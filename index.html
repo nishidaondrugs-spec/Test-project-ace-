@@ -3,230 +3,126 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Project ACE — Serve Read Prototype</title>
+<title>Project ACE — Two Stage Serve Prototype</title>
 <style>
 :root{
-  --bg:#03070d;--panel:#07111c;--ink:#eef7ff;--muted:#698197;
-  --court:#b96a3a;--line:#f2efe8;--blue:#58b7ff;--gold:#f3cf69;
-  --green:#2f7b63;--shadow:rgba(0,0,0,.35)
+  --bg:#03070d;--ink:#eef7ff;--muted:#7894aa;--blue:#59b8ff;--gold:#f0c967;
+  --good:#63d39b;--court:#b96a3b;--court2:#8f5031;--line:rgba(255,255,255,.10)
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-button{font:inherit}
-.app{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  background:
-    radial-gradient(circle at 50% -15%,rgba(65,145,198,.16),transparent 38%),
-    linear-gradient(180deg,#06111a 0%,#02070d 100%);
-  color:var(--ink);
-}
-.hud{
-  height:54px;flex:0 0 54px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 14px;border-bottom:1px solid rgba(255,255,255,.08);
-  background:rgba(3,9,15,.96)
-}
-.brand{font-size:10px;font-weight:900;letter-spacing:.16em}
-.hudRight{display:flex;gap:16px;align-items:center;font-size:10px;font-weight:900;color:#9ccff2}
-.hudRight span:first-child{color:#6f8da3;font-weight:700}
+.app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#06121b,#02070d);color:var(--ink)}
+.top{height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--line);background:#030a11}
+.brand{font-size:10px;font-weight:1000;letter-spacing:.15em}
+.meta{display:flex;gap:16px;font-size:9px;font-weight:900;color:#86c9f5}
+.meta span:first-child{color:#688397}
+.game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 21%,#173f45 21% 30%,#173427 30%)}
+.stands{position:absolute;inset:0 0 auto;height:28%;opacity:.55;background:
+linear-gradient(180deg,rgba(255,255,255,.04),transparent),
+repeating-linear-gradient(90deg,transparent 0 26px,rgba(255,255,255,.025) 26px 28px)}
+.shell{position:absolute;left:50%;top:6%;width:min(94vw,620px);height:84%;transform:translateX(-50%)}
+.court{position:absolute;left:5%;right:5%;top:8%;bottom:5%;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);background:
+linear-gradient(90deg,transparent 49.6%,rgba(255,255,255,.92) 49.6% 50.4%,transparent 50.4%),
+linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.94) 49.6% 50.4%,transparent 50.4%),
+linear-gradient(180deg,var(--court),var(--court2));
+border:3px solid rgba(255,255,255,.92);box-shadow:0 26px 52px rgba(0,0,0,.35)}
+.court:before,.court:after{content:"";position:absolute;left:8%;right:8%;height:2px;background:rgba(255,255,255,.88)}
+.court:before{top:33%}.court:after{top:66%}
+.net{position:absolute;left:3%;right:3%;top:49%;height:15px;z-index:30;border-top:2px solid white;border-bottom:1px solid rgba(255,255,255,.65);background:
+repeating-linear-gradient(90deg,rgba(255,255,255,.4) 0 1px,transparent 1px 10px),
+repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
+.net:before,.net:after{content:"";position:absolute;top:-8px;width:4px;height:31px;background:#edf3f7}.net:before{left:0}.net:after{right:0}
 
-.game{
-  position:relative;flex:1;min-height:0;overflow:hidden;
-  background:
-    linear-gradient(180deg,#112f3d 0 18%,#163b43 18% 30%,#153425 30% 100%);
-}
-.stands{
-  position:absolute;inset:0 0 auto 0;height:29%;
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.035),transparent),
-    repeating-linear-gradient(90deg,transparent 0 28px,rgba(255,255,255,.025) 28px 30px);
-}
-.courtShell{
-  position:absolute;
-  left:50%;top:10%;
-  width:min(94vw,610px);
-  height:78%;
-  transform:translateX(-50%);
-}
-.court{
-  position:absolute;
-  left:4%;right:4%;top:10%;bottom:8%;
-  background:
-    linear-gradient(90deg,transparent 49.65%,rgba(255,255,255,.92) 49.65% 50.35%,transparent 50.35%),
-    linear-gradient(180deg,transparent 49.55%,rgba(255,255,255,.94) 49.55% 50.45%,transparent 50.45%),
-    linear-gradient(180deg,#c37440,#9f5933);
-  border:3px solid rgba(255,255,255,.95);
-  clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);
-  box-shadow:0 28px 52px var(--shadow);
-}
-.court:before,.court:after{
-  content:"";position:absolute;left:8%;right:8%;height:2px;background:rgba(255,255,255,.9)
-}
-.court:before{top:32.9%}.court:after{top:66.1%}
-.net{
-  position:absolute;left:2%;right:2%;top:49.4%;height:16px;z-index:30;
-  transform:translateY(-50%);
-  border-top:2px solid #fff;border-bottom:1px solid rgba(255,255,255,.75);
-  background:
-    repeating-linear-gradient(90deg,rgba(255,255,255,.45) 0 1px,transparent 1px 10px),
-    repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.25) 4px 5px);
-}
-.net:before,.net:after{
-  content:"";position:absolute;top:-8px;width:4px;height:32px;background:#e7edf2
-}
-.net:before{left:0}.net:after{right:0}
+.receiver{position:absolute;width:34px;height:49px;transform:translate(-50%,-50%);z-index:17;transition:left .35s ease,top .35s ease,transform .18s ease}
+.receiver .head{position:absolute;left:10px;top:0;width:14px;height:14px;border-radius:50%;background:#d0a283}
+.receiver .body{position:absolute;left:7px;top:13px;width:20px;height:25px;border-radius:7px 7px 5px 5px;background:#dfe8ee;border:1px solid rgba(0,0,0,.25);box-shadow:0 6px 11px rgba(0,0,0,.25)}
+.receiver.lib .body{background:#3fa37d}.receiver.set .body{background:#8198a7}
+.receiver .legs:before,.receiver .legs:after{content:"";position:absolute;top:36px;width:5px;height:13px;border-radius:4px;background:#17222a}
+.receiver .legs:before{left:8px;transform:rotate(7deg)}.receiver .legs:after{right:8px;transform:rotate(-7deg)}
+.receiver.weak .body{box-shadow:0 0 0 2px rgba(240,201,103,.52),0 0 22px rgba(240,201,103,.2)}
+.receiver.react{transform:translate(-50%,-50%) rotate(-12deg) scale(.95)}
+.receiver.dive{animation:dive .58s ease}
+@keyframes dive{0%{transform:translate(-50%,-50%)}45%{transform:translate(-75%,-36%) rotate(-25deg)}100%{transform:translate(-50%,-50%)}}
 
-.aimZone{
-  position:absolute;left:8%;right:8%;top:12%;height:34%;
-  z-index:20;touch-action:none;cursor:crosshair
-}
-.target{
-  position:absolute;width:44px;height:44px;border:2px solid var(--blue);
-  border-radius:50%;transform:translate(-50%,-50%);z-index:25;display:none;
-  box-shadow:0 0 0 8px rgba(88,183,255,.09),0 0 30px rgba(88,183,255,.25)
-}
-.target:before,.target:after{content:"";position:absolute;background:#bfe7ff}
-.target:before{width:14px;height:2px;left:13px;top:19px}
-.target:after{width:2px;height:14px;left:19px;top:13px}
+.server{position:absolute;left:50%;bottom:0;width:40px;height:54px;transform:translateX(-50%);z-index:22}
+.server .head{position:absolute;left:12px;top:0;width:16px;height:16px;border-radius:50%;background:#c99978}
+.server .body{position:absolute;left:8px;top:15px;width:24px;height:28px;border-radius:8px;background:#183149}
 
-.coachHint{
-  position:absolute;width:22px;height:22px;border:2px solid rgba(243,207,105,.9);
-  border-radius:50%;transform:translate(-50%,-50%);z-index:18;pointer-events:none;
-  animation:hintPulse 1.1s ease-out infinite;opacity:.72
-}
-@keyframes hintPulse{
-  0%{box-shadow:0 0 0 0 rgba(243,207,105,.28)}
-  100%{box-shadow:0 0 0 20px rgba(243,207,105,0)}
-}
+.coach{position:absolute;left:1.5%;bottom:15%;width:32px;height:52px;z-index:19;opacity:.78}
+.coach .head{position:absolute;width:14px;height:14px;border-radius:50%;left:8px;top:0;background:#c99c7d}
+.coach .body{position:absolute;width:21px;height:29px;border-radius:7px;left:5px;top:13px;background:#455a6a}
+.coach .arm{position:absolute;width:23px;height:5px;border-radius:4px;background:#c99c7d;left:2px;top:20px;transform-origin:right center;transition:.3s}
+.coach.left .arm{transform:rotate(-55deg)}.coach.right .arm{transform:rotate(17deg)}.coach.short .arm{transform:rotate(-32deg)}
 
-.person{
-  position:absolute;width:34px;height:49px;transform:translate(-50%,-50%);
-  z-index:17;transition:left .48s cubic-bezier(.2,.85,.2,1),top .48s cubic-bezier(.2,.85,.2,1),transform .2s
-}
-.person .head{
-  position:absolute;left:10px;top:0;width:14px;height:14px;border-radius:50%;
-  background:#d0a383;border:1px solid rgba(0,0,0,.3)
-}
-.person .body{
-  position:absolute;left:7px;top:13px;width:20px;height:25px;border-radius:7px 7px 5px 5px;
-  background:#dfe9ef;border:1px solid rgba(0,0,0,.25);box-shadow:0 7px 13px rgba(0,0,0,.22)
-}
-.person .legs:before,.person .legs:after{
-  content:"";position:absolute;top:36px;width:5px;height:13px;border-radius:4px;background:#16212a
-}
-.person .legs:before{left:8px;transform:rotate(7deg)}
-.person .legs:after{right:8px;transform:rotate(-7deg)}
-.person.lib .body{background:#42a77f}
-.person.set .body{background:#879aa8}
-.person.weak .body{
-  box-shadow:0 0 0 2px rgba(243,207,105,.55),0 0 25px rgba(243,207,105,.22)
-}
-.person.react{transform:translate(-50%,-50%) rotate(-11deg) scale(.95)}
-.person.dive{animation:dive .65s ease}
-@keyframes dive{
-  0%{transform:translate(-50%,-50%)}
-  45%{transform:translate(-78%,-34%) rotate(-24deg)}
-  100%{transform:translate(-50%,-50%)}
-}
+.swingGuide{position:absolute;left:16%;right:16%;top:12%;height:28%;z-index:40;pointer-events:none}
+.swingLine{position:absolute;left:50%;top:2%;bottom:0;width:3px;background:linear-gradient(180deg,rgba(91,188,255,.1),rgba(91,188,255,.95));transform-origin:50% 100%;filter:drop-shadow(0 0 7px rgba(91,188,255,.45))}
+.swingLine:after{content:"";position:absolute;left:50%;top:-6px;width:12px;height:12px;border-radius:50%;background:#aee1ff;transform:translateX(-50%);box-shadow:0 0 0 6px rgba(91,188,255,.08)}
+.swingLock{position:absolute;left:50%;top:10%;bottom:0;width:2px;background:rgba(240,201,103,.9);transform-origin:50% 100%;display:none}
+.swingLock:after{content:"";position:absolute;left:50%;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--gold);transform:translateX(-50%)}
+.hint{position:absolute;width:22px;height:22px;border:2px solid rgba(240,201,103,.8);border-radius:50%;transform:translate(-50%,-50%);z-index:18;animation:pulse 1.1s ease-out infinite;opacity:.65}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,201,103,.28)}100%{box-shadow:0 0 0 18px rgba(240,201,103,0)}}
 
-.server{
-  position:absolute;left:50%;bottom:0;width:40px;height:54px;transform:translateX(-50%);z-index:21
-}
-.server .head{position:absolute;left:12px;top:0;width:16px;height:16px;border-radius:50%;background:#c99877}
-.server .body{position:absolute;left:8px;top:15px;width:24px;height:27px;border-radius:8px;background:#142d42;border:1px solid rgba(255,255,255,.12)}
-.server:before,.server:after{content:"";position:absolute;top:41px;width:6px;height:13px;border-radius:4px;background:#0d1821}
-.server:before{left:10px}.server:after{right:10px}
-
-.coach{
-  position:absolute;left:1.5%;bottom:15%;width:31px;height:52px;z-index:19;opacity:.78
-}
-.coach .head{position:absolute;width:14px;height:14px;border-radius:50%;left:8px;top:0;background:#c89d7e}
-.coach .body{position:absolute;width:21px;height:29px;border-radius:7px;left:5px;top:13px;background:#42596a}
-.coach .arm{
-  position:absolute;width:23px;height:5px;border-radius:4px;background:#c89d7e;left:2px;top:20px;
-  transform-origin:right center;transition:transform .3s
-}
-.coach.left .arm{transform:rotate(-55deg)}
-.coach.right .arm{transform:rotate(16deg)}
-.coach.short .arm{transform:rotate(-32deg)}
-
-.ball{
-  position:absolute;width:20px;height:20px;border-radius:50%;z-index:80;display:none;
-  background:
-    radial-gradient(circle at 32% 32%,#fff 0 18%,#dedede 19% 32%,#e66b57 33% 47%,#fff 48% 61%,#d8bd52 62% 74%,#fff 75%);
-  box-shadow:0 4px 10px rgba(0,0,0,.42)
-}
-
-.flash{
-  position:absolute;left:50%;top:6%;transform:translateX(-50%) scale(.94);
-  z-index:100;opacity:0;pointer-events:none;text-align:center;transition:.18s
-}
+.ball{position:absolute;width:20px;height:20px;border-radius:50%;z-index:80;display:none;background:
+radial-gradient(circle at 32% 32%,#fff 0 18%,#ddd 19% 32%,#e56d58 33% 47%,#fff 48% 61%,#d9be52 62% 74%,#fff 75%);
+box-shadow:0 4px 10px rgba(0,0,0,.42)}
+.flash{position:absolute;left:50%;top:7%;transform:translateX(-50%) scale(.94);z-index:100;opacity:0;text-align:center;transition:.18s;pointer-events:none}
 .flash.show{opacity:1;transform:translateX(-50%) scale(1)}
-.flash b{display:block;font-size:30px;line-height:1;text-shadow:0 7px 22px rgba(0,0,0,.55)}
-.flash span{display:block;margin-top:4px;font-size:9px;letter-spacing:.15em;color:#cce5f6;font-weight:800}
+.flash b{display:block;font-size:30px;line-height:1;text-shadow:0 7px 22px rgba(0,0,0,.5)}
+.flash span{display:block;margin-top:4px;font-size:9px;letter-spacing:.14em;font-weight:900;color:#cfe6f5}
 
-.bottom{
-  flex:0 0 135px;
-  display:grid;grid-template-columns:1fr 92px;gap:12px;align-items:center;
-  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
-  border-top:1px solid rgba(255,255,255,.08);background:#04101a
-}
-.meterCol{min-width:0}
-.meter{
-  position:relative;height:20px;border-radius:12px;overflow:hidden;
-  background:#0b2233;border:1px solid rgba(255,255,255,.09)
-}
-.sweet{
-  position:absolute;left:62%;width:18%;inset-block:0;
-  background:rgba(95,221,160,.16);border-left:1px solid rgba(95,221,160,.45);border-right:1px solid rgba(95,221,160,.45)
-}
-.fill{height:100%;width:0;background:linear-gradient(90deg,#357fae,#67c7ff)}
-.labels{display:flex;justify-content:space-between;margin-top:6px;color:#5f7c91;font-size:7px;letter-spacing:.13em;font-weight:800}
-.mini{margin-top:8px;color:#7894a8;font-size:8px;line-height:1.4}
-.serve{
-  width:84px;height:84px;border-radius:50%;
-  border:1px solid rgba(104,199,255,.28);
-  background:radial-gradient(circle at 38% 28%,#153f5e,#071a29 68%);
-  color:white;font-size:31px;box-shadow:0 10px 25px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.018);
-  touch-action:none;user-select:none
-}
-.serve.down{transform:scale(.96)}
-.serve:disabled{opacity:.35}
+.bottom{flex:0 0 168px;padding:10px 14px calc(11px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#04101a;display:grid;grid-template-columns:1fr 94px;gap:14px;align-items:center}
+.stageTitle{font-size:8px;font-weight:1000;letter-spacing:.14em;color:#6d8799;margin-bottom:7px}
+.directionTrack{position:relative;height:12px;border-radius:8px;background:#0b2232;border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.directionZone{position:absolute;top:0;bottom:0;left:42%;width:16%;background:rgba(95,211,155,.14);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
+.directionDot{position:absolute;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background:#77ccff;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(91,184,255,.6)}
+.powerTrack{position:relative;height:19px;border-radius:10px;background:#0b2232;border:1px solid rgba(255,255,255,.08);overflow:hidden;display:none}
+.powerGood{position:absolute;left:62%;width:18%;top:0;bottom:0;background:rgba(95,211,155,.15);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
+.powerFill{height:100%;width:0;background:linear-gradient(90deg,#3c8bbb,#6bcbff)}
+.labels{display:flex;justify-content:space-between;margin-top:6px;font-size:7px;color:#587487;font-weight:900;letter-spacing:.12em}
+.help{margin-top:8px;font-size:8px;color:#7691a5;line-height:1.45}
+.mainBtn{width:88px;height:88px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:white;font-size:30px;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);touch-action:none;user-select:none}
+.mainBtn small{display:block;font-size:7px;letter-spacing:.08em;margin-top:2px;color:#8ebbd8}
+.mainBtn.down{transform:scale(.96)}.mainBtn:disabled{opacity:.35}
+
+.phaseBadge{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);z-index:45;padding:7px 10px;border-radius:12px;background:rgba(4,16,26,.72);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:1000;letter-spacing:.12em;color:#a6d9fa;backdrop-filter:blur(8px)}
 
 @media(min-width:760px){
-  .hud{padding-left:max(18px,calc((100vw - 720px)/2));padding-right:max(18px,calc((100vw - 720px)/2))}
+  .top{padding-left:max(18px,calc((100vw - 720px)/2));padding-right:max(18px,calc((100vw - 720px)/2))}
   .bottom{padding-left:max(18px,calc((100vw - 640px)/2));padding-right:max(18px,calc((100vw - 640px)/2))}
 }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="hud">
-    <div class="brand">PROJECT ACE · SERVE READ</div>
-    <div class="hudRight"><span id="rep">1 / 8</span><span id="score">0</span></div>
+  <div class="top">
+    <div class="brand">PROJECT ACE · TWO-STAGE SERVE</div>
+    <div class="meta"><span id="rep">1 / 8</span><span id="score">0</span></div>
   </div>
 
-  <div class="game" id="game">
+  <div class="game">
     <div class="stands"></div>
-    <div class="courtShell" id="shell">
+    <div class="shell" id="shell">
       <div class="court"></div>
       <div class="net"></div>
-      <div class="aimZone" id="aimZone"></div>
-      <div class="target" id="target"></div>
-      <div class="coachHint" id="coachHint"></div>
 
-      <div class="person" id="r0"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="person" id="r1"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="person" id="r2"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="person" id="r3"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="person lib" id="r4"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="person set" id="r5"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="receiver" id="r0"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="receiver" id="r1"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="receiver" id="r2"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="receiver" id="r3"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="receiver lib" id="r4"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="receiver set" id="r5"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
 
       <div class="server"><i class="head"></i><i class="body"></i></div>
       <div class="coach" id="coach"><i class="head"></i><i class="body"></i><i class="arm"></i></div>
+      <div class="hint" id="hint"></div>
+
+      <div class="swingGuide">
+        <div class="swingLine" id="swingLine"></div>
+        <div class="swingLock" id="swingLock"></div>
+      </div>
+
+      <div class="phaseBadge" id="phaseBadge">LOCK DIRECTION</div>
       <div class="ball" id="ball"></div>
     </div>
 
@@ -234,22 +130,34 @@ button{font:inherit}
   </div>
 
   <div class="bottom">
-    <div class="meterCol">
-      <div class="meter"><div class="sweet"></div><div class="fill" id="fill"></div></div>
-      <div class="labels"><span>CONTROL</span><span>PACE</span></div>
-      <div class="mini">Tap the far court to aim. Hold the ball. Release to serve.</div>
+    <div>
+      <div id="directionUi">
+        <div class="stageTitle">STAGE 1 · DIRECTION</div>
+        <div class="directionTrack"><div class="directionZone"></div><div class="directionDot" id="dirDot"></div></div>
+        <div class="labels"><span>ZONE 5</span><span>SEAM</span><span>ZONE 1</span></div>
+        <div class="help">Tap once to lock where the serve is travelling.</div>
+      </div>
+
+      <div id="powerUi" style="display:none">
+        <div class="stageTitle">STAGE 2 · DEPTH / PACE</div>
+        <div class="powerTrack" id="powerTrack"><div class="powerGood"></div><div class="powerFill" id="powerFill"></div></div>
+        <div class="labels"><span>SHORT</span><span>DEEP</span></div>
+        <div class="help">Tap again to lock depth and pace.</div>
+      </div>
     </div>
-    <button class="serve" id="serve" aria-label="Serve">🏐</button>
+
+    <button class="mainBtn" id="mainBtn">🏐<small id="btnLabel">LOCK</small></button>
   </div>
 </div>
 
 <script>
 (function(){
-  const q=s=>document.querySelector(s);
-  const shell=q("#shell"),aim=q("#aimZone"),target=q("#target"),coachHint=q("#coachHint");
-  const ball=q("#ball"),fill=q("#fill"),serve=q("#serve"),repEl=q("#rep"),scoreEl=q("#score");
-  const flash=q("#flash"),coach=q("#coach");
-  const recv=[0,1,2,3,4,5].map(i=>q("#r"+i));
+  const $=s=>document.querySelector(s);
+  const recv=[0,1,2,3,4,5].map(i=>$("#r"+i));
+  const shell=$("#shell"), coach=$("#coach"),hint=$("#hint"),swingLine=$("#swingLine"),swingLock=$("#swingLock");
+  const dirDot=$("#dirDot"),directionUi=$("#directionUi"),powerUi=$("#powerUi"),powerTrack=$("#powerTrack"),powerFill=$("#powerFill");
+  const btn=$("#mainBtn"),btnLabel=$("#btnLabel"),phaseBadge=$("#phaseBadge"),ball=$("#ball"),flash=$("#flash");
+  const repEl=$("#rep"),scoreEl=$("#score");
 
   const formations=[
     {p:[[24,23],[50,22],[76,24],[28,39],[61,39],[82,38]],weak:3,h:[28,39],c:"left"},
@@ -260,11 +168,16 @@ button{font:inherit}
     {p:[[19,22],[47,24],[82,22],[21,40],[55,39],[84,41]],weak:2,h:[81,25],c:"right"}
   ];
 
-  let state={rep:1,total:8,score:0,busy:false,hold:false,start:0,power:0,aim:{x:.5,y:.28},formation:null,raf:0};
+  const st={
+    phase:"direction",rep:1,total:8,score:0,busy:false,
+    dirT:0,dirX:.5,dirSign:1,dirLocked:.5,
+    powerT:0,power:.1,powerSign:1,
+    raf:0,formation:null
+  };
 
   function setFormation(){
     const f=formations[Math.floor(Math.random()*formations.length)];
-    state.formation=f;
+    st.formation=f;
     recv.forEach((el,i)=>{
       el.classList.remove("weak","react","dive");
       if(i===f.weak)el.classList.add("weak");
@@ -272,76 +185,83 @@ button{font:inherit}
       el.style.top=f.p[i][1]+"%";
     });
     coach.className="coach "+f.c;
-    coachHint.style.left=f.h[0]+"%";
-    coachHint.style.top=f.h[1]+"%";
-    coachHint.style.display="block";
-    target.style.display="none";
-    state.aim={x:.5,y:.28};
+    hint.style.left=f.h[0]+"%";hint.style.top=f.h[1]+"%";
+    hint.style.display="block";
 
+    // Sometimes one receiver shifts late, so the initial picture isn't always static.
     setTimeout(()=>{
-      if(state.busy)return;
-      recv.forEach((el,i)=>{
-        const dx=(Math.random()-.5)*3.2,dy=(Math.random()-.5)*2.2;
-        el.style.left=(f.p[i][0]+dx)+"%";
-        el.style.top=(f.p[i][1]+dy)+"%";
-      });
-    },320);
+      if(st.busy)return;
+      const idx=Math.floor(Math.random()*recv.length);
+      const el=recv[idx],base=f.p[idx];
+      el.style.left=(base[0]+(Math.random()>.5?4:-4))+"%";
+      el.style.top=(base[1]+(Math.random()-.5)*2)+"%";
+    },550);
   }
 
-  function aimAt(clientX,clientY){
-    if(state.busy)return;
-    const r=aim.getBoundingClientRect();
-    let x=(clientX-r.left)/r.width,y=(clientY-r.top)/r.height;
-    x=Math.max(0,Math.min(1,x));y=Math.max(0,Math.min(1,y));
-    state.aim={x,y};
-    const shellRect=shell.getBoundingClientRect();
-    const aimRect=aim.getBoundingClientRect();
-    target.style.left=((aimRect.left-shellRect.left)+x*aimRect.width)+"px";
-    target.style.top=((aimRect.top-shellRect.top)+y*aimRect.height)+"px";
-    target.style.display="block";
+  function resetInput(){
+    st.phase="direction";st.dirX=.5;st.dirSign=1;st.power=.1;st.powerSign=1;
+    directionUi.style.display="block";powerUi.style.display="none";powerTrack.style.display="none";
+    btnLabel.textContent="LOCK";phaseBadge.textContent="LOCK DIRECTION";
+    swingLine.style.display="block";swingLock.style.display="none";powerFill.style.width="0";
+    cancelAnimationFrame(st.raf);animateDirection();
   }
 
-  aim.addEventListener("pointerdown",e=>{e.preventDefault();aimAt(e.clientX,e.clientY)});
-  aim.addEventListener("touchstart",e=>{
-    if(!e.touches[0])return;
+  function animateDirection(){
+    if(st.phase!=="direction"||st.busy)return;
+    st.dirX+=0.012*st.dirSign;
+    if(st.dirX>=1){st.dirX=1;st.dirSign=-1}
+    if(st.dirX<=0){st.dirX=0;st.dirSign=1}
+    const angle=-34+st.dirX*68;
+    swingLine.style.transform=`rotate(${angle}deg)`;
+    dirDot.style.left=(st.dirX*100)+"%";
+    st.raf=requestAnimationFrame(animateDirection);
+  }
+
+  function animatePower(){
+    if(st.phase!=="power"||st.busy)return;
+    st.power+=0.015*st.powerSign;
+    if(st.power>=1){st.power=1;st.powerSign=-1}
+    if(st.power<=.06){st.power=.06;st.powerSign=1}
+    powerFill.style.width=(st.power*100)+"%";
+    st.raf=requestAnimationFrame(animatePower);
+  }
+
+  function lockDirection(){
+    cancelAnimationFrame(st.raf);
+    st.dirLocked=st.dirX;
+    const angle=-34+st.dirLocked*68;
+    swingLock.style.display="block";
+    swingLock.style.transform=`rotate(${angle}deg)`;
+    swingLine.style.display="none";
+    st.phase="power";
+    directionUi.style.display="none";powerUi.style.display="block";powerTrack.style.display="block";
+    btnLabel.textContent="SERVE";phaseBadge.textContent="LOCK DEPTH / PACE";
+    setTimeout(animatePower,80);
+  }
+
+  function lockPowerAndServe(){
+    cancelAnimationFrame(st.raf);
+    st.phase="flight";st.busy=true;btn.disabled=true;hint.style.display="none";
+    btnLabel.textContent="...";
+    doServe();
+  }
+
+  btn.addEventListener("click",e=>{
     e.preventDefault();
-    aimAt(e.touches[0].clientX,e.touches[0].clientY);
-  },{passive:false});
-
-  function meter(){
-    if(!state.hold)return;
-    const t=(performance.now()-state.start)/1000;
-    state.power=Math.min(1,t/1.2);
-    fill.style.width=(state.power*100)+"%";
-    state.raf=requestAnimationFrame(meter);
-  }
-
-  function begin(e){
-    if(state.busy||state.hold)return;
-    e.preventDefault();
-    state.hold=true;state.start=performance.now();state.power=0;
-    serve.classList.add("down");
-    cancelAnimationFrame(state.raf);meter();
-  }
-  function end(e){
-    if(!state.hold||state.busy)return;
-    e.preventDefault();
-    state.hold=false;serve.classList.remove("down");
-    cancelAnimationFrame(state.raf);doServe();
-  }
-  serve.addEventListener("pointerdown",begin);
-  serve.addEventListener("pointerup",end);
-  serve.addEventListener("pointercancel",end);
-  serve.addEventListener("touchstart",begin,{passive:false});
-  serve.addEventListener("touchend",end,{passive:false});
+    if(st.busy)return;
+    if(st.phase==="direction")lockDirection();
+    else if(st.phase==="power")lockPowerAndServe();
+  });
 
   function doServe(){
-    state.busy=true;serve.disabled=true;coachHint.style.display="none";
+    const shellW=shell.clientWidth,shellH=shell.clientHeight;
 
-    const shellR=shell.getBoundingClientRect(),aimR=aim.getBoundingClientRect();
-    const startX=shellR.width*.5,startY=shellR.height*.93;
-    const endX=(aimR.left-shellR.left)+state.aim.x*aimR.width;
-    const endY=(aimR.top-shellR.top)+state.aim.y*aimR.height;
+    // Direction controls left/right. Power controls both depth and pace.
+    const endX=shellW*(0.18+st.dirLocked*0.64);
+    const depth=0.18+st.power*0.23; // far court landing band
+    const endY=shellH*depth;
+
+    const startX=shellW*.5,startY=shellH*.93;
 
     ball.style.display="block";
     ball.style.transition="none";
@@ -349,49 +269,51 @@ button{font:inherit}
     ball.style.transform="translate(-50%,-50%) scale(1)";
     void ball.offsetWidth;
 
-    const dur=660-state.power*210;
+    const dur=700-st.power*245;
     ball.style.transition=`left ${dur}ms cubic-bezier(.18,.72,.33,1),top ${dur}ms cubic-bezier(.18,.72,.33,1),transform ${dur}ms`;
     ball.style.left=endX+"px";ball.style.top=endY+"px";
-    ball.style.transform="translate(-50%,-50%) scale(.78) rotate(420deg)";
+    ball.style.transform="translate(-50%,-50%) scale(.76) rotate(430deg)";
 
     setTimeout(()=>resolve(endX,endY),dur+30);
   }
 
   function resolve(x,y){
-    const weak=recv[state.formation.weak];
+    const weak=recv[st.formation.weak];
     const wx=parseFloat(weak.style.left)/100*shell.clientWidth;
     const wy=parseFloat(weak.style.top)/100*shell.clientHeight;
 
     const dx=(x-wx)/shell.clientWidth,dy=(y-wy)/shell.clientHeight;
-    const dist=Math.hypot(dx,dy);
-    const read=Math.max(0,1-dist/.28);
-    const exec=Math.max(0,1-Math.abs(state.power-.72)/.45);
-    const ql=Math.max(0,Math.min(100,Math.round((read*.44+exec*.56)*100)));
+    const tactical=Math.max(0,1-Math.hypot(dx,dy)/.29);
+
+    // Skill comes from both stages, not the coach hint.
+    // Centre-ish direction isn't automatically best; it depends on formation.
+    const powerExec=Math.max(0,1-Math.abs(st.power-.72)/.42);
+    const quality=Math.round(Math.max(0,Math.min(1,tactical*.48+powerExec*.52))*100);
 
     let tag,pts;
-    if(ql>=88){tag="ACE";pts=3;weak.classList.add("dive")}
-    else if(ql>=74){tag="PRESSURE";pts=2;weak.classList.add("react")}
-    else if(ql>=58){tag="IN SYSTEM";pts=1;weak.classList.add("react")}
+    if(quality>=88){tag="ACE";pts=3;weak.classList.add("dive")}
+    else if(quality>=74){tag="PRESSURE";pts=2;weak.classList.add("react")}
+    else if(quality>=58){tag="IN SYSTEM";pts=1;weak.classList.add("react")}
     else{tag="FREE BALL";pts=0}
 
-    state.score+=pts;scoreEl.textContent=state.score;
-    flash.querySelector("b").textContent=ql+"%";
+    st.score+=pts;scoreEl.textContent=st.score;
+    flash.querySelector("b").textContent=quality+"%";
     flash.querySelector("span").textContent=tag;
     flash.classList.add("show");
     ball.style.display="none";
 
     setTimeout(()=>{
       flash.classList.remove("show");
-      fill.style.width="0";
-      state.rep++;
-      if(state.rep>state.total){state.rep=1;state.score=0;scoreEl.textContent="0"}
-      repEl.textContent=state.rep+" / "+state.total;
-      setFormation();
-      state.busy=false;serve.disabled=false;
+      st.rep++;
+      if(st.rep>st.total){st.rep=1;st.score=0;scoreEl.textContent="0"}
+      repEl.textContent=st.rep+" / "+st.total;
+      st.busy=false;btn.disabled=false;
+      setFormation();resetInput();
     },1150);
   }
 
   setFormation();
+  resetInput();
 })();
 </script>
 </body>
