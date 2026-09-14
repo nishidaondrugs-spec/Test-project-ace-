@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Project ACE — Serve Read Prototype</title>
+<style>
+:root{
+  --bg:#03070d;--panel:#07111c;--ink:#eef7ff;--muted:#698197;
+  --court:#b96a3a;--line:#f2efe8;--blue:#58b7ff;--gold:#f3cf69;
+  --green:#2f7b63;--shadow:rgba(0,0,0,.35)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit}
+.app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  background:
+    radial-gradient(circle at 50% -15%,rgba(65,145,198,.16),transparent 38%),
+    linear-gradient(180deg,#06111a 0%,#02070d 100%);
+  color:var(--ink);
+}
+.hud{
+  height:54px;flex:0 0 54px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;border-bottom:1px solid rgba(255,255,255,.08);
+  background:rgba(3,9,15,.96)
+}
+.brand{font-size:10px;font-weight:900;letter-spacing:.16em}
+.hudRight{display:flex;gap:16px;align-items:center;font-size:10px;font-weight:900;color:#9ccff2}
+.hudRight span:first-child{color:#6f8da3;font-weight:700}
+
+.game{
+  position:relative;flex:1;min-height:0;overflow:hidden;
+  background:
+    linear-gradient(180deg,#112f3d 0 18%,#163b43 18% 30%,#153425 30% 100%);
+}
+.stands{
+  position:absolute;inset:0 0 auto 0;height:29%;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.035),transparent),
+    repeating-linear-gradient(90deg,transparent 0 28px,rgba(255,255,255,.025) 28px 30px);
+}
+.courtShell{
+  position:absolute;
+  left:50%;top:10%;
+  width:min(94vw,610px);
+  height:78%;
+  transform:translateX(-50%);
+}
+.court{
+  position:absolute;
+  left:4%;right:4%;top:10%;bottom:8%;
+  background:
+    linear-gradient(90deg,transparent 49.65%,rgba(255,255,255,.92) 49.65% 50.35%,transparent 50.35%),
+    linear-gradient(180deg,transparent 49.55%,rgba(255,255,255,.94) 49.55% 50.45%,transparent 50.45%),
+    linear-gradient(180deg,#c37440,#9f5933);
+  border:3px solid rgba(255,255,255,.95);
+  clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);
+  box-shadow:0 28px 52px var(--shadow);
+}
+.court:before,.court:after{
+  content:"";position:absolute;left:8%;right:8%;height:2px;background:rgba(255,255,255,.9)
+}
+.court:before{top:32.9%}.court:after{top:66.1%}
+.net{
+  position:absolute;left:2%;right:2%;top:49.4%;height:16px;z-index:30;
+  transform:translateY(-50%);
+  border-top:2px solid #fff;border-bottom:1px solid rgba(255,255,255,.75);
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.45) 0 1px,transparent 1px 10px),
+    repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.25) 4px 5px);
+}
+.net:before,.net:after{
+  content:"";position:absolute;top:-8px;width:4px;height:32px;background:#e7edf2
+}
+.net:before{left:0}.net:after{right:0}
+
+.aimZone{
+  position:absolute;left:8%;right:8%;top:12%;height:34%;
+  z-index:20;touch-action:none;cursor:crosshair
+}
+.target{
+  position:absolute;width:44px;height:44px;border:2px solid var(--blue);
+  border-radius:50%;transform:translate(-50%,-50%);z-index:25;display:none;
+  box-shadow:0 0 0 8px rgba(88,183,255,.09),0 0 30px rgba(88,183,255,.25)
+}
+.target:before,.target:after{content:"";position:absolute;background:#bfe7ff}
+.target:before{width:14px;height:2px;left:13px;top:19px}
+.target:after{width:2px;height:14px;left:19px;top:13px}
+
+.coachHint{
+  position:absolute;width:22px;height:22px;border:2px solid rgba(243,207,105,.9);
+  border-radius:50%;transform:translate(-50%,-50%);z-index:18;pointer-events:none;
+  animation:hintPulse 1.1s ease-out infinite;opacity:.72
+}
+@keyframes hintPulse{
+  0%{box-shadow:0 0 0 0 rgba(243,207,105,.28)}
+  100%{box-shadow:0 0 0 20px rgba(243,207,105,0)}
+}
+
+.person{
+  position:absolute;width:34px;height:49px;transform:translate(-50%,-50%);
+  z-index:17;transition:left .48s cubic-bezier(.2,.85,.2,1),top .48s cubic-bezier(.2,.85,.2,1),transform .2s
+}
+.person .head{
+  position:absolute;left:10px;top:0;width:14px;height:14px;border-radius:50%;
+  background:#d0a383;border:1px solid rgba(0,0,0,.3)
+}
+.person .body{
+  position:absolute;left:7px;top:13px;width:20px;height:25px;border-radius:7px 7px 5px 5px;
+  background:#dfe9ef;border:1px solid rgba(0,0,0,.25);box-shadow:0 7px 13px rgba(0,0,0,.22)
+}
+.person .legs:before,.person .legs:after{
+  content:"";position:absolute;top:36px;width:5px;height:13px;border-radius:4px;background:#16212a
+}
+.person .legs:before{left:8px;transform:rotate(7deg)}
+.person .legs:after{right:8px;transform:rotate(-7deg)}
+.person.lib .body{background:#42a77f}
+.person.set .body{background:#879aa8}
+.person.weak .body{
+  box-shadow:0 0 0 2px rgba(243,207,105,.55),0 0 25px rgba(243,207,105,.22)
+}
+.person.react{transform:translate(-50%,-50%) rotate(-11deg) scale(.95)}
+.person.dive{animation:dive .65s ease}
+@keyframes dive{
+  0%{transform:translate(-50%,-50%)}
+  45%{transform:translate(-78%,-34%) rotate(-24deg)}
+  100%{transform:translate(-50%,-50%)}
+}
+
+.server{
+  position:absolute;left:50%;bottom:0;width:40px;height:54px;transform:translateX(-50%);z-index:21
+}
+.server .head{position:absolute;left:12px;top:0;width:16px;height:16px;border-radius:50%;background:#c99877}
+.server .body{position:absolute;left:8px;top:15px;width:24px;height:27px;border-radius:8px;background:#142d42;border:1px solid rgba(255,255,255,.12)}
+.server:before,.server:after{content:"";position:absolute;top:41px;width:6px;height:13px;border-radius:4px;background:#0d1821}
+.server:before{left:10px}.server:after{right:10px}
+
+.coach{
+  position:absolute;left:1.5%;bottom:15%;width:31px;height:52px;z-index:19;opacity:.78
+}
+.coach .head{position:absolute;width:14px;height:14px;border-radius:50%;left:8px;top:0;background:#c89d7e}
+.coach .body{position:absolute;width:21px;height:29px;border-radius:7px;left:5px;top:13px;background:#42596a}
+.coach .arm{
+  position:absolute;width:23px;height:5px;border-radius:4px;background:#c89d7e;left:2px;top:20px;
+  transform-origin:right center;transition:transform .3s
+}
+.coach.left .arm{transform:rotate(-55deg)}
+.coach.right .arm{transform:rotate(16deg)}
+.coach.short .arm{transform:rotate(-32deg)}
+
+.ball{
+  position:absolute;width:20px;height:20px;border-radius:50%;z-index:80;display:none;
+  background:
+    radial-gradient(circle at 32% 32%,#fff 0 18%,#dedede 19% 32%,#e66b57 33% 47%,#fff 48% 61%,#d8bd52 62% 74%,#fff 75%);
+  box-shadow:0 4px 10px rgba(0,0,0,.42)
+}
+
+.flash{
+  position:absolute;left:50%;top:6%;transform:translateX(-50%) scale(.94);
+  z-index:100;opacity:0;pointer-events:none;text-align:center;transition:.18s
+}
+.flash.show{opacity:1;transform:translateX(-50%) scale(1)}
+.flash b{display:block;font-size:30px;line-height:1;text-shadow:0 7px 22px rgba(0,0,0,.55)}
+.flash span{display:block;margin-top:4px;font-size:9px;letter-spacing:.15em;color:#cce5f6;font-weight:800}
+
+.bottom{
+  flex:0 0 135px;
+  display:grid;grid-template-columns:1fr 92px;gap:12px;align-items:center;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid rgba(255,255,255,.08);background:#04101a
+}
+.meterCol{min-width:0}
+.meter{
+  position:relative;height:20px;border-radius:12px;overflow:hidden;
+  background:#0b2233;border:1px solid rgba(255,255,255,.09)
+}
+.sweet{
+  position:absolute;left:62%;width:18%;inset-block:0;
+  background:rgba(95,221,160,.16);border-left:1px solid rgba(95,221,160,.45);border-right:1px solid rgba(95,221,160,.45)
+}
+.fill{height:100%;width:0;background:linear-gradient(90deg,#357fae,#67c7ff)}
+.labels{display:flex;justify-content:space-between;margin-top:6px;color:#5f7c91;font-size:7px;letter-spacing:.13em;font-weight:800}
+.mini{margin-top:8px;color:#7894a8;font-size:8px;line-height:1.4}
+.serve{
+  width:84px;height:84px;border-radius:50%;
+  border:1px solid rgba(104,199,255,.28);
+  background:radial-gradient(circle at 38% 28%,#153f5e,#071a29 68%);
+  color:white;font-size:31px;box-shadow:0 10px 25px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.018);
+  touch-action:none;user-select:none
+}
+.serve.down{transform:scale(.96)}
+.serve:disabled{opacity:.35}
+
+@media(min-width:760px){
+  .hud{padding-left:max(18px,calc((100vw - 720px)/2));padding-right:max(18px,calc((100vw - 720px)/2))}
+  .bottom{padding-left:max(18px,calc((100vw - 640px)/2));padding-right:max(18px,calc((100vw - 640px)/2))}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hud">
+    <div class="brand">PROJECT ACE · SERVE READ</div>
+    <div class="hudRight"><span id="rep">1 / 8</span><span id="score">0</span></div>
+  </div>
+
+  <div class="game" id="game">
+    <div class="stands"></div>
+    <div class="courtShell" id="shell">
+      <div class="court"></div>
+      <div class="net"></div>
+      <div class="aimZone" id="aimZone"></div>
+      <div class="target" id="target"></div>
+      <div class="coachHint" id="coachHint"></div>
+
+      <div class="person" id="r0"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="person" id="r1"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="person" id="r2"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="person" id="r3"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="person lib" id="r4"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="person set" id="r5"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+
+      <div class="server"><i class="head"></i><i class="body"></i></div>
+      <div class="coach" id="coach"><i class="head"></i><i class="body"></i><i class="arm"></i></div>
+      <div class="ball" id="ball"></div>
+    </div>
+
+    <div class="flash" id="flash"><b></b><span></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="meterCol">
+      <div class="meter"><div class="sweet"></div><div class="fill" id="fill"></div></div>
+      <div class="labels"><span>CONTROL</span><span>PACE</span></div>
+      <div class="mini">Tap the far court to aim. Hold the ball. Release to serve.</div>
+    </div>
+    <button class="serve" id="serve" aria-label="Serve">🏐</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const q=s=>document.querySelector(s);
+  const shell=q("#shell"),aim=q("#aimZone"),target=q("#target"),coachHint=q("#coachHint");
+  const ball=q("#ball"),fill=q("#fill"),serve=q("#serve"),repEl=q("#rep"),scoreEl=q("#score");
+  const flash=q("#flash"),coach=q("#coach");
+  const recv=[0,1,2,3,4,5].map(i=>q("#r"+i));
+
+  const formations=[
+    {p:[[24,23],[50,22],[76,24],[28,39],[61,39],[82,38]],weak:3,h:[28,39],c:"left"},
+    {p:[[20,23],[48,22],[77,23],[20,40],[53,39],[82,40]],weak:5,h:[81,39],c:"right"},
+    {p:[[23,22],[50,23],[78,22],[18,39],[49,43],[78,39]],weak:4,h:[49,43],c:"short"},
+    {p:[[18,24],[46,21],[77,24],[31,38],[66,37],[86,40]],weak:0,h:[19,27],c:"left"},
+    {p:[[22,22],[50,21],[78,24],[25,41],[72,42],[51,35]],weak:1,h:[50,24],c:"short"},
+    {p:[[19,22],[47,24],[82,22],[21,40],[55,39],[84,41]],weak:2,h:[81,25],c:"right"}
+  ];
+
+  let state={rep:1,total:8,score:0,busy:false,hold:false,start:0,power:0,aim:{x:.5,y:.28},formation:null,raf:0};
+
+  function setFormation(){
+    const f=formations[Math.floor(Math.random()*formations.length)];
+    state.formation=f;
+    recv.forEach((el,i)=>{
+      el.classList.remove("weak","react","dive");
+      if(i===f.weak)el.classList.add("weak");
+      el.style.left=f.p[i][0]+"%";
+      el.style.top=f.p[i][1]+"%";
+    });
+    coach.className="coach "+f.c;
+    coachHint.style.left=f.h[0]+"%";
+    coachHint.style.top=f.h[1]+"%";
+    coachHint.style.display="block";
+    target.style.display="none";
+    state.aim={x:.5,y:.28};
+
+    setTimeout(()=>{
+      if(state.busy)return;
+      recv.forEach((el,i)=>{
+        const dx=(Math.random()-.5)*3.2,dy=(Math.random()-.5)*2.2;
+        el.style.left=(f.p[i][0]+dx)+"%";
+        el.style.top=(f.p[i][1]+dy)+"%";
+      });
+    },320);
+  }
+
+  function aimAt(clientX,clientY){
+    if(state.busy)return;
+    const r=aim.getBoundingClientRect();
+    let x=(clientX-r.left)/r.width,y=(clientY-r.top)/r.height;
+    x=Math.max(0,Math.min(1,x));y=Math.max(0,Math.min(1,y));
+    state.aim={x,y};
+    const shellRect=shell.getBoundingClientRect();
+    const aimRect=aim.getBoundingClientRect();
+    target.style.left=((aimRect.left-shellRect.left)+x*aimRect.width)+"px";
+    target.style.top=((aimRect.top-shellRect.top)+y*aimRect.height)+"px";
+    target.style.display="block";
+  }
+
+  aim.addEventListener("pointerdown",e=>{e.preventDefault();aimAt(e.clientX,e.clientY)});
+  aim.addEventListener("touchstart",e=>{
+    if(!e.touches[0])return;
+    e.preventDefault();
+    aimAt(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+
+  function meter(){
+    if(!state.hold)return;
+    const t=(performance.now()-state.start)/1000;
+    state.power=Math.min(1,t/1.2);
+    fill.style.width=(state.power*100)+"%";
+    state.raf=requestAnimationFrame(meter);
+  }
+
+  function begin(e){
+    if(state.busy||state.hold)return;
+    e.preventDefault();
+    state.hold=true;state.start=performance.now();state.power=0;
+    serve.classList.add("down");
+    cancelAnimationFrame(state.raf);meter();
+  }
+  function end(e){
+    if(!state.hold||state.busy)return;
+    e.preventDefault();
+    state.hold=false;serve.classList.remove("down");
+    cancelAnimationFrame(state.raf);doServe();
+  }
+  serve.addEventListener("pointerdown",begin);
+  serve.addEventListener("pointerup",end);
+  serve.addEventListener("pointercancel",end);
+  serve.addEventListener("touchstart",begin,{passive:false});
+  serve.addEventListener("touchend",end,{passive:false});
+
+  function doServe(){
+    state.busy=true;serve.disabled=true;coachHint.style.display="none";
+
+    const shellR=shell.getBoundingClientRect(),aimR=aim.getBoundingClientRect();
+    const startX=shellR.width*.5,startY=shellR.height*.93;
+    const endX=(aimR.left-shellR.left)+state.aim.x*aimR.width;
+    const endY=(aimR.top-shellR.top)+state.aim.y*aimR.height;
+
+    ball.style.display="block";
+    ball.style.transition="none";
+    ball.style.left=startX+"px";ball.style.top=startY+"px";
+    ball.style.transform="translate(-50%,-50%) scale(1)";
+    void ball.offsetWidth;
+
+    const dur=660-state.power*210;
+    ball.style.transition=`left ${dur}ms cubic-bezier(.18,.72,.33,1),top ${dur}ms cubic-bezier(.18,.72,.33,1),transform ${dur}ms`;
+    ball.style.left=endX+"px";ball.style.top=endY+"px";
+    ball.style.transform="translate(-50%,-50%) scale(.78) rotate(420deg)";
+
+    setTimeout(()=>resolve(endX,endY),dur+30);
+  }
+
+  function resolve(x,y){
+    const weak=recv[state.formation.weak];
+    const wx=parseFloat(weak.style.left)/100*shell.clientWidth;
+    const wy=parseFloat(weak.style.top)/100*shell.clientHeight;
+
+    const dx=(x-wx)/shell.clientWidth,dy=(y-wy)/shell.clientHeight;
+    const dist=Math.hypot(dx,dy);
+    const read=Math.max(0,1-dist/.28);
+    const exec=Math.max(0,1-Math.abs(state.power-.72)/.45);
+    const ql=Math.max(0,Math.min(100,Math.round((read*.44+exec*.56)*100)));
+
+    let tag,pts;
+    if(ql>=88){tag="ACE";pts=3;weak.classList.add("dive")}
+    else if(ql>=74){tag="PRESSURE";pts=2;weak.classList.add("react")}
+    else if(ql>=58){tag="IN SYSTEM";pts=1;weak.classList.add("react")}
+    else{tag="FREE BALL";pts=0}
+
+    state.score+=pts;scoreEl.textContent=state.score;
+    flash.querySelector("b").textContent=ql+"%";
+    flash.querySelector("span").textContent=tag;
+    flash.classList.add("show");
+    ball.style.display="none";
+
+    setTimeout(()=>{
+      flash.classList.remove("show");
+      fill.style.width="0";
+      state.rep++;
+      if(state.rep>state.total){state.rep=1;state.score=0;scoreEl.textContent="0"}
+      repEl.textContent=state.rep+" / "+state.total;
+      setFormation();
+      state.busy=false;serve.disabled=false;
+    },1150);
+  }
+
+  setFormation();
+})();
+</script>
+</body>
+</html>
