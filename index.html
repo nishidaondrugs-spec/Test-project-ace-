@@ -3,35 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Project ACE — Two Stage Serve Prototype</title>
+<title>Project ACE — Serve Prototype V3</title>
 <style>
 :root{
-  --bg:#03070d;--ink:#eef7ff;--muted:#7894aa;--blue:#59b8ff;--gold:#f0c967;
-  --good:#63d39b;--court:#b96a3b;--court2:#8f5031;--line:rgba(255,255,255,.10)
+  --bg:#03070d;--ink:#eef7ff;--muted:#718da3;--blue:#5abaff;--gold:#f0c968;
+  --good:#62d39b;--court:#bd7040;--court2:#985632;--line:rgba(255,255,255,.10)
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit}
 .app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#06121b,#02070d);color:var(--ink)}
 .top{height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--line);background:#030a11}
 .brand{font-size:10px;font-weight:1000;letter-spacing:.15em}
-.meta{display:flex;gap:16px;font-size:9px;font-weight:900;color:#86c9f5}
-.meta span:first-child{color:#688397}
-.game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 21%,#173f45 21% 30%,#173427 30%)}
+.meta{display:flex;gap:16px;font-size:9px;font-weight:900;color:#88cbf5}.meta span:first-child{color:#6b879a}
+.game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 20%,#173f45 20% 29%,#173427 29%)}
 .stands{position:absolute;inset:0 0 auto;height:28%;opacity:.55;background:
 linear-gradient(180deg,rgba(255,255,255,.04),transparent),
 repeating-linear-gradient(90deg,transparent 0 26px,rgba(255,255,255,.025) 26px 28px)}
-.shell{position:absolute;left:50%;top:6%;width:min(94vw,620px);height:84%;transform:translateX(-50%)}
-.court{position:absolute;left:5%;right:5%;top:8%;bottom:5%;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);background:
-linear-gradient(90deg,transparent 49.6%,rgba(255,255,255,.92) 49.6% 50.4%,transparent 50.4%),
-linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.94) 49.6% 50.4%,transparent 50.4%),
-linear-gradient(180deg,var(--court),var(--court2));
-border:3px solid rgba(255,255,255,.92);box-shadow:0 26px 52px rgba(0,0,0,.35)}
-.court:before,.court:after{content:"";position:absolute;left:8%;right:8%;height:2px;background:rgba(255,255,255,.88)}
+.shell{position:absolute;left:50%;top:5%;width:min(95vw,620px);height:86%;transform:translateX(-50%)}
+.court{
+  position:absolute;left:5%;right:5%;top:7%;bottom:5%;
+  clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);
+  background:
+    linear-gradient(90deg,transparent 49.6%,rgba(255,255,255,.93) 49.6% 50.4%,transparent 50.4%),
+    linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.95) 49.6% 50.4%,transparent 50.4%),
+    linear-gradient(180deg,var(--court),var(--court2));
+  border:3px solid rgba(255,255,255,.94);
+  box-shadow:0 26px 52px rgba(0,0,0,.35)
+}
+/* full-width three-metre lines — clip-path trims them to the court edges */
+.court:before,.court:after{content:"";position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.92)}
 .court:before{top:33%}.court:after{top:66%}
-.net{position:absolute;left:3%;right:3%;top:49%;height:15px;z-index:30;border-top:2px solid white;border-bottom:1px solid rgba(255,255,255,.65);background:
-repeating-linear-gradient(90deg,rgba(255,255,255,.4) 0 1px,transparent 1px 10px),
-repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
+.net{
+  position:absolute;left:3%;right:3%;top:48.8%;height:15px;z-index:30;
+  border-top:2px solid white;border-bottom:1px solid rgba(255,255,255,.65);
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.4) 0 1px,transparent 1px 10px),
+    repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)
+}
 .net:before,.net:after{content:"";position:absolute;top:-8px;width:4px;height:31px;background:#edf3f7}.net:before{left:0}.net:after{right:0}
 
 .receiver{position:absolute;width:34px;height:49px;transform:translate(-50%,-50%);z-index:17;transition:left .35s ease,top .35s ease,transform .18s ease}
@@ -40,14 +50,16 @@ repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
 .receiver.lib .body{background:#3fa37d}.receiver.set .body{background:#8198a7}
 .receiver .legs:before,.receiver .legs:after{content:"";position:absolute;top:36px;width:5px;height:13px;border-radius:4px;background:#17222a}
 .receiver .legs:before{left:8px;transform:rotate(7deg)}.receiver .legs:after{right:8px;transform:rotate(-7deg)}
-.receiver.weak .body{box-shadow:0 0 0 2px rgba(240,201,103,.52),0 0 22px rgba(240,201,103,.2)}
+.receiver.weak .body{box-shadow:0 0 0 2px rgba(240,201,104,.52),0 0 22px rgba(240,201,104,.2)}
 .receiver.react{transform:translate(-50%,-50%) rotate(-12deg) scale(.95)}
 .receiver.dive{animation:dive .58s ease}
 @keyframes dive{0%{transform:translate(-50%,-50%)}45%{transform:translate(-75%,-36%) rotate(-25deg)}100%{transform:translate(-50%,-50%)}}
 
-.server{position:absolute;left:50%;bottom:0;width:40px;height:54px;transform:translateX(-50%);z-index:22}
+.server{position:absolute;left:50%;bottom:0;width:40px;height:54px;transform:translateX(-50%);z-index:23}
 .server .head{position:absolute;left:12px;top:0;width:16px;height:16px;border-radius:50%;background:#c99978}
 .server .body{position:absolute;left:8px;top:15px;width:24px;height:28px;border-radius:8px;background:#183149}
+.server:before,.server:after{content:"";position:absolute;top:41px;width:6px;height:13px;border-radius:4px;background:#0f1921}
+.server:before{left:10px}.server:after{right:10px}
 
 .coach{position:absolute;left:1.5%;bottom:15%;width:32px;height:52px;z-index:19;opacity:.78}
 .coach .head{position:absolute;width:14px;height:14px;border-radius:50%;left:8px;top:0;background:#c99c7d}
@@ -55,37 +67,88 @@ repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
 .coach .arm{position:absolute;width:23px;height:5px;border-radius:4px;background:#c99c7d;left:2px;top:20px;transform-origin:right center;transition:.3s}
 .coach.left .arm{transform:rotate(-55deg)}.coach.right .arm{transform:rotate(17deg)}.coach.short .arm{transform:rotate(-32deg)}
 
-.swingGuide{position:absolute;left:16%;right:16%;top:12%;height:28%;z-index:40;pointer-events:none}
-.swingLine{position:absolute;left:50%;top:2%;bottom:0;width:3px;background:linear-gradient(180deg,rgba(91,188,255,.1),rgba(91,188,255,.95));transform-origin:50% 100%;filter:drop-shadow(0 0 7px rgba(91,188,255,.45))}
-.swingLine:after{content:"";position:absolute;left:50%;top:-6px;width:12px;height:12px;border-radius:50%;background:#aee1ff;transform:translateX(-50%);box-shadow:0 0 0 6px rgba(91,188,255,.08)}
-.swingLock{position:absolute;left:50%;top:10%;bottom:0;width:2px;background:rgba(240,201,103,.9);transform-origin:50% 100%;display:none}
-.swingLock:after{content:"";position:absolute;left:50%;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--gold);transform:translateX(-50%)}
-.hint{position:absolute;width:22px;height:22px;border:2px solid rgba(240,201,103,.8);border-radius:50%;transform:translate(-50%,-50%);z-index:18;animation:pulse 1.1s ease-out infinite;opacity:.65}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,201,103,.28)}100%{box-shadow:0 0 0 18px rgba(240,201,103,0)}}
+.hint{position:absolute;width:22px;height:22px;border:2px solid rgba(240,201,104,.82);border-radius:50%;transform:translate(-50%,-50%);z-index:18;animation:pulse 1.1s ease-out infinite;opacity:.64}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,201,104,.28)}100%{box-shadow:0 0 0 18px rgba(240,201,104,0)}}
+
+/* direction/power trajectory now starts at the server */
+.trajectory{
+  position:absolute;left:50%;bottom:28px;width:3px;height:72%;z-index:40;
+  transform-origin:50% 100%;pointer-events:none
+}
+.trajectory .beam{
+  position:absolute;left:0;bottom:0;width:3px;height:100%;
+  background:linear-gradient(180deg,rgba(93,187,255,.98),rgba(93,187,255,.45) 52%,rgba(93,187,255,.10));
+  filter:drop-shadow(0 0 7px rgba(93,187,255,.5))
+}
+.trajectory .beam:before{
+  content:"";position:absolute;left:50%;top:-8px;width:0;height:0;
+  border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #aee3ff;
+  transform:translateX(-50%)
+}
+.trajectory.locked .beam{background:linear-gradient(180deg,rgba(240,201,104,.96),rgba(240,201,104,.55),rgba(240,201,104,.10));filter:drop-shadow(0 0 7px rgba(240,201,104,.42))}
+.trajectory.locked .beam:before{border-bottom-color:var(--gold)}
+.powerTrace{
+  position:absolute;left:50%;bottom:28px;width:4px;height:0;z-index:41;
+  transform-origin:50% 100%;pointer-events:none;display:none
+}
+.powerTrace:before{
+  content:"";position:absolute;inset:0;background:linear-gradient(180deg,#8bd4ff,#58baff 56%,rgba(88,186,255,.18));
+  box-shadow:0 0 10px rgba(88,186,255,.38);border-radius:3px
+}
+.powerTrace:after{
+  content:"";position:absolute;left:50%;top:-6px;width:11px;height:11px;border-radius:50%;
+  background:#d5f1ff;transform:translateX(-50%);box-shadow:0 0 0 6px rgba(88,186,255,.08)
+}
 
 .ball{position:absolute;width:20px;height:20px;border-radius:50%;z-index:80;display:none;background:
 radial-gradient(circle at 32% 32%,#fff 0 18%,#ddd 19% 32%,#e56d58 33% 47%,#fff 48% 61%,#d9be52 62% 74%,#fff 75%);
 box-shadow:0 4px 10px rgba(0,0,0,.42)}
+
 .flash{position:absolute;left:50%;top:7%;transform:translateX(-50%) scale(.94);z-index:100;opacity:0;text-align:center;transition:.18s;pointer-events:none}
 .flash.show{opacity:1;transform:translateX(-50%) scale(1)}
 .flash b{display:block;font-size:30px;line-height:1;text-shadow:0 7px 22px rgba(0,0,0,.5)}
 .flash span{display:block;margin-top:4px;font-size:9px;letter-spacing:.14em;font-weight:900;color:#cfe6f5}
+.phaseBadge{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);z-index:45;padding:7px 10px;border-radius:12px;background:rgba(4,16,26,.76);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:1000;letter-spacing:.12em;color:#a6d9fa;backdrop-filter:blur(8px)}
 
-.bottom{flex:0 0 168px;padding:10px 14px calc(11px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#04101a;display:grid;grid-template-columns:1fr 94px;gap:14px;align-items:center}
-.stageTitle{font-size:8px;font-weight:1000;letter-spacing:.14em;color:#6d8799;margin-bottom:7px}
-.directionTrack{position:relative;height:12px;border-radius:8px;background:#0b2232;border:1px solid rgba(255,255,255,.08);overflow:hidden}
-.directionZone{position:absolute;top:0;bottom:0;left:42%;width:16%;background:rgba(95,211,155,.14);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
-.directionDot{position:absolute;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background:#77ccff;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(91,184,255,.6)}
-.powerTrack{position:relative;height:19px;border-radius:10px;background:#0b2232;border:1px solid rgba(255,255,255,.08);overflow:hidden;display:none}
-.powerGood{position:absolute;left:62%;width:18%;top:0;bottom:0;background:rgba(95,211,155,.15);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
-.powerFill{height:100%;width:0;background:linear-gradient(90deg,#3c8bbb,#6bcbff)}
+.bottom{
+  flex:0 0 178px;padding:10px 14px calc(11px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:#04101a;
+  display:grid;grid-template-columns:1fr 94px;gap:14px;align-items:center
+}
+.stageTitle{font-size:8px;font-weight:1000;letter-spacing:.14em;color:#708b9e;margin-bottom:7px}
+.track{position:relative;height:18px;border-radius:10px;background:#0b2232;border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.green{position:absolute;top:0;bottom:0;background:rgba(95,211,155,.16);border-left:1px solid rgba(95,211,155,.48);border-right:1px solid rgba(95,211,155,.48)}
+.dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:#78ccff;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(91,184,255,.6)}
+.fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3d8dbd,#6acbff)}
 .labels{display:flex;justify-content:space-between;margin-top:6px;font-size:7px;color:#587487;font-weight:900;letter-spacing:.12em}
 .help{margin-top:8px;font-size:8px;color:#7691a5;line-height:1.45}
-.mainBtn{width:88px;height:88px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:white;font-size:30px;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);touch-action:none;user-select:none}
+.mainBtn{width:88px;height:88px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:white;font-size:29px;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);touch-action:none;user-select:none}
 .mainBtn small{display:block;font-size:7px;letter-spacing:.08em;margin-top:2px;color:#8ebbd8}
-.mainBtn.down{transform:scale(.96)}.mainBtn:disabled{opacity:.35}
+.mainBtn:disabled{opacity:.35}
 
-.phaseBadge{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);z-index:45;padding:7px 10px;border-radius:12px;background:rgba(4,16,26,.72);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:1000;letter-spacing:.12em;color:#a6d9fa;backdrop-filter:blur(8px)}
+/* contact stage */
+.contactWrap{display:none}
+.contactRow{display:flex;align-items:center;gap:11px}
+.contactBall{
+  position:relative;width:76px;height:76px;flex:0 0 76px;border-radius:50%;
+  background:
+    radial-gradient(circle at 34% 30%,#fff 0 19%,#e0e0e0 20% 33%,#e66f59 34% 47%,#fff 48% 61%,#d7ba50 62% 74%,#fff 75%);
+  box-shadow:inset -10px -12px 18px rgba(0,0,0,.17),0 8px 18px rgba(0,0,0,.28)
+}
+.contactBall:before{
+  content:"";position:absolute;left:50%;top:9px;bottom:9px;width:1px;background:rgba(0,0,0,.2)
+}
+.contactCursor{
+  position:absolute;top:50%;left:50%;width:16px;height:16px;border:2px solid #66c5ff;border-radius:50%;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 5px rgba(88,186,255,.10)
+}
+.contactCursor:before,.contactCursor:after{content:"";position:absolute;background:#7fd0ff}
+.contactCursor:before{width:8px;height:1px;left:2px;top:6px}.contactCursor:after{width:1px;height:8px;left:6px;top:2px}
+.contactInfo{min-width:0;flex:1}
+.contactScale{height:10px;border-radius:7px;background:#0b2232;border:1px solid rgba(255,255,255,.08);position:relative}
+.contactScale:before{content:"";position:absolute;left:46%;width:8%;top:0;bottom:0;background:rgba(95,211,155,.18);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
+.contactScaleDot{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#7dccff;transform:translate(-50%,-50%)}
+.contactLabels{display:flex;justify-content:space-between;margin-top:5px;font-size:6px;color:#5e788b;letter-spacing:.1em;font-weight:900}
 
 @media(min-width:760px){
   .top{padding-left:max(18px,calc((100vw - 720px)/2));padding-right:max(18px,calc((100vw - 720px)/2))}
@@ -96,7 +159,7 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand">PROJECT ACE · TWO-STAGE SERVE</div>
+    <div class="brand">PROJECT ACE · SERVE V3</div>
     <div class="meta"><span id="rep">1 / 8</span><span id="score">0</span></div>
   </div>
 
@@ -117,10 +180,8 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
       <div class="coach" id="coach"><i class="head"></i><i class="body"></i><i class="arm"></i></div>
       <div class="hint" id="hint"></div>
 
-      <div class="swingGuide">
-        <div class="swingLine" id="swingLine"></div>
-        <div class="swingLock" id="swingLock"></div>
-      </div>
+      <div class="trajectory" id="trajectory"><div class="beam"></div></div>
+      <div class="powerTrace" id="powerTrace"></div>
 
       <div class="phaseBadge" id="phaseBadge">LOCK DIRECTION</div>
       <div class="ball" id="ball"></div>
@@ -133,16 +194,36 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     <div>
       <div id="directionUi">
         <div class="stageTitle">STAGE 1 · DIRECTION</div>
-        <div class="directionTrack"><div class="directionZone"></div><div class="directionDot" id="dirDot"></div></div>
+        <div class="track">
+          <div class="green" style="left:42%;width:16%"></div>
+          <div class="dot" id="dirDot" style="left:50%"></div>
+        </div>
         <div class="labels"><span>ZONE 5</span><span>SEAM</span><span>ZONE 1</span></div>
-        <div class="help">Tap once to lock where the serve is travelling.</div>
+        <div class="help">Tap once to lock the direction.</div>
       </div>
 
       <div id="powerUi" style="display:none">
         <div class="stageTitle">STAGE 2 · DEPTH / PACE</div>
-        <div class="powerTrack" id="powerTrack"><div class="powerGood"></div><div class="powerFill" id="powerFill"></div></div>
-        <div class="labels"><span>SHORT</span><span>DEEP</span></div>
-        <div class="help">Tap again to lock depth and pace.</div>
+        <div class="track">
+          <div class="green" id="powerGreen"></div>
+          <div class="fill" id="powerFill"></div>
+        </div>
+        <div class="labels"><span>SHORT</span><span>DEEP / POWER</span></div>
+        <div class="help">The green window moves and tightens depending on the serve.</div>
+      </div>
+
+      <div class="contactWrap" id="contactUi">
+        <div class="stageTitle">STAGE 3 · CONTACT</div>
+        <div class="contactRow">
+          <div class="contactBall">
+            <div class="contactCursor" id="contactCursor"></div>
+          </div>
+          <div class="contactInfo">
+            <div class="contactScale"><div class="contactScaleDot" id="contactScaleDot"></div></div>
+            <div class="contactLabels"><span>LEFT</span><span>CENTRE</span><span>RIGHT</span></div>
+            <div class="help">Off-centre contact bends the ball and changes the landing point.</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -154,10 +235,12 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
 (function(){
   const $=s=>document.querySelector(s);
   const recv=[0,1,2,3,4,5].map(i=>$("#r"+i));
-  const shell=$("#shell"), coach=$("#coach"),hint=$("#hint"),swingLine=$("#swingLine"),swingLock=$("#swingLock");
-  const dirDot=$("#dirDot"),directionUi=$("#directionUi"),powerUi=$("#powerUi"),powerTrack=$("#powerTrack"),powerFill=$("#powerFill");
-  const btn=$("#mainBtn"),btnLabel=$("#btnLabel"),phaseBadge=$("#phaseBadge"),ball=$("#ball"),flash=$("#flash");
-  const repEl=$("#rep"),scoreEl=$("#score");
+  const shell=$("#shell"),coach=$("#coach"),hint=$("#hint"),trajectory=$("#trajectory"),powerTrace=$("#powerTrace");
+  const directionUi=$("#directionUi"),powerUi=$("#powerUi"),contactUi=$("#contactUi");
+  const dirDot=$("#dirDot"),powerGreen=$("#powerGreen"),powerFill=$("#powerFill");
+  const contactCursor=$("#contactCursor"),contactScaleDot=$("#contactScaleDot");
+  const btn=$("#mainBtn"),btnLabel=$("#btnLabel"),phaseBadge=$("#phaseBadge");
+  const ball=$("#ball"),flash=$("#flash"),repEl=$("#rep"),scoreEl=$("#score");
 
   const formations=[
     {p:[[24,23],[50,22],[76,24],[28,39],[61,39],[82,38]],weak:3,h:[28,39],c:"left"},
@@ -170,8 +253,9 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
 
   const st={
     phase:"direction",rep:1,total:8,score:0,busy:false,
-    dirT:0,dirX:.5,dirSign:1,dirLocked:.5,
-    powerT:0,power:.1,powerSign:1,
+    dir:.5,dirSign:1,dirLocked:.5,
+    power:.08,powerSign:1,targetPower:.65,powerWidth:.16,
+    contact:.5,contactSign:1,contactLocked:.5,
     raf:0,formation:null
   };
 
@@ -188,59 +272,102 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     hint.style.left=f.h[0]+"%";hint.style.top=f.h[1]+"%";
     hint.style.display="block";
 
-    // Sometimes one receiver shifts late, so the initial picture isn't always static.
+    // Convert desired receiving depth into power:
+    // near net (large y) = short/low power, far baseline (small y) = deep/high power.
+    const targetY=f.h[1]/100;
+    st.targetPower=Math.max(.08,Math.min(.96,(.44-targetY)/.25));
+    // Deep power serves get a smaller timing window.
+    st.powerWidth=Math.max(.09,.24-(st.targetPower*.15));
+
     setTimeout(()=>{
       if(st.busy)return;
       const idx=Math.floor(Math.random()*recv.length);
       const el=recv[idx],base=f.p[idx];
       el.style.left=(base[0]+(Math.random()>.5?4:-4))+"%";
       el.style.top=(base[1]+(Math.random()-.5)*2)+"%";
-    },550);
+    },520);
   }
 
   function resetInput(){
-    st.phase="direction";st.dirX=.5;st.dirSign=1;st.power=.1;st.powerSign=1;
-    directionUi.style.display="block";powerUi.style.display="none";powerTrack.style.display="none";
+    cancelAnimationFrame(st.raf);
+    st.phase="direction";st.dir=.5;st.dirSign=1;st.power=.08;st.powerSign=1;st.contact=.5;st.contactSign=1;
+    directionUi.style.display="block";powerUi.style.display="none";contactUi.style.display="none";
     btnLabel.textContent="LOCK";phaseBadge.textContent="LOCK DIRECTION";
-    swingLine.style.display="block";swingLock.style.display="none";powerFill.style.width="0";
-    cancelAnimationFrame(st.raf);animateDirection();
+    trajectory.style.display="block";trajectory.classList.remove("locked");
+    powerTrace.style.display="none";powerFill.style.width="0";
+    animateDirection();
   }
+
+  function angleForDir(v){ return -34+v*68; }
 
   function animateDirection(){
     if(st.phase!=="direction"||st.busy)return;
-    st.dirX+=0.012*st.dirSign;
-    if(st.dirX>=1){st.dirX=1;st.dirSign=-1}
-    if(st.dirX<=0){st.dirX=0;st.dirSign=1}
-    const angle=-34+st.dirX*68;
-    swingLine.style.transform=`rotate(${angle}deg)`;
-    dirDot.style.left=(st.dirX*100)+"%";
+    st.dir+=.012*st.dirSign;
+    if(st.dir>=1){st.dir=1;st.dirSign=-1}
+    if(st.dir<=0){st.dir=0;st.dirSign=1}
+    const a=angleForDir(st.dir);
+    trajectory.style.transform=`rotate(${a}deg)`;
+    dirDot.style.left=(st.dir*100)+"%";
     st.raf=requestAnimationFrame(animateDirection);
-  }
-
-  function animatePower(){
-    if(st.phase!=="power"||st.busy)return;
-    st.power+=0.015*st.powerSign;
-    if(st.power>=1){st.power=1;st.powerSign=-1}
-    if(st.power<=.06){st.power=.06;st.powerSign=1}
-    powerFill.style.width=(st.power*100)+"%";
-    st.raf=requestAnimationFrame(animatePower);
   }
 
   function lockDirection(){
     cancelAnimationFrame(st.raf);
-    st.dirLocked=st.dirX;
-    const angle=-34+st.dirLocked*68;
-    swingLock.style.display="block";
-    swingLock.style.transform=`rotate(${angle}deg)`;
-    swingLine.style.display="none";
+    st.dirLocked=st.dir;
+    trajectory.classList.add("locked");
+    trajectory.style.transform=`rotate(${angleForDir(st.dirLocked)}deg)`;
+
     st.phase="power";
-    directionUi.style.display="none";powerUi.style.display="block";powerTrack.style.display="block";
-    btnLabel.textContent="SERVE";phaseBadge.textContent="LOCK DEPTH / PACE";
-    setTimeout(animatePower,80);
+    directionUi.style.display="none";powerUi.style.display="block";contactUi.style.display="none";
+    btnLabel.textContent="LOCK";phaseBadge.textContent="LOCK DEPTH / PACE";
+
+    const left=Math.max(0,Math.min(1-st.powerWidth,st.targetPower-st.powerWidth/2));
+    powerGreen.style.left=(left*100)+"%";
+    powerGreen.style.width=(st.powerWidth*100)+"%";
+
+    powerTrace.style.display="block";
+    powerTrace.style.transform=`rotate(${angleForDir(st.dirLocked)}deg)`;
+    setTimeout(animatePower,60);
   }
 
-  function lockPowerAndServe(){
+  function animatePower(){
+    if(st.phase!=="power"||st.busy)return;
+    st.power+=.015*st.powerSign;
+    if(st.power>=1){st.power=1;st.powerSign=-1}
+    if(st.power<=.04){st.power=.04;st.powerSign=1}
+
+    powerFill.style.width=(st.power*100)+"%";
+
+    // Dynamic line length: short serve = short line, deep/power serve = long line.
+    const h=(26+st.power*50); // percentage of shell height
+    powerTrace.style.height=h+"%";
+
+    st.raf=requestAnimationFrame(animatePower);
+  }
+
+  function lockPower(){
     cancelAnimationFrame(st.raf);
+    st.phase="contact";
+    directionUi.style.display="none";powerUi.style.display="none";contactUi.style.display="block";
+    btnLabel.textContent="HIT";phaseBadge.textContent="CONTACT";
+    powerTrace.style.display="none";
+    setTimeout(animateContact,60);
+  }
+
+  function animateContact(){
+    if(st.phase!=="contact"||st.busy)return;
+    st.contact+=.018*st.contactSign;
+    if(st.contact>=.94){st.contact=.94;st.contactSign=-1}
+    if(st.contact<=.06){st.contact=.06;st.contactSign=1}
+
+    contactCursor.style.left=(st.contact*100)+"%";
+    contactScaleDot.style.left=(st.contact*100)+"%";
+    st.raf=requestAnimationFrame(animateContact);
+  }
+
+  function lockContactAndServe(){
+    cancelAnimationFrame(st.raf);
+    st.contactLocked=st.contact;
     st.phase="flight";st.busy=true;btn.disabled=true;hint.style.display="none";
     btnLabel.textContent="...";
     doServe();
@@ -250,34 +377,48 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     e.preventDefault();
     if(st.busy)return;
     if(st.phase==="direction")lockDirection();
-    else if(st.phase==="power")lockPowerAndServe();
+    else if(st.phase==="power")lockPower();
+    else if(st.phase==="contact")lockContactAndServe();
   });
 
   function doServe(){
-    const shellW=shell.clientWidth,shellH=shell.clientHeight;
+    const W=shell.clientWidth,H=shell.clientHeight;
 
-    // Direction controls left/right. Power controls both depth and pace.
-    const endX=shellW*(0.18+st.dirLocked*0.64);
-    const depth=0.18+st.power*0.23; // far court landing band
-    const endY=shellH*depth;
+    // Direction chooses lateral lane.
+    let endX=W*(.18+st.dirLocked*.64);
 
-    const startX=shellW*.5,startY=shellH*.93;
+    // Power chooses depth: low = short (near net, larger y), high = deep (smaller y).
+    let endY=H*(.44-st.power*.25);
 
+    // Contact changes flight.
+    // Right-side contact bends the ball left; left-side contact bends it right.
+    const contactOffset=(st.contactLocked-.5); // -0.5...+0.5
+    const bend=-contactOffset*W*.20;
+    endX+=bend;
+
+    // More off-centre contact bleeds a little pace/depth.
+    const off=Math.abs(contactOffset)*2;
+    endY+=H*(off*.035);
+
+    endX=Math.max(W*.11,Math.min(W*.89,endX));
+    endY=Math.max(H*.12,Math.min(H*.46,endY));
+
+    const startX=W*.5,startY=H*.93;
     ball.style.display="block";
     ball.style.transition="none";
     ball.style.left=startX+"px";ball.style.top=startY+"px";
     ball.style.transform="translate(-50%,-50%) scale(1)";
     void ball.offsetWidth;
 
-    const dur=700-st.power*245;
+    const dur=720-st.power*270;
     ball.style.transition=`left ${dur}ms cubic-bezier(.18,.72,.33,1),top ${dur}ms cubic-bezier(.18,.72,.33,1),transform ${dur}ms`;
     ball.style.left=endX+"px";ball.style.top=endY+"px";
-    ball.style.transform="translate(-50%,-50%) scale(.76) rotate(430deg)";
+    ball.style.transform=`translate(-50%,-50%) scale(.76) rotate(${430+(contactOffset*220)}deg)`;
 
-    setTimeout(()=>resolve(endX,endY),dur+30);
+    setTimeout(()=>resolve(endX,endY,off),dur+30);
   }
 
-  function resolve(x,y){
+  function resolve(x,y,off){
     const weak=recv[st.formation.weak];
     const wx=parseFloat(weak.style.left)/100*shell.clientWidth;
     const wy=parseFloat(weak.style.top)/100*shell.clientHeight;
@@ -285,10 +426,19 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     const dx=(x-wx)/shell.clientWidth,dy=(y-wy)/shell.clientHeight;
     const tactical=Math.max(0,1-Math.hypot(dx,dy)/.29);
 
-    // Skill comes from both stages, not the coach hint.
-    // Centre-ish direction isn't automatically best; it depends on formation.
-    const powerExec=Math.max(0,1-Math.abs(st.power-.72)/.42);
-    const quality=Math.round(Math.max(0,Math.min(1,tactical*.48+powerExec*.52))*100);
+    // How close power was to this rep's dynamic target.
+    const powerAccuracy=Math.max(0,1-(Math.abs(st.power-st.targetPower)/Math.max(.12,st.powerWidth*.9)));
+
+    // Centre contact is most stable; slight off-centre contact is still usable.
+    const contactAccuracy=Math.max(0,1-off*1.35);
+
+    const quality=Math.round(
+      Math.max(0,Math.min(1,
+        tactical*.38 +
+        powerAccuracy*.34 +
+        contactAccuracy*.28
+      ))*100
+    );
 
     let tag,pts;
     if(quality>=88){tag="ACE";pts=3;weak.classList.add("dive")}
