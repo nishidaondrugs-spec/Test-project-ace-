@@ -100,9 +100,11 @@ repeating-linear-gradient(90deg,transparent 0 26px,rgba(255,255,255,.025) 26px 2
   background:#d5f1ff;transform:translateX(-50%);box-shadow:0 0 0 6px rgba(88,186,255,.08)
 }
 
-.ball{position:absolute;width:20px;height:20px;border-radius:50%;z-index:80;display:none;background:
-radial-gradient(circle at 32% 32%,#fff 0 18%,#ddd 19% 32%,#e56d58 33% 47%,#fff 48% 61%,#d9be52 62% 74%,#fff 75%);
-box-shadow:0 4px 10px rgba(0,0,0,.42)}
+.ball{position:absolute;width:20px;height:20px;border-radius:50%;z-index:80;display:none;
+background:
+radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
+conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
+box-shadow:inset -3px -4px 7px rgba(0,0,0,.15),0 4px 10px rgba(0,0,0,.42)}
 
 .flash{position:absolute;left:50%;top:7%;transform:translateX(-50%) scale(.94);z-index:100;opacity:0;text-align:center;transition:.18s;pointer-events:none}
 .flash.show{opacity:1;transform:translateX(-50%) scale(1)}
@@ -122,8 +124,11 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
 .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3d8dbd,#6acbff)}
 .labels{display:flex;justify-content:space-between;margin-top:6px;font-size:7px;color:#587487;font-weight:900;letter-spacing:.12em}
 .help{margin-top:8px;font-size:8px;color:#7691a5;line-height:1.45}
-.mainBtn{width:88px;height:88px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:white;font-size:29px;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);touch-action:none;user-select:none}
-.mainBtn small{display:block;font-size:7px;letter-spacing:.08em;margin-top:2px;color:#8ebbd8}
+.mainBtn{width:88px;height:88px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:white;font-size:29px;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.mainBtn small{display:block;font-size:7px;letter-spacing:.08em;margin-top:0;color:#8ebbd8}
+.btnBall{width:34px;height:34px;border-radius:50%;flex:0 0 34px;background:
+radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
+conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);box-shadow:inset -5px -6px 8px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.22)}
 .mainBtn:disabled{opacity:.35}
 
 /* contact stage */
@@ -132,7 +137,8 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
 .contactBall{
   position:relative;width:76px;height:76px;flex:0 0 76px;border-radius:50%;
   background:
-    radial-gradient(circle at 34% 30%,#fff 0 19%,#e0e0e0 20% 33%,#e66f59 34% 47%,#fff 48% 61%,#d7ba50 62% 74%,#fff 75%);
+    radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
+    conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
   box-shadow:inset -10px -12px 18px rgba(0,0,0,.17),0 8px 18px rgba(0,0,0,.28)
 }
 .contactBall:before{
@@ -145,8 +151,8 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
 .contactCursor:before,.contactCursor:after{content:"";position:absolute;background:#7fd0ff}
 .contactCursor:before{width:8px;height:1px;left:2px;top:6px}.contactCursor:after{width:1px;height:8px;left:6px;top:2px}
 .contactInfo{min-width:0;flex:1}
-.contactScale{height:10px;border-radius:7px;background:#0b2232;border:1px solid rgba(255,255,255,.08);position:relative}
-.contactScale:before{content:"";position:absolute;left:46%;width:8%;top:0;bottom:0;background:rgba(95,211,155,.18);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
+.contactScale{height:10px;border-radius:7px;background:#0b2232;border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
+.contactScaleGreen{position:absolute;top:0;bottom:0;left:46%;width:8%;background:rgba(95,211,155,.18);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
 .contactScaleDot{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#7dccff;transform:translate(-50%,-50%)}
 .contactLabels{display:flex;justify-content:space-between;margin-top:5px;font-size:6px;color:#5e788b;letter-spacing:.1em;font-weight:900}
 
@@ -195,7 +201,7 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
       <div id="directionUi">
         <div class="stageTitle">STAGE 1 · DIRECTION</div>
         <div class="track">
-          <div class="green" style="left:42%;width:16%"></div>
+          <div class="green" id="directionGreen"></div>
           <div class="dot" id="dirDot" style="left:50%"></div>
         </div>
         <div class="labels"><span>ZONE 5</span><span>SEAM</span><span>ZONE 1</span></div>
@@ -219,15 +225,15 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
             <div class="contactCursor" id="contactCursor"></div>
           </div>
           <div class="contactInfo">
-            <div class="contactScale"><div class="contactScaleDot" id="contactScaleDot"></div></div>
+            <div class="contactScale"><div class="contactScaleGreen" id="contactScaleGreen"></div><div class="contactScaleDot" id="contactScaleDot"></div></div>
             <div class="contactLabels"><span>LEFT</span><span>CENTRE</span><span>RIGHT</span></div>
-            <div class="help">Off-centre contact bends the ball and changes the landing point.</div>
+            <div class="help">If your initial aim is a bit off, the right contact point can still nudge the serve back on line.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <button class="mainBtn" id="mainBtn">🏐<small id="btnLabel">LOCK</small></button>
+    <button class="mainBtn" id="mainBtn"><span class="btnBall" aria-hidden="true"></span><small id="btnLabel">LOCK</small></button>
   </div>
 </div>
 
@@ -237,8 +243,8 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
   const recv=[0,1,2,3,4,5].map(i=>$("#r"+i));
   const shell=$("#shell"),coach=$("#coach"),hint=$("#hint"),trajectory=$("#trajectory"),powerTrace=$("#powerTrace");
   const directionUi=$("#directionUi"),powerUi=$("#powerUi"),contactUi=$("#contactUi");
-  const dirDot=$("#dirDot"),powerGreen=$("#powerGreen"),powerFill=$("#powerFill");
-  const contactCursor=$("#contactCursor"),contactScaleDot=$("#contactScaleDot");
+  const dirDot=$("#dirDot"),directionGreen=$("#directionGreen"),powerGreen=$("#powerGreen"),powerFill=$("#powerFill");
+  const contactCursor=$("#contactCursor"),contactScaleDot=$("#contactScaleDot"),contactScaleGreen=$("#contactScaleGreen");
   const btn=$("#mainBtn"),btnLabel=$("#btnLabel"),phaseBadge=$("#phaseBadge");
   const ball=$("#ball"),flash=$("#flash"),repEl=$("#rep"),scoreEl=$("#score");
 
@@ -253,9 +259,9 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
 
   const st={
     phase:"direction",rep:1,total:8,score:0,busy:false,
-    dir:.5,dirSign:1,dirLocked:.5,
+    dir:.5,dirSign:1,dirLocked:.5,targetDir:.5,dirWidth:.16,
     power:.08,powerSign:1,targetPower:.65,powerWidth:.16,
-    contact:.5,contactSign:1,contactLocked:.5,
+    contact:.5,contactSign:1,contactLocked:.5,targetContact:.5,contactWidth:.14,effectiveDir:.5,
     raf:0,formation:null
   };
 
@@ -271,6 +277,16 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     coach.className="coach "+f.c;
     hint.style.left=f.h[0]+"%";hint.style.top=f.h[1]+"%";
     hint.style.display="block";
+
+    // Convert the visual target into the Stage 1 direction gauge.
+    // Flight maps direction 0..1 into roughly 18%..82% of the court width.
+    const targetX=f.h[0]/100;
+    st.targetDir=Math.max(0,Math.min(1,(targetX-.18)/.64));
+
+    // Slightly vary the directional window so each rep does not feel identical.
+    // Edge targets are a touch tighter than central seams.
+    const edge=Math.abs(st.targetDir-.5)*2;
+    st.dirWidth=Math.max(.11,.18-(edge*.04));
 
     // Convert desired receiving depth into power:
     // near net (large y) = short/low power, far baseline (small y) = deep/high power.
@@ -295,6 +311,16 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     btnLabel.textContent="LOCK";phaseBadge.textContent="LOCK DIRECTION";
     trajectory.style.display="block";trajectory.classList.remove("locked");
     powerTrace.style.display="none";powerFill.style.width="0";
+
+    // Move the Stage 1 green target to the actual tactical aiming lane for this rep.
+    const dirLeft=Math.max(0,Math.min(1-st.dirWidth,st.targetDir-st.dirWidth/2));
+    directionGreen.style.left=(dirLeft*100)+"%";
+    directionGreen.style.width=(st.dirWidth*100)+"%";
+
+    // Reset contact guidance; it will shift after the direction lock if the player misses.
+    contactScaleGreen.style.left="46%";
+    contactScaleGreen.style.width="8%";
+
     animateDirection();
   }
 
@@ -351,6 +377,16 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     directionUi.style.display="none";powerUi.style.display="none";contactUi.style.display="block";
     btnLabel.textContent="HIT";phaseBadge.textContent="CONTACT";
     powerTrace.style.display="none";
+
+    // If the player missed the Stage 1 lane, Stage 3 can slightly rescue it.
+    // Aim too far right => contact more on the right side to bend it back left, and vice versa.
+    const rawDirError=st.dirLocked-st.targetDir;
+    st.targetContact=Math.max(.12,Math.min(.88,.5 + (rawDirError/.40)));
+    st.contactWidth=Math.max(.10,.16 - Math.min(.05,Math.abs(rawDirError)*.12));
+    const cLeft=Math.max(0,Math.min(1-st.contactWidth,st.targetContact-st.contactWidth/2));
+    contactScaleGreen.style.left=(cLeft*100)+"%";
+    contactScaleGreen.style.width=(st.contactWidth*100)+"%";
+
     setTimeout(animateContact,60);
   }
 
@@ -384,17 +420,16 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
   function doServe(){
     const W=shell.clientWidth,H=shell.clientHeight;
 
-    // Direction chooses lateral lane.
-    let endX=W*(.18+st.dirLocked*.64);
+    // Contact can slightly rescue the initial direction lock.
+    // Right-side contact bends the ball left; left-side contact bends it right.
+    const contactOffset=(st.contactLocked-.5); // -0.5...+0.5
+    st.effectiveDir=Math.max(0,Math.min(1,st.dirLocked-(contactOffset*.40)));
+
+    // Effective direction chooses the lateral lane after the contact adjustment.
+    let endX=W*(.18+st.effectiveDir*.64);
 
     // Power chooses depth: low = short (near net, larger y), high = deep (smaller y).
     let endY=H*(.44-st.power*.25);
-
-    // Contact changes flight.
-    // Right-side contact bends the ball left; left-side contact bends it right.
-    const contactOffset=(st.contactLocked-.5); // -0.5...+0.5
-    const bend=-contactOffset*W*.20;
-    endX+=bend;
 
     // More off-centre contact bleeds a little pace/depth.
     const off=Math.abs(contactOffset)*2;
@@ -407,7 +442,7 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     ball.style.display="block";
     ball.style.transition="none";
     ball.style.left=startX+"px";ball.style.top=startY+"px";
-    ball.style.transform="translate(-50%,-50%) scale(1)";
+    ball.style.transform="translate(-50%,-50%) scale(1) rotate(0deg)";
     void ball.offsetWidth;
 
     const dur=720-st.power*270;
@@ -426,17 +461,26 @@ box-shadow:0 4px 10px rgba(0,0,0,.42)}
     const dx=(x-wx)/shell.clientWidth,dy=(y-wy)/shell.clientHeight;
     const tactical=Math.max(0,1-Math.hypot(dx,dy)/.29);
 
+    // Direction accuracy now uses the post-contact flight lane.
+    const directionAccuracy=Math.max(
+      0,
+      1-(Math.abs(st.effectiveDir-st.targetDir)/Math.max(.09,st.dirWidth*.85))
+    );
+
     // How close power was to this rep's dynamic target.
     const powerAccuracy=Math.max(0,1-(Math.abs(st.power-st.targetPower)/Math.max(.12,st.powerWidth*.9)));
 
-    // Centre contact is most stable; slight off-centre contact is still usable.
-    const contactAccuracy=Math.max(0,1-off*1.35);
+    // Contact is judged against the dynamic rescue target, but still rewards clean strikes.
+    const contactFit=Math.max(0,1-(Math.abs(st.contactLocked-st.targetContact)/Math.max(.09,st.contactWidth*.95)));
+    const cleanStrike=Math.max(0,1-off*1.05);
+    const contactAccuracy=(contactFit*.72)+(cleanStrike*.28);
 
     const quality=Math.round(
       Math.max(0,Math.min(1,
-        tactical*.38 +
-        powerAccuracy*.34 +
-        contactAccuracy*.28
+        tactical*.30 +
+        directionAccuracy*.18 +
+        powerAccuracy*.30 +
+        contactAccuracy*.22
       ))*100
     );
 
