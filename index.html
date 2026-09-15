@@ -18,9 +18,13 @@ button{font:inherit}
 .top{height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#030a11;border-bottom:1px solid var(--line)}
 .brand{font-size:10px;font-weight:1000;letter-spacing:.15em}
 .meta{display:flex;gap:15px;font-size:9px;font-weight:900;color:#82c9f5}
+.headerControls{display:flex;align-items:center;gap:6px}
+.modeSwitch,.posSwitch{display:flex;gap:4px;padding:3px;border-radius:9px;background:#071522;border:1px solid rgba(255,255,255,.07)}
+.modeBtn,.posBtn{border:0;border-radius:6px;padding:5px 8px;background:transparent;color:#648298;font-size:7px;font-weight:1000;letter-spacing:.08em}
+.modeBtn.active,.posBtn.active{background:#12334a;color:#dff4ff;box-shadow:inset 0 0 0 1px rgba(104,198,255,.18)}
+.modeBtn[data-mode="match"].active{background:#2b2432;color:#f4dfff;box-shadow:inset 0 0 0 1px rgba(216,142,255,.18)}
 .posSwitch{display:flex;gap:4px;padding:3px;border-radius:9px;background:#071522;border:1px solid rgba(255,255,255,.07)}
-.posBtn{border:0;border-radius:6px;padding:5px 8px;background:transparent;color:#648298;font-size:7px;font-weight:1000;letter-spacing:.08em}
-.posBtn.active{background:#12334a;color:#dff4ff;box-shadow:inset 0 0 0 1px rgba(104,198,255,.18)}
+
 .game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)}
 .stands{position:absolute;inset:0 0 auto;height:27%;opacity:.55;background:
 linear-gradient(180deg,rgba(255,255,255,.04),transparent),
@@ -59,7 +63,10 @@ repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
 .blocker .arms:before,.blocker .arms:after{content:"";position:absolute;top:-5px;width:5px;height:23px;border-radius:4px;background:#c99b7b}
 .blocker .arms:before{left:8px;transform:rotate(-8deg)}.blocker .arms:after{right:8px;transform:rotate(8deg)}
 .blocker.high .arms:before,.blocker.high .arms:after{height:28px;top:-10px}
-.blocker.late{transform:translate(-50%,-50%) translateY(7px) scale(.96)}
+.blocker.late{transform:translate(-50%,-50%) translateY(11px) scale(.94)}
+.blocker.verylate{transform:translate(-50%,-50%) translateY(22px) scale(.88);opacity:.82}
+.blocker.verylate .arms:before,.blocker.verylate .arms:after{height:17px;top:1px}
+.blocker.seal{transform:translate(-50%,-50%) scale(1.04)}
 .blocker.split.left{transform:translate(-50%,-50%) translateX(-10px)}
 .blocker.split.right{transform:translate(-50%,-50%) translateX(10px)}
 
@@ -142,16 +149,42 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
 .powerCall.medium{color:#a9ddff;border-color:rgba(97,193,255,.27)}
 .powerCall.low{color:#92edb7;border-color:rgba(82,213,137,.26)}
 
+
+.readCard{
+  position:absolute;left:50%;bottom:8px;z-index:90;transform:translateX(-50%);
+  min-width:220px;max-width:82%;padding:8px 10px;border-radius:10px;
+  background:rgba(3,10,17,.84);border:1px solid rgba(255,255,255,.09);
+  font-size:8px;font-weight:900;letter-spacing:.08em;text-align:center;color:#cfe7f6;
+  opacity:0;pointer-events:none;transition:.18s
+}
+.readCard.show{opacity:1}
+.readCard b{display:block;font-size:10px;color:#fff;margin-bottom:3px}
+.matchMode .target,
+.matchMode .powerCall{display:none}
+.matchMode .aimTarget,
+.matchMode .powerTarget{display:none}
+.matchMode .situation{
+  right:50%;transform:translateX(50%);
+  color:#d8ecf8
+}
+.matchMode .situation::before{content:"MATCH READ · "}
+
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="brand">PROJECT ACE · HITTING TEST</div>
-    <div class="posSwitch" id="posSwitch">
-      <button class="posBtn active" data-pos="OH">OH</button>
-      <button class="posBtn" data-pos="MB">MB</button>
-      <button class="posBtn" data-pos="OP">OP</button>
+    <div class="headerControls">
+      <div class="modeSwitch" id="modeSwitch">
+        <button class="modeBtn" data-mode="training">TRAIN</button>
+        <button class="modeBtn active" data-mode="match">MATCH</button>
+      </div>
+      <div class="posSwitch" id="posSwitch">
+        <button class="posBtn active" data-pos="OH">OH</button>
+        <button class="posBtn" data-pos="MB">MB</button>
+        <button class="posBtn" data-pos="OP">OP</button>
+      </div>
     </div>
     <div class="meta"><span id="rep">1 / 8</span><span id="score">0</span></div>
   </div>
@@ -179,7 +212,7 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
       <div class="setBall" id="setBall"></div>
       <div class="hitBall" id="hitBall"></div>
     </div>
-    <div class="flash" id="flash"><b></b><span></span></div>
+    <div class="flash" id="flash"><b></b><span></span></div><div class="readCard" id="readCard"><b></b><span></span></div>
   </div>
 
   <div class="bottom">
@@ -187,7 +220,7 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
       <div class="stage active" id="aimStage">
         <div class="stageTitle">1 · SWING DIRECTION</div>
         <div class="track">
-          <i class="yellow" id="aimTarget"></i>
+          <i class="yellow aimTarget" id="aimTarget"></i>
           <em class="needle" id="aimNeedle"></em>
         </div>
         <div class="labels"><span id="aimLabelL">LINE</span><span id="aimLabelM">SEAM</span><span id="aimLabelR">CROSS</span></div>
@@ -197,7 +230,7 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
       <div class="stage" id="powerStage">
         <div class="stageTitle">2 · SWING POWER</div>
         <div class="track">
-          <i class="yellow" id="powerTarget"></i>
+          <i class="yellow powerTarget" id="powerTarget"></i>
           <em class="needle" id="powerNeedle"></em>
         </div>
         <div class="labels"><span>LOW</span><span>MEDIUM</span><span>HIGH</span></div>
@@ -227,23 +260,16 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
 <script>
 (()=>{
 const $=s=>document.querySelector(s);
-const shell=$("#shell"), action=$("#action"), actionLabel=$("#actionLabel");
+const app=$(".app"),shell=$("#shell"), action=$("#action"), actionLabel=$("#actionLabel");
 const aimStage=$("#aimStage"), powerStage=$("#powerStage"), contactStage=$("#contactStage");
 const aimNeedle=$("#aimNeedle"),powerNeedle=$("#powerNeedle"),contactNeedle=$("#contactNeedle");
 const aimTarget=$("#aimTarget"),powerTarget=$("#powerTarget"),contactTarget=$("#contactTarget"),contactCursor=$("#contactCursor");
-const aimLine=$("#aimLine"),target=$("#target"),setBall=$("#setBall"),hitBall=$("#hitBall"),flash=$("#flash"),situation=$("#situation"),powerCall=$("#powerCall"),powerHelp=$("#powerHelp");
+const aimLine=$("#aimLine"),target=$("#target"),setBall=$("#setBall"),hitBall=$("#hitBall"),flash=$("#flash"),readCard=$("#readCard"),situation=$("#situation"),powerCall=$("#powerCall"),powerHelp=$("#powerHelp");
 const blockers=[$("#b0"),$("#b1"),$("#b2")],defs=[$("#d0"),$("#d1"),$("#d2")];
 const hitter=$("#hitter");
 const repEl=$("#rep"),scoreEl=$("#score");
 const aimLabelL=$("#aimLabelL"),aimLabelM=$("#aimLabelM"),aimLabelR=$("#aimLabelR");
 
-/*
-  Hitting drill = swing only.
-  Approach timing belongs in the Vertical drill.
-
-  The test selector lets us inspect OH / MB / OP.
-  In Career this would come from the player's actual position.
-*/
 const POS={
   OH:{
     hitterX:.24,hitterY:.59,contactX:.24,contactY:.535,
@@ -252,10 +278,10 @@ const POS={
     targetX:{LINE:.18,SEAM:.48,CROSS:.76}
   },
   OP:{
-    hitterX:.76,hitterY:.59,contactX:.76,contactY:.535,
+    hitterX:.80,hitterY:.59,contactX:.80,contactY:.535,
     label:["CROSS","SEAM","LINE"],
-    blockBase:[.66,.77],
-    targetX:{LINE:.82,SEAM:.52,CROSS:.24}
+    blockBase:[.70,.81],
+    targetX:{LINE:.86,SEAM:.54,CROSS:.24}
   },
   MB:{
     hitterX:.50,hitterY:.575,contactX:.50,contactY:.525,
@@ -265,21 +291,77 @@ const POS={
   }
 };
 
+/*
+  Each scenario now has MULTIPLE viable solutions.
+  value = tactical value before execution.
+  There is no single hidden "correct answer" in match mode.
+*/
 const SCENARIOS=[
-  {name:"LATE BLOCK",power:"HIGH",powerNeed:.87,shot:"SEAM",kind:"late"},
-  {name:"DEEP DEFENCE",power:"LOW",powerNeed:.18,shot:"SEAM",kind:"deep"},
-  {name:"FORMED BLOCK",power:"MEDIUM",powerNeed:.52,shot:"LINE",kind:"formed"},
-  {name:"FORMED BLOCK",power:"MEDIUM",powerNeed:.50,shot:"CROSS",kind:"formed"},
-  {name:"TRIPLE / CLOSED",power:"LOW",powerNeed:.22,shot:"CROSS",kind:"triple"},
-  {name:"ONE BLOCKER",power:"HIGH",powerNeed:.89,shot:"LINE",kind:"single"}
+  {
+    key:"seamLate", trainName:"MIDDLE LATE · SEAM OPEN",
+    blockKind:"seamLate",
+    solutions:[
+      {shot:"SEAM",power:"HIGH",p:.87,value:.97,label:"ATTACKED THE LATE SEAM"},
+      {shot:"LINE",power:"MEDIUM",p:.54,value:.79,label:"USED THE OPEN PIN"},
+      {shot:"CROSS",power:"MEDIUM",p:.50,value:.72,label:"CONTROLLED ANGLE"}
+    ]
+  },
+  {
+    key:"deep", trainName:"DEEP DEFENCE · SHORT SPACE",
+    blockKind:"deep",
+    solutions:[
+      {shot:"SEAM",power:"LOW",p:.18,value:.97,label:"FOUND THE SHORT SPACE"},
+      {shot:"LINE",power:"LOW",p:.22,value:.89,label:"SOFT LINE"},
+      {shot:"CROSS",power:"LOW",p:.22,value:.87,label:"SOFT CROSS"},
+      {shot:"SEAM",power:"MEDIUM",p:.48,value:.64,label:"SAFE CONTROLLED SWING"}
+    ]
+  },
+  {
+    key:"lineSeal", trainName:"DOUBLE BLOCK · LINE SEALED",
+    blockKind:"lineSeal",
+    solutions:[
+      {shot:"CROSS",power:"MEDIUM",p:.54,value:.96,label:"USED OPEN CROSS"},
+      {shot:"SEAM",power:"HIGH",p:.82,value:.84,label:"BEAT THE INNER HAND"},
+      {shot:"CROSS",power:"LOW",p:.24,value:.78,label:"ROLLED BEHIND THE BLOCK"}
+    ]
+  },
+  {
+    key:"crossSeal", trainName:"DOUBLE BLOCK · CROSS SEALED",
+    blockKind:"crossSeal",
+    solutions:[
+      {shot:"LINE",power:"MEDIUM",p:.54,value:.96,label:"USED OPEN LINE"},
+      {shot:"SEAM",power:"HIGH",p:.82,value:.84,label:"ATTACKED THE SEAM"},
+      {shot:"LINE",power:"LOW",p:.24,value:.77,label:"CONTROLLED LINE"}
+    ]
+  },
+  {
+    key:"triple", trainName:"TRIPLE BLOCK · CLOSED",
+    blockKind:"triple",
+    solutions:[
+      {shot:"CROSS",power:"LOW",p:.22,value:.90,label:"TOOK PACE OFF"},
+      {shot:"LINE",power:"LOW",p:.22,value:.88,label:"RECYCLED THE EDGE"},
+      {shot:"SEAM",power:"MEDIUM",p:.46,value:.68,label:"CHALLENGED THE HANDS"}
+    ]
+  },
+  {
+    key:"single", trainName:"ONE BLOCKER",
+    blockKind:"single",
+    solutions:[
+      {shot:"LINE",power:"HIGH",p:.89,value:.95,label:"PUT AWAY THE LINE"},
+      {shot:"CROSS",power:"HIGH",p:.88,value:.94,label:"PUT AWAY THE ANGLE"},
+      {shot:"SEAM",power:"HIGH",p:.86,value:.91,label:"BEAT THE SINGLE BLOCK"},
+      {shot:"LINE",power:"MEDIUM",p:.58,value:.76,label:"CONTROLLED FINISH"},
+      {shot:"CROSS",power:"MEDIUM",p:.58,value:.76,label:"CONTROLLED FINISH"}
+    ]
+  }
 ];
 
 const st={
-  rep:1,total:8,score:0,pos:"OH",phase:"aim",busy:false,raf:0,
+  rep:1,total:8,score:0,pos:"OH",mode:"match",phase:"aim",busy:false,raf:0,
   aim:.5,aimSign:1,aimLocked:.5,
   power:.08,powerSign:1,powerLocked:.5,
   contact:.5,contactSign:1,contactLocked:.5,
-  s:null
+  s:null,primary:null
 };
 
 function clamp(v,a=0,b=1){return Math.max(a,Math.min(b,v))}
@@ -299,6 +381,13 @@ function semanticAim(pos,shot){
   const x=p.targetX[shot];
   return clamp((x-.15)/.70);
 }
+function nearestShot(pos,aim){
+  const shots=["LINE","SEAM","CROSS"];
+  return shots.reduce((best,shot)=>{
+    const d=Math.abs(aim-semanticAim(pos,shot));
+    return !best||d<best.d?{shot,d}:best;
+  },null);
+}
 function configurePosition(){
   const p=POS[st.pos];
   hitter.style.left=(p.hitterX*100)+"%";
@@ -306,56 +395,86 @@ function configurePosition(){
   aimLabelL.textContent=p.label[0];
   aimLabelM.textContent=p.label[1];
   aimLabelR.textContent=p.label[2];
-
   document.querySelectorAll(".posBtn").forEach(b=>b.classList.toggle("active",b.dataset.pos===st.pos));
 }
 function buildScenario(){
   const base=SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
   const p=POS[st.pos];
-  const s={...base};
+  const s={...base,solutions:base.solutions.map(x=>({...x}))};
 
-  s.aim=semanticAim(st.pos,s.shot);
-  s.contact=.50;
-  s.target=[p.targetX[s.shot]*100, s.power==="LOW"?43:s.power==="HIGH"?27:32];
+  s.solutions.forEach(sol=>{
+    sol.aim=semanticAim(st.pos,sol.shot);
+  });
+  s.primary=s.solutions.reduce((a,b)=>b.value>a.value?b:a,s.solutions[0]);
 
-  // Defence changes with the intended power read.
-  if(s.power==="LOW"){
+  // Defence shape supports the read but does not force one single answer.
+  if(s.key==="deep"){
     s.def=[[.19,17],[.50,18],[.81,17]];
-  }else if(s.power==="HIGH"){
-    s.def=[[.18,25],[.51,27],[.82,24]];
+  }else if(s.key==="single"){
+    s.def=[[.18,26],[.52,27],[.82,24]];
   }else{
     s.def=[[.20,27],[.51,24],[.80,27]];
   }
 
-  const [b1,b2]=p.blockBase;
+  const [b1,b2]=p.blockBase, pinX=p.hitterX;
   if(st.pos==="MB"){
-    if(s.kind==="single") s.block=[[.50,"late"],[1,"off"],[1,"off"]];
-    else if(s.kind==="triple") s.block=[[.42,"high"],[.50,"high"],[.58,"high"]];
-    else if(s.kind==="late") s.block=[[.46,"late"],[.55,"late"],[1,"off"]];
+    if(s.blockKind==="single") s.block=[[.50,"late"],[1,"off"],[1,"off"]];
+    else if(s.blockKind==="triple") s.block=[[.42,"high seal"],[.50,"high seal"],[.58,"high seal"]];
+    else if(s.blockKind==="seamLate") s.block=[[.45,"high seal"],[.61,"verylate"],[1,"off"]];
+    else if(s.blockKind==="lineSeal") s.block=[[.43,"high seal"],[.49,"high seal"],[1,"off"]];
+    else if(s.blockKind==="crossSeal") s.block=[[.51,"high seal"],[.57,"high seal"],[1,"off"]];
     else s.block=[[.45,""],[.55,""],[1,"off"]];
   }else{
-    if(s.kind==="single") s.block=[[b1+.02,"late"],[1,"off"],[1,"off"]];
-    else if(s.kind==="triple"){
+    if(s.blockKind==="single"){
+      s.block=[[pinX,"late"],[1,"off"],[1,"off"]];
+    }else if(s.blockKind==="triple"){
       const mid=(b1+b2)/2;
-      s.block=[[mid-.105,"high"],[mid,"high"],[mid+.105,"high"]];
-    }else if(s.kind==="late") s.block=[[b1,"late"],[b2,"late"],[1,"off"]];
-    else s.block=[[b1,""],[b2,"high"],[1,"off"]];
+      s.block=[[mid-.105,"high seal"],[mid,"high seal"],[mid+.105,"high seal"]];
+    }else if(s.blockKind==="lineSeal"){
+      s.block=st.pos==="OH"
+        ? [[pinX-.045,"high seal"],[pinX+.025,"high seal"],[1,"off"]]
+        : [[pinX-.025,"high seal"],[pinX+.045,"high seal"],[1,"off"]];
+    }else if(s.blockKind==="crossSeal"){
+      s.block=st.pos==="OH"
+        ? [[pinX+.015,"high seal"],[pinX+.095,"high seal"],[1,"off"]]
+        : [[pinX-.095,"high seal"],[pinX-.015,"high seal"],[1,"off"]];
+    }else if(s.blockKind==="seamLate"){
+      s.block=st.pos==="OH"
+        ? [[pinX-.005,"high seal"],[pinX+.19,"verylate"],[1,"off"]]
+        : [[pinX+.005,"high seal"],[pinX-.19,"verylate"],[1,"off"]];
+    }else{
+      s.block=[[b1,""],[b2,"high"],[1,"off"]];
+    }
   }
+
   return s;
 }
-
+function applyModeUI(){
+  app.classList.toggle("matchMode",st.mode==="match");
+  document.querySelectorAll(".modeBtn").forEach(b=>b.classList.toggle("active",b.dataset.mode===st.mode));
+}
 function setup(){
   stop();
   configurePosition();
-  st.s=buildScenario();
-  situation.textContent=st.pos+" · "+st.s.name+" · "+st.s.shot;
+  applyModeUI();
+  readCard.classList.remove("show");
 
-  powerCall.textContent="POWER · "+st.s.power;
-  powerCall.className="powerCall "+st.s.power.toLowerCase();
-  powerHelp.textContent=
-    st.s.power==="HIGH" ? "HIGH POWER — finish the swing hard." :
-    st.s.power==="LOW" ? "LOW POWER — take pace off and place it." :
-    "MEDIUM POWER — controlled swing, not full power.";
+  st.s=buildScenario();
+  st.primary=st.s.primary;
+
+  if(st.mode==="training"){
+    situation.textContent=st.pos+" · "+st.s.trainName+" · TRY "+st.primary.shot;
+    powerCall.textContent="POWER · "+st.primary.power;
+    powerCall.className="powerCall "+st.primary.power.toLowerCase();
+    powerHelp.textContent=
+      st.primary.power==="HIGH" ? "HIGH POWER — finish the swing hard." :
+      st.primary.power==="LOW" ? "LOW POWER — take pace off and place it." :
+      "MEDIUM POWER — controlled swing, not full power.";
+  }else{
+    situation.textContent=st.pos+" · READ THE BLOCK & DEFENCE";
+    powerCall.textContent="";
+    powerHelp.textContent="Choose the power that fits what you see.";
+  }
 
   blockers.forEach((b,i)=>{
     const [x,cls]=st.s.block[i];
@@ -368,12 +487,15 @@ function setup(){
     d.style.top=(st.s.def[i][1]*100)+"%";
   });
 
-  target.style.left=st.s.target[0]+"%";
-  target.style.top=st.s.target[1]+"%";
+  const p=POS[st.pos];
+  const trainTargetX=p.targetX[st.primary.shot]*100;
+  const trainTargetY=st.primary.power==="LOW"?43:st.primary.power==="HIGH"?27:32;
+  target.style.left=trainTargetX+"%";
+  target.style.top=trainTargetY+"%";
 
-  setYellow(aimTarget,st.s.aim,.18);
-  setYellow(powerTarget,st.s.powerNeed,st.s.power==="HIGH"?.13:st.s.power==="LOW"?.17:.20);
-  setYellow(contactTarget,st.s.contact,.18);
+  setYellow(aimTarget,st.primary.aim,.18);
+  setYellow(powerTarget,st.primary.p,st.primary.power==="HIGH"?.13:st.primary.power==="LOW"?.17:.20);
+  setYellow(contactTarget,.5,.18);
 
   st.phase="aim";st.busy=false;
   st.aim=.5;st.aimSign=1;
@@ -387,25 +509,19 @@ function setup(){
   playSet();
   animateAim();
 }
-
 function updateShortArrow(aimValue){
-  const p=POS[st.pos];
-  const W=shell.clientWidth,H=shell.clientHeight;
-
+  const p=POS[st.pos],W=shell.clientWidth,H=shell.clientHeight;
   const sx=W*p.contactX, sy=H*p.contactY;
   const targetX=W*(.15+aimValue*.70);
   const targetY=H*.34;
-
   const dx=targetX-sx,dy=targetY-sy;
   const angle=Math.atan2(dy,dx)*180/Math.PI;
   const len=Math.min(112,Math.max(70,Math.hypot(dx,dy)*.34));
-
   aimLine.style.left=sx+"px";
   aimLine.style.top=sy+"px";
   aimLine.style.width=len+"px";
   aimLine.style.transform=`rotate(${angle}deg)`;
 }
-
 function animateAim(){
   stop();
   const tick=()=>{
@@ -443,7 +559,10 @@ function lockPower(){
   stop();st.powerLocked=st.power;st.phase="contact";
   showStage("contact");actionLabel.textContent="CONTACT";
 
-  const error=st.aimLocked-st.s.aim;
+  // Contact can still rescue a small directional miss.
+  const nearest=nearestShot(st.pos,st.aimLocked);
+  const desiredAim=semanticAim(st.pos,nearest.shot);
+  const error=st.aimLocked-desiredAim;
   const rescue=clamp(.5+error/.30,.12,.88);
   setYellow(contactTarget,rescue,.16);
   st.s.dynamicContact=rescue;
@@ -470,7 +589,6 @@ function playSet(){
   setBall.style.top=H*.69+"px";
   setBall.style.transform="rotate(0deg)";
   void setBall.offsetWidth;
-
   const ms=st.pos==="MB"?350:520;
   setBall.style.transition=`left ${ms}ms cubic-bezier(.2,.7,.3,1),top ${ms}ms cubic-bezier(.2,.7,.3,1),transform ${ms}ms`;
   setBall.style.left=W*p.contactX+"px";
@@ -478,40 +596,73 @@ function playSet(){
   setBall.style.transform="rotate(300deg)";
   setTimeout(()=>setBall.style.display="none",ms+30);
 }
+function evaluateRead(effectiveAim,power){
+  let best=null;
+  for(const sol of st.s.solutions){
+    const aimDist=Math.abs(effectiveAim-sol.aim);
+    const powerDist=Math.abs(power-sol.p);
+
+    // Continuous fit to each viable solution profile.
+    const aimFit=clamp(1-aimDist/.27);
+    const powerFit=clamp(1-powerDist/.30);
+    const executionFit=aimFit*.58+powerFit*.42;
+    const tactical=sol.value*executionFit;
+
+    if(!best||tactical>best.tactical){
+      best={...sol,aimFit,powerFit,executionFit,tactical};
+    }
+  }
+  return best;
+}
 function finish(){
   stop();st.contactLocked=st.contact;st.phase="flight";st.busy=true;action.disabled=true;
 
-  const powerWindow=st.s.power==="HIGH"?.19:st.s.power==="LOW"?.22:.25;
-  const powerAcc=clamp(1-Math.abs(st.powerLocked-st.s.powerNeed)/powerWindow);
-  const contactTargetVal=st.s.dynamicContact??st.s.contact;
+  const contactTargetVal=st.s.dynamicContact??.5;
   const contactAcc=clamp(1-Math.abs(st.contactLocked-contactTargetVal)/.26);
-
   const correction=(st.contactLocked-.5)*.26;
   const effectiveAim=clamp(st.aimLocked-correction);
-  const aimAcc=clamp(1-Math.abs(effectiveAim-st.s.aim)/.25);
 
-  const quality=clamp(aimAcc*.44+powerAcc*.34+contactAcc*.22);
+  const read=evaluateRead(effectiveAim,st.powerLocked);
+
+  // Tactical read and mechanical execution are separate.
+  const readScore=clamp(read.tactical);
+  const mechanical=clamp(read.executionFit*.78+contactAcc*.22);
+  const quality=clamp(readScore*.62+mechanical*.38);
+
   animateHit(effectiveAim,quality,st.powerLocked);
 
   setTimeout(()=>{
-    let label,pts;
-    if(quality>=.90){label="KILL";pts=3}
-    else if(quality>=.75){label="GOOD SWING";pts=2}
-    else if(quality>=.58){label="PLAYABLE";pts=1}
-    else{label="BLOCKED / OUT";pts=0}
+    let outcome,pts;
+    if(quality>=.90){outcome="KILL";pts=3}
+    else if(quality>=.76){outcome="GOOD SWING";pts=2}
+    else if(quality>=.60){outcome="PLAYABLE";pts=1}
+    else{outcome="BLOCKED / OUT";pts=0}
+
+    let readBand;
+    if(read.value>=.90 && read.executionFit>=.75)readBand="GREAT READ";
+    else if(read.value>=.76 && read.executionFit>=.65)readBand="GOOD READ";
+    else if(read.value>=.62)readBand="VALID BUT RISKY";
+    else readBand="LOW-PERCENTAGE READ";
+
     st.score+=pts;scoreEl.textContent=st.score;
     flash.querySelector("b").textContent=Math.round(quality*100)+"%";
-    flash.querySelector("span").textContent=label+" · "+st.s.power+" POWER";
+    flash.querySelector("span").textContent=outcome;
     flash.classList.add("show");
+
+    readCard.querySelector("b").textContent=readBand+" · "+read.label;
+    readCard.querySelector("span").textContent=
+      `${read.shot} / ${read.power} · tactical ${Math.round(read.value*100)}% · execution ${Math.round(read.executionFit*100)}%`;
+    readCard.classList.add("show");
 
     setTimeout(()=>{
       flash.classList.remove("show");
+      readCard.classList.remove("show");
       st.rep++;
       if(st.rep>st.total){st.rep=1;st.score=0;scoreEl.textContent="0"}
       repEl.textContent=st.rep+" / "+st.total;
       action.disabled=false;
       setup();
-    },1000);
+    },1400);
   },650);
 }
 function animateHit(effectiveAim,quality,power){
@@ -544,6 +695,13 @@ document.querySelectorAll(".posBtn").forEach(btn=>{
   btn.addEventListener("click",()=>{
     if(st.busy)return;
     st.pos=btn.dataset.pos;
+    setup();
+  });
+});
+document.querySelectorAll(".modeBtn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    if(st.busy)return;
+    st.mode=btn.dataset.mode;
     setup();
   });
 });
