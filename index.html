@@ -18,6 +18,9 @@ button{font:inherit}
 .top{height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#030a11;border-bottom:1px solid var(--line)}
 .brand{font-size:10px;font-weight:1000;letter-spacing:.15em}
 .meta{display:flex;gap:15px;font-size:9px;font-weight:900;color:#82c9f5}
+.posSwitch{display:flex;gap:4px;padding:3px;border-radius:9px;background:#071522;border:1px solid rgba(255,255,255,.07)}
+.posBtn{border:0;border-radius:6px;padding:5px 8px;background:transparent;color:#648298;font-size:7px;font-weight:1000;letter-spacing:.08em}
+.posBtn.active{background:#12334a;color:#dff4ff;box-shadow:inset 0 0 0 1px rgba(104,198,255,.18)}
 .game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)}
 .stands{position:absolute;inset:0 0 auto;height:27%;opacity:.55;background:
 linear-gradient(180deg,rgba(255,255,255,.04),transparent),
@@ -77,11 +80,19 @@ repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
 .target:after{content:"";position:absolute;inset:7px;border-radius:50%;border:2px solid rgba(87,213,139,.95)}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(242,200,75,.28)}100%{box-shadow:0 0 0 18px rgba(242,200,75,0)}}
 
-.aimLine{position:absolute;left:24%;top:76%;width:3px;height:44%;z-index:42;transform-origin:50% 100%;
-background:linear-gradient(180deg,#a8e0ff,rgba(90,190,255,.5),rgba(90,190,255,.08));filter:drop-shadow(0 0 7px rgba(90,190,255,.45));display:none}
-.aimLine:before{content:"";position:absolute;left:50%;top:-7px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #a8e0ff;transform:translateX(-50%)}
-.aimLine.locked{background:linear-gradient(180deg,#f2c84b,rgba(242,200,75,.55),rgba(242,200,75,.08))}
-.aimLine.locked:before{border-bottom-color:#f2c84b}
+.aimLine{
+  position:absolute;left:24%;top:54%;width:92px;height:4px;z-index:42;
+  transform-origin:0 50%;border-radius:3px;
+  background:linear-gradient(90deg,#a8e0ff,rgba(90,190,255,.62),rgba(90,190,255,.12));
+  filter:drop-shadow(0 0 7px rgba(90,190,255,.45));display:none
+}
+.aimLine:before{
+  content:"";position:absolute;right:-4px;top:50%;width:0;height:0;
+  border-top:7px solid transparent;border-bottom:7px solid transparent;
+  border-left:13px solid #a8e0ff;transform:translateY(-50%)
+}
+.aimLine.locked{background:linear-gradient(90deg,#f2c84b,rgba(242,200,75,.6),rgba(242,200,75,.10))}
+.aimLine.locked:before{border-left-color:#f2c84b}
 
 .flash{position:absolute;left:50%;top:7%;transform:translateX(-50%) scale(.94);z-index:110;opacity:0;text-align:center;transition:.18s;pointer-events:none}
 .flash.show{opacity:1;transform:translateX(-50%) scale(1)}
@@ -137,6 +148,11 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
 <div class="app">
   <div class="top">
     <div class="brand">PROJECT ACE · HITTING TEST</div>
+    <div class="posSwitch" id="posSwitch">
+      <button class="posBtn active" data-pos="OH">OH</button>
+      <button class="posBtn" data-pos="MB">MB</button>
+      <button class="posBtn" data-pos="OP">OP</button>
+    </div>
     <div class="meta"><span id="rep">1 / 8</span><span id="score">0</span></div>
   </div>
 
@@ -174,7 +190,7 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
           <i class="yellow" id="aimTarget"></i>
           <em class="needle" id="aimNeedle"></em>
         </div>
-        <div class="labels"><span>LINE</span><span>SEAM</span><span>CROSS</span></div>
+        <div class="labels"><span id="aimLabelL">LINE</span><span id="aimLabelM">SEAM</span><span id="aimLabelR">CROSS</span></div>
         <div class="help">Lock the swing angle into the open court.</div>
       </div>
 
@@ -217,62 +233,49 @@ const aimNeedle=$("#aimNeedle"),powerNeedle=$("#powerNeedle"),contactNeedle=$("#
 const aimTarget=$("#aimTarget"),powerTarget=$("#powerTarget"),contactTarget=$("#contactTarget"),contactCursor=$("#contactCursor");
 const aimLine=$("#aimLine"),target=$("#target"),setBall=$("#setBall"),hitBall=$("#hitBall"),flash=$("#flash"),situation=$("#situation"),powerCall=$("#powerCall"),powerHelp=$("#powerHelp");
 const blockers=[$("#b0"),$("#b1"),$("#b2")],defs=[$("#d0"),$("#d1"),$("#d2")];
+const hitter=$("#hitter");
 const repEl=$("#rep"),scoreEl=$("#score");
+const aimLabelL=$("#aimLabelL"),aimLabelM=$("#aimLabelM"),aimLabelR=$("#aimLabelR");
 
 /*
-  Hitting now tests ONLY the swing:
-  1. direction
-  2. power
-  3. contact
+  Hitting drill = swing only.
   Approach timing belongs in the Vertical drill.
+
+  The test selector lets us inspect OH / MB / OP.
+  In Career this would come from the player's actual position.
 */
-const scenarios=[
-  {
-    name:"LATE BLOCK · OPEN SEAM",
-    power:"HIGH", powerNeed:.86,
-    block:[[29,"late"],[42,"late"],[100,"off"]],
-    def:[[18,25],[51,25],[81,24]],
-    target:[53,29], aim:.53, contact:.50
+const POS={
+  OH:{
+    hitterX:.24,hitterY:.59,contactX:.24,contactY:.535,
+    label:["LINE","SEAM","CROSS"],
+    blockBase:[.23,.34],
+    targetX:{LINE:.18,SEAM:.48,CROSS:.76}
   },
-  {
-    name:"DEEP DEFENCE · OPEN TIP",
-    power:"LOW", powerNeed:.18,
-    block:[[30,""],[43,""],[100,"off"]],
-    def:[[19,17],[51,18],[82,17]],
-    target:[54,43], aim:.55, contact:.50
+  OP:{
+    hitterX:.76,hitterY:.59,contactX:.76,contactY:.535,
+    label:["CROSS","SEAM","LINE"],
+    blockBase:[.66,.77],
+    targetX:{LINE:.82,SEAM:.52,CROSS:.24}
   },
-  {
-    name:"LINE OPEN · CONTROL IT",
-    power:"MEDIUM", powerNeed:.52,
-    block:[[40,"high"],[50,""],[100,"off"]],
-    def:[[27,27],[55,22],[80,25]],
-    target:[22,31], aim:.18, contact:.50
-  },
-  {
-    name:"CROSS OPEN · CONTROL IT",
-    power:"MEDIUM", powerNeed:.50,
-    block:[[27,""],[38,"high"],[100,"off"]],
-    def:[[20,25],[48,23],[72,27]],
-    target:[77,31], aim:.82, contact:.50
-  },
-  {
-    name:"TRIPLE BLOCK · ROLL OFF",
-    power:"LOW", powerNeed:.22,
-    block:[[27,"high"],[39,"high"],[51,"high"]],
-    def:[[18,30],[50,38],[82,30]],
-    target:[65,42], aim:.67, contact:.56
-  },
-  {
-    name:"ONE BLOCKER · PUT IT AWAY",
-    power:"HIGH", powerNeed:.88,
-    block:[[38,"late"],[100,"off"],[100,"off"]],
-    def:[[19,24],[53,27],[82,23]],
-    target:[72,30], aim:.78, contact:.48
+  MB:{
+    hitterX:.50,hitterY:.575,contactX:.50,contactY:.525,
+    label:["LEFT GAP","SEAM","RIGHT GAP"],
+    blockBase:[.44,.56],
+    targetX:{LINE:.30,SEAM:.50,CROSS:.70}
   }
+};
+
+const SCENARIOS=[
+  {name:"LATE BLOCK",power:"HIGH",powerNeed:.87,shot:"SEAM",kind:"late"},
+  {name:"DEEP DEFENCE",power:"LOW",powerNeed:.18,shot:"SEAM",kind:"deep"},
+  {name:"FORMED BLOCK",power:"MEDIUM",powerNeed:.52,shot:"LINE",kind:"formed"},
+  {name:"FORMED BLOCK",power:"MEDIUM",powerNeed:.50,shot:"CROSS",kind:"formed"},
+  {name:"TRIPLE / CLOSED",power:"LOW",powerNeed:.22,shot:"CROSS",kind:"triple"},
+  {name:"ONE BLOCKER",power:"HIGH",powerNeed:.89,shot:"LINE",kind:"single"}
 ];
 
 const st={
-  rep:1,total:8,score:0,phase:"aim",busy:false,raf:0,
+  rep:1,total:8,score:0,pos:"OH",phase:"aim",busy:false,raf:0,
   aim:.5,aimSign:1,aimLocked:.5,
   power:.08,powerSign:1,powerLocked:.5,
   contact:.5,contactSign:1,contactLocked:.5,
@@ -280,21 +283,72 @@ const st={
 };
 
 function clamp(v,a=0,b=1){return Math.max(a,Math.min(b,v))}
+function stop(){if(st.raf)cancelAnimationFrame(st.raf);st.raf=0}
 function showStage(which){
   aimStage.classList.toggle("active",which==="aim");
   powerStage.classList.toggle("active",which==="power");
   contactStage.classList.toggle("active",which==="contact");
 }
-function stop(){if(st.raf)cancelAnimationFrame(st.raf);st.raf=0}
 function setYellow(el,center,width){
   const left=clamp(center-width/2,0,1-width);
   el.style.left=(left*100)+"%";
   el.style.width=(width*100)+"%";
 }
+function semanticAim(pos,shot){
+  const p=POS[pos];
+  const x=p.targetX[shot];
+  return clamp((x-.15)/.70);
+}
+function configurePosition(){
+  const p=POS[st.pos];
+  hitter.style.left=(p.hitterX*100)+"%";
+  hitter.style.top=(p.hitterY*100)+"%";
+  aimLabelL.textContent=p.label[0];
+  aimLabelM.textContent=p.label[1];
+  aimLabelR.textContent=p.label[2];
+
+  document.querySelectorAll(".posBtn").forEach(b=>b.classList.toggle("active",b.dataset.pos===st.pos));
+}
+function buildScenario(){
+  const base=SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
+  const p=POS[st.pos];
+  const s={...base};
+
+  s.aim=semanticAim(st.pos,s.shot);
+  s.contact=.50;
+  s.target=[p.targetX[s.shot]*100, s.power==="LOW"?43:s.power==="HIGH"?27:32];
+
+  // Defence changes with the intended power read.
+  if(s.power==="LOW"){
+    s.def=[[.19,17],[.50,18],[.81,17]];
+  }else if(s.power==="HIGH"){
+    s.def=[[.18,25],[.51,27],[.82,24]];
+  }else{
+    s.def=[[.20,27],[.51,24],[.80,27]];
+  }
+
+  const [b1,b2]=p.blockBase;
+  if(st.pos==="MB"){
+    if(s.kind==="single") s.block=[[.50,"late"],[1,"off"],[1,"off"]];
+    else if(s.kind==="triple") s.block=[[.42,"high"],[.50,"high"],[.58,"high"]];
+    else if(s.kind==="late") s.block=[[.46,"late"],[.55,"late"],[1,"off"]];
+    else s.block=[[.45,""],[.55,""],[1,"off"]];
+  }else{
+    if(s.kind==="single") s.block=[[b1+.02,"late"],[1,"off"],[1,"off"]];
+    else if(s.kind==="triple"){
+      const mid=(b1+b2)/2;
+      s.block=[[mid-.105,"high"],[mid,"high"],[mid+.105,"high"]];
+    }else if(s.kind==="late") s.block=[[b1,"late"],[b2,"late"],[1,"off"]];
+    else s.block=[[b1,""],[b2,"high"],[1,"off"]];
+  }
+  return s;
+}
+
 function setup(){
   stop();
-  st.s=scenarios[Math.floor(Math.random()*scenarios.length)];
-  situation.textContent=st.s.name;
+  configurePosition();
+  st.s=buildScenario();
+  situation.textContent=st.pos+" · "+st.s.name+" · "+st.s.shot;
 
   powerCall.textContent="POWER · "+st.s.power;
   powerCall.className="powerCall "+st.s.power.toLowerCase();
@@ -306,11 +360,12 @@ function setup(){
   blockers.forEach((b,i)=>{
     const [x,cls]=st.s.block[i];
     b.className="blocker "+cls;
-    if(cls==="off"){b.style.display="none"}else{b.style.display="block";b.style.left=x+"%"}
+    if(cls==="off"){b.style.display="none"}
+    else{b.style.display="block";b.style.left=(x*100)+"%"}
   });
   defs.forEach((d,i)=>{
-    d.style.left=st.s.def[i][0]+"%";
-    d.style.top=st.s.def[i][1]+"%";
+    d.style.left=(st.s.def[i][0]*100)+"%";
+    d.style.top=(st.s.def[i][1]*100)+"%";
   });
 
   target.style.left=st.s.target[0]+"%";
@@ -333,6 +388,24 @@ function setup(){
   animateAim();
 }
 
+function updateShortArrow(aimValue){
+  const p=POS[st.pos];
+  const W=shell.clientWidth,H=shell.clientHeight;
+
+  const sx=W*p.contactX, sy=H*p.contactY;
+  const targetX=W*(.15+aimValue*.70);
+  const targetY=H*.34;
+
+  const dx=targetX-sx,dy=targetY-sy;
+  const angle=Math.atan2(dy,dx)*180/Math.PI;
+  const len=Math.min(112,Math.max(70,Math.hypot(dx,dy)*.34));
+
+  aimLine.style.left=sx+"px";
+  aimLine.style.top=sy+"px";
+  aimLine.style.width=len+"px";
+  aimLine.style.transform=`rotate(${angle}deg)`;
+}
+
 function animateAim(){
   stop();
   const tick=()=>{
@@ -341,7 +414,7 @@ function animateAim(){
     if(st.aim>=1){st.aim=1;st.aimSign=-1}
     if(st.aim<=0){st.aim=0;st.aimSign=1}
     aimNeedle.style.left=(st.aim*100)+"%";
-    aimLine.style.transform=`rotate(${-31+st.aim*62}deg)`;
+    updateShortArrow(st.aim);
     st.raf=requestAnimationFrame(tick);
   };
   st.raf=requestAnimationFrame(tick);
@@ -349,6 +422,7 @@ function animateAim(){
 function lockAim(){
   stop();st.aimLocked=st.aim;st.phase="power";
   aimLine.classList.add("locked");
+  updateShortArrow(st.aimLocked);
   showStage("power");
   actionLabel.textContent="LOCK POWER";
   animatePower();
@@ -369,7 +443,6 @@ function lockPower(){
   stop();st.powerLocked=st.power;st.phase="contact";
   showStage("contact");actionLabel.textContent="CONTACT";
 
-  // Contact can rescue a small aim miss.
   const error=st.aimLocked-st.s.aim;
   const rescue=clamp(.5+error/.30,.12,.88);
   setYellow(contactTarget,rescue,.16);
@@ -390,18 +463,20 @@ function animateContact(){
   st.raf=requestAnimationFrame(tick);
 }
 function playSet(){
-  const W=shell.clientWidth,H=shell.clientHeight;
+  const p=POS[st.pos],W=shell.clientWidth,H=shell.clientHeight;
   setBall.style.display="block";
   setBall.style.transition="none";
   setBall.style.left=W*.54+"px";
   setBall.style.top=H*.69+"px";
   setBall.style.transform="rotate(0deg)";
   void setBall.offsetWidth;
-  setBall.style.transition="left 520ms cubic-bezier(.2,.7,.3,1),top 520ms cubic-bezier(.2,.7,.3,1),transform 520ms";
-  setBall.style.left=W*.24+"px";
-  setBall.style.top=H*.54+"px";
+
+  const ms=st.pos==="MB"?350:520;
+  setBall.style.transition=`left ${ms}ms cubic-bezier(.2,.7,.3,1),top ${ms}ms cubic-bezier(.2,.7,.3,1),transform ${ms}ms`;
+  setBall.style.left=W*p.contactX+"px";
+  setBall.style.top=H*p.contactY+"px";
   setBall.style.transform="rotate(300deg)";
-  setTimeout(()=>setBall.style.display="none",550);
+  setTimeout(()=>setBall.style.display="none",ms+30);
 }
 function finish(){
   stop();st.contactLocked=st.contact;st.phase="flight";st.busy=true;action.disabled=true;
@@ -440,11 +515,9 @@ function finish(){
   },650);
 }
 function animateHit(effectiveAim,quality,power){
-  const W=shell.clientWidth,H=shell.clientHeight;
-  const startX=W*.24,startY=H*.54;
+  const p=POS[st.pos],W=shell.clientWidth,H=shell.clientHeight;
+  const startX=W*p.contactX,startY=H*p.contactY;
   const endX=W*(.15+effectiveAim*.70);
-
-  // High power drives deeper; low power drops shorter.
   const powerDepth=.40-power*.24;
   const endY=H*clamp(powerDepth+(1-quality)*.14,.12,.50);
 
@@ -466,6 +539,15 @@ function trigger(){
   else if(st.phase==="contact")finish();
 }
 action.addEventListener("click",trigger);
+
+document.querySelectorAll(".posBtn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    if(st.busy)return;
+    st.pos=btn.dataset.pos;
+    setup();
+  });
+});
+
 document.addEventListener("keydown",e=>{
   if(e.code!=="Space"||e.repeat)return;
   const t=e.target;
