@@ -3,161 +3,122 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Project ACE — Serve Prototype V3</title>
+<title>Project ACE — Hitting Prototype</title>
 <style>
 :root{
-  --bg:#03070d;--ink:#eef7ff;--muted:#718da3;--blue:#5abaff;--gold:#f0c968;
-  --good:#62d39b;--court:#bd7040;--court2:#985632;--line:rgba(255,255,255,.10)
+  --bg:#02070d;--panel:#05131f;--ink:#eff8ff;--muted:#718da2;
+  --blue:#64c3ff;--yellow:#f2c84b;--green:#57d58b;
+  --court:#b96a3b;--court2:#955532;--line:rgba(255,255,255,.10)
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
 body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 button{font:inherit}
-.app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#06121b,#02070d);color:var(--ink)}
-.top{height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--line);background:#030a11}
+.app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#06121b,#02070d)}
+.top{height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#030a11;border-bottom:1px solid var(--line)}
 .brand{font-size:10px;font-weight:1000;letter-spacing:.15em}
-.meta{display:flex;gap:16px;font-size:9px;font-weight:900;color:#88cbf5}.meta span:first-child{color:#6b879a}
-.game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 20%,#173f45 20% 29%,#173427 29%)}
-.stands{position:absolute;inset:0 0 auto;height:28%;opacity:.55;background:
+.meta{display:flex;gap:15px;font-size:9px;font-weight:900;color:#82c9f5}
+.game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)}
+.stands{position:absolute;inset:0 0 auto;height:27%;opacity:.55;background:
 linear-gradient(180deg,rgba(255,255,255,.04),transparent),
 repeating-linear-gradient(90deg,transparent 0 26px,rgba(255,255,255,.025) 26px 28px)}
-.shell{position:absolute;left:50%;top:5%;width:min(95vw,620px);height:86%;transform:translateX(-50%)}
+.shell{position:absolute;left:50%;top:4%;width:min(96vw,640px);height:88%;transform:translateX(-50%)}
 .court{
-  position:absolute;left:5%;right:5%;top:7%;bottom:5%;
+  position:absolute;left:4%;right:4%;top:6%;bottom:5%;
   clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);
   background:
-    linear-gradient(90deg,transparent 49.6%,rgba(255,255,255,.93) 49.6% 50.4%,transparent 50.4%),
-    linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.95) 49.6% 50.4%,transparent 50.4%),
-    linear-gradient(180deg,var(--court),var(--court2));
+   linear-gradient(90deg,transparent 49.65%,rgba(255,255,255,.95) 49.65% 50.35%,transparent 50.35%),
+   linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.96) 49.6% 50.4%,transparent 50.4%),
+   linear-gradient(180deg,var(--court),var(--court2));
   border:3px solid rgba(255,255,255,.94);
-  box-shadow:0 26px 52px rgba(0,0,0,.35)
+  box-shadow:0 25px 50px rgba(0,0,0,.34)
 }
-/* full-width three-metre lines — clip-path trims them to the court edges */
-.court:before,.court:after{content:"";position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.92)}
+.court:before,.court:after{content:"";position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.9)}
 .court:before{top:33%}.court:after{top:66%}
-.net{
-  position:absolute;left:3%;right:3%;top:48.8%;height:15px;z-index:30;
-  border-top:2px solid white;border-bottom:1px solid rgba(255,255,255,.65);
+.net{position:absolute;left:2%;right:2%;top:48.8%;height:16px;z-index:30;border-top:2px solid #fff;border-bottom:1px solid rgba(255,255,255,.6);
+background:repeating-linear-gradient(90deg,rgba(255,255,255,.38) 0 1px,transparent 1px 10px),
+repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
+.net:before,.net:after{content:"";position:absolute;top:-9px;width:4px;height:33px;background:#edf5f8}.net:before{left:0}.net:after{right:0}
+
+.player,.blocker,.defender,.setter{position:absolute;z-index:20;transform:translate(-50%,-50%)}
+.player{width:38px;height:57px;left:24%;top:80%;z-index:24}
+.setter{width:34px;height:50px;left:54%;top:69%}
+.blocker{width:36px;height:56px;top:42.5%;transition:left .4s ease,transform .22s ease}
+.defender{width:32px;height:47px;transition:left .35s ease,top .35s ease}
+.head{position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%)}
+.body{position:absolute;left:50%;top:13px;width:21px;height:27px;border-radius:7px;background:#183149;transform:translateX(-50%)}
+.setter .body{background:#225272}
+.blocker .body{background:#dfe6ea}
+.defender .body{background:#dfe6ea}
+.defender.lib .body{background:#3fa37d}
+.legs:before,.legs:after{content:"";position:absolute;top:38px;width:5px;height:15px;border-radius:4px;background:#111a21}
+.legs:before{left:9px}.legs:after{right:9px}
+.blocker .arms:before,.blocker .arms:after{content:"";position:absolute;top:-5px;width:5px;height:23px;border-radius:4px;background:#c99b7b}
+.blocker .arms:before{left:8px;transform:rotate(-8deg)}.blocker .arms:after{right:8px;transform:rotate(8deg)}
+.blocker.high .arms:before,.blocker.high .arms:after{height:28px;top:-10px}
+.blocker.late{transform:translate(-50%,-50%) translateY(7px) scale(.96)}
+.blocker.split.left{transform:translate(-50%,-50%) translateX(-10px)}
+.blocker.split.right{transform:translate(-50%,-50%) translateX(10px)}
+
+.setBall,.hitBall{
+  position:absolute;border-radius:50%;z-index:80;
   background:
-    repeating-linear-gradient(90deg,rgba(255,255,255,.4) 0 1px,transparent 1px 10px),
-    repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)
+  radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
+  conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
+  box-shadow:inset -4px -5px 7px rgba(0,0,0,.16),0 4px 10px rgba(0,0,0,.4)
 }
-.net:before,.net:after{content:"";position:absolute;top:-8px;width:4px;height:31px;background:#edf3f7}.net:before{left:0}.net:after{right:0}
+.setBall{width:21px;height:21px;display:none}
+.hitBall{width:23px;height:23px;display:none}
 
-.receiver{position:absolute;width:34px;height:49px;transform:translate(-50%,-50%);z-index:17;transition:left .35s ease,top .35s ease,transform .18s ease}
-.receiver .head{position:absolute;left:10px;top:0;width:14px;height:14px;border-radius:50%;background:#d0a283}
-.receiver .body{position:absolute;left:7px;top:13px;width:20px;height:25px;border-radius:7px 7px 5px 5px;background:#dfe8ee;border:1px solid rgba(0,0,0,.25);box-shadow:0 6px 11px rgba(0,0,0,.25)}
-.receiver.lib .body{background:#3fa37d}.receiver.set .body{background:#8198a7}
-.receiver .legs:before,.receiver .legs:after{content:"";position:absolute;top:36px;width:5px;height:13px;border-radius:4px;background:#17222a}
-.receiver .legs:before{left:8px;transform:rotate(7deg)}.receiver .legs:after{right:8px;transform:rotate(-7deg)}
-.receiver.weak .body{box-shadow:0 0 0 2px rgba(240,201,104,.52),0 0 22px rgba(240,201,104,.2)}
-.receiver.react{transform:translate(-50%,-50%) rotate(-12deg) scale(.95)}
-.receiver.dive{animation:dive .58s ease}
-@keyframes dive{0%{transform:translate(-50%,-50%)}45%{transform:translate(-75%,-36%) rotate(-25deg)}100%{transform:translate(-50%,-50%)}}
-
-.server{position:absolute;left:50%;bottom:0;width:40px;height:54px;transform:translateX(-50%);z-index:23}
-.server .head{position:absolute;left:12px;top:0;width:16px;height:16px;border-radius:50%;background:#c99978}
-.server .body{position:absolute;left:8px;top:15px;width:24px;height:28px;border-radius:8px;background:#183149}
-.server:before,.server:after{content:"";position:absolute;top:41px;width:6px;height:13px;border-radius:4px;background:#0f1921}
-.server:before{left:10px}.server:after{right:10px}
-
-.coach{position:absolute;left:1.5%;bottom:15%;width:32px;height:52px;z-index:19;opacity:.78}
-.coach .head{position:absolute;width:14px;height:14px;border-radius:50%;left:8px;top:0;background:#c99c7d}
-.coach .body{position:absolute;width:21px;height:29px;border-radius:7px;left:5px;top:13px;background:#455a6a}
-.coach .arm{position:absolute;width:23px;height:5px;border-radius:4px;background:#c99c7d;left:2px;top:20px;transform-origin:right center;transition:.3s}
-.coach.left .arm{transform:rotate(-55deg)}.coach.right .arm{transform:rotate(17deg)}.coach.short .arm{transform:rotate(-32deg)}
-
-.hint{position:absolute;width:22px;height:22px;border:2px solid rgba(240,201,104,.82);border-radius:50%;transform:translate(-50%,-50%);z-index:18;animation:pulse 1.1s ease-out infinite;opacity:.64}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,201,104,.28)}100%{box-shadow:0 0 0 18px rgba(240,201,104,0)}}
-
-/* direction/power trajectory now starts at the server */
-.trajectory{
-  position:absolute;left:50%;bottom:28px;width:3px;height:72%;z-index:40;
-  transform-origin:50% 100%;pointer-events:none
+.target{
+  position:absolute;width:34px;height:34px;border-radius:50%;border:2px solid rgba(242,200,75,.8);
+  transform:translate(-50%,-50%);z-index:16;animation:pulse 1.1s ease-out infinite
 }
-.trajectory .beam{
-  position:absolute;left:0;bottom:0;width:3px;height:100%;
-  background:linear-gradient(180deg,rgba(93,187,255,.98),rgba(93,187,255,.45) 52%,rgba(93,187,255,.10));
-  filter:drop-shadow(0 0 7px rgba(93,187,255,.5))
-}
-.trajectory .beam:before{
-  content:"";position:absolute;left:50%;top:-8px;width:0;height:0;
-  border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #aee3ff;
-  transform:translateX(-50%)
-}
-.trajectory.locked .beam{background:linear-gradient(180deg,rgba(240,201,104,.96),rgba(240,201,104,.55),rgba(240,201,104,.10));filter:drop-shadow(0 0 7px rgba(240,201,104,.42))}
-.trajectory.locked .beam:before{border-bottom-color:var(--gold)}
-.powerTrace{
-  position:absolute;left:50%;bottom:28px;width:4px;height:0;z-index:41;
-  transform-origin:50% 100%;pointer-events:none;display:none
-}
-.powerTrace:before{
-  content:"";position:absolute;inset:0;background:linear-gradient(180deg,#8bd4ff,#58baff 56%,rgba(88,186,255,.18));
-  box-shadow:0 0 10px rgba(88,186,255,.38);border-radius:3px
-}
-.powerTrace:after{
-  content:"";position:absolute;left:50%;top:-6px;width:11px;height:11px;border-radius:50%;
-  background:#d5f1ff;transform:translateX(-50%);box-shadow:0 0 0 6px rgba(88,186,255,.08)
-}
+.target:after{content:"";position:absolute;inset:7px;border-radius:50%;border:2px solid rgba(87,213,139,.95)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(242,200,75,.28)}100%{box-shadow:0 0 0 18px rgba(242,200,75,0)}}
 
-.ball{position:absolute;width:20px;height:20px;border-radius:50%;z-index:80;display:none;
-background:
-radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
-conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
-box-shadow:inset -3px -4px 7px rgba(0,0,0,.15),0 4px 10px rgba(0,0,0,.42)}
+.aimLine{position:absolute;left:24%;top:76%;width:3px;height:44%;z-index:42;transform-origin:50% 100%;
+background:linear-gradient(180deg,#a8e0ff,rgba(90,190,255,.5),rgba(90,190,255,.08));filter:drop-shadow(0 0 7px rgba(90,190,255,.45));display:none}
+.aimLine:before{content:"";position:absolute;left:50%;top:-7px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #a8e0ff;transform:translateX(-50%)}
+.aimLine.locked{background:linear-gradient(180deg,#f2c84b,rgba(242,200,75,.55),rgba(242,200,75,.08))}
+.aimLine.locked:before{border-bottom-color:#f2c84b}
 
-.flash{position:absolute;left:50%;top:7%;transform:translateX(-50%) scale(.94);z-index:100;opacity:0;text-align:center;transition:.18s;pointer-events:none}
+.flash{position:absolute;left:50%;top:7%;transform:translateX(-50%) scale(.94);z-index:110;opacity:0;text-align:center;transition:.18s;pointer-events:none}
 .flash.show{opacity:1;transform:translateX(-50%) scale(1)}
 .flash b{display:block;font-size:30px;line-height:1;text-shadow:0 7px 22px rgba(0,0,0,.5)}
-.flash span{display:block;margin-top:4px;font-size:9px;letter-spacing:.14em;font-weight:900;color:#cfe6f5}
-.phaseBadge{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);z-index:45;padding:7px 10px;border-radius:12px;background:rgba(4,16,26,.76);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:1000;letter-spacing:.12em;color:#a6d9fa;backdrop-filter:blur(8px)}
+.flash span{display:block;margin-top:4px;font-size:9px;font-weight:900;letter-spacing:.14em;color:#d1e8f5}
 
-.bottom{
-  flex:0 0 178px;padding:10px 14px calc(11px + env(safe-area-inset-bottom));
-  border-top:1px solid var(--line);background:#04101a;
-  display:grid;grid-template-columns:1fr 94px;gap:14px;align-items:center
-}
-.stageTitle{font-size:8px;font-weight:1000;letter-spacing:.14em;color:#708b9e;margin-bottom:7px}
+.bottom{flex:0 0 192px;padding:10px 14px calc(11px + env(safe-area-inset-bottom));background:#04101a;border-top:1px solid var(--line);
+display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:14px;align-items:center}
+.panel{min-width:0}
+.stageTitle{font-size:8px;font-weight:1000;letter-spacing:.14em;color:#718da1;margin-bottom:7px}
+.stage{display:none}.stage.active{display:block}
 .track{position:relative;height:18px;border-radius:10px;background:#0b2232;border:1px solid rgba(255,255,255,.08);overflow:hidden}
-.green{position:absolute;top:0;bottom:0;background:rgba(95,211,155,.16);border-left:1px solid rgba(95,211,155,.48);border-right:1px solid rgba(95,211,155,.48)}
-.dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:#78ccff;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(91,184,255,.6)}
+.yellow{position:absolute;top:0;bottom:0;background:rgba(242,200,75,.28);border-left:1px solid rgba(242,200,75,.75);border-right:1px solid rgba(242,200,75,.75)}
+.yellow:after{content:"";position:absolute;left:30%;right:30%;top:0;bottom:0;background:rgba(87,213,139,.5);border-left:1px solid rgba(87,213,139,.9);border-right:1px solid rgba(87,213,139,.9)}
+.needle{position:absolute;top:50%;left:50%;width:9px;height:9px;border-radius:50%;background:#77ccff;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(91,184,255,.6)}
 .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3d8dbd,#6acbff)}
-.labels{display:flex;justify-content:space-between;margin-top:6px;font-size:7px;color:#587487;font-weight:900;letter-spacing:.12em}
-.help{margin-top:8px;font-size:8px;color:#7691a5;line-height:1.45}
-.mainBtn{width:88px;height:88px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:white;font-size:29px;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);touch-action:none;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.mainBtn small{display:block;font-size:7px;letter-spacing:.08em;margin-top:0;color:#8ebbd8}
-.btnBall{width:34px;height:34px;border-radius:50%;flex:0 0 34px;background:
-radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
-conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);box-shadow:inset -5px -6px 8px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.22)}
-.mainBtn:disabled{opacity:.35}
-
-/* contact stage */
-.contactWrap{display:none}
-.contactRow{display:flex;align-items:center;gap:11px}
+.labels{display:flex;justify-content:space-between;margin-top:6px;font-size:7px;color:#587487;font-weight:900;letter-spacing:.11em}
+.help{margin-top:7px;font-size:8px;color:#7691a5;line-height:1.4}
+.contactRow{display:flex;align-items:center;gap:10px}
 .contactBall{
-  position:relative;width:76px;height:76px;flex:0 0 76px;border-radius:50%;
+  position:relative;width:66px;height:66px;flex:0 0 66px;border-radius:50%;
   background:
-    radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
-    conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
-  box-shadow:inset -10px -12px 18px rgba(0,0,0,.17),0 8px 18px rgba(0,0,0,.28)
+  radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
+  conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
+  box-shadow:inset -9px -10px 14px rgba(0,0,0,.17),0 7px 16px rgba(0,0,0,.28)
 }
-.contactBall:before{
-  content:"";position:absolute;left:50%;top:9px;bottom:9px;width:1px;background:rgba(0,0,0,.2)
-}
-.contactCursor{
-  position:absolute;top:50%;left:50%;width:16px;height:16px;border:2px solid #66c5ff;border-radius:50%;
-  transform:translate(-50%,-50%);box-shadow:0 0 0 5px rgba(88,186,255,.10)
-}
-.contactCursor:before,.contactCursor:after{content:"";position:absolute;background:#7fd0ff}
-.contactCursor:before{width:8px;height:1px;left:2px;top:6px}.contactCursor:after{width:1px;height:8px;left:6px;top:2px}
+.contactCursor{position:absolute;left:50%;top:50%;width:15px;height:15px;border-radius:50%;border:2px solid #69c8ff;transform:translate(-50%,-50%);box-shadow:0 0 0 5px rgba(88,186,255,.10)}
 .contactInfo{min-width:0;flex:1}
-.contactScale{height:10px;border-radius:7px;background:#0b2232;border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
-.contactScaleGreen{position:absolute;top:0;bottom:0;left:46%;width:8%;background:rgba(95,211,155,.18);border-left:1px solid rgba(95,211,155,.45);border-right:1px solid rgba(95,211,155,.45)}
-.contactScaleDot{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:#7dccff;transform:translate(-50%,-50%)}
-.contactLabels{display:flex;justify-content:space-between;margin-top:5px;font-size:6px;color:#5e788b;letter-spacing:.1em;font-weight:900}
+.btn{width:86px;height:86px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);
+color:white;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.btnBall{width:34px;height:34px;border-radius:50%;background:
+radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
+conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%)}
+.btn small{font-size:6.5px;letter-spacing:.09em;color:#9dcced;text-align:center;max-width:70px}
+.situation{position:absolute;right:10px;top:10px;z-index:70;padding:7px 9px;border-radius:10px;background:rgba(3,10,17,.72);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:900;letter-spacing:.09em;color:#bdd9ea;backdrop-filter:blur(6px)}
 
 @media(min-width:760px){
-  .top{padding-left:max(18px,calc((100vw - 720px)/2));padding-right:max(18px,calc((100vw - 720px)/2))}
   .bottom{padding-left:max(18px,calc((100vw - 640px)/2));padding-right:max(18px,calc((100vw - 640px)/2))}
 }
 </style>
@@ -165,7 +126,7 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand">PROJECT ACE · SERVE V3</div>
+    <div class="brand">PROJECT ACE · HITTING TEST</div>
     <div class="meta"><span id="rep">1 / 8</span><span id="score">0</span></div>
   </div>
 
@@ -174,340 +135,313 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
     <div class="shell" id="shell">
       <div class="court"></div>
       <div class="net"></div>
+      <div class="situation" id="situation">READ THE BLOCK</div>
 
-      <div class="receiver" id="r0"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="receiver" id="r1"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="receiver" id="r2"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="receiver" id="r3"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="receiver lib" id="r4"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="receiver set" id="r5"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="player" id="hitter"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="setter"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
 
-      <div class="server"><i class="head"></i><i class="body"></i></div>
-      <div class="coach" id="coach"><i class="head"></i><i class="body"></i><i class="arm"></i></div>
-      <div class="hint" id="hint"></div>
+      <div class="blocker" id="b0"><i class="head"></i><i class="body"></i><i class="arms"></i><i class="legs"></i></div>
+      <div class="blocker" id="b1"><i class="head"></i><i class="body"></i><i class="arms"></i><i class="legs"></i></div>
+      <div class="blocker" id="b2"><i class="head"></i><i class="body"></i><i class="arms"></i><i class="legs"></i></div>
 
-      <div class="trajectory" id="trajectory"><div class="beam"></div></div>
-      <div class="powerTrace" id="powerTrace"></div>
+      <div class="defender" id="d0"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="defender lib" id="d1"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
+      <div class="defender" id="d2"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
 
-      <div class="phaseBadge" id="phaseBadge">LOCK DIRECTION</div>
-      <div class="ball" id="ball"></div>
+      <div class="target" id="target"></div>
+      <div class="aimLine" id="aimLine"></div>
+      <div class="setBall" id="setBall"></div>
+      <div class="hitBall" id="hitBall"></div>
     </div>
-
     <div class="flash" id="flash"><b></b><span></span></div>
   </div>
 
   <div class="bottom">
-    <div>
-      <div id="directionUi">
-        <div class="stageTitle">STAGE 1 · DIRECTION</div>
+    <div class="panel">
+      <div class="stage active" id="approachStage">
+        <div class="stageTitle">1 · APPROACH TIMING</div>
         <div class="track">
-          <div class="green" id="directionGreen"></div>
-          <div class="dot" id="dirDot" style="left:50%"></div>
+          <i class="yellow" id="approachTarget"></i>
+          <em class="needle" id="approachNeedle"></em>
         </div>
-        <div class="labels"><span>ZONE 5</span><span>SEAM</span><span>ZONE 1</span></div>
-        <div class="help">Tap once to lock the direction.</div>
+        <div class="labels"><span>EARLY</span><span>ON TIME</span><span>LATE</span></div>
+        <div class="help">Time your approach to the set.</div>
       </div>
 
-      <div id="powerUi" style="display:none">
-        <div class="stageTitle">STAGE 2 · DEPTH / PACE</div>
+      <div class="stage" id="aimStage">
+        <div class="stageTitle">2 · SHOT DIRECTION</div>
         <div class="track">
-          <div class="green" id="powerGreen"></div>
-          <div class="fill" id="powerFill"></div>
+          <i class="yellow" id="aimTarget"></i>
+          <em class="needle" id="aimNeedle"></em>
         </div>
-        <div class="labels"><span>SHORT</span><span>DEEP / POWER</span></div>
-        <div class="help">The green window moves and tightens depending on the serve.</div>
+        <div class="labels"><span>LINE</span><span>SEAM</span><span>CROSS</span></div>
+        <div class="help">Read the block and defence, then choose the open court.</div>
       </div>
 
-      <div class="contactWrap" id="contactUi">
-        <div class="stageTitle">STAGE 3 · CONTACT</div>
+      <div class="stage" id="contactStage">
+        <div class="stageTitle">3 · CONTACT / POWER</div>
         <div class="contactRow">
-          <div class="contactBall">
-            <div class="contactCursor" id="contactCursor"></div>
-          </div>
+          <div class="contactBall"><i class="contactCursor" id="contactCursor"></i></div>
           <div class="contactInfo">
-            <div class="contactScale"><div class="contactScaleGreen" id="contactScaleGreen"></div><div class="contactScaleDot" id="contactScaleDot"></div></div>
-            <div class="contactLabels"><span>LEFT</span><span>CENTRE</span><span>RIGHT</span></div>
-            <div class="help">If your initial aim is a bit off, the right contact point can still nudge the serve back on line.</div>
+            <div class="track">
+              <i class="yellow" id="contactTarget"></i>
+              <em class="needle" id="contactNeedle"></em>
+            </div>
+            <div class="labels"><span>LEFT SIDE</span><span>CENTRE</span><span>RIGHT SIDE</span></div>
+            <div class="help">Contact can slightly rescue your aim or pull it further off.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <button class="mainBtn" id="mainBtn"><span class="btnBall" aria-hidden="true"></span><small id="btnLabel">LOCK</small></button>
+    <button class="btn" id="action"><span class="btnBall"></span><small id="actionLabel">LOCK APPROACH</small></button>
   </div>
 </div>
 
 <script>
-(function(){
-  const $=s=>document.querySelector(s);
-  const recv=[0,1,2,3,4,5].map(i=>$("#r"+i));
-  const shell=$("#shell"),coach=$("#coach"),hint=$("#hint"),trajectory=$("#trajectory"),powerTrace=$("#powerTrace");
-  const directionUi=$("#directionUi"),powerUi=$("#powerUi"),contactUi=$("#contactUi");
-  const dirDot=$("#dirDot"),directionGreen=$("#directionGreen"),powerGreen=$("#powerGreen"),powerFill=$("#powerFill");
-  const contactCursor=$("#contactCursor"),contactScaleDot=$("#contactScaleDot"),contactScaleGreen=$("#contactScaleGreen");
-  const btn=$("#mainBtn"),btnLabel=$("#btnLabel"),phaseBadge=$("#phaseBadge");
-  const ball=$("#ball"),flash=$("#flash"),repEl=$("#rep"),scoreEl=$("#score");
+(()=>{
+const $=s=>document.querySelector(s);
+const shell=$("#shell"), action=$("#action"), actionLabel=$("#actionLabel");
+const approachStage=$("#approachStage"), aimStage=$("#aimStage"), contactStage=$("#contactStage");
+const approachNeedle=$("#approachNeedle"),aimNeedle=$("#aimNeedle"),contactNeedle=$("#contactNeedle");
+const approachTarget=$("#approachTarget"),aimTarget=$("#aimTarget"),contactTarget=$("#contactTarget"),contactCursor=$("#contactCursor");
+const aimLine=$("#aimLine"),target=$("#target"),setBall=$("#setBall"),hitBall=$("#hitBall"),flash=$("#flash"),situation=$("#situation");
+const blockers=[$("#b0"),$("#b1"),$("#b2")],defs=[$("#d0"),$("#d1"),$("#d2")];
+const repEl=$("#rep"),scoreEl=$("#score");
 
-  const formations=[
-    {p:[[24,23],[50,22],[76,24],[28,39],[61,39],[82,38]],weak:3,h:[28,39],c:"left"},
-    {p:[[20,23],[48,22],[77,23],[20,40],[53,39],[82,40]],weak:5,h:[81,39],c:"right"},
-    {p:[[23,22],[50,23],[78,22],[18,39],[49,43],[78,39]],weak:4,h:[49,43],c:"short"},
-    {p:[[18,24],[46,21],[77,24],[31,38],[66,37],[86,40]],weak:0,h:[19,27],c:"left"},
-    {p:[[22,22],[50,21],[78,24],[25,41],[72,42],[51,35]],weak:1,h:[50,24],c:"short"},
-    {p:[[19,22],[47,24],[82,22],[21,40],[55,39],[84,41]],weak:2,h:[81,25],c:"right"}
-  ];
+const scenarios=[
+  {
+    name:"LINE SEALED",
+    block:[[28,"high"],[38,""],[100,"off"]],
+    def:[[28,24],[51,23],[75,27]],
+    target:[72,30],
+    aim:.82, contact:.50, approach:.54
+  },
+  {
+    name:"CROSS SEALED",
+    block:[[35,""],[46,"high"],[100,"off"]],
+    def:[[20,28],[46,25],[76,24]],
+    target:[22,31],
+    aim:.18, contact:.50, approach:.50
+  },
+  {
+    name:"SEAM OPEN",
+    block:[[29,"split left"],[47,"split right"],[100,"off"]],
+    def:[[18,25],[50,34],[82,25]],
+    target:[51,31],
+    aim:.50, contact:.50, approach:.52
+  },
+  {
+    name:"LATE MIDDLE",
+    block:[[31,""],[43,"late"],[100,"off"]],
+    def:[[20,25],[51,27],[81,23]],
+    target:[58,33],
+    aim:.60, contact:.46, approach:.46
+  },
+  {
+    name:"TRIPLE BLOCK",
+    block:[[28,"high"],[39,"high"],[50,"high"]],
+    def:[[18,30],[50,39],[82,30]],
+    target:[62,42],
+    aim:.66, contact:.58, approach:.56
+  },
+  {
+    name:"DEEP DEFENCE",
+    block:[[31,""],[42,""],[100,"off"]],
+    def:[[20,17],[50,18],[80,17]],
+    target:[51,43],
+    aim:.50, contact:.50, approach:.50
+  }
+];
 
-  const st={
-    phase:"direction",rep:1,total:8,score:0,busy:false,
-    dir:.5,dirSign:1,dirLocked:.5,targetDir:.5,dirWidth:.16,
-    power:.08,powerSign:1,targetPower:.65,powerWidth:.16,
-    contact:.5,contactSign:1,contactLocked:.5,targetContact:.5,contactWidth:.14,effectiveDir:.5,
-    raf:0,formation:null
+const st={
+  rep:1,total:8,score:0,phase:"approach",busy:false,raf:0,
+  approach:.1,approachSign:1,approachLocked:.5,
+  aim:.5,aimSign:1,aimLocked:.5,
+  contact:.5,contactSign:1,contactLocked:.5,
+  s:null
+};
+
+function clamp(v,a=0,b=1){return Math.max(a,Math.min(b,v))}
+function showStage(which){
+  approachStage.classList.toggle("active",which==="approach");
+  aimStage.classList.toggle("active",which==="aim");
+  contactStage.classList.toggle("active",which==="contact");
+}
+function stop(){if(st.raf)cancelAnimationFrame(st.raf);st.raf=0}
+function setYellow(el,center,width){
+  const left=clamp(center-width/2,0,1-width);
+  el.style.left=(left*100)+"%";
+  el.style.width=(width*100)+"%";
+}
+function setup(){
+  stop();
+  st.s=scenarios[Math.floor(Math.random()*scenarios.length)];
+  situation.textContent=st.s.name;
+
+  blockers.forEach((b,i)=>{
+    const [x,cls]=st.s.block[i];
+    b.className="blocker "+cls;
+    if(cls==="off"){b.style.display="none"}else{b.style.display="block";b.style.left=x+"%"}
+  });
+  defs.forEach((d,i)=>{
+    d.style.left=st.s.def[i][0]+"%";
+    d.style.top=st.s.def[i][1]+"%";
+  });
+
+  target.style.left=st.s.target[0]+"%";
+  target.style.top=st.s.target[1]+"%";
+
+  setYellow(approachTarget,st.s.approach,.18);
+  setYellow(aimTarget,st.s.aim,.18);
+  setYellow(contactTarget,st.s.contact,.18);
+
+  st.phase="approach";st.busy=false;
+  st.approach=.08;st.approachSign=1;
+  st.aim=.5;st.aimSign=1;
+  st.contact=.5;st.contactSign=1;
+  showStage("approach");
+  actionLabel.textContent="LOCK APPROACH";
+  aimLine.style.display="none";
+  aimLine.classList.remove("locked");
+  animateApproach();
+}
+
+function animateApproach(){
+  stop();
+  const tick=()=>{
+    if(st.phase!=="approach"||st.busy)return;
+    st.approach+=.014*st.approachSign;
+    if(st.approach>=1){st.approach=1;st.approachSign=-1}
+    if(st.approach<=0){st.approach=0;st.approachSign=1}
+    approachNeedle.style.left=(st.approach*100)+"%";
+    st.raf=requestAnimationFrame(tick);
   };
+  st.raf=requestAnimationFrame(tick);
+}
+function lockApproach(){
+  stop();st.approachLocked=st.approach;st.phase="aim";
+  showStage("aim");actionLabel.textContent="LOCK SHOT";
+  playSet();
+  aimLine.style.display="block";
+  animateAim();
+}
+function animateAim(){
+  stop();
+  const tick=()=>{
+    if(st.phase!=="aim"||st.busy)return;
+    st.aim+=.012*st.aimSign;
+    if(st.aim>=1){st.aim=1;st.aimSign=-1}
+    if(st.aim<=0){st.aim=0;st.aimSign=1}
+    aimNeedle.style.left=(st.aim*100)+"%";
+    aimLine.style.transform=`rotate(${-31+st.aim*62}deg)`;
+    st.raf=requestAnimationFrame(tick);
+  };
+  st.raf=requestAnimationFrame(tick);
+}
+function lockAim(){
+  stop();st.aimLocked=st.aim;st.phase="contact";
+  aimLine.classList.add("locked");
+  showStage("contact");actionLabel.textContent="CONTACT";
 
-  function setFormation(){
-    const f=formations[Math.floor(Math.random()*formations.length)];
-    st.formation=f;
-    recv.forEach((el,i)=>{
-      el.classList.remove("weak","react","dive");
-      if(i===f.weak)el.classList.add("weak");
-      el.style.left=f.p[i][0]+"%";
-      el.style.top=f.p[i][1]+"%";
-    });
-    coach.className="coach "+f.c;
-    hint.style.left=f.h[0]+"%";hint.style.top=f.h[1]+"%";
-    hint.style.display="block";
-
-    // Convert the visual target into the Stage 1 direction gauge.
-    // Flight maps direction 0..1 into roughly 18%..82% of the court width.
-    const targetX=f.h[0]/100;
-    st.targetDir=Math.max(0,Math.min(1,(targetX-.18)/.64));
-
-    // Slightly vary the directional window so each rep does not feel identical.
-    // Edge targets are a touch tighter than central seams.
-    const edge=Math.abs(st.targetDir-.5)*2;
-    st.dirWidth=Math.max(.11,.18-(edge*.04));
-
-    // Convert desired receiving depth into power:
-    // near net (large y) = short/low power, far baseline (small y) = deep/high power.
-    const targetY=f.h[1]/100;
-    st.targetPower=Math.max(.08,Math.min(.96,(.44-targetY)/.25));
-    // Deep power serves get a smaller timing window.
-    st.powerWidth=Math.max(.09,.24-(st.targetPower*.15));
-
-    setTimeout(()=>{
-      if(st.busy)return;
-      const idx=Math.floor(Math.random()*recv.length);
-      const el=recv[idx],base=f.p[idx];
-      el.style.left=(base[0]+(Math.random()>.5?4:-4))+"%";
-      el.style.top=(base[1]+(Math.random()-.5)*2)+"%";
-    },520);
-  }
-
-  function resetInput(){
-    cancelAnimationFrame(st.raf);
-    st.phase="direction";st.dir=.5;st.dirSign=1;st.power=.08;st.powerSign=1;st.contact=.5;st.contactSign=1;
-    directionUi.style.display="block";powerUi.style.display="none";contactUi.style.display="none";
-    btnLabel.textContent="LOCK";phaseBadge.textContent="LOCK DIRECTION";
-    trajectory.style.display="block";trajectory.classList.remove("locked");
-    powerTrace.style.display="none";powerFill.style.width="0";
-
-    // Move the Stage 1 green target to the actual tactical aiming lane for this rep.
-    const dirLeft=Math.max(0,Math.min(1-st.dirWidth,st.targetDir-st.dirWidth/2));
-    directionGreen.style.left=(dirLeft*100)+"%";
-    directionGreen.style.width=(st.dirWidth*100)+"%";
-
-    // Reset contact guidance; it will shift after the direction lock if the player misses.
-    contactScaleGreen.style.left="46%";
-    contactScaleGreen.style.width="8%";
-
-    animateDirection();
-  }
-
-  function angleForDir(v){ return -34+v*68; }
-
-  function animateDirection(){
-    if(st.phase!=="direction"||st.busy)return;
-    st.dir+=.012*st.dirSign;
-    if(st.dir>=1){st.dir=1;st.dirSign=-1}
-    if(st.dir<=0){st.dir=0;st.dirSign=1}
-    const a=angleForDir(st.dir);
-    trajectory.style.transform=`rotate(${a}deg)`;
-    dirDot.style.left=(st.dir*100)+"%";
-    st.raf=requestAnimationFrame(animateDirection);
-  }
-
-  function lockDirection(){
-    cancelAnimationFrame(st.raf);
-    st.dirLocked=st.dir;
-    trajectory.classList.add("locked");
-    trajectory.style.transform=`rotate(${angleForDir(st.dirLocked)}deg)`;
-
-    st.phase="power";
-    directionUi.style.display="none";powerUi.style.display="block";contactUi.style.display="none";
-    btnLabel.textContent="LOCK";phaseBadge.textContent="LOCK DEPTH / PACE";
-
-    const left=Math.max(0,Math.min(1-st.powerWidth,st.targetPower-st.powerWidth/2));
-    powerGreen.style.left=(left*100)+"%";
-    powerGreen.style.width=(st.powerWidth*100)+"%";
-
-    powerTrace.style.display="block";
-    powerTrace.style.transform=`rotate(${angleForDir(st.dirLocked)}deg)`;
-    setTimeout(animatePower,60);
-  }
-
-  function animatePower(){
-    if(st.phase!=="power"||st.busy)return;
-    st.power+=.015*st.powerSign;
-    if(st.power>=1){st.power=1;st.powerSign=-1}
-    if(st.power<=.04){st.power=.04;st.powerSign=1}
-
-    powerFill.style.width=(st.power*100)+"%";
-
-    // Dynamic line length: short serve = short line, deep/power serve = long line.
-    const h=(26+st.power*50); // percentage of shell height
-    powerTrace.style.height=h+"%";
-
-    st.raf=requestAnimationFrame(animatePower);
-  }
-
-  function lockPower(){
-    cancelAnimationFrame(st.raf);
-    st.phase="contact";
-    directionUi.style.display="none";powerUi.style.display="none";contactUi.style.display="block";
-    btnLabel.textContent="HIT";phaseBadge.textContent="CONTACT";
-    powerTrace.style.display="none";
-
-    // If the player missed the Stage 1 lane, Stage 3 can slightly rescue it.
-    // Aim too far right => contact more on the right side to bend it back left, and vice versa.
-    const rawDirError=st.dirLocked-st.targetDir;
-    st.targetContact=Math.max(.12,Math.min(.88,.5 + (rawDirError/.40)));
-    st.contactWidth=Math.max(.10,.16 - Math.min(.05,Math.abs(rawDirError)*.12));
-    const cLeft=Math.max(0,Math.min(1-st.contactWidth,st.targetContact-st.contactWidth/2));
-    contactScaleGreen.style.left=(cLeft*100)+"%";
-    contactScaleGreen.style.width=(st.contactWidth*100)+"%";
-
-    setTimeout(animateContact,60);
-  }
-
-  function animateContact(){
+  const error=st.aimLocked-st.s.aim;
+  const rescue=clamp(.5+error/.30,.12,.88);
+  setYellow(contactTarget,rescue,.16);
+  st.s.dynamicContact=rescue;
+  animateContact();
+}
+function animateContact(){
+  stop();
+  const tick=()=>{
     if(st.phase!=="contact"||st.busy)return;
     st.contact+=.018*st.contactSign;
     if(st.contact>=.94){st.contact=.94;st.contactSign=-1}
     if(st.contact<=.06){st.contact=.06;st.contactSign=1}
-
+    contactNeedle.style.left=(st.contact*100)+"%";
     contactCursor.style.left=(st.contact*100)+"%";
-    contactScaleDot.style.left=(st.contact*100)+"%";
-    st.raf=requestAnimationFrame(animateContact);
-  }
+    st.raf=requestAnimationFrame(tick);
+  };
+  st.raf=requestAnimationFrame(tick);
+}
+function playSet(){
+  const W=shell.clientWidth,H=shell.clientHeight;
+  setBall.style.display="block";
+  setBall.style.transition="none";
+  setBall.style.left=W*.54+"px";
+  setBall.style.top=H*.69+"px";
+  void setBall.offsetWidth;
+  setBall.style.transition="left 520ms cubic-bezier(.2,.7,.3,1),top 520ms cubic-bezier(.2,.7,.3,1),transform 520ms";
+  setBall.style.left=W*.24+"px";
+  setBall.style.top=H*.54+"px";
+  setBall.style.transform="rotate(300deg)";
+  setTimeout(()=>setBall.style.display="none",550);
+}
+function finish(){
+  stop();st.contactLocked=st.contact;st.phase="flight";st.busy=true;action.disabled=true;
 
-  function lockContactAndServe(){
-    cancelAnimationFrame(st.raf);
-    st.contactLocked=st.contact;
-    st.phase="flight";st.busy=true;btn.disabled=true;hint.style.display="none";
-    btnLabel.textContent="...";
-    doServe();
-  }
+  const approachAcc=clamp(1-Math.abs(st.approachLocked-st.s.approach)/.28);
+  const contactTarget=st.s.dynamicContact??st.s.contact;
+  const contactAcc=clamp(1-Math.abs(st.contactLocked-contactTarget)/.26);
 
-  btn.addEventListener("click",e=>{
-    e.preventDefault();
-    if(st.busy)return;
-    if(st.phase==="direction")lockDirection();
-    else if(st.phase==="power")lockPower();
-    else if(st.phase==="contact")lockContactAndServe();
-  });
+  // Contact can rescue a small aim error, but not a huge one.
+  const correction=(st.contactLocked-.5)*.26;
+  const effectiveAim=clamp(st.aimLocked-correction);
+  const aimAcc=clamp(1-Math.abs(effectiveAim-st.s.aim)/.25);
 
-  function doServe(){
-    const W=shell.clientWidth,H=shell.clientHeight;
+  const quality=clamp(approachAcc*.30+aimAcc*.42+contactAcc*.28);
+  animateHit(effectiveAim,quality);
 
-    // Contact can slightly rescue the initial direction lock.
-    // Right-side contact bends the ball left; left-side contact bends it right.
-    const contactOffset=(st.contactLocked-.5); // -0.5...+0.5
-    st.effectiveDir=Math.max(0,Math.min(1,st.dirLocked-(contactOffset*.40)));
-
-    // Effective direction chooses the lateral lane after the contact adjustment.
-    let endX=W*(.18+st.effectiveDir*.64);
-
-    // Power chooses depth: low = short (near net, larger y), high = deep (smaller y).
-    let endY=H*(.44-st.power*.25);
-
-    // More off-centre contact bleeds a little pace/depth.
-    const off=Math.abs(contactOffset)*2;
-    endY+=H*(off*.035);
-
-    endX=Math.max(W*.11,Math.min(W*.89,endX));
-    endY=Math.max(H*.12,Math.min(H*.46,endY));
-
-    const startX=W*.5,startY=H*.93;
-    ball.style.display="block";
-    ball.style.transition="none";
-    ball.style.left=startX+"px";ball.style.top=startY+"px";
-    ball.style.transform="translate(-50%,-50%) scale(1) rotate(0deg)";
-    void ball.offsetWidth;
-
-    const dur=720-st.power*270;
-    ball.style.transition=`left ${dur}ms cubic-bezier(.18,.72,.33,1),top ${dur}ms cubic-bezier(.18,.72,.33,1),transform ${dur}ms`;
-    ball.style.left=endX+"px";ball.style.top=endY+"px";
-    ball.style.transform=`translate(-50%,-50%) scale(.76) rotate(${430+(contactOffset*220)}deg)`;
-
-    setTimeout(()=>resolve(endX,endY,off),dur+30);
-  }
-
-  function resolve(x,y,off){
-    const weak=recv[st.formation.weak];
-    const wx=parseFloat(weak.style.left)/100*shell.clientWidth;
-    const wy=parseFloat(weak.style.top)/100*shell.clientHeight;
-
-    const dx=(x-wx)/shell.clientWidth,dy=(y-wy)/shell.clientHeight;
-    const tactical=Math.max(0,1-Math.hypot(dx,dy)/.29);
-
-    // Direction accuracy now uses the post-contact flight lane.
-    const directionAccuracy=Math.max(
-      0,
-      1-(Math.abs(st.effectiveDir-st.targetDir)/Math.max(.09,st.dirWidth*.85))
-    );
-
-    // How close power was to this rep's dynamic target.
-    const powerAccuracy=Math.max(0,1-(Math.abs(st.power-st.targetPower)/Math.max(.12,st.powerWidth*.9)));
-
-    // Contact is judged against the dynamic rescue target, but still rewards clean strikes.
-    const contactFit=Math.max(0,1-(Math.abs(st.contactLocked-st.targetContact)/Math.max(.09,st.contactWidth*.95)));
-    const cleanStrike=Math.max(0,1-off*1.05);
-    const contactAccuracy=(contactFit*.72)+(cleanStrike*.28);
-
-    const quality=Math.round(
-      Math.max(0,Math.min(1,
-        tactical*.30 +
-        directionAccuracy*.18 +
-        powerAccuracy*.30 +
-        contactAccuracy*.22
-      ))*100
-    );
-
-    let tag,pts;
-    if(quality>=88){tag="ACE";pts=3;weak.classList.add("dive")}
-    else if(quality>=74){tag="PRESSURE";pts=2;weak.classList.add("react")}
-    else if(quality>=58){tag="IN SYSTEM";pts=1;weak.classList.add("react")}
-    else{tag="FREE BALL";pts=0}
-
+  setTimeout(()=>{
+    let label,pts;
+    if(quality>=.90){label="KILL";pts=3}
+    else if(quality>=.75){label="PRESSURE";pts=2}
+    else if(quality>=.58){label="RECYCLED";pts=1}
+    else{label="BLOCKED";pts=0}
     st.score+=pts;scoreEl.textContent=st.score;
-    flash.querySelector("b").textContent=quality+"%";
-    flash.querySelector("span").textContent=tag;
+    flash.querySelector("b").textContent=Math.round(quality*100)+"%";
+    flash.querySelector("span").textContent=label;
     flash.classList.add("show");
-    ball.style.display="none";
 
     setTimeout(()=>{
       flash.classList.remove("show");
       st.rep++;
       if(st.rep>st.total){st.rep=1;st.score=0;scoreEl.textContent="0"}
       repEl.textContent=st.rep+" / "+st.total;
-      st.busy=false;btn.disabled=false;
-      setFormation();resetInput();
-    },1150);
-  }
+      action.disabled=false;
+      setup();
+    },1000);
+  },650);
+}
+function animateHit(effectiveAim,quality){
+  const W=shell.clientWidth,H=shell.clientHeight;
+  const startX=W*.24,startY=H*.54;
+  const endX=W*(.15+effectiveAim*.70);
+  const endY=H*(.18+(1-quality)*.19);
+  hitBall.style.display="block";
+  hitBall.style.transition="none";
+  hitBall.style.left=startX+"px";hitBall.style.top=startY+"px";
+  hitBall.style.transform="translate(-50%,-50%) scale(1)";
+  void hitBall.offsetWidth;
+  hitBall.style.transition="left 430ms cubic-bezier(.16,.75,.28,1),top 430ms cubic-bezier(.16,.75,.28,1),transform 430ms";
+  hitBall.style.left=endX+"px";hitBall.style.top=endY+"px";
+  hitBall.style.transform=`translate(-50%,-50%) scale(.78) rotate(${440+(st.contactLocked-.5)*240}deg)`;
+  setTimeout(()=>hitBall.style.display="none",470);
+}
+function trigger(){
+  if(st.busy)return;
+  if(st.phase==="approach")lockApproach();
+  else if(st.phase==="aim")lockAim();
+  else if(st.phase==="contact")finish();
+}
+action.addEventListener("click",trigger);
+document.addEventListener("keydown",e=>{
+  if(e.code!=="Space"||e.repeat)return;
+  const t=e.target;
+  if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable))return;
+  e.preventDefault();trigger();
+});
 
-  setFormation();
-  resetInput();
+setup();
 })();
 </script>
 </body>
