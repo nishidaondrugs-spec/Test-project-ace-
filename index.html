@@ -121,6 +121,16 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
 @media(min-width:760px){
   .bottom{padding-left:max(18px,calc((100vw - 640px)/2));padding-right:max(18px,calc((100vw - 640px)/2))}
 }
+
+.powerCall{
+  position:absolute;left:10px;top:10px;z-index:70;padding:8px 11px;border-radius:10px;
+  background:rgba(3,10,17,.82);border:1px solid rgba(255,255,255,.10);
+  font-size:9px;font-weight:1000;letter-spacing:.13em;color:#fff;backdrop-filter:blur(6px)
+}
+.powerCall.high{color:#ffdf73;border-color:rgba(255,202,74,.28);box-shadow:0 0 22px rgba(255,196,55,.08)}
+.powerCall.medium{color:#a9ddff;border-color:rgba(97,193,255,.27)}
+.powerCall.low{color:#92edb7;border-color:rgba(82,213,137,.26)}
+
 </style>
 </head>
 <body>
@@ -135,7 +145,7 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
     <div class="shell" id="shell">
       <div class="court"></div>
       <div class="net"></div>
-      <div class="situation" id="situation">READ THE BLOCK</div>
+      <div class="situation" id="situation">READ THE BLOCK</div><div class="powerCall" id="powerCall">POWER · MEDIUM</div>
 
       <div class="player" id="hitter"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
       <div class="setter"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
@@ -158,28 +168,28 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
 
   <div class="bottom">
     <div class="panel">
-      <div class="stage active" id="approachStage">
-        <div class="stageTitle">1 · APPROACH TIMING</div>
-        <div class="track">
-          <i class="yellow" id="approachTarget"></i>
-          <em class="needle" id="approachNeedle"></em>
-        </div>
-        <div class="labels"><span>EARLY</span><span>ON TIME</span><span>LATE</span></div>
-        <div class="help">Time your approach to the set.</div>
-      </div>
-
-      <div class="stage" id="aimStage">
-        <div class="stageTitle">2 · SHOT DIRECTION</div>
+      <div class="stage active" id="aimStage">
+        <div class="stageTitle">1 · SWING DIRECTION</div>
         <div class="track">
           <i class="yellow" id="aimTarget"></i>
           <em class="needle" id="aimNeedle"></em>
         </div>
         <div class="labels"><span>LINE</span><span>SEAM</span><span>CROSS</span></div>
-        <div class="help">Read the block and defence, then choose the open court.</div>
+        <div class="help">Lock the swing angle into the open court.</div>
+      </div>
+
+      <div class="stage" id="powerStage">
+        <div class="stageTitle">2 · SWING POWER</div>
+        <div class="track">
+          <i class="yellow" id="powerTarget"></i>
+          <em class="needle" id="powerNeedle"></em>
+        </div>
+        <div class="labels"><span>LOW</span><span>MEDIUM</span><span>HIGH</span></div>
+        <div class="help" id="powerHelp">The scenario tells you how much power this swing needs.</div>
       </div>
 
       <div class="stage" id="contactStage">
-        <div class="stageTitle">3 · CONTACT / POWER</div>
+        <div class="stageTitle">3 · BALL CONTACT</div>
         <div class="contactRow">
           <div class="contactBall"><i class="contactCursor" id="contactCursor"></i></div>
           <div class="contactInfo">
@@ -188,13 +198,13 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
               <em class="needle" id="contactNeedle"></em>
             </div>
             <div class="labels"><span>LEFT SIDE</span><span>CENTRE</span><span>RIGHT SIDE</span></div>
-            <div class="help">Contact can slightly rescue your aim or pull it further off.</div>
+            <div class="help">Contact can shape the final direction, but only slightly.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <button class="btn" id="action"><span class="btnBall"></span><small id="actionLabel">LOCK APPROACH</small></button>
+    <button class="btn" id="action"><span class="btnBall"></span><small id="actionLabel">LOCK SWING</small></button>
   </div>
 </div>
 
@@ -202,70 +212,77 @@ conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb
 (()=>{
 const $=s=>document.querySelector(s);
 const shell=$("#shell"), action=$("#action"), actionLabel=$("#actionLabel");
-const approachStage=$("#approachStage"), aimStage=$("#aimStage"), contactStage=$("#contactStage");
-const approachNeedle=$("#approachNeedle"),aimNeedle=$("#aimNeedle"),contactNeedle=$("#contactNeedle");
-const approachTarget=$("#approachTarget"),aimTarget=$("#aimTarget"),contactTarget=$("#contactTarget"),contactCursor=$("#contactCursor");
-const aimLine=$("#aimLine"),target=$("#target"),setBall=$("#setBall"),hitBall=$("#hitBall"),flash=$("#flash"),situation=$("#situation");
+const aimStage=$("#aimStage"), powerStage=$("#powerStage"), contactStage=$("#contactStage");
+const aimNeedle=$("#aimNeedle"),powerNeedle=$("#powerNeedle"),contactNeedle=$("#contactNeedle");
+const aimTarget=$("#aimTarget"),powerTarget=$("#powerTarget"),contactTarget=$("#contactTarget"),contactCursor=$("#contactCursor");
+const aimLine=$("#aimLine"),target=$("#target"),setBall=$("#setBall"),hitBall=$("#hitBall"),flash=$("#flash"),situation=$("#situation"),powerCall=$("#powerCall"),powerHelp=$("#powerHelp");
 const blockers=[$("#b0"),$("#b1"),$("#b2")],defs=[$("#d0"),$("#d1"),$("#d2")];
 const repEl=$("#rep"),scoreEl=$("#score");
 
+/*
+  Hitting now tests ONLY the swing:
+  1. direction
+  2. power
+  3. contact
+  Approach timing belongs in the Vertical drill.
+*/
 const scenarios=[
   {
-    name:"LINE SEALED",
-    block:[[28,"high"],[38,""],[100,"off"]],
-    def:[[28,24],[51,23],[75,27]],
-    target:[72,30],
-    aim:.82, contact:.50, approach:.54
+    name:"LATE BLOCK · OPEN SEAM",
+    power:"HIGH", powerNeed:.86,
+    block:[[29,"late"],[42,"late"],[100,"off"]],
+    def:[[18,25],[51,25],[81,24]],
+    target:[53,29], aim:.53, contact:.50
   },
   {
-    name:"CROSS SEALED",
-    block:[[35,""],[46,"high"],[100,"off"]],
-    def:[[20,28],[46,25],[76,24]],
-    target:[22,31],
-    aim:.18, contact:.50, approach:.50
+    name:"DEEP DEFENCE · OPEN TIP",
+    power:"LOW", powerNeed:.18,
+    block:[[30,""],[43,""],[100,"off"]],
+    def:[[19,17],[51,18],[82,17]],
+    target:[54,43], aim:.55, contact:.50
   },
   {
-    name:"SEAM OPEN",
-    block:[[29,"split left"],[47,"split right"],[100,"off"]],
-    def:[[18,25],[50,34],[82,25]],
-    target:[51,31],
-    aim:.50, contact:.50, approach:.52
+    name:"LINE OPEN · CONTROL IT",
+    power:"MEDIUM", powerNeed:.52,
+    block:[[40,"high"],[50,""],[100,"off"]],
+    def:[[27,27],[55,22],[80,25]],
+    target:[22,31], aim:.18, contact:.50
   },
   {
-    name:"LATE MIDDLE",
-    block:[[31,""],[43,"late"],[100,"off"]],
-    def:[[20,25],[51,27],[81,23]],
-    target:[58,33],
-    aim:.60, contact:.46, approach:.46
+    name:"CROSS OPEN · CONTROL IT",
+    power:"MEDIUM", powerNeed:.50,
+    block:[[27,""],[38,"high"],[100,"off"]],
+    def:[[20,25],[48,23],[72,27]],
+    target:[77,31], aim:.82, contact:.50
   },
   {
-    name:"TRIPLE BLOCK",
-    block:[[28,"high"],[39,"high"],[50,"high"]],
-    def:[[18,30],[50,39],[82,30]],
-    target:[62,42],
-    aim:.66, contact:.58, approach:.56
+    name:"TRIPLE BLOCK · ROLL OFF",
+    power:"LOW", powerNeed:.22,
+    block:[[27,"high"],[39,"high"],[51,"high"]],
+    def:[[18,30],[50,38],[82,30]],
+    target:[65,42], aim:.67, contact:.56
   },
   {
-    name:"DEEP DEFENCE",
-    block:[[31,""],[42,""],[100,"off"]],
-    def:[[20,17],[50,18],[80,17]],
-    target:[51,43],
-    aim:.50, contact:.50, approach:.50
+    name:"ONE BLOCKER · PUT IT AWAY",
+    power:"HIGH", powerNeed:.88,
+    block:[[38,"late"],[100,"off"],[100,"off"]],
+    def:[[19,24],[53,27],[82,23]],
+    target:[72,30], aim:.78, contact:.48
   }
 ];
 
 const st={
-  rep:1,total:8,score:0,phase:"approach",busy:false,raf:0,
-  approach:.1,approachSign:1,approachLocked:.5,
+  rep:1,total:8,score:0,phase:"aim",busy:false,raf:0,
   aim:.5,aimSign:1,aimLocked:.5,
+  power:.08,powerSign:1,powerLocked:.5,
   contact:.5,contactSign:1,contactLocked:.5,
   s:null
 };
 
 function clamp(v,a=0,b=1){return Math.max(a,Math.min(b,v))}
 function showStage(which){
-  approachStage.classList.toggle("active",which==="approach");
   aimStage.classList.toggle("active",which==="aim");
+  powerStage.classList.toggle("active",which==="power");
   contactStage.classList.toggle("active",which==="contact");
 }
 function stop(){if(st.raf)cancelAnimationFrame(st.raf);st.raf=0}
@@ -278,6 +295,13 @@ function setup(){
   stop();
   st.s=scenarios[Math.floor(Math.random()*scenarios.length)];
   situation.textContent=st.s.name;
+
+  powerCall.textContent="POWER · "+st.s.power;
+  powerCall.className="powerCall "+st.s.power.toLowerCase();
+  powerHelp.textContent=
+    st.s.power==="HIGH" ? "HIGH POWER — finish the swing hard." :
+    st.s.power==="LOW" ? "LOW POWER — take pace off and place it." :
+    "MEDIUM POWER — controlled swing, not full power.";
 
   blockers.forEach((b,i)=>{
     const [x,cls]=st.s.block[i];
@@ -292,40 +316,23 @@ function setup(){
   target.style.left=st.s.target[0]+"%";
   target.style.top=st.s.target[1]+"%";
 
-  setYellow(approachTarget,st.s.approach,.18);
   setYellow(aimTarget,st.s.aim,.18);
+  setYellow(powerTarget,st.s.powerNeed,st.s.power==="HIGH"?.13:st.s.power==="LOW"?.17:.20);
   setYellow(contactTarget,st.s.contact,.18);
 
-  st.phase="approach";st.busy=false;
-  st.approach=.08;st.approachSign=1;
+  st.phase="aim";st.busy=false;
   st.aim=.5;st.aimSign=1;
+  st.power=.08;st.powerSign=1;
   st.contact=.5;st.contactSign=1;
-  showStage("approach");
-  actionLabel.textContent="LOCK APPROACH";
-  aimLine.style.display="none";
-  aimLine.classList.remove("locked");
-  animateApproach();
-}
 
-function animateApproach(){
-  stop();
-  const tick=()=>{
-    if(st.phase!=="approach"||st.busy)return;
-    st.approach+=.014*st.approachSign;
-    if(st.approach>=1){st.approach=1;st.approachSign=-1}
-    if(st.approach<=0){st.approach=0;st.approachSign=1}
-    approachNeedle.style.left=(st.approach*100)+"%";
-    st.raf=requestAnimationFrame(tick);
-  };
-  st.raf=requestAnimationFrame(tick);
-}
-function lockApproach(){
-  stop();st.approachLocked=st.approach;st.phase="aim";
-  showStage("aim");actionLabel.textContent="LOCK SHOT";
-  playSet();
+  showStage("aim");
+  actionLabel.textContent="LOCK SWING";
   aimLine.style.display="block";
+  aimLine.classList.remove("locked");
+  playSet();
   animateAim();
 }
+
 function animateAim(){
   stop();
   const tick=()=>{
@@ -340,10 +347,29 @@ function animateAim(){
   st.raf=requestAnimationFrame(tick);
 }
 function lockAim(){
-  stop();st.aimLocked=st.aim;st.phase="contact";
+  stop();st.aimLocked=st.aim;st.phase="power";
   aimLine.classList.add("locked");
+  showStage("power");
+  actionLabel.textContent="LOCK POWER";
+  animatePower();
+}
+function animatePower(){
+  stop();
+  const tick=()=>{
+    if(st.phase!=="power"||st.busy)return;
+    st.power+=.016*st.powerSign;
+    if(st.power>=1){st.power=1;st.powerSign=-1}
+    if(st.power<=0){st.power=0;st.powerSign=1}
+    powerNeedle.style.left=(st.power*100)+"%";
+    st.raf=requestAnimationFrame(tick);
+  };
+  st.raf=requestAnimationFrame(tick);
+}
+function lockPower(){
+  stop();st.powerLocked=st.power;st.phase="contact";
   showStage("contact");actionLabel.textContent="CONTACT";
 
+  // Contact can rescue a small aim miss.
   const error=st.aimLocked-st.s.aim;
   const rescue=clamp(.5+error/.30,.12,.88);
   setYellow(contactTarget,rescue,.16);
@@ -369,6 +395,7 @@ function playSet(){
   setBall.style.transition="none";
   setBall.style.left=W*.54+"px";
   setBall.style.top=H*.69+"px";
+  setBall.style.transform="rotate(0deg)";
   void setBall.offsetWidth;
   setBall.style.transition="left 520ms cubic-bezier(.2,.7,.3,1),top 520ms cubic-bezier(.2,.7,.3,1),transform 520ms";
   setBall.style.left=W*.24+"px";
@@ -379,27 +406,27 @@ function playSet(){
 function finish(){
   stop();st.contactLocked=st.contact;st.phase="flight";st.busy=true;action.disabled=true;
 
-  const approachAcc=clamp(1-Math.abs(st.approachLocked-st.s.approach)/.28);
-  const contactTarget=st.s.dynamicContact??st.s.contact;
-  const contactAcc=clamp(1-Math.abs(st.contactLocked-contactTarget)/.26);
+  const powerWindow=st.s.power==="HIGH"?.19:st.s.power==="LOW"?.22:.25;
+  const powerAcc=clamp(1-Math.abs(st.powerLocked-st.s.powerNeed)/powerWindow);
+  const contactTargetVal=st.s.dynamicContact??st.s.contact;
+  const contactAcc=clamp(1-Math.abs(st.contactLocked-contactTargetVal)/.26);
 
-  // Contact can rescue a small aim error, but not a huge one.
   const correction=(st.contactLocked-.5)*.26;
   const effectiveAim=clamp(st.aimLocked-correction);
   const aimAcc=clamp(1-Math.abs(effectiveAim-st.s.aim)/.25);
 
-  const quality=clamp(approachAcc*.30+aimAcc*.42+contactAcc*.28);
-  animateHit(effectiveAim,quality);
+  const quality=clamp(aimAcc*.44+powerAcc*.34+contactAcc*.22);
+  animateHit(effectiveAim,quality,st.powerLocked);
 
   setTimeout(()=>{
     let label,pts;
     if(quality>=.90){label="KILL";pts=3}
-    else if(quality>=.75){label="PRESSURE";pts=2}
-    else if(quality>=.58){label="RECYCLED";pts=1}
-    else{label="BLOCKED";pts=0}
+    else if(quality>=.75){label="GOOD SWING";pts=2}
+    else if(quality>=.58){label="PLAYABLE";pts=1}
+    else{label="BLOCKED / OUT";pts=0}
     st.score+=pts;scoreEl.textContent=st.score;
     flash.querySelector("b").textContent=Math.round(quality*100)+"%";
-    flash.querySelector("span").textContent=label;
+    flash.querySelector("span").textContent=label+" · "+st.s.power+" POWER";
     flash.classList.add("show");
 
     setTimeout(()=>{
@@ -412,25 +439,30 @@ function finish(){
     },1000);
   },650);
 }
-function animateHit(effectiveAim,quality){
+function animateHit(effectiveAim,quality,power){
   const W=shell.clientWidth,H=shell.clientHeight;
   const startX=W*.24,startY=H*.54;
   const endX=W*(.15+effectiveAim*.70);
-  const endY=H*(.18+(1-quality)*.19);
+
+  // High power drives deeper; low power drops shorter.
+  const powerDepth=.40-power*.24;
+  const endY=H*clamp(powerDepth+(1-quality)*.14,.12,.50);
+
   hitBall.style.display="block";
   hitBall.style.transition="none";
   hitBall.style.left=startX+"px";hitBall.style.top=startY+"px";
   hitBall.style.transform="translate(-50%,-50%) scale(1)";
   void hitBall.offsetWidth;
-  hitBall.style.transition="left 430ms cubic-bezier(.16,.75,.28,1),top 430ms cubic-bezier(.16,.75,.28,1),transform 430ms";
+  const duration=520-power*150;
+  hitBall.style.transition=`left ${duration}ms cubic-bezier(.16,.75,.28,1),top ${duration}ms cubic-bezier(.16,.75,.28,1),transform ${duration}ms`;
   hitBall.style.left=endX+"px";hitBall.style.top=endY+"px";
-  hitBall.style.transform=`translate(-50%,-50%) scale(.78) rotate(${440+(st.contactLocked-.5)*240}deg)`;
-  setTimeout(()=>hitBall.style.display="none",470);
+  hitBall.style.transform=`translate(-50%,-50%) scale(.78) rotate(${420+(st.contactLocked-.5)*260}deg)`;
+  setTimeout(()=>hitBall.style.display="none",duration+40);
 }
 function trigger(){
   if(st.busy)return;
-  if(st.phase==="approach")lockApproach();
-  else if(st.phase==="aim")lockAim();
+  if(st.phase==="aim")lockAim();
+  else if(st.phase==="power")lockPower();
   else if(st.phase==="contact")finish();
 }
 action.addEventListener("click",trigger);
