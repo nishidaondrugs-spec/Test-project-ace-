@@ -40,7 +40,7 @@
 <body>
 <div class="app">
 <header class="top">
-  <div class="brand"><small>PROJECT ACE · DEFENCE TEST</small><b>POSITION → DEPTH → CONTACT</b></div>
+  <div class="brand"><small>PROJECT ACE · DEFENCE TEST</small><b>READ → REACT → CONTACT</b></div>
   <div class="switch"><button data-mode="training" class="active">TRAIN</button><button data-mode="match">MATCH</button></div>
 </header>
 <main class="main">
@@ -55,11 +55,11 @@
   <div class="flash" id="flash"><b></b><span></span></div><div class="result" id="result"></div>
 </section>
 <aside class="panel">
-  <div class="intro"><small>DEFENSIVE READ</small><b>Read first. Then commit.</b><span>Same Project ACE language as serving and hitting.</span></div>
-  <div class="stage active" id="positionStage"><div class="stageTitle">1 · DEFENSIVE POSITION</div><div class="track"><i class="band" id="positionBand"></i><em class="needle" id="positionNeedle"></em></div><div class="labels"><span>LINE</span><span>MIDDLE</span><span>CROSS</span></div><div class="help">Lock where you think the attack is going.</div></div>
-  <div class="stage" id="depthStage"><div class="stageTitle">2 · DEFENSIVE DEPTH</div><div class="track"><i class="band" id="depthBand"></i><em class="needle" id="depthNeedle"></em></div><div class="labels"><span>SHORT</span><span>BASE</span><span>DEEP</span></div><div class="help">Lock how deep you think it will land.</div></div>
-  <div class="stage" id="contactStage"><div class="stageTitle">3 · DIG CONTACT</div><div class="contactRow"><div class="contactBall"><i class="contactCursor" id="contactCursor"></i></div><div style="flex:1"><div class="track"><i class="band" id="contactBand"></i><em class="needle" id="contactNeedle"></em></div><div class="labels"><span>LEFT</span><span>CENTRE</span><span>RIGHT</span></div><div class="help">Clean contact can rescue a small positioning miss.</div></div></div></div>
-  <button class="action" id="action"><span class="buttonBall"></span><b id="actionLabel">LOCK POSITION</b></button>
+  <div class="intro"><small>DEFENSIVE READ</small><b>See it. React. Finish.</b><span>The hitter shows the attack first. You react to the ball, then make the dig.</span></div>
+  <div class="stage active" id="positionStage"><div class="stageTitle">1 · READ THE HITTER</div><div class="track"><i class="band" id="positionBand" style="left:0;width:100%"></i><em class="needle" id="positionNeedle" style="left:0"></em></div><div class="labels"><span>BODY</span><span>ARM</span><span>BALL</span></div><div class="help">Watch the hitter and the first part of the ball flight.</div></div>
+  <div class="stage" id="depthStage"><div class="stageTitle">2 · REACT</div><div class="track"><i class="band" id="depthBand"></i><em class="needle" id="depthNeedle"></em></div><div class="labels"><span>LINE</span><span>MIDDLE</span><span>CROSS</span></div><div class="help">Commit to the lane the ball is actually travelling toward.</div></div>
+  <div class="stage" id="contactStage"><div class="stageTitle">3 · DIG CONTACT</div><div class="contactRow"><div class="contactBall"><i class="contactCursor" id="contactCursor"></i></div><div style="flex:1"><div class="track"><i class="band" id="contactBand"></i><em class="needle" id="contactNeedle"></em></div><div class="labels"><span>LEFT</span><span>CENTRE</span><span>RIGHT</span></div><div class="help">Clean platform contact can rescue a small reaction miss.</div></div></div></div>
+  <button class="action" id="action"><span class="buttonBall"></span><b id="actionLabel">WATCH SWING</b></button>
   <div class="progress" id="progress"></div><div class="footer" id="footer"></div>
 </aside>
 </main>
@@ -68,52 +68,47 @@
 (()=>{
 const $=s=>document.querySelector(s),clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const scene=$("#scene"),attacker=$("#attacker"),blocker=$("#blocker"),defender=$("#defender"),ball=$("#ball"),target=$("#target");
-const posStage=$("#positionStage"),depthStage=$("#depthStage"),contactStage=$("#contactStage"),posNeedle=$("#positionNeedle"),depthNeedle=$("#depthNeedle"),contactNeedle=$("#contactNeedle"),cursor=$("#contactCursor");
-const posBand=$("#positionBand"),depthBand=$("#depthBand"),contactBand=$("#contactBand"),action=$("#action"),label=$("#actionLabel"),cue=$("#cue"),matchCue=$("#matchCue"),badge=$("#badge"),flash=$("#flash"),result=$("#result"),progress=$("#progress"),footer=$("#footer");
+const readStage=$("#positionStage"),reactStage=$("#depthStage"),contactStage=$("#contactStage"),readNeedle=$("#positionNeedle"),reactNeedle=$("#depthNeedle"),contactNeedle=$("#contactNeedle"),cursor=$("#contactCursor");
+const readBand=$("#positionBand"),reactBand=$("#depthBand"),contactBand=$("#contactBand"),action=$("#action"),label=$("#actionLabel"),cue=$("#cue"),matchCue=$("#matchCue"),badge=$("#badge"),flash=$("#flash"),result=$("#result"),progress=$("#progress"),footer=$("#footer");
 const scenarios=[
- {key:"cross",name:"HARD CROSS · DEEP",body:"open",pos:.79,depth:.82,pw:.18,dw:.20,cue:"SHOULDER OPENS EARLY · HARD SWING",shot:"HARD CROSS"},
- {key:"line",name:"LINE · BASE/DEEP",body:"closed",pos:.18,depth:.68,pw:.17,dw:.23,cue:"SHOULDER STAYS CLOSED · LINE AVAILABLE",shot:"LINE"},
- {key:"tip",name:"TIP · SHORT",body:"tip",pos:.49,depth:.18,pw:.22,dw:.16,cue:"ARM SPEED DROPS · HAND SOFTENS",shot:"TIP"},
- {key:"tool",name:"BLOCK TOUCH · LATE DEFLECTION",body:"open",pos:.65,depth:.48,pw:.24,dw:.26,cue:"WATCH THE BLOCK TOUCH · REACT LATE",shot:"TOOL DEFLECTION",deflect:true},
- {key:"crossBase",name:"CROSS · BASE",body:"open",pos:.74,depth:.55,pw:.20,dw:.24,cue:"CROSS BODY SHAPE · CONTROLLED SWING",shot:"CROSS"}
+ {key:"cross",name:"HARD CROSS",body:"open",target:.80,cue:"SHOULDER OPENS · ARM COMES ACROSS",shot:"HARD CROSS",speed:520},
+ {key:"line",name:"LINE",body:"closed",target:.18,cue:"SHOULDER STAYS CLOSED · STRAIGHT ARM",shot:"LINE",speed:540},
+ {key:"tip",name:"TIP",body:"tip",target:.50,cue:"ARM SPEED DROPS · SOFT HAND",shot:"TIP",speed:760,short:true},
+ {key:"tool",name:"BLOCK TOUCH",body:"open",target:.67,cue:"WATCH THE BALL AFTER THE BLOCK",shot:"TOOL DEFLECTION",speed:600,deflect:true},
+ {key:"crossBase",name:"CROSS",body:"open",target:.73,cue:"OPEN BODY · CONTROLLED CROSS",shot:"CROSS",speed:610}
 ];
-const st={mode:"training",rep:1,total:8,phase:"position",busy:false,raf:0,p:.5,pd:1,pl:.5,d:.5,dd:1,dl:.5,c:.5,cd:1,cl:.5,s:null};
+const st={mode:"training",rep:1,total:8,phase:"read",busy:false,raf:0,r:.5,rd:1,rl:.5,c:.5,cd:1,cl:.5,s:null,launched:false};
 function stop(){if(st.raf)cancelAnimationFrame(st.raf);st.raf=0}
 function band(el,c,w){const l=clamp(c-w/2,0,1-w);el.style.left=l*100+"%";el.style.width=w*100+"%"}
-function stage(x){posStage.classList.toggle("active",x==="position");depthStage.classList.toggle("active",x==="depth");contactStage.classList.toggle("active",x==="contact")}
-function place(p,d){defender.style.left=(18+p*64)+"%";defender.style.top=(62+d*26)+"%"}
-function modeUI(){const tr=st.mode==="training";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===st.mode));target.style.display=tr?"block":"none";posBand.style.display=tr?"block":"none";depthBand.style.display=tr?"block":"none";cue.style.display=tr?"block":"none";matchCue.style.display=tr?"none":"block";footer.textContent=tr?"Green = ideal · Yellow = close. Match hides the answer.":"No target zones. Read the attacker and blocker yourself."}
+function stage(x){readStage.classList.toggle("active",x==="read");reactStage.classList.toggle("active",x==="react");contactStage.classList.toggle("active",x==="contact")}
+function place(x){defender.style.left=(18+x*64)+"%";defender.style.top="78%"}
+function modeUI(){const tr=st.mode==="training";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===st.mode));cue.style.display=tr?"block":"none";matchCue.style.display=tr?"none":"block";reactBand.style.display=tr?"block":"none";target.style.display="none";footer.textContent=tr?"Training exaggerates the body cue and shows the reaction lane.":"No answer shown. Read the hitter, ball and block yourself."}
 function setup(){
- stop();st.s=scenarios[Math.floor(Math.random()*scenarios.length)];Object.assign(st,{phase:"position",busy:false,p:.5,pd:1,pl:.5,d:.5,dd:1,dl:.5,c:.5,cd:1,cl:.5});
- attacker.className="person attacker "+st.s.body;cue.textContent=st.s.name+" · "+st.s.cue;badge.textContent="REP "+st.rep+" / "+st.total;
- band(posBand,st.s.pos,st.s.pw);band(depthBand,st.s.depth,st.s.dw);band(contactBand,.5,.16);target.style.left=(18+st.s.pos*64)+"%";target.style.top=(62+st.s.depth*26)+"%";
- place(.5,.5);flash.classList.remove("show");result.classList.remove("show");stage("position");label.textContent="LOCK POSITION";action.disabled=false;
- progress.innerHTML=Array.from({length:st.total},(_,i)=>`<i class="${i<st.rep-1?"done":""}"></i>`).join("");modeUI();posLoop();
+ stop();st.s=scenarios[Math.floor(Math.random()*scenarios.length)];Object.assign(st,{phase:"read",busy:false,r:.5,rd:1,rl:.5,c:.5,cd:1,cl:.5,launched:false});
+ attacker.className="person attacker "+st.s.body;blocker.classList.remove("touch");cue.textContent=st.s.name+" · "+st.s.cue;matchCue.textContent=st.s.deflect?"WATCH THE BLOCK TOUCH":"READ THE HITTER + BALL";badge.textContent="REP "+st.rep+" / "+st.total;
+ readBand.style.display="block";band(readBand,.5,1);readNeedle.style.left="0%";band(reactBand,st.s.target,.18);band(contactBand,.5,.16);place(.5);ball.style.display="none";flash.classList.remove("show");result.classList.remove("show");stage("read");label.textContent="WATCH SWING";action.disabled=false;
+ progress.innerHTML=Array.from({length:st.total},(_,i)=>`<i class="${i<st.rep-1?"done":""}"></i>`).join("");modeUI();readPreview();
 }
-function posLoop(){stop();const t=()=>{if(st.phase!=="position"||st.busy)return;st.p+=.012*st.pd;if(st.p>=1){st.p=1;st.pd=-1}if(st.p<=0){st.p=0;st.pd=1}posNeedle.style.left=st.p*100+"%";st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
-function depthLoop(){stop();const t=()=>{if(st.phase!=="depth"||st.busy)return;st.d+=.015*st.dd;if(st.d>=1){st.d=1;st.dd=-1}if(st.d<=0){st.d=0;st.dd=1}depthNeedle.style.left=st.d*100+"%";place(st.pl,st.d);st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
-function contactLoop(){stop();const t=()=>{if(st.phase!=="contact"||st.busy)return;st.c+=.018*st.cd;if(st.c>=.94){st.c=.94;st.cd=-1}if(st.c<=.06){st.c=.06;st.cd=1}contactNeedle.style.left=st.c*100+"%";cursor.style.left=st.c*100+"%";st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
+function readPreview(){stop();let v=0;const t=()=>{if(st.phase!=="read"||st.busy)return;v+=.012;readNeedle.style.left=Math.min(1,v)*100+"%";if(v<1)st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
 function launch(){
- const W=scene.clientWidth,H=scene.clientHeight,sx=W*.25,sy=H*.43,tx=W*(.18+st.s.pos*.64),ty=H*(.62+st.s.depth*.26);
+ if(st.launched)return;st.launched=true;stop();attacker.style.transition="transform .18s ease";if(st.s.body==="open")attacker.style.transform="translate(-50%,-50%) rotate(-14deg) scale(1.08)";else if(st.s.body==="closed")attacker.style.transform="translate(-50%,-50%) rotate(13deg) scale(1.08)";else attacker.style.transform="translate(-50%,-50%) rotate(-2deg) scale(1.05)";
+ const W=scene.clientWidth,H=scene.clientHeight,sx=W*.25,sy=H*.43,tx=W*(.18+st.s.target*.64),ty=H*(st.s.short?.70:.77);
  ball.style.display="block";ball.style.transition="none";ball.style.left=sx+"px";ball.style.top=sy+"px";ball.style.transform="translate(-50%,-50%) rotate(0deg)";void ball.offsetWidth;
- if(st.s.deflect){const mx=W*.36,my=H*.505;ball.style.transition="left 260ms linear,top 260ms ease-in,transform 260ms linear";ball.style.left=mx+"px";ball.style.top=my+"px";ball.style.transform="translate(-50%,-50%) rotate(300deg)";setTimeout(()=>{ball.style.transition="left 430ms ease,top 430ms ease,transform 430ms linear";ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(720deg)"},265)}
- else{const ms=st.s.key==="tip"?620:500;ball.style.transition=`left ${ms}ms ease,top ${ms}ms ease,transform ${ms}ms linear`;ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(650deg)"}
+ if(st.s.deflect){const mx=W*.35,my=H*.505;ball.style.transition="left 250ms linear,top 250ms ease-in,transform 250ms linear";ball.style.left=mx+"px";ball.style.top=my+"px";ball.style.transform="translate(-50%,-50%) rotate(280deg)";setTimeout(()=>{blocker.classList.add("touch");startReact();ball.style.transition="left 420ms ease,top 420ms ease,transform 420ms linear";ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(690deg)"},255)}
+ else{ball.style.transition=`left ${st.s.speed}ms ease,top ${st.s.speed}ms ease,transform ${st.s.speed}ms linear`;ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(630deg)";setTimeout(startReact,170)}
 }
+function startReact(){if(st.phase!=="read")return;st.phase="react";stage("react");label.textContent="COMMIT";reactLoop()}
+function reactLoop(){stop();const t=()=>{if(st.phase!=="react"||st.busy)return;st.r+=.019*st.rd;if(st.r>=1){st.r=1;st.rd=-1}if(st.r<=0){st.r=0;st.rd=1}reactNeedle.style.left=st.r*100+"%";place(st.r);st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
+function toContact(){stop();st.rl=st.r;st.phase="contact";place(st.rl);stage("contact");label.textContent="DIG";const err=st.rl-st.s.target,rescue=clamp(.5+err/.28,.14,.86);st.s.ct=rescue;band(contactBand,rescue,.16);contactLoop()}
+function contactLoop(){stop();const t=()=>{if(st.phase!=="contact"||st.busy)return;st.c+=.02*st.cd;if(st.c>=.94){st.c=.94;st.cd=-1}if(st.c<=.06){st.c=.06;st.cd=1}contactNeedle.style.left=st.c*100+"%";cursor.style.left=st.c*100+"%";st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
 function finish(){
- stop();st.busy=true;st.cl=st.c;action.disabled=true;const pa=clamp(1-Math.abs(st.pl-st.s.pos)/.34),da=clamp(1-Math.abs(st.dl-st.s.depth)/.36),ct=Number(st.s.ct??.5),ca=clamp(1-Math.abs(st.cl-ct)/.27);let q=pa*.52+da*.30+ca*.18;if(Math.abs(st.pl-st.s.pos)>.45||Math.abs(st.dl-st.s.depth)>.48)q=Math.min(q,.49);
- const outcome=q>=.9?"PERFECT DIG":q>=.76?"CONTROLLED DIG":q>=.6?"KEPT ALIVE":"BEATEN",read=q>=.9?"GREAT READ":q>=.76?"GOOD READ":q>=.6?"READABLE":"MISREAD";
- const ptxt=st.pl<.34?"LINE":st.pl<.67?"MIDDLE":"CROSS",dtxt=st.dl<.34?"SHORT":st.dl<.67?"BASE":"DEEP",iptxt=st.s.pos<.34?"LINE":st.s.pos<.67?"MIDDLE":"CROSS",idtxt=st.s.depth<.34?"SHORT":st.s.depth<.67?"BASE":"DEEP",cls=x=>x>=.8?"good":x>=.6?"warn":"bad";
- let note=pa<.6?`Direction was wrong — this ball wanted ${iptxt}.`:da<.6?`Direction was fine, but target depth was ${idtxt}.`:ca<.6?"You got there, but the platform contact was off.":pa>=.85&&da>=.85?"You got into the right space early and finished the platform well.":"Good read. Small positioning error, but you kept it playable.";
- flash.querySelector("b").textContent=Math.round(q*100)+"%";flash.querySelector("span").textContent=outcome;flash.classList.add("show");
- result.innerHTML=`<b>${read} · ${st.s.shot}</b><span><strong>YOU DID:</strong> ${ptxt} + ${dtxt}</span><div class="line"><span>Position</span><strong class="${cls(pa)}">${Math.round(pa*100)}%</strong></div><div class="line"><span>Depth</span><strong class="${cls(da)}">${Math.round(da*100)}%</strong></div><div class="line"><span>Contact</span><strong class="${cls(ca)}">${Math.round(ca*100)}%</strong></div><span class="other"><strong>WHY:</strong><br>${note}</span>`;result.classList.add("show");setTimeout(()=>ball.style.display="none",250);setTimeout(()=>{st.rep++;if(st.rep>st.total)st.rep=1;setup()},2300)
+ stop();st.busy=true;st.cl=st.c;action.disabled=true;const ra=clamp(1-Math.abs(st.rl-st.s.target)/.34),ca=clamp(1-Math.abs(st.cl-Number(st.s.ct??.5))/.27);let q=ra*.72+ca*.28;if(Math.abs(st.rl-st.s.target)>.46)q=Math.min(q,.47);
+ const outcome=q>=.90?"PERFECT DIG":q>=.76?"CONTROLLED DIG":q>=.60?"KEPT ALIVE":"BEATEN",read=q>=.90?"GREAT READ":q>=.76?"GOOD READ":q>=.60?"READABLE":"MISREAD";
+ const what=st.rl<.34?"LINE":st.rl<.67?"MIDDLE":"CROSS",ideal=st.s.target<.34?"LINE":st.s.target<.67?"MIDDLE":"CROSS",cls=x=>x>=.8?"good":x>=.6?"warn":"bad";let note=ra<.6?`You committed ${what}, but the ball went ${ideal}.`:ca<.6?"You got to the lane, but your platform contact was off.":"You read the hitter and got your platform behind the ball.";
+ flash.querySelector("b").textContent=Math.round(q*100)+"%";flash.querySelector("span").textContent=outcome;flash.classList.add("show");result.innerHTML=`<b>${read} · ${st.s.shot}</b><span><strong>YOU COMMITTED:</strong> ${what}</span><div class="line"><span>Reaction</span><strong class="${cls(ra)}">${Math.round(ra*100)}%</strong></div><div class="line"><span>Contact</span><strong class="${cls(ca)}">${Math.round(ca*100)}%</strong></div><span class="other"><strong>WHY:</strong><br>${note}</span>`;result.classList.add("show");setTimeout(()=>ball.style.display="none",220);setTimeout(()=>{st.rep++;if(st.rep>st.total)st.rep=1;attacker.style.transform="";setup()},2300)
 }
-function go(){
- if(st.busy)return;
- if(st.phase==="position"){stop();st.pl=st.p;st.phase="depth";place(st.pl,.5);stage("depth");label.textContent="LOCK DEPTH";depthLoop()}
- else if(st.phase==="depth"){stop();st.dl=st.d;st.phase="contact";place(st.pl,st.dl);stage("contact");label.textContent="DIG";const e=st.pl-st.s.pos,rescue=clamp(.5+e/.28,.14,.86);st.s.ct=rescue;band(contactBand,rescue,.16);contactLoop();setTimeout(launch,100)}
- else if(st.phase==="contact")finish()
-}
-action.addEventListener("click",go);document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{if(st.busy)return;st.mode=b.dataset.mode;setup()}));document.addEventListener("keydown",e=>{if(e.code==="Space"&&!e.repeat){e.preventDefault();go()}});setup();
+function go(){if(st.busy)return;if(st.phase==="read")launch();else if(st.phase==="react")toContact();else if(st.phase==="contact")finish()}
+action.addEventListener("click",go);document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{if(st.busy)return;st.mode=b.dataset.mode;attacker.style.transform="";setup()}));document.addEventListener("keydown",e=>{if(e.code==="Space"&&!e.repeat){e.preventDefault();go()}});setup();
 })();
 </script>
 </body>
