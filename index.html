@@ -2,113 +2,137 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Project ACE — Defence Drill</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Project ACE — Defence V3</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#02070d;color:#eef7fb;font-family:Inter,system-ui,-apple-system,sans-serif}button{font:inherit}
-.app{min-height:100dvh;background:radial-gradient(circle at 50% -10%,#0d3140,#06121b 30%,#02070d 72%)}
-.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid #ffffff10;background:#02070dee}
-.brand small{display:block;color:#5fb6e7;font-size:7px;font-weight:1000;letter-spacing:.14em}.brand b{font-size:13px}
-.switch{display:flex;gap:4px;padding:3px;border:1px solid #ffffff12;border-radius:9px;background:#071522}.switch button{border:0;border-radius:6px;padding:6px 9px;background:transparent;color:#668398;font-size:7px;font-weight:1000}.switch button.active{background:#12334a;color:#fff}
-.main{min-height:calc(100dvh - 56px);display:grid;grid-template-columns:minmax(0,1fr) 400px}
-.scene{position:relative;min-height:560px;overflow:hidden;background:linear-gradient(#123342 0 20%,#183f45 20% 28%,#173427 28%)}
-.court{position:absolute;left:4%;right:4%;top:6%;bottom:5%;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);background:linear-gradient(90deg,transparent 49.6%,#fff 49.6% 50.4%,transparent 50.4%),linear-gradient(180deg,transparent 49.6%,#fff 49.6% 50.4%,transparent 50.4%),#a55f38;border:3px solid #fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:#02070d;color:#eef7fb;font-family:Inter,system-ui,-apple-system,sans-serif;overscroll-behavior:none}
+button{font:inherit}.app{min-height:100dvh;background:radial-gradient(circle at 50% -10%,#0f3242,#06121b 32%,#02070d 72%)}
+.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid #ffffff10;background:#02070df2}
+.brand small{display:block;color:#5fb6e7;font-size:7px;font-weight:1000;letter-spacing:.14em}.brand b{display:block;margin-top:2px;font-size:13px}
+.pill{padding:7px 9px;border:1px solid #ffffff12;border-radius:9px;background:#071522;color:#7ebfe4;font-size:7px;font-weight:1000}
+.main{min-height:calc(100dvh - 56px);display:grid;grid-template-columns:minmax(0,1fr) 390px}
+.scene{position:relative;min-height:570px;overflow:hidden;touch-action:none;background:linear-gradient(#123342 0 20%,#183f45 20% 28%,#173427 28%)}
+.court{position:absolute;left:4%;right:4%;top:6%;bottom:5%;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);background:linear-gradient(90deg,transparent 49.6%,#fff 49.6% 50.4%,transparent 50.4%),linear-gradient(180deg,transparent 49.6%,#fff 49.6% 50.4%,transparent 50.4%),#a96039;border:3px solid #fff;box-shadow:0 22px 45px #0006}
 .court:before,.court:after{content:"";position:absolute;left:0;right:0;height:2px;background:#fff}.court:before{top:33%}.court:after{top:66%}
 .net{position:absolute;left:2%;right:2%;top:48.8%;height:16px;z-index:30;border-top:2px solid #fff;border-bottom:1px solid #ffffff99;background:repeating-linear-gradient(90deg,#ffffff55 0 1px,transparent 1px 10px)}
 .net:before,.net:after{content:"";position:absolute;top:-9px;width:4px;height:33px;background:#edf5f8}.net:before{left:0}.net:after{right:0}
-.person{position:absolute;z-index:24;transform:translate(-50%,-50%);width:38px;height:58px}.attacker{left:24%;top:41%}.setter{left:51%;top:42%}.blocker{left:31%;top:52%}.defender{left:50%;top:76%;transition:left .15s ease,top .15s ease}
-.head{position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%)}.torso{position:absolute;left:50%;top:13px;width:21px;height:27px;border-radius:7px;background:#183149;transform:translateX(-50%)}.attacker .torso{background:#922d39}.setter .torso{background:#9c4c57}.blocker .torso{background:#dfe6ea}.defender .torso{background:#3fa37d}
-.legs:before,.legs:after{content:"";position:absolute;top:38px;width:5px;height:15px;border-radius:4px;background:#111a21}.legs:before{left:9px}.legs:after{right:9px}
-.arms:before,.arms:after{content:"";position:absolute;top:-5px;width:5px;height:23px;border-radius:4px;background:#c99b7b}.arms:before{left:8px;transform:rotate(-8deg)}.arms:after{right:8px;transform:rotate(8deg)}.blocker .arms:before,.blocker .arms:after{height:29px;top:-11px}
-.attacker.open{transform:translate(-50%,-50%) rotate(-10deg)}.attacker.closed{transform:translate(-50%,-50%) rotate(10deg)}.attacker.tip .arms:after{height:15px;top:1px;transform:rotate(24deg)}
-.ball,.contactBall,.buttonBall{border-radius:50%;background:conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97%);box-shadow:inset -5px -6px 9px #0003,0 5px 12px #0006}
-.ball{position:absolute;width:22px;height:22px;z-index:80;display:none}
-.cue,.matchCue,.badge{position:absolute;top:10px;z-index:70;padding:8px 10px;border-radius:10px;background:#030a11dd;border:1px solid #ffffff18;font-size:8px;font-weight:1000;letter-spacing:.1em}.cue{right:10px}.badge{left:10px;color:#80d6ff}.matchCue{left:50%;transform:translateX(-50%);white-space:nowrap}
-.target{position:absolute;width:42px;height:42px;border-radius:50%;border:3px solid #f2c84bd0;transform:translate(-50%,-50%);z-index:15}.target:after{content:"";position:absolute;inset:8px;border-radius:50%;border:2px solid #57d58bf5}
-.panel{padding:18px;background:linear-gradient(#071724,#04101a);border-left:1px solid #ffffff10;display:grid;grid-template-columns:minmax(0,1fr) 100px;grid-template-rows:auto auto auto auto;gap:12px 16px;align-content:center}
-.intro{grid-column:1/-1}.intro small{color:#67b9ea;font-size:8px;font-weight:1000}.intro b{display:block;margin-top:4px;font-size:17px}.intro span{display:block;margin-top:4px;color:#7894a8;font-size:9px}
-.stage{display:none;grid-column:1;grid-row:2}.stage.active{display:block}.stageTitle{margin-bottom:8px;color:#7891a4;font-size:8px;font-weight:1000;letter-spacing:.13em}
-.track{position:relative;height:25px;border-radius:14px;background:#0b2232;border:1px solid #ffffff12;overflow:hidden}.band{position:absolute;top:0;bottom:0;background:#f2c84b4f;border-left:1px solid #f2c84bd0;border-right:1px solid #f2c84bd0}.band:after{content:"";position:absolute;left:30%;right:30%;top:0;bottom:0;background:#57d58b94}.needle{position:absolute;top:50%;left:50%;width:12px;height:12px;border-radius:50%;background:#77ccff;transform:translate(-50%,-50%);box-shadow:0 0 12px #5bb8ffa8}
-.labels{display:flex;justify-content:space-between;margin-top:7px;color:#668195;font-size:7px;font-weight:1000}.help{margin-top:7px;color:#7892a5;font-size:8px;line-height:1.4}
-.contactRow{display:flex;align-items:center;gap:10px}.contactBall{position:relative;width:78px;height:78px;flex:0 0 78px}.contactCursor{position:absolute;left:50%;top:50%;width:16px;height:16px;border-radius:50%;border:2px solid #69c8ff;transform:translate(-50%,-50%)}
-.action{grid-column:2;grid-row:2;width:94px;height:94px;border-radius:50%;border:1px solid #65c2fa47;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:#fff;font-weight:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}.action:disabled{opacity:.5}.buttonBall{width:37px;height:37px}.action b{font-size:7px}.progress{grid-column:1/-1;grid-row:3;display:flex;gap:5px}.progress i{height:4px;flex:1;border-radius:4px;background:#102332}.progress i.done{background:#4fb5e8}.footer{grid-column:1/-1;grid-row:4;color:#718da0;font-size:8px}
-.flash{position:absolute;left:50%;top:8%;transform:translateX(-50%);z-index:110;opacity:0;text-align:center;transition:.18s}.flash.show{opacity:1}.flash b{display:block;font-size:39px}.flash span{display:block;margin-top:6px;font-size:12px;font-weight:1000}
-.result{position:absolute;left:50%;bottom:10px;z-index:115;transform:translateX(-50%);width:min(92%,500px);padding:15px 16px;border-radius:14px;background:#030a11f2;border:1px solid #ffffff1c;color:#cfe7f6;opacity:0;transition:.18s}.result.show{opacity:1}.result>b{display:block;font-size:18px;color:#fff;margin-bottom:9px}.result>span{display:block;font-size:11px;line-height:1.45}.line{display:flex;justify-content:space-between;margin-top:6px;font-size:11px}.good{color:#7fe1a4!important}.warn{color:#ffd36d!important}.bad{color:#ff8c8c!important}.other{margin-top:9px!important;padding-top:9px;border-top:1px solid #ffffff14;color:#91aabe!important}
-@media(max-width:760px){.main{min-height:calc(100dvh - 56px);display:flex;flex-direction:column}.scene{flex:1 1 auto;min-height:0}.panel{flex:0 0 auto;grid-template-columns:minmax(0,1fr) 84px;grid-template-rows:auto auto auto;gap:7px 10px;padding:9px 11px calc(10px + env(safe-area-inset-bottom));border-left:0;border-top:1px solid #ffffff10}.intro{display:none}.stage{grid-row:1}.action{grid-row:1;width:80px;height:80px}.track{height:18px}.contactBall{width:55px;height:55px;flex-basis:55px}.buttonBall{width:31px;height:31px}.progress{grid-row:2}.footer{grid-row:3}.cue,.matchCue,.badge{font-size:6.5px;padding:6px 8px}.result{width:94%;bottom:7px;padding:12px 13px}.result>b{font-size:16px}.result>span,.line{font-size:10px}}
+.person{position:absolute;z-index:24;transform:translate(-50%,-50%)}.hitter{width:46px;height:68px;left:25%;top:40%}.blocker{width:40px;height:58px;left:31%;top:52%}.defender{width:42px;height:62px;left:50%;top:80%;z-index:50}
+.head{position:absolute;left:50%;top:0;width:15px;height:15px;border-radius:50%;background:#cea080;transform:translateX(-50%)}.torso{position:absolute;left:50%;top:14px;width:23px;height:30px;border-radius:7px;background:#183149;transform:translateX(-50%)}.hitter .torso{background:#922d39}.blocker .torso{background:#dde5ea}.defender .torso{background:#3fa37d}
+.legs:before,.legs:after{content:"";position:absolute;top:42px;width:5px;height:17px;border-radius:4px;background:#111a21}.legs:before{left:10px}.legs:after{right:10px}
+.arms:before,.arms:after{content:"";position:absolute;top:-3px;width:5px;height:27px;border-radius:4px;background:#c99b7b}.arms:before{left:9px;transform:rotate(-8deg)}.arms:after{right:9px;transform:rotate(8deg)}
+.hitter.swing{animation:swing .34s ease}@keyframes swing{45%{transform:translate(-50%,-50%) rotate(-8deg) scale(1.08)}}
+.ball,.buttonBall{border-radius:50%;background:conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97%);box-shadow:inset -5px -6px 9px #0003,0 5px 12px #0006}
+.ball{position:absolute;width:24px;height:24px;z-index:80;display:none}
+.shadow{position:absolute;z-index:14;width:54px;height:22px;border-radius:50%;background:#0005;filter:blur(2px);transform:translate(-50%,-50%);display:none}
+.reach{position:absolute;z-index:13;width:76px;height:76px;border-radius:50%;border:2px dashed #72d6ff66;transform:translate(-50%,-50%);pointer-events:none}
+.badge,.hint{position:absolute;top:10px;z-index:90;padding:8px 10px;border-radius:10px;background:#030a11df;border:1px solid #ffffff18;font-size:8px;font-weight:1000;letter-spacing:.1em}.badge{left:10px;color:#80d6ff}.hint{right:10px;color:#dceaf2}
+.panel{padding:18px;background:linear-gradient(#071724,#04101a);border-left:1px solid #ffffff10;display:flex;flex-direction:column;justify-content:center;gap:13px}
+.intro small{color:#67b9ea;font-size:8px;font-weight:1000;letter-spacing:.12em}.intro b{display:block;margin-top:4px;font-size:18px}.intro span{display:block;margin-top:5px;color:#7894a8;font-size:9px;line-height:1.45}
+.phase{padding:12px;border:1px solid #ffffff0f;border-radius:12px;background:#06131e}.phase small{color:#6caed2;font-size:7px;font-weight:1000;letter-spacing:.13em}.phase b{display:block;margin-top:4px;font-size:14px}.phase span{display:block;margin-top:5px;color:#7894a8;font-size:8px;line-height:1.4}
+.barWrap{display:none}.barWrap.show{display:block}.track{position:relative;height:30px;border-radius:16px;background:#0b2232;border:1px solid #ffffff14;overflow:hidden}
+.badZone,.goodZone,.perfectZone{position:absolute;top:0;bottom:0}.badZone{inset:0;background:#8d293933}.goodZone{left:31%;width:38%;background:#e8c34c55}.perfectZone{left:44%;width:12%;background:#57d58b9e}
+.needle{position:absolute;top:50%;left:50%;width:12px;height:20px;border-radius:5px;background:#eaf7ff;transform:translate(-50%,-50%);box-shadow:0 0 12px #75cfff}
+.labels{display:flex;justify-content:space-between;margin-top:6px;color:#637f91;font-size:7px;font-weight:1000}.labels span:nth-child(2){color:#d3b857}.labels span:nth-child(3){color:#65d893}
+.action{width:100%;min-height:56px;border:1px solid #65c2fa47;border-radius:12px;background:linear-gradient(135deg,#123a55,#071a29);color:#fff;font-size:9px;font-weight:1000;letter-spacing:.08em;cursor:pointer}.action:disabled{opacity:.45}
+.progress{display:flex;gap:5px}.progress i{height:4px;flex:1;border-radius:4px;background:#102332}.progress i.done{background:#4fb5e8}
+.tip{color:#6f8a9c;font-size:8px;line-height:1.45}
+.result{position:absolute;left:50%;bottom:10px;z-index:120;transform:translateX(-50%);width:min(92%,500px);padding:15px;border-radius:14px;background:#030a11f3;border:1px solid #ffffff1c;opacity:0;pointer-events:none;transition:.18s}.result.show{opacity:1}.result>b{display:block;font-size:19px}.result .row{display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:#91aabe}.result .row strong{color:#fff}.result p{margin:10px 0 0;padding-top:9px;border-top:1px solid #ffffff14;color:#91aabe;font-size:10px;line-height:1.4}
+.flash{position:absolute;left:50%;top:9%;z-index:115;transform:translateX(-50%);opacity:0;text-align:center;transition:.15s}.flash.show{opacity:1}.flash b{display:block;font-size:42px}.flash span{font-size:11px;font-weight:1000;letter-spacing:.12em}
+@media(max-width:760px){.top{height:52px}.main{min-height:calc(100dvh - 52px);display:flex;flex-direction:column}.scene{flex:1 1 auto;min-height:380px}.panel{flex:0 0 auto;padding:9px 11px calc(10px + env(safe-area-inset-bottom));gap:7px;border-left:0;border-top:1px solid #ffffff10}.intro{display:none}.phase{padding:8px}.phase span{display:none}.track{height:24px}.action{min-height:48px}.tip{font-size:7px}.badge,.hint{padding:6px 8px;font-size:6.5px}.result{bottom:7px;padding:12px}.result>b{font-size:16px}.result .row{font-size:10px}}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="top">
-  <div class="brand"><small>PROJECT ACE · DEFENCE TEST</small><b>READ → REACT → CONTACT</b></div>
-  <div class="switch"><button data-mode="training" class="active">TRAIN</button><button data-mode="match">MATCH</button></div>
-</header>
+<header class="top"><div class="brand"><small>PROJECT ACE · DEFENCE V3</small><b>MOVE → REACH → DIG</b></div><div class="pill">DRAG · WASD · SPACE</div></header>
 <main class="main">
 <section class="scene" id="scene">
-  <div class="court"></div><div class="net"></div>
-  <div class="person attacker" id="attacker"><i class="head"></i><i class="torso"></i><i class="arms"></i><i class="legs"></i></div>
-  <div class="person setter"><i class="head"></i><i class="torso"></i><i class="legs"></i></div>
-  <div class="person blocker" id="blocker"><i class="head"></i><i class="torso"></i><i class="arms"></i><i class="legs"></i></div>
-  <div class="person defender" id="defender"><i class="head"></i><i class="torso"></i><i class="legs"></i></div>
-  <div class="ball" id="ball"></div><div class="target" id="target"></div>
-  <div class="badge" id="badge"></div><div class="cue" id="cue"></div><div class="matchCue" id="matchCue">READ THE ATTACKER + BLOCK</div>
-  <div class="flash" id="flash"><b></b><span></span></div><div class="result" id="result"></div>
+ <div class="court"></div><div class="net"></div>
+ <div class="person hitter" id="hitter"><i class="head"></i><i class="torso"></i><i class="arms"></i><i class="legs"></i></div>
+ <div class="person blocker"><i class="head"></i><i class="torso"></i><i class="arms"></i><i class="legs"></i></div>
+ <div class="person defender" id="defender"><i class="head"></i><i class="torso"></i><i class="legs"></i></div>
+ <div class="reach" id="reach"></div><div class="shadow" id="shadow"></div><div class="ball" id="ball"></div>
+ <div class="badge" id="badge"></div><div class="hint" id="hint">WATCH THE BALL · MOVE TO IT</div>
+ <div class="flash" id="flash"><b></b><span></span></div><div class="result" id="result"></div>
 </section>
 <aside class="panel">
-  <div class="intro"><small>DEFENSIVE READ</small><b>See it. React. Finish.</b><span>The hitter shows the attack first. You react to the ball, then make the dig.</span></div>
-  <div class="stage active" id="positionStage"><div class="stageTitle">1 · READ THE HITTER</div><div class="track"><i class="band" id="positionBand" style="left:0;width:100%"></i><em class="needle" id="positionNeedle" style="left:0"></em></div><div class="labels"><span>BODY</span><span>ARM</span><span>BALL</span></div><div class="help">Watch the hitter and the first part of the ball flight.</div></div>
-  <div class="stage" id="depthStage"><div class="stageTitle">2 · REACT</div><div class="track"><i class="band" id="depthBand"></i><em class="needle" id="depthNeedle"></em></div><div class="labels"><span>LINE</span><span>MIDDLE</span><span>CROSS</span></div><div class="help">Commit to the lane the ball is actually travelling toward.</div></div>
-  <div class="stage" id="contactStage"><div class="stageTitle">3 · DIG CONTACT</div><div class="contactRow"><div class="contactBall"><i class="contactCursor" id="contactCursor"></i></div><div style="flex:1"><div class="track"><i class="band" id="contactBand"></i><em class="needle" id="contactNeedle"></em></div><div class="labels"><span>LEFT</span><span>CENTRE</span><span>RIGHT</span></div><div class="help">Clean platform contact can rescue a small reaction miss.</div></div></div></div>
-  <button class="action" id="action"><span class="buttonBall"></span><b id="actionLabel">WATCH SWING</b></button>
-  <div class="progress" id="progress"></div><div class="footer" id="footer"></div>
+ <div class="intro"><small>DEFENSIVE REACTION</small><b>Get there first. Then make the dig.</b><span>No guessing the hitter's shoulders. Follow the actual attack and physically move your defender.</span></div>
+ <div class="phase" id="phase"><small>1 · MOVE</small><b>REACT TO THE BALL</b><span>Drag anywhere on your half of the court. On PC use WASD.</span></div>
+ <div class="barWrap" id="barWrap"><div class="track"><i class="badZone"></i><i class="goodZone" id="goodZone"></i><i class="perfectZone" id="perfectZone"></i><em class="needle" id="needle"></em></div><div class="labels"><span>BAD</span><span>GOOD</span><span>PERFECT</span><span>GOOD</span><span>BAD</span></div></div>
+ <button class="action" id="action">START ATTACK</button>
+ <div class="progress" id="progress"></div>
+ <div class="tip" id="tip">Mobile: drag the defender. PC: WASD. Once you're in reach, press DIG / Space on the timing bar.</div>
 </aside>
 </main>
 </div>
 <script>
 (()=>{
 const $=s=>document.querySelector(s),clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
-const scene=$("#scene"),attacker=$("#attacker"),blocker=$("#blocker"),defender=$("#defender"),ball=$("#ball"),target=$("#target");
-const readStage=$("#positionStage"),reactStage=$("#depthStage"),contactStage=$("#contactStage"),readNeedle=$("#positionNeedle"),reactNeedle=$("#depthNeedle"),contactNeedle=$("#contactNeedle"),cursor=$("#contactCursor");
-const readBand=$("#positionBand"),reactBand=$("#depthBand"),contactBand=$("#contactBand"),action=$("#action"),label=$("#actionLabel"),cue=$("#cue"),matchCue=$("#matchCue"),badge=$("#badge"),flash=$("#flash"),result=$("#result"),progress=$("#progress"),footer=$("#footer");
-const scenarios=[
- {key:"cross",name:"HARD CROSS",body:"open",target:.80,cue:"SHOULDER OPENS · ARM COMES ACROSS",shot:"HARD CROSS",speed:520},
- {key:"line",name:"LINE",body:"closed",target:.18,cue:"SHOULDER STAYS CLOSED · STRAIGHT ARM",shot:"LINE",speed:540},
- {key:"tip",name:"TIP",body:"tip",target:.50,cue:"ARM SPEED DROPS · SOFT HAND",shot:"TIP",speed:760,short:true},
- {key:"tool",name:"BLOCK TOUCH",body:"open",target:.67,cue:"WATCH THE BALL AFTER THE BLOCK",shot:"TOOL DEFLECTION",speed:600,deflect:true},
- {key:"crossBase",name:"CROSS",body:"open",target:.73,cue:"OPEN BODY · CONTROLLED CROSS",shot:"CROSS",speed:610}
+const scene=$("#scene"),hitter=$("#hitter"),defender=$("#defender"),reach=$("#reach"),ball=$("#ball"),shadow=$("#shadow"),badge=$("#badge"),hint=$("#hint"),phase=$("#phase"),barWrap=$("#barWrap"),needle=$("#needle"),goodZone=$("#goodZone"),perfectZone=$("#perfectZone"),action=$("#action"),progress=$("#progress"),flash=$("#flash"),result=$("#result");
+const shots=[
+ {name:"HARD CROSS",x:.79,y:.82,dur:1050},
+ {name:"LINE",x:.19,y:.76,dur:1100},
+ {name:"TIP",x:.49,y:.63,dur:1350},
+ {name:"CROSS",x:.72,y:.75,dur:1180},
+ {name:"BLOCK DEFLECTION",x:.64,y:.70,dur:1250,deflect:true}
 ];
-const st={mode:"training",rep:1,total:8,phase:"read",busy:false,raf:0,r:.5,rd:1,rl:.5,c:.5,cd:1,cl:.5,s:null,launched:false};
-function stop(){if(st.raf)cancelAnimationFrame(st.raf);st.raf=0}
-function band(el,c,w){const l=clamp(c-w/2,0,1-w);el.style.left=l*100+"%";el.style.width=w*100+"%"}
-function stage(x){readStage.classList.toggle("active",x==="read");reactStage.classList.toggle("active",x==="react");contactStage.classList.toggle("active",x==="contact")}
-function place(x){defender.style.left=(18+x*64)+"%";defender.style.top="78%"}
-function modeUI(){const tr=st.mode==="training";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===st.mode));cue.style.display=tr?"block":"none";matchCue.style.display=tr?"none":"block";reactBand.style.display=tr?"block":"none";target.style.display="none";footer.textContent=tr?"Training exaggerates the body cue and shows the reaction lane.":"No answer shown. Read the hitter, ball and block yourself."}
+const st={rep:1,total:8,phase:"ready",x:.50,y:.82,target:null,shot:null,keys:{},raf:0,bar:.05,dir:1,contact:.5,position:0,started:0};
+function pctPos(){defender.style.left=(18+st.x*64)+"%";defender.style.top=(59+st.y*34)+"%";reach.style.left=defender.style.left;reach.style.top=defender.style.top}
+function targetPx(){const r=scene.getBoundingClientRect();return{x:r.width*(.18+st.shot.x*.64),y:r.height*(.59+st.shot.y*.34)}}
+function defenderPx(){const r=scene.getBoundingClientRect();return{x:r.width*(.18+st.x*.64),y:r.height*(.59+st.y*.34)}}
+function distScore(){const a=targetPx(),b=defenderPx(),d=Math.hypot(a.x-b.x,a.y-b.y);return{d,score:clamp(1-d/145)}}
 function setup(){
- stop();st.s=scenarios[Math.floor(Math.random()*scenarios.length)];Object.assign(st,{phase:"read",busy:false,r:.5,rd:1,rl:.5,c:.5,cd:1,cl:.5,launched:false});
- attacker.className="person attacker "+st.s.body;blocker.classList.remove("touch");cue.textContent=st.s.name+" · "+st.s.cue;matchCue.textContent=st.s.deflect?"WATCH THE BLOCK TOUCH":"READ THE HITTER + BALL";badge.textContent="REP "+st.rep+" / "+st.total;
- readBand.style.display="block";band(readBand,.5,1);readNeedle.style.left="0%";band(reactBand,st.s.target,.18);band(contactBand,.5,.16);place(.5);ball.style.display="none";flash.classList.remove("show");result.classList.remove("show");stage("read");label.textContent="WATCH SWING";action.disabled=false;
- progress.innerHTML=Array.from({length:st.total},(_,i)=>`<i class="${i<st.rep-1?"done":""}"></i>`).join("");modeUI();readPreview();
+ cancelAnimationFrame(st.raf);Object.assign(st,{phase:"ready",x:.50,y:.82,bar:.05,dir:1,position:0});
+ st.shot=shots[Math.floor(Math.random()*shots.length)];pctPos();ball.style.display="none";shadow.style.display="none";barWrap.classList.remove("show");flash.classList.remove("show");result.classList.remove("show");action.disabled=false;action.textContent="START ATTACK";hint.textContent="WATCH THE BALL · MOVE TO IT";phase.innerHTML="<small>1 · MOVE</small><b>REACT TO THE BALL</b><span>Drag on court or use WASD. Follow the actual ball flight.</span>";badge.textContent="REP "+st.rep+" / "+st.total;progress.innerHTML=Array.from({length:st.total},(_,i)=>`<i class="${i<st.rep-1?"done":""}"></i>`).join("")
 }
-function readPreview(){stop();let v=0;const t=()=>{if(st.phase!=="read"||st.busy)return;v+=.012;readNeedle.style.left=Math.min(1,v)*100+"%";if(v<1)st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
 function launch(){
- if(st.launched)return;st.launched=true;stop();attacker.style.transition="transform .18s ease";if(st.s.body==="open")attacker.style.transform="translate(-50%,-50%) rotate(-14deg) scale(1.08)";else if(st.s.body==="closed")attacker.style.transform="translate(-50%,-50%) rotate(13deg) scale(1.08)";else attacker.style.transform="translate(-50%,-50%) rotate(-2deg) scale(1.05)";
- const W=scene.clientWidth,H=scene.clientHeight,sx=W*.25,sy=H*.43,tx=W*(.18+st.s.target*.64),ty=H*(st.s.short?.70:.77);
- ball.style.display="block";ball.style.transition="none";ball.style.left=sx+"px";ball.style.top=sy+"px";ball.style.transform="translate(-50%,-50%) rotate(0deg)";void ball.offsetWidth;
- if(st.s.deflect){const mx=W*.35,my=H*.505;ball.style.transition="left 250ms linear,top 250ms ease-in,transform 250ms linear";ball.style.left=mx+"px";ball.style.top=my+"px";ball.style.transform="translate(-50%,-50%) rotate(280deg)";setTimeout(()=>{blocker.classList.add("touch");startReact();ball.style.transition="left 420ms ease,top 420ms ease,transform 420ms linear";ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(690deg)"},255)}
- else{ball.style.transition=`left ${st.s.speed}ms ease,top ${st.s.speed}ms ease,transform ${st.s.speed}ms linear`;ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(630deg)";setTimeout(startReact,170)}
+ if(st.phase!=="ready")return;st.phase="move";action.disabled=true;action.textContent="MOVE!";
+ hitter.classList.add("swing");setTimeout(()=>hitter.classList.remove("swing"),360);
+ const r=scene.getBoundingClientRect(),sx=r.width*.25,sy=r.height*.43,t=targetPx();
+ ball.style.display="block";shadow.style.display="block";ball.style.transition="none";ball.style.left=sx+"px";ball.style.top=sy+"px";shadow.style.left=t.x+"px";shadow.style.top=t.y+"px";void ball.offsetWidth;
+ if(st.shot.deflect){
+   const mx=r.width*.35,my=r.height*.51;
+   ball.style.transition="left 390ms linear,top 390ms ease-in,transform 390ms linear";ball.style.left=mx+"px";ball.style.top=my+"px";ball.style.transform="translate(-50%,-50%) rotate(300deg)";
+   setTimeout(()=>{ball.style.transition="left 850ms ease,top 850ms ease,transform 850ms linear";ball.style.left=t.x+"px";ball.style.top=t.y+"px";ball.style.transform="translate(-50%,-50%) rotate(760deg)"},395);
+ }else{
+   ball.style.transition=`left ${st.shot.dur}ms ease,top ${st.shot.dur}ms ease,transform ${st.shot.dur}ms linear`;ball.style.left=t.x+"px";ball.style.top=t.y+"px";ball.style.transform="translate(-50%,-50%) rotate(700deg)";
+ }
+ st.started=performance.now();moveLoop();
+ const checkAt=st.shot.deflect?1160:Math.max(820,st.shot.dur-160);setTimeout(reachCheck,checkAt)
 }
-function startReact(){if(st.phase!=="read")return;st.phase="react";stage("react");label.textContent="COMMIT";reactLoop()}
-function reactLoop(){stop();const t=()=>{if(st.phase!=="react"||st.busy)return;st.r+=.019*st.rd;if(st.r>=1){st.r=1;st.rd=-1}if(st.r<=0){st.r=0;st.rd=1}reactNeedle.style.left=st.r*100+"%";place(st.r);st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
-function toContact(){stop();st.rl=st.r;st.phase="contact";place(st.rl);stage("contact");label.textContent="DIG";const err=st.rl-st.s.target,rescue=clamp(.5+err/.28,.14,.86);st.s.ct=rescue;band(contactBand,rescue,.16);contactLoop()}
-function contactLoop(){stop();const t=()=>{if(st.phase!=="contact"||st.busy)return;st.c+=.02*st.cd;if(st.c>=.94){st.c=.94;st.cd=-1}if(st.c<=.06){st.c=.06;st.cd=1}contactNeedle.style.left=st.c*100+"%";cursor.style.left=st.c*100+"%";st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
-function finish(){
- stop();st.busy=true;st.cl=st.c;action.disabled=true;const ra=clamp(1-Math.abs(st.rl-st.s.target)/.34),ca=clamp(1-Math.abs(st.cl-Number(st.s.ct??.5))/.27);let q=ra*.72+ca*.28;if(Math.abs(st.rl-st.s.target)>.46)q=Math.min(q,.47);
- const outcome=q>=.90?"PERFECT DIG":q>=.76?"CONTROLLED DIG":q>=.60?"KEPT ALIVE":"BEATEN",read=q>=.90?"GREAT READ":q>=.76?"GOOD READ":q>=.60?"READABLE":"MISREAD";
- const what=st.rl<.34?"LINE":st.rl<.67?"MIDDLE":"CROSS",ideal=st.s.target<.34?"LINE":st.s.target<.67?"MIDDLE":"CROSS",cls=x=>x>=.8?"good":x>=.6?"warn":"bad";let note=ra<.6?`You committed ${what}, but the ball went ${ideal}.`:ca<.6?"You got to the lane, but your platform contact was off.":"You read the hitter and got your platform behind the ball.";
- flash.querySelector("b").textContent=Math.round(q*100)+"%";flash.querySelector("span").textContent=outcome;flash.classList.add("show");result.innerHTML=`<b>${read} · ${st.s.shot}</b><span><strong>YOU COMMITTED:</strong> ${what}</span><div class="line"><span>Reaction</span><strong class="${cls(ra)}">${Math.round(ra*100)}%</strong></div><div class="line"><span>Contact</span><strong class="${cls(ca)}">${Math.round(ca*100)}%</strong></div><span class="other"><strong>WHY:</strong><br>${note}</span>`;result.classList.add("show");setTimeout(()=>ball.style.display="none",220);setTimeout(()=>{st.rep++;if(st.rep>st.total)st.rep=1;attacker.style.transform="";setup()},2300)
+function moveLoop(){
+ if(st.phase!=="move")return;
+ const speed=.012;if(st.keys.w||st.keys.arrowup)st.y-=speed;if(st.keys.s||st.keys.arrowdown)st.y+=speed;if(st.keys.a||st.keys.arrowleft)st.x-=speed;if(st.keys.d||st.keys.arrowright)st.x+=speed;
+ st.x=clamp(st.x,.03,.97);st.y=clamp(st.y,.08,.98);pctPos();st.raf=requestAnimationFrame(moveLoop)
 }
-function go(){if(st.busy)return;if(st.phase==="read")launch();else if(st.phase==="react")toContact();else if(st.phase==="contact")finish()}
-action.addEventListener("click",go);document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{if(st.busy)return;st.mode=b.dataset.mode;attacker.style.transform="";setup()}));document.addEventListener("keydown",e=>{if(e.code==="Space"&&!e.repeat){e.preventDefault();go()}});setup();
+function reachCheck(){
+ if(st.phase!=="move")return;cancelAnimationFrame(st.raf);const ds=distScore();st.position=ds.score;
+ if(ds.d>120){finishMiss(ds);return}
+ st.phase="dig";barWrap.classList.add("show");action.disabled=false;action.textContent="DIG";hint.textContent=ds.d<55?"SET PLATFORM · TIME THE DIG":"SCRAMBLING · SMALLER CONTACT WINDOW";
+ phase.innerHTML="<small>2 · DIG CONTACT</small><b>"+(ds.d<55?"YOU'RE THERE":"YOU JUST REACHED IT")+"</b><span>Your positioning changes how forgiving the timing window is.</span>";
+ const quality=clamp(1-ds.d/120);const goodW=.18+.22*quality,perfectW=.055+.10*quality;goodZone.style.left=(.5-goodW/2)*100+"%";goodZone.style.width=goodW*100+"%";perfectZone.style.left=(.5-perfectW/2)*100+"%";perfectZone.style.width=perfectW*100+"%";barLoop()
+}
+function barLoop(){
+ if(st.phase!=="dig")return;st.bar+=.022*st.dir;if(st.bar>=.97){st.bar=.97;st.dir=-1}if(st.bar<=.03){st.bar=.03;st.dir=1}needle.style.left=st.bar*100+"%";st.raf=requestAnimationFrame(barLoop)
+}
+function dig(){
+ if(st.phase!=="dig")return;cancelAnimationFrame(st.raf);const contact=clamp(1-Math.abs(st.bar-.5)/.43);st.contact=contact;const q=st.position*.58+contact*.42;
+ let title=q>=.9?"PERFECT DIG":q>=.76?"CONTROLLED DIG":q>=.60?"SCRAMBLE SAVE":"SHANK";
+ showResult(title,q,st.position,contact,q>=.6?"You got into range and controlled the platform.":"You reached the play, but the position/contact combination wasn't clean enough.")
+}
+function finishMiss(ds){st.phase="result";action.disabled=true;showResult("BEATEN",Math.min(.48,ds.score*.55),ds.score,0,"You didn't get close enough to the landing point to attempt a dig.")}
+function showResult(title,q,p,c,note){
+ st.phase="result";ball.style.display="none";shadow.style.display="none";barWrap.classList.remove("show");flash.querySelector("b").textContent=Math.round(q*100)+"%";flash.querySelector("span").textContent=title;flash.classList.add("show");
+ result.innerHTML=`<b>${title} · ${st.shot.name}</b><div class="row"><span>Position</span><strong>${Math.round(p*100)}%</strong></div><div class="row"><span>Contact</span><strong>${Math.round(c*100)}%</strong></div><p>${note}</p>`;result.classList.add("show");setTimeout(()=>{st.rep++;if(st.rep>st.total)st.rep=1;setup()},2300)
+}
+function pointerMove(e){
+ if(st.phase!=="move")return;const r=scene.getBoundingClientRect(),px=clamp((e.clientX-r.left)/r.width,.18,.82),py=clamp((e.clientY-r.top)/r.height,.59,.93);st.x=clamp((px-.18)/.64);st.y=clamp((py-.59)/.34);pctPos()
+}
+scene.addEventListener("pointerdown",e=>{if(st.phase==="move"){scene.setPointerCapture?.(e.pointerId);pointerMove(e)}});scene.addEventListener("pointermove",e=>{if(e.buttons||e.pointerType==="touch")pointerMove(e)});
+document.addEventListener("keydown",e=>{const k=e.key.toLowerCase();st.keys[k]=true;if(e.code==="Space"&&!e.repeat){e.preventDefault();if(st.phase==="ready")launch();else if(st.phase==="dig")dig()}});
+document.addEventListener("keyup",e=>st.keys[e.key.toLowerCase()]=false);
+action.addEventListener("click",()=>{if(st.phase==="ready")launch();else if(st.phase==="dig")dig()});
+setup();
 })();
 </script>
 </body>
