@@ -2,718 +2,118 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Project ACE — Hitting Prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Project ACE — Defence Drill</title>
 <style>
-:root{
-  --bg:#02070d;--panel:#05131f;--ink:#eff8ff;--muted:#718da2;
-  --blue:#64c3ff;--yellow:#f2c84b;--green:#57d58b;
-  --court:#b96a3b;--court2:#955532;--line:rgba(255,255,255,.10)
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
-body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-button{font:inherit}
-.app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#06121b,#02070d)}
-.top{height:54px;flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#030a11;border-bottom:1px solid var(--line)}
-.brand{font-size:10px;font-weight:1000;letter-spacing:.15em}
-.meta{display:flex;gap:15px;font-size:9px;font-weight:900;color:#82c9f5}
-.headerControls{display:flex;align-items:center;gap:6px}
-.modeSwitch,.posSwitch{display:flex;gap:4px;padding:3px;border-radius:9px;background:#071522;border:1px solid rgba(255,255,255,.07)}
-.modeBtn,.posBtn{border:0;border-radius:6px;padding:5px 8px;background:transparent;color:#648298;font-size:7px;font-weight:1000;letter-spacing:.08em}
-.modeBtn.active,.posBtn.active{background:#12334a;color:#dff4ff;box-shadow:inset 0 0 0 1px rgba(104,198,255,.18)}
-.modeBtn[data-mode="match"].active{background:#2b2432;color:#f4dfff;box-shadow:inset 0 0 0 1px rgba(216,142,255,.18)}
-.posSwitch{display:flex;gap:4px;padding:3px;border-radius:9px;background:#071522;border:1px solid rgba(255,255,255,.07)}
-
-.game{position:relative;flex:1;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)}
-.stands{position:absolute;inset:0 0 auto;height:27%;opacity:.55;background:
-linear-gradient(180deg,rgba(255,255,255,.04),transparent),
-repeating-linear-gradient(90deg,transparent 0 26px,rgba(255,255,255,.025) 26px 28px)}
-.shell{position:absolute;left:50%;top:4%;width:min(96vw,640px);height:88%;transform:translateX(-50%)}
-.court{
-  position:absolute;left:4%;right:4%;top:6%;bottom:5%;
-  clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);
-  background:
-   linear-gradient(90deg,transparent 49.65%,rgba(255,255,255,.95) 49.65% 50.35%,transparent 50.35%),
-   linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.96) 49.6% 50.4%,transparent 50.4%),
-   linear-gradient(180deg,var(--court),var(--court2));
-  border:3px solid rgba(255,255,255,.94);
-  box-shadow:0 25px 50px rgba(0,0,0,.34)
-}
-.court:before,.court:after{content:"";position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.9)}
-.court:before{top:33%}.court:after{top:66%}
-.net{position:absolute;left:2%;right:2%;top:48.8%;height:16px;z-index:30;border-top:2px solid #fff;border-bottom:1px solid rgba(255,255,255,.6);
-background:repeating-linear-gradient(90deg,rgba(255,255,255,.38) 0 1px,transparent 1px 10px),
-repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#02070d;color:#eef7fb;font-family:Inter,system-ui,-apple-system,sans-serif}button{font:inherit}
+.app{min-height:100dvh;background:radial-gradient(circle at 50% -10%,#0d3140,#06121b 30%,#02070d 72%)}
+.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid #ffffff10;background:#02070dee}
+.brand small{display:block;color:#5fb6e7;font-size:7px;font-weight:1000;letter-spacing:.14em}.brand b{font-size:13px}
+.switch{display:flex;gap:4px;padding:3px;border:1px solid #ffffff12;border-radius:9px;background:#071522}.switch button{border:0;border-radius:6px;padding:6px 9px;background:transparent;color:#668398;font-size:7px;font-weight:1000}.switch button.active{background:#12334a;color:#fff}
+.main{min-height:calc(100dvh - 56px);display:grid;grid-template-columns:minmax(0,1fr) 400px}
+.scene{position:relative;min-height:560px;overflow:hidden;background:linear-gradient(#123342 0 20%,#183f45 20% 28%,#173427 28%)}
+.court{position:absolute;left:4%;right:4%;top:6%;bottom:5%;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);background:linear-gradient(90deg,transparent 49.6%,#fff 49.6% 50.4%,transparent 50.4%),linear-gradient(180deg,transparent 49.6%,#fff 49.6% 50.4%,transparent 50.4%),#a55f38;border:3px solid #fff}
+.court:before,.court:after{content:"";position:absolute;left:0;right:0;height:2px;background:#fff}.court:before{top:33%}.court:after{top:66%}
+.net{position:absolute;left:2%;right:2%;top:48.8%;height:16px;z-index:30;border-top:2px solid #fff;border-bottom:1px solid #ffffff99;background:repeating-linear-gradient(90deg,#ffffff55 0 1px,transparent 1px 10px)}
 .net:before,.net:after{content:"";position:absolute;top:-9px;width:4px;height:33px;background:#edf5f8}.net:before{left:0}.net:after{right:0}
-
-.player,.blocker,.defender,.setter{position:absolute;z-index:20;transform:translate(-50%,-50%)}
-.player{width:38px;height:57px;left:24%;top:80%;z-index:24}
-.setter{width:34px;height:50px;left:54%;top:69%}
-.blocker{width:36px;height:56px;top:42.5%;transition:left .4s ease,transform .22s ease}
-.defender{width:32px;height:47px;transition:left .35s ease,top .35s ease}
-.head{position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%)}
-.body{position:absolute;left:50%;top:13px;width:21px;height:27px;border-radius:7px;background:#183149;transform:translateX(-50%)}
-.setter .body{background:#225272}
-.blocker .body{background:#dfe6ea}
-.defender .body{background:#dfe6ea}
-.defender.lib .body{background:#3fa37d}
-.legs:before,.legs:after{content:"";position:absolute;top:38px;width:5px;height:15px;border-radius:4px;background:#111a21}
-.legs:before{left:9px}.legs:after{right:9px}
-.blocker .arms:before,.blocker .arms:after{content:"";position:absolute;top:-5px;width:5px;height:23px;border-radius:4px;background:#c99b7b}
-.blocker .arms:before{left:8px;transform:rotate(-8deg)}.blocker .arms:after{right:8px;transform:rotate(8deg)}
-.blocker.high .arms:before,.blocker.high .arms:after{height:28px;top:-10px}
-.blocker.late{transform:translate(-50%,-50%) translateY(11px) scale(.94)}
-.blocker.verylate{transform:translate(-50%,-50%) translateY(22px) scale(.88);opacity:.82}
-.blocker.verylate .arms:before,.blocker.verylate .arms:after{height:17px;top:1px}
-.blocker.seal{transform:translate(-50%,-50%) scale(1.04)}
-.blocker.split.left{transform:translate(-50%,-50%) translateX(-10px)}
-.blocker.split.right{transform:translate(-50%,-50%) translateX(10px)}
-
-.setBall,.hitBall{
-  position:absolute;border-radius:50%;z-index:80;
-  background:
-  radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
-  conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
-  box-shadow:inset -4px -5px 7px rgba(0,0,0,.16),0 4px 10px rgba(0,0,0,.4)
-}
-.setBall{width:21px;height:21px;display:none}
-.hitBall{width:23px;height:23px;display:none}
-
-.target{
-  position:absolute;width:34px;height:34px;border-radius:50%;border:2px solid rgba(242,200,75,.8);
-  transform:translate(-50%,-50%);z-index:16;animation:pulse 1.1s ease-out infinite
-}
-.target:after{content:"";position:absolute;inset:7px;border-radius:50%;border:2px solid rgba(87,213,139,.95)}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(242,200,75,.28)}100%{box-shadow:0 0 0 18px rgba(242,200,75,0)}}
-
-.aimLine{
-  position:absolute;left:24%;top:54%;width:92px;height:4px;z-index:42;
-  transform-origin:0 50%;border-radius:3px;
-  background:linear-gradient(90deg,#a8e0ff,rgba(90,190,255,.62),rgba(90,190,255,.12));
-  filter:drop-shadow(0 0 7px rgba(90,190,255,.45));display:none
-}
-.aimLine:before{
-  content:"";position:absolute;right:-4px;top:50%;width:0;height:0;
-  border-top:7px solid transparent;border-bottom:7px solid transparent;
-  border-left:13px solid #a8e0ff;transform:translateY(-50%)
-}
-.aimLine.locked{background:linear-gradient(90deg,#f2c84b,rgba(242,200,75,.6),rgba(242,200,75,.10))}
-.aimLine.locked:before{border-left-color:#f2c84b}
-
-.flash{position:absolute;left:50%;top:7%;transform:translateX(-50%) scale(.94);z-index:110;opacity:0;text-align:center;transition:.18s;pointer-events:none}
-.flash.show{opacity:1;transform:translateX(-50%) scale(1)}
-.flash b{display:block;font-size:30px;line-height:1;text-shadow:0 7px 22px rgba(0,0,0,.5)}
-.flash span{display:block;margin-top:4px;font-size:9px;font-weight:900;letter-spacing:.14em;color:#d1e8f5}
-
-.bottom{flex:0 0 192px;padding:10px 14px calc(11px + env(safe-area-inset-bottom));background:#04101a;border-top:1px solid var(--line);
-display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:14px;align-items:center}
-.panel{min-width:0}
-.stageTitle{font-size:8px;font-weight:1000;letter-spacing:.14em;color:#718da1;margin-bottom:7px}
-.stage{display:none}.stage.active{display:block}
-.track{position:relative;height:18px;border-radius:10px;background:#0b2232;border:1px solid rgba(255,255,255,.08);overflow:hidden}
-.yellow{position:absolute;top:0;bottom:0;background:rgba(242,200,75,.28);border-left:1px solid rgba(242,200,75,.75);border-right:1px solid rgba(242,200,75,.75)}
-.yellow:after{content:"";position:absolute;left:30%;right:30%;top:0;bottom:0;background:rgba(87,213,139,.5);border-left:1px solid rgba(87,213,139,.9);border-right:1px solid rgba(87,213,139,.9)}
-.needle{position:absolute;top:50%;left:50%;width:9px;height:9px;border-radius:50%;background:#77ccff;transform:translate(-50%,-50%);box-shadow:0 0 10px rgba(91,184,255,.6)}
-.fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3d8dbd,#6acbff)}
-.labels{display:flex;justify-content:space-between;margin-top:6px;font-size:7px;color:#587487;font-weight:900;letter-spacing:.11em}
-.help{margin-top:7px;font-size:8px;color:#7691a5;line-height:1.4}
-.contactRow{display:flex;align-items:center;gap:10px}
-.contactBall{
-  position:relative;width:66px;height:66px;flex:0 0 66px;border-radius:50%;
-  background:
-  radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
-  conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);
-  box-shadow:inset -9px -10px 14px rgba(0,0,0,.17),0 7px 16px rgba(0,0,0,.28)
-}
-.contactCursor{position:absolute;left:50%;top:50%;width:15px;height:15px;border-radius:50%;border:2px solid #69c8ff;transform:translate(-50%,-50%);box-shadow:0 0 0 5px rgba(88,186,255,.10)}
-.contactInfo{min-width:0;flex:1}
-.btn{width:86px;height:86px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);
-color:white;font-weight:1000;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.btnBall{width:34px;height:34px;border-radius:50%;background:
-radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),
-conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%)}
-.btn small{font-size:6.5px;letter-spacing:.09em;color:#9dcced;text-align:center;max-width:70px}
-.situation{position:absolute;right:10px;top:10px;z-index:70;padding:7px 9px;border-radius:10px;background:rgba(3,10,17,.72);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:900;letter-spacing:.09em;color:#bdd9ea;backdrop-filter:blur(6px)}
-
-@media(min-width:760px){
-  .bottom{padding-left:max(18px,calc((100vw - 640px)/2));padding-right:max(18px,calc((100vw - 640px)/2))}
-}
-
-.powerCall{
-  position:absolute;left:10px;top:10px;z-index:70;padding:8px 11px;border-radius:10px;
-  background:rgba(3,10,17,.82);border:1px solid rgba(255,255,255,.10);
-  font-size:9px;font-weight:1000;letter-spacing:.13em;color:#fff;backdrop-filter:blur(6px)
-}
-.powerCall.high{color:#ffdf73;border-color:rgba(255,202,74,.28);box-shadow:0 0 22px rgba(255,196,55,.08)}
-.powerCall.medium{color:#a9ddff;border-color:rgba(97,193,255,.27)}
-.powerCall.low{color:#92edb7;border-color:rgba(82,213,137,.26)}
-
-
-.readCard{
-  position:absolute;left:50%;bottom:8px;z-index:90;transform:translateX(-50%);
-  min-width:220px;max-width:82%;padding:8px 10px;border-radius:10px;
-  background:rgba(3,10,17,.84);border:1px solid rgba(255,255,255,.09);
-  font-size:8px;font-weight:900;letter-spacing:.08em;text-align:center;color:#cfe7f6;
-  opacity:0;pointer-events:none;transition:.18s
-}
-.readCard.show{opacity:1}
-.readCard b{display:block;font-size:10px;color:#fff;margin-bottom:3px}
-.matchMode .target,
-.matchMode .powerCall{display:none}
-.matchMode .aimTarget,
-.matchMode .powerTarget{display:none}
-.matchMode .situation{
-  right:50%;transform:translateX(50%);
-  color:#d8ecf8
-}
-.matchMode .situation::before{content:"MATCH READ · "}
-
+.person{position:absolute;z-index:24;transform:translate(-50%,-50%);width:38px;height:58px}.attacker{left:24%;top:41%}.setter{left:51%;top:42%}.blocker{left:31%;top:52%}.defender{left:50%;top:76%;transition:left .15s ease,top .15s ease}
+.head{position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%)}.torso{position:absolute;left:50%;top:13px;width:21px;height:27px;border-radius:7px;background:#183149;transform:translateX(-50%)}.attacker .torso{background:#922d39}.setter .torso{background:#9c4c57}.blocker .torso{background:#dfe6ea}.defender .torso{background:#3fa37d}
+.legs:before,.legs:after{content:"";position:absolute;top:38px;width:5px;height:15px;border-radius:4px;background:#111a21}.legs:before{left:9px}.legs:after{right:9px}
+.arms:before,.arms:after{content:"";position:absolute;top:-5px;width:5px;height:23px;border-radius:4px;background:#c99b7b}.arms:before{left:8px;transform:rotate(-8deg)}.arms:after{right:8px;transform:rotate(8deg)}.blocker .arms:before,.blocker .arms:after{height:29px;top:-11px}
+.attacker.open{transform:translate(-50%,-50%) rotate(-10deg)}.attacker.closed{transform:translate(-50%,-50%) rotate(10deg)}.attacker.tip .arms:after{height:15px;top:1px;transform:rotate(24deg)}
+.ball,.contactBall,.buttonBall{border-radius:50%;background:conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97%);box-shadow:inset -5px -6px 9px #0003,0 5px 12px #0006}
+.ball{position:absolute;width:22px;height:22px;z-index:80;display:none}
+.cue,.matchCue,.badge{position:absolute;top:10px;z-index:70;padding:8px 10px;border-radius:10px;background:#030a11dd;border:1px solid #ffffff18;font-size:8px;font-weight:1000;letter-spacing:.1em}.cue{right:10px}.badge{left:10px;color:#80d6ff}.matchCue{left:50%;transform:translateX(-50%);white-space:nowrap}
+.target{position:absolute;width:42px;height:42px;border-radius:50%;border:3px solid #f2c84bd0;transform:translate(-50%,-50%);z-index:15}.target:after{content:"";position:absolute;inset:8px;border-radius:50%;border:2px solid #57d58bf5}
+.panel{padding:18px;background:linear-gradient(#071724,#04101a);border-left:1px solid #ffffff10;display:grid;grid-template-columns:minmax(0,1fr) 100px;grid-template-rows:auto auto auto auto;gap:12px 16px;align-content:center}
+.intro{grid-column:1/-1}.intro small{color:#67b9ea;font-size:8px;font-weight:1000}.intro b{display:block;margin-top:4px;font-size:17px}.intro span{display:block;margin-top:4px;color:#7894a8;font-size:9px}
+.stage{display:none;grid-column:1;grid-row:2}.stage.active{display:block}.stageTitle{margin-bottom:8px;color:#7891a4;font-size:8px;font-weight:1000;letter-spacing:.13em}
+.track{position:relative;height:25px;border-radius:14px;background:#0b2232;border:1px solid #ffffff12;overflow:hidden}.band{position:absolute;top:0;bottom:0;background:#f2c84b4f;border-left:1px solid #f2c84bd0;border-right:1px solid #f2c84bd0}.band:after{content:"";position:absolute;left:30%;right:30%;top:0;bottom:0;background:#57d58b94}.needle{position:absolute;top:50%;left:50%;width:12px;height:12px;border-radius:50%;background:#77ccff;transform:translate(-50%,-50%);box-shadow:0 0 12px #5bb8ffa8}
+.labels{display:flex;justify-content:space-between;margin-top:7px;color:#668195;font-size:7px;font-weight:1000}.help{margin-top:7px;color:#7892a5;font-size:8px;line-height:1.4}
+.contactRow{display:flex;align-items:center;gap:10px}.contactBall{position:relative;width:78px;height:78px;flex:0 0 78px}.contactCursor{position:absolute;left:50%;top:50%;width:16px;height:16px;border-radius:50%;border:2px solid #69c8ff;transform:translate(-50%,-50%)}
+.action{grid-column:2;grid-row:2;width:94px;height:94px;border-radius:50%;border:1px solid #65c2fa47;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:#fff;font-weight:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}.action:disabled{opacity:.5}.buttonBall{width:37px;height:37px}.action b{font-size:7px}.progress{grid-column:1/-1;grid-row:3;display:flex;gap:5px}.progress i{height:4px;flex:1;border-radius:4px;background:#102332}.progress i.done{background:#4fb5e8}.footer{grid-column:1/-1;grid-row:4;color:#718da0;font-size:8px}
+.flash{position:absolute;left:50%;top:8%;transform:translateX(-50%);z-index:110;opacity:0;text-align:center;transition:.18s}.flash.show{opacity:1}.flash b{display:block;font-size:39px}.flash span{display:block;margin-top:6px;font-size:12px;font-weight:1000}
+.result{position:absolute;left:50%;bottom:10px;z-index:115;transform:translateX(-50%);width:min(92%,500px);padding:15px 16px;border-radius:14px;background:#030a11f2;border:1px solid #ffffff1c;color:#cfe7f6;opacity:0;transition:.18s}.result.show{opacity:1}.result>b{display:block;font-size:18px;color:#fff;margin-bottom:9px}.result>span{display:block;font-size:11px;line-height:1.45}.line{display:flex;justify-content:space-between;margin-top:6px;font-size:11px}.good{color:#7fe1a4!important}.warn{color:#ffd36d!important}.bad{color:#ff8c8c!important}.other{margin-top:9px!important;padding-top:9px;border-top:1px solid #ffffff14;color:#91aabe!important}
+@media(max-width:760px){.main{min-height:calc(100dvh - 56px);display:flex;flex-direction:column}.scene{flex:1 1 auto;min-height:0}.panel{flex:0 0 auto;grid-template-columns:minmax(0,1fr) 84px;grid-template-rows:auto auto auto;gap:7px 10px;padding:9px 11px calc(10px + env(safe-area-inset-bottom));border-left:0;border-top:1px solid #ffffff10}.intro{display:none}.stage{grid-row:1}.action{grid-row:1;width:80px;height:80px}.track{height:18px}.contactBall{width:55px;height:55px;flex-basis:55px}.buttonBall{width:31px;height:31px}.progress{grid-row:2}.footer{grid-row:3}.cue,.matchCue,.badge{font-size:6.5px;padding:6px 8px}.result{width:94%;bottom:7px;padding:12px 13px}.result>b{font-size:16px}.result>span,.line{font-size:10px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top">
-    <div class="brand">PROJECT ACE · HITTING TEST</div>
-    <div class="headerControls">
-      <div class="modeSwitch" id="modeSwitch">
-        <button class="modeBtn" data-mode="training">TRAIN</button>
-        <button class="modeBtn active" data-mode="match">MATCH</button>
-      </div>
-      <div class="posSwitch" id="posSwitch">
-        <button class="posBtn active" data-pos="OH">OH</button>
-        <button class="posBtn" data-pos="MB">MB</button>
-        <button class="posBtn" data-pos="OP">OP</button>
-      </div>
-    </div>
-    <div class="meta"><span id="rep">1 / 8</span><span id="score">0</span></div>
-  </div>
-
-  <div class="game">
-    <div class="stands"></div>
-    <div class="shell" id="shell">
-      <div class="court"></div>
-      <div class="net"></div>
-      <div class="situation" id="situation">READ THE BLOCK</div><div class="powerCall" id="powerCall">POWER · MEDIUM</div>
-
-      <div class="player" id="hitter"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="setter"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-
-      <div class="blocker" id="b0"><i class="head"></i><i class="body"></i><i class="arms"></i><i class="legs"></i></div>
-      <div class="blocker" id="b1"><i class="head"></i><i class="body"></i><i class="arms"></i><i class="legs"></i></div>
-      <div class="blocker" id="b2"><i class="head"></i><i class="body"></i><i class="arms"></i><i class="legs"></i></div>
-
-      <div class="defender" id="d0"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="defender lib" id="d1"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-      <div class="defender" id="d2"><i class="head"></i><i class="body"></i><i class="legs"></i></div>
-
-      <div class="target" id="target"></div>
-      <div class="aimLine" id="aimLine"></div>
-      <div class="setBall" id="setBall"></div>
-      <div class="hitBall" id="hitBall"></div>
-    </div>
-    <div class="flash" id="flash"><b></b><span></span></div><div class="readCard" id="readCard"><b></b><span></span></div>
-  </div>
-
-  <div class="bottom">
-    <div class="panel">
-      <div class="stage active" id="aimStage">
-        <div class="stageTitle">1 · SWING DIRECTION</div>
-        <div class="track">
-          <i class="yellow aimTarget" id="aimTarget"></i>
-          <em class="needle" id="aimNeedle"></em>
-        </div>
-        <div class="labels"><span id="aimLabelL">LINE</span><span id="aimLabelM">SEAM</span><span id="aimLabelR">CROSS</span></div>
-        <div class="help">Lock the swing angle into the open court.</div>
-      </div>
-
-      <div class="stage" id="powerStage">
-        <div class="stageTitle">2 · SWING POWER</div>
-        <div class="track">
-          <i class="yellow powerTarget" id="powerTarget"></i>
-          <em class="needle" id="powerNeedle"></em>
-        </div>
-        <div class="labels"><span>LOW</span><span>MEDIUM</span><span>HIGH</span></div>
-        <div class="help" id="powerHelp">The scenario tells you how much power this swing needs.</div>
-      </div>
-
-      <div class="stage" id="contactStage">
-        <div class="stageTitle">3 · BALL CONTACT</div>
-        <div class="contactRow">
-          <div class="contactBall"><i class="contactCursor" id="contactCursor"></i></div>
-          <div class="contactInfo">
-            <div class="track">
-              <i class="yellow" id="contactTarget"></i>
-              <em class="needle" id="contactNeedle"></em>
-            </div>
-            <div class="labels"><span>LEFT SIDE</span><span>CENTRE</span><span>RIGHT SIDE</span></div>
-            <div class="help">Contact can shape the final direction, but only slightly.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn" id="action"><span class="btnBall"></span><small id="actionLabel">LOCK SWING</small></button>
-  </div>
+<header class="top">
+  <div class="brand"><small>PROJECT ACE · DEFENCE TEST</small><b>POSITION → DEPTH → CONTACT</b></div>
+  <div class="switch"><button data-mode="training" class="active">TRAIN</button><button data-mode="match">MATCH</button></div>
+</header>
+<main class="main">
+<section class="scene" id="scene">
+  <div class="court"></div><div class="net"></div>
+  <div class="person attacker" id="attacker"><i class="head"></i><i class="torso"></i><i class="arms"></i><i class="legs"></i></div>
+  <div class="person setter"><i class="head"></i><i class="torso"></i><i class="legs"></i></div>
+  <div class="person blocker" id="blocker"><i class="head"></i><i class="torso"></i><i class="arms"></i><i class="legs"></i></div>
+  <div class="person defender" id="defender"><i class="head"></i><i class="torso"></i><i class="legs"></i></div>
+  <div class="ball" id="ball"></div><div class="target" id="target"></div>
+  <div class="badge" id="badge"></div><div class="cue" id="cue"></div><div class="matchCue" id="matchCue">READ THE ATTACKER + BLOCK</div>
+  <div class="flash" id="flash"><b></b><span></span></div><div class="result" id="result"></div>
+</section>
+<aside class="panel">
+  <div class="intro"><small>DEFENSIVE READ</small><b>Read first. Then commit.</b><span>Same Project ACE language as serving and hitting.</span></div>
+  <div class="stage active" id="positionStage"><div class="stageTitle">1 · DEFENSIVE POSITION</div><div class="track"><i class="band" id="positionBand"></i><em class="needle" id="positionNeedle"></em></div><div class="labels"><span>LINE</span><span>MIDDLE</span><span>CROSS</span></div><div class="help">Lock where you think the attack is going.</div></div>
+  <div class="stage" id="depthStage"><div class="stageTitle">2 · DEFENSIVE DEPTH</div><div class="track"><i class="band" id="depthBand"></i><em class="needle" id="depthNeedle"></em></div><div class="labels"><span>SHORT</span><span>BASE</span><span>DEEP</span></div><div class="help">Lock how deep you think it will land.</div></div>
+  <div class="stage" id="contactStage"><div class="stageTitle">3 · DIG CONTACT</div><div class="contactRow"><div class="contactBall"><i class="contactCursor" id="contactCursor"></i></div><div style="flex:1"><div class="track"><i class="band" id="contactBand"></i><em class="needle" id="contactNeedle"></em></div><div class="labels"><span>LEFT</span><span>CENTRE</span><span>RIGHT</span></div><div class="help">Clean contact can rescue a small positioning miss.</div></div></div></div>
+  <button class="action" id="action"><span class="buttonBall"></span><b id="actionLabel">LOCK POSITION</b></button>
+  <div class="progress" id="progress"></div><div class="footer" id="footer"></div>
+</aside>
+</main>
 </div>
-
 <script>
 (()=>{
-const $=s=>document.querySelector(s);
-const app=$(".app"),shell=$("#shell"), action=$("#action"), actionLabel=$("#actionLabel");
-const aimStage=$("#aimStage"), powerStage=$("#powerStage"), contactStage=$("#contactStage");
-const aimNeedle=$("#aimNeedle"),powerNeedle=$("#powerNeedle"),contactNeedle=$("#contactNeedle");
-const aimTarget=$("#aimTarget"),powerTarget=$("#powerTarget"),contactTarget=$("#contactTarget"),contactCursor=$("#contactCursor");
-const aimLine=$("#aimLine"),target=$("#target"),setBall=$("#setBall"),hitBall=$("#hitBall"),flash=$("#flash"),readCard=$("#readCard"),situation=$("#situation"),powerCall=$("#powerCall"),powerHelp=$("#powerHelp");
-const blockers=[$("#b0"),$("#b1"),$("#b2")],defs=[$("#d0"),$("#d1"),$("#d2")];
-const hitter=$("#hitter");
-const repEl=$("#rep"),scoreEl=$("#score");
-const aimLabelL=$("#aimLabelL"),aimLabelM=$("#aimLabelM"),aimLabelR=$("#aimLabelR");
-
-const POS={
-  OH:{
-    hitterX:.24,hitterY:.59,contactX:.24,contactY:.535,
-    label:["LINE","SEAM","CROSS"],
-    blockBase:[.23,.34],
-    targetX:{LINE:.18,SEAM:.48,CROSS:.76}
-  },
-  OP:{
-    hitterX:.80,hitterY:.59,contactX:.80,contactY:.535,
-    label:["CROSS","SEAM","LINE"],
-    blockBase:[.70,.81],
-    targetX:{LINE:.86,SEAM:.54,CROSS:.24}
-  },
-  MB:{
-    hitterX:.50,hitterY:.575,contactX:.50,contactY:.525,
-    label:["LEFT GAP","SEAM","RIGHT GAP"],
-    blockBase:[.44,.56],
-    targetX:{LINE:.30,SEAM:.50,CROSS:.70}
-  }
-};
-
-/*
-  Each scenario now has MULTIPLE viable solutions.
-  value = tactical value before execution.
-  There is no single hidden "correct answer" in match mode.
-*/
-const SCENARIOS=[
-  {
-    key:"seamLate", trainName:"MIDDLE LATE · SEAM OPEN",
-    blockKind:"seamLate",
-    solutions:[
-      {shot:"SEAM",power:"HIGH",p:.87,value:.97,label:"ATTACKED THE LATE SEAM"},
-      {shot:"LINE",power:"MEDIUM",p:.54,value:.79,label:"USED THE OPEN PIN"},
-      {shot:"CROSS",power:"MEDIUM",p:.50,value:.72,label:"CONTROLLED ANGLE"}
-    ]
-  },
-  {
-    key:"deep", trainName:"DEEP DEFENCE · SHORT SPACE",
-    blockKind:"deep",
-    solutions:[
-      {shot:"SEAM",power:"LOW",p:.18,value:.97,label:"FOUND THE SHORT SPACE"},
-      {shot:"LINE",power:"LOW",p:.22,value:.89,label:"SOFT LINE"},
-      {shot:"CROSS",power:"LOW",p:.22,value:.87,label:"SOFT CROSS"},
-      {shot:"SEAM",power:"MEDIUM",p:.48,value:.64,label:"SAFE CONTROLLED SWING"}
-    ]
-  },
-  {
-    key:"lineSeal", trainName:"DOUBLE BLOCK · LINE SEALED",
-    blockKind:"lineSeal",
-    solutions:[
-      {shot:"CROSS",power:"MEDIUM",p:.54,value:.96,label:"USED OPEN CROSS"},
-      {shot:"SEAM",power:"HIGH",p:.82,value:.84,label:"BEAT THE INNER HAND"},
-      {shot:"CROSS",power:"LOW",p:.24,value:.78,label:"ROLLED BEHIND THE BLOCK"}
-    ]
-  },
-  {
-    key:"crossSeal", trainName:"DOUBLE BLOCK · CROSS SEALED",
-    blockKind:"crossSeal",
-    solutions:[
-      {shot:"LINE",power:"MEDIUM",p:.54,value:.96,label:"USED OPEN LINE"},
-      {shot:"SEAM",power:"HIGH",p:.82,value:.84,label:"ATTACKED THE SEAM"},
-      {shot:"LINE",power:"LOW",p:.24,value:.77,label:"CONTROLLED LINE"}
-    ]
-  },
-  {
-    key:"triple", trainName:"TRIPLE BLOCK · CLOSED",
-    blockKind:"triple",
-    solutions:[
-      {shot:"CROSS",power:"LOW",p:.22,value:.90,label:"TOOK PACE OFF"},
-      {shot:"LINE",power:"LOW",p:.22,value:.88,label:"RECYCLED THE EDGE"},
-      {shot:"SEAM",power:"MEDIUM",p:.46,value:.68,label:"CHALLENGED THE HANDS"}
-    ]
-  },
-  {
-    key:"single", trainName:"ONE BLOCKER",
-    blockKind:"single",
-    solutions:[
-      {shot:"LINE",power:"HIGH",p:.89,value:.95,label:"PUT AWAY THE LINE"},
-      {shot:"CROSS",power:"HIGH",p:.88,value:.94,label:"PUT AWAY THE ANGLE"},
-      {shot:"SEAM",power:"HIGH",p:.86,value:.91,label:"BEAT THE SINGLE BLOCK"},
-      {shot:"LINE",power:"MEDIUM",p:.58,value:.76,label:"CONTROLLED FINISH"},
-      {shot:"CROSS",power:"MEDIUM",p:.58,value:.76,label:"CONTROLLED FINISH"}
-    ]
-  }
+const $=s=>document.querySelector(s),clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const scene=$("#scene"),attacker=$("#attacker"),blocker=$("#blocker"),defender=$("#defender"),ball=$("#ball"),target=$("#target");
+const posStage=$("#positionStage"),depthStage=$("#depthStage"),contactStage=$("#contactStage"),posNeedle=$("#positionNeedle"),depthNeedle=$("#depthNeedle"),contactNeedle=$("#contactNeedle"),cursor=$("#contactCursor");
+const posBand=$("#positionBand"),depthBand=$("#depthBand"),contactBand=$("#contactBand"),action=$("#action"),label=$("#actionLabel"),cue=$("#cue"),matchCue=$("#matchCue"),badge=$("#badge"),flash=$("#flash"),result=$("#result"),progress=$("#progress"),footer=$("#footer");
+const scenarios=[
+ {key:"cross",name:"HARD CROSS · DEEP",body:"open",pos:.79,depth:.82,pw:.18,dw:.20,cue:"SHOULDER OPENS EARLY · HARD SWING",shot:"HARD CROSS"},
+ {key:"line",name:"LINE · BASE/DEEP",body:"closed",pos:.18,depth:.68,pw:.17,dw:.23,cue:"SHOULDER STAYS CLOSED · LINE AVAILABLE",shot:"LINE"},
+ {key:"tip",name:"TIP · SHORT",body:"tip",pos:.49,depth:.18,pw:.22,dw:.16,cue:"ARM SPEED DROPS · HAND SOFTENS",shot:"TIP"},
+ {key:"tool",name:"BLOCK TOUCH · LATE DEFLECTION",body:"open",pos:.65,depth:.48,pw:.24,dw:.26,cue:"WATCH THE BLOCK TOUCH · REACT LATE",shot:"TOOL DEFLECTION",deflect:true},
+ {key:"crossBase",name:"CROSS · BASE",body:"open",pos:.74,depth:.55,pw:.20,dw:.24,cue:"CROSS BODY SHAPE · CONTROLLED SWING",shot:"CROSS"}
 ];
-
-const st={
-  rep:1,total:8,score:0,pos:"OH",mode:"match",phase:"aim",busy:false,raf:0,
-  aim:.5,aimSign:1,aimLocked:.5,
-  power:.08,powerSign:1,powerLocked:.5,
-  contact:.5,contactSign:1,contactLocked:.5,
-  s:null,primary:null
-};
-
-function clamp(v,a=0,b=1){return Math.max(a,Math.min(b,v))}
+const st={mode:"training",rep:1,total:8,phase:"position",busy:false,raf:0,p:.5,pd:1,pl:.5,d:.5,dd:1,dl:.5,c:.5,cd:1,cl:.5,s:null};
 function stop(){if(st.raf)cancelAnimationFrame(st.raf);st.raf=0}
-function showStage(which){
-  aimStage.classList.toggle("active",which==="aim");
-  powerStage.classList.toggle("active",which==="power");
-  contactStage.classList.toggle("active",which==="contact");
-}
-function setYellow(el,center,width){
-  const left=clamp(center-width/2,0,1-width);
-  el.style.left=(left*100)+"%";
-  el.style.width=(width*100)+"%";
-}
-function semanticAim(pos,shot){
-  const p=POS[pos];
-  const x=p.targetX[shot];
-  return clamp((x-.15)/.70);
-}
-function nearestShot(pos,aim){
-  const shots=["LINE","SEAM","CROSS"];
-  return shots.reduce((best,shot)=>{
-    const d=Math.abs(aim-semanticAim(pos,shot));
-    return !best||d<best.d?{shot,d}:best;
-  },null);
-}
-function configurePosition(){
-  const p=POS[st.pos];
-  hitter.style.left=(p.hitterX*100)+"%";
-  hitter.style.top=(p.hitterY*100)+"%";
-  aimLabelL.textContent=p.label[0];
-  aimLabelM.textContent=p.label[1];
-  aimLabelR.textContent=p.label[2];
-  document.querySelectorAll(".posBtn").forEach(b=>b.classList.toggle("active",b.dataset.pos===st.pos));
-}
-function buildScenario(){
-  const base=SCENARIOS[Math.floor(Math.random()*SCENARIOS.length)];
-  const p=POS[st.pos];
-  const s={...base,solutions:base.solutions.map(x=>({...x}))};
-
-  s.solutions.forEach(sol=>{
-    sol.aim=semanticAim(st.pos,sol.shot);
-  });
-  s.primary=s.solutions.reduce((a,b)=>b.value>a.value?b:a,s.solutions[0]);
-
-  // Defence shape supports the read but does not force one single answer.
-  if(s.key==="deep"){
-    s.def=[[.19,17],[.50,18],[.81,17]];
-  }else if(s.key==="single"){
-    s.def=[[.18,26],[.52,27],[.82,24]];
-  }else{
-    s.def=[[.20,27],[.51,24],[.80,27]];
-  }
-
-  const [b1,b2]=p.blockBase, pinX=p.hitterX;
-  if(st.pos==="MB"){
-    if(s.blockKind==="single") s.block=[[.50,"late"],[1,"off"],[1,"off"]];
-    else if(s.blockKind==="triple") s.block=[[.42,"high seal"],[.50,"high seal"],[.58,"high seal"]];
-    else if(s.blockKind==="seamLate") s.block=[[.45,"high seal"],[.61,"verylate"],[1,"off"]];
-    else if(s.blockKind==="lineSeal") s.block=[[.43,"high seal"],[.49,"high seal"],[1,"off"]];
-    else if(s.blockKind==="crossSeal") s.block=[[.51,"high seal"],[.57,"high seal"],[1,"off"]];
-    else s.block=[[.45,""],[.55,""],[1,"off"]];
-  }else{
-    if(s.blockKind==="single"){
-      s.block=[[pinX,"late"],[1,"off"],[1,"off"]];
-    }else if(s.blockKind==="triple"){
-      const mid=(b1+b2)/2;
-      s.block=[[mid-.105,"high seal"],[mid,"high seal"],[mid+.105,"high seal"]];
-    }else if(s.blockKind==="lineSeal"){
-      s.block=st.pos==="OH"
-        ? [[pinX-.045,"high seal"],[pinX+.025,"high seal"],[1,"off"]]
-        : [[pinX-.025,"high seal"],[pinX+.045,"high seal"],[1,"off"]];
-    }else if(s.blockKind==="crossSeal"){
-      s.block=st.pos==="OH"
-        ? [[pinX+.015,"high seal"],[pinX+.095,"high seal"],[1,"off"]]
-        : [[pinX-.095,"high seal"],[pinX-.015,"high seal"],[1,"off"]];
-    }else if(s.blockKind==="seamLate"){
-      s.block=st.pos==="OH"
-        ? [[pinX-.005,"high seal"],[pinX+.19,"verylate"],[1,"off"]]
-        : [[pinX+.005,"high seal"],[pinX-.19,"verylate"],[1,"off"]];
-    }else{
-      s.block=[[b1,""],[b2,"high"],[1,"off"]];
-    }
-  }
-
-  return s;
-}
-function applyModeUI(){
-  app.classList.toggle("matchMode",st.mode==="match");
-  document.querySelectorAll(".modeBtn").forEach(b=>b.classList.toggle("active",b.dataset.mode===st.mode));
-}
+function band(el,c,w){const l=clamp(c-w/2,0,1-w);el.style.left=l*100+"%";el.style.width=w*100+"%"}
+function stage(x){posStage.classList.toggle("active",x==="position");depthStage.classList.toggle("active",x==="depth");contactStage.classList.toggle("active",x==="contact")}
+function place(p,d){defender.style.left=(18+p*64)+"%";defender.style.top=(62+d*26)+"%"}
+function modeUI(){const tr=st.mode==="training";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===st.mode));target.style.display=tr?"block":"none";posBand.style.display=tr?"block":"none";depthBand.style.display=tr?"block":"none";cue.style.display=tr?"block":"none";matchCue.style.display=tr?"none":"block";footer.textContent=tr?"Green = ideal · Yellow = close. Match hides the answer.":"No target zones. Read the attacker and blocker yourself."}
 function setup(){
-  stop();
-  configurePosition();
-  applyModeUI();
-  readCard.classList.remove("show");
-
-  st.s=buildScenario();
-  st.primary=st.s.primary;
-
-  if(st.mode==="training"){
-    situation.textContent=st.pos+" · "+st.s.trainName+" · TRY "+st.primary.shot;
-    powerCall.textContent="POWER · "+st.primary.power;
-    powerCall.className="powerCall "+st.primary.power.toLowerCase();
-    powerHelp.textContent=
-      st.primary.power==="HIGH" ? "HIGH POWER — finish the swing hard." :
-      st.primary.power==="LOW" ? "LOW POWER — take pace off and place it." :
-      "MEDIUM POWER — controlled swing, not full power.";
-  }else{
-    situation.textContent=st.pos+" · READ THE BLOCK & DEFENCE";
-    powerCall.textContent="";
-    powerHelp.textContent="Choose the power that fits what you see.";
-  }
-
-  blockers.forEach((b,i)=>{
-    const [x,cls]=st.s.block[i];
-    b.className="blocker "+cls;
-    if(cls==="off"){b.style.display="none"}
-    else{b.style.display="block";b.style.left=(x*100)+"%"}
-  });
-  defs.forEach((d,i)=>{
-    d.style.left=(st.s.def[i][0]*100)+"%";
-    d.style.top=(st.s.def[i][1]*100)+"%";
-  });
-
-  const p=POS[st.pos];
-  const trainTargetX=p.targetX[st.primary.shot]*100;
-  const trainTargetY=st.primary.power==="LOW"?43:st.primary.power==="HIGH"?27:32;
-  target.style.left=trainTargetX+"%";
-  target.style.top=trainTargetY+"%";
-
-  setYellow(aimTarget,st.primary.aim,.18);
-  setYellow(powerTarget,st.primary.p,st.primary.power==="HIGH"?.13:st.primary.power==="LOW"?.17:.20);
-  setYellow(contactTarget,.5,.18);
-
-  st.phase="aim";st.busy=false;
-  st.aim=.5;st.aimSign=1;
-  st.power=.08;st.powerSign=1;
-  st.contact=.5;st.contactSign=1;
-
-  showStage("aim");
-  actionLabel.textContent="LOCK SWING";
-  aimLine.style.display="block";
-  aimLine.classList.remove("locked");
-  playSet();
-  animateAim();
+ stop();st.s=scenarios[Math.floor(Math.random()*scenarios.length)];Object.assign(st,{phase:"position",busy:false,p:.5,pd:1,pl:.5,d:.5,dd:1,dl:.5,c:.5,cd:1,cl:.5});
+ attacker.className="person attacker "+st.s.body;cue.textContent=st.s.name+" · "+st.s.cue;badge.textContent="REP "+st.rep+" / "+st.total;
+ band(posBand,st.s.pos,st.s.pw);band(depthBand,st.s.depth,st.s.dw);band(contactBand,.5,.16);target.style.left=(18+st.s.pos*64)+"%";target.style.top=(62+st.s.depth*26)+"%";
+ place(.5,.5);flash.classList.remove("show");result.classList.remove("show");stage("position");label.textContent="LOCK POSITION";action.disabled=false;
+ progress.innerHTML=Array.from({length:st.total},(_,i)=>`<i class="${i<st.rep-1?"done":""}"></i>`).join("");modeUI();posLoop();
 }
-function updateShortArrow(aimValue){
-  const p=POS[st.pos],W=shell.clientWidth,H=shell.clientHeight;
-  const sx=W*p.contactX, sy=H*p.contactY;
-  const targetX=W*(.15+aimValue*.70);
-  const targetY=H*.34;
-  const dx=targetX-sx,dy=targetY-sy;
-  const angle=Math.atan2(dy,dx)*180/Math.PI;
-  const len=Math.min(112,Math.max(70,Math.hypot(dx,dy)*.34));
-  aimLine.style.left=sx+"px";
-  aimLine.style.top=sy+"px";
-  aimLine.style.width=len+"px";
-  aimLine.style.transform=`rotate(${angle}deg)`;
-}
-function animateAim(){
-  stop();
-  const tick=()=>{
-    if(st.phase!=="aim"||st.busy)return;
-    st.aim+=.012*st.aimSign;
-    if(st.aim>=1){st.aim=1;st.aimSign=-1}
-    if(st.aim<=0){st.aim=0;st.aimSign=1}
-    aimNeedle.style.left=(st.aim*100)+"%";
-    updateShortArrow(st.aim);
-    st.raf=requestAnimationFrame(tick);
-  };
-  st.raf=requestAnimationFrame(tick);
-}
-function lockAim(){
-  stop();st.aimLocked=st.aim;st.phase="power";
-  aimLine.classList.add("locked");
-  updateShortArrow(st.aimLocked);
-  showStage("power");
-  actionLabel.textContent="LOCK POWER";
-  animatePower();
-}
-function animatePower(){
-  stop();
-  const tick=()=>{
-    if(st.phase!=="power"||st.busy)return;
-    st.power+=.016*st.powerSign;
-    if(st.power>=1){st.power=1;st.powerSign=-1}
-    if(st.power<=0){st.power=0;st.powerSign=1}
-    powerNeedle.style.left=(st.power*100)+"%";
-    st.raf=requestAnimationFrame(tick);
-  };
-  st.raf=requestAnimationFrame(tick);
-}
-function lockPower(){
-  stop();st.powerLocked=st.power;st.phase="contact";
-  showStage("contact");actionLabel.textContent="CONTACT";
-
-  // Contact can still rescue a small directional miss.
-  const nearest=nearestShot(st.pos,st.aimLocked);
-  const desiredAim=semanticAim(st.pos,nearest.shot);
-  const error=st.aimLocked-desiredAim;
-  const rescue=clamp(.5+error/.30,.12,.88);
-  setYellow(contactTarget,rescue,.16);
-  st.s.dynamicContact=rescue;
-  animateContact();
-}
-function animateContact(){
-  stop();
-  const tick=()=>{
-    if(st.phase!=="contact"||st.busy)return;
-    st.contact+=.018*st.contactSign;
-    if(st.contact>=.94){st.contact=.94;st.contactSign=-1}
-    if(st.contact<=.06){st.contact=.06;st.contactSign=1}
-    contactNeedle.style.left=(st.contact*100)+"%";
-    contactCursor.style.left=(st.contact*100)+"%";
-    st.raf=requestAnimationFrame(tick);
-  };
-  st.raf=requestAnimationFrame(tick);
-}
-function playSet(){
-  const p=POS[st.pos],W=shell.clientWidth,H=shell.clientHeight;
-  setBall.style.display="block";
-  setBall.style.transition="none";
-  setBall.style.left=W*.54+"px";
-  setBall.style.top=H*.69+"px";
-  setBall.style.transform="rotate(0deg)";
-  void setBall.offsetWidth;
-  const ms=st.pos==="MB"?350:520;
-  setBall.style.transition=`left ${ms}ms cubic-bezier(.2,.7,.3,1),top ${ms}ms cubic-bezier(.2,.7,.3,1),transform ${ms}ms`;
-  setBall.style.left=W*p.contactX+"px";
-  setBall.style.top=H*p.contactY+"px";
-  setBall.style.transform="rotate(300deg)";
-  setTimeout(()=>setBall.style.display="none",ms+30);
-}
-function evaluateRead(effectiveAim,power){
-  let best=null;
-  for(const sol of st.s.solutions){
-    const aimDist=Math.abs(effectiveAim-sol.aim);
-    const powerDist=Math.abs(power-sol.p);
-
-    // Continuous fit to each viable solution profile.
-    const aimFit=clamp(1-aimDist/.27);
-    const powerFit=clamp(1-powerDist/.30);
-    const executionFit=aimFit*.58+powerFit*.42;
-    const tactical=sol.value*executionFit;
-
-    if(!best||tactical>best.tactical){
-      best={...sol,aimFit,powerFit,executionFit,tactical};
-    }
-  }
-  return best;
+function posLoop(){stop();const t=()=>{if(st.phase!=="position"||st.busy)return;st.p+=.012*st.pd;if(st.p>=1){st.p=1;st.pd=-1}if(st.p<=0){st.p=0;st.pd=1}posNeedle.style.left=st.p*100+"%";st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
+function depthLoop(){stop();const t=()=>{if(st.phase!=="depth"||st.busy)return;st.d+=.015*st.dd;if(st.d>=1){st.d=1;st.dd=-1}if(st.d<=0){st.d=0;st.dd=1}depthNeedle.style.left=st.d*100+"%";place(st.pl,st.d);st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
+function contactLoop(){stop();const t=()=>{if(st.phase!=="contact"||st.busy)return;st.c+=.018*st.cd;if(st.c>=.94){st.c=.94;st.cd=-1}if(st.c<=.06){st.c=.06;st.cd=1}contactNeedle.style.left=st.c*100+"%";cursor.style.left=st.c*100+"%";st.raf=requestAnimationFrame(t)};st.raf=requestAnimationFrame(t)}
+function launch(){
+ const W=scene.clientWidth,H=scene.clientHeight,sx=W*.25,sy=H*.43,tx=W*(.18+st.s.pos*.64),ty=H*(.62+st.s.depth*.26);
+ ball.style.display="block";ball.style.transition="none";ball.style.left=sx+"px";ball.style.top=sy+"px";ball.style.transform="translate(-50%,-50%) rotate(0deg)";void ball.offsetWidth;
+ if(st.s.deflect){const mx=W*.36,my=H*.505;ball.style.transition="left 260ms linear,top 260ms ease-in,transform 260ms linear";ball.style.left=mx+"px";ball.style.top=my+"px";ball.style.transform="translate(-50%,-50%) rotate(300deg)";setTimeout(()=>{ball.style.transition="left 430ms ease,top 430ms ease,transform 430ms linear";ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(720deg)"},265)}
+ else{const ms=st.s.key==="tip"?620:500;ball.style.transition=`left ${ms}ms ease,top ${ms}ms ease,transform ${ms}ms linear`;ball.style.left=tx+"px";ball.style.top=ty+"px";ball.style.transform="translate(-50%,-50%) rotate(650deg)"}
 }
 function finish(){
-  stop();st.contactLocked=st.contact;st.phase="flight";st.busy=true;action.disabled=true;
-
-  const contactTargetVal=st.s.dynamicContact??.5;
-  const contactAcc=clamp(1-Math.abs(st.contactLocked-contactTargetVal)/.26);
-  const correction=(st.contactLocked-.5)*.26;
-  const effectiveAim=clamp(st.aimLocked-correction);
-
-  const read=evaluateRead(effectiveAim,st.powerLocked);
-
-  // Tactical read and mechanical execution are separate.
-  const readScore=clamp(read.tactical);
-  const mechanical=clamp(read.executionFit*.78+contactAcc*.22);
-  const quality=clamp(readScore*.62+mechanical*.38);
-
-  animateHit(effectiveAim,quality,st.powerLocked);
-
-  setTimeout(()=>{
-    let outcome,pts;
-    if(quality>=.90){outcome="KILL";pts=3}
-    else if(quality>=.76){outcome="GOOD SWING";pts=2}
-    else if(quality>=.60){outcome="PLAYABLE";pts=1}
-    else{outcome="BLOCKED / OUT";pts=0}
-
-    let readBand;
-    if(read.value>=.90 && read.executionFit>=.75)readBand="GREAT READ";
-    else if(read.value>=.76 && read.executionFit>=.65)readBand="GOOD READ";
-    else if(read.value>=.62)readBand="VALID BUT RISKY";
-    else readBand="LOW-PERCENTAGE READ";
-
-    st.score+=pts;scoreEl.textContent=st.score;
-    flash.querySelector("b").textContent=Math.round(quality*100)+"%";
-    flash.querySelector("span").textContent=outcome;
-    flash.classList.add("show");
-
-    readCard.querySelector("b").textContent=readBand+" · "+read.label;
-    readCard.querySelector("span").textContent=
-      `${read.shot} / ${read.power} · tactical ${Math.round(read.value*100)}% · execution ${Math.round(read.executionFit*100)}%`;
-    readCard.classList.add("show");
-
-    setTimeout(()=>{
-      flash.classList.remove("show");
-      readCard.classList.remove("show");
-      st.rep++;
-      if(st.rep>st.total){st.rep=1;st.score=0;scoreEl.textContent="0"}
-      repEl.textContent=st.rep+" / "+st.total;
-      action.disabled=false;
-      setup();
-    },1400);
-  },650);
+ stop();st.busy=true;st.cl=st.c;action.disabled=true;const pa=clamp(1-Math.abs(st.pl-st.s.pos)/.34),da=clamp(1-Math.abs(st.dl-st.s.depth)/.36),ct=Number(st.s.ct??.5),ca=clamp(1-Math.abs(st.cl-ct)/.27);let q=pa*.52+da*.30+ca*.18;if(Math.abs(st.pl-st.s.pos)>.45||Math.abs(st.dl-st.s.depth)>.48)q=Math.min(q,.49);
+ const outcome=q>=.9?"PERFECT DIG":q>=.76?"CONTROLLED DIG":q>=.6?"KEPT ALIVE":"BEATEN",read=q>=.9?"GREAT READ":q>=.76?"GOOD READ":q>=.6?"READABLE":"MISREAD";
+ const ptxt=st.pl<.34?"LINE":st.pl<.67?"MIDDLE":"CROSS",dtxt=st.dl<.34?"SHORT":st.dl<.67?"BASE":"DEEP",iptxt=st.s.pos<.34?"LINE":st.s.pos<.67?"MIDDLE":"CROSS",idtxt=st.s.depth<.34?"SHORT":st.s.depth<.67?"BASE":"DEEP",cls=x=>x>=.8?"good":x>=.6?"warn":"bad";
+ let note=pa<.6?`Direction was wrong — this ball wanted ${iptxt}.`:da<.6?`Direction was fine, but target depth was ${idtxt}.`:ca<.6?"You got there, but the platform contact was off.":pa>=.85&&da>=.85?"You got into the right space early and finished the platform well.":"Good read. Small positioning error, but you kept it playable.";
+ flash.querySelector("b").textContent=Math.round(q*100)+"%";flash.querySelector("span").textContent=outcome;flash.classList.add("show");
+ result.innerHTML=`<b>${read} · ${st.s.shot}</b><span><strong>YOU DID:</strong> ${ptxt} + ${dtxt}</span><div class="line"><span>Position</span><strong class="${cls(pa)}">${Math.round(pa*100)}%</strong></div><div class="line"><span>Depth</span><strong class="${cls(da)}">${Math.round(da*100)}%</strong></div><div class="line"><span>Contact</span><strong class="${cls(ca)}">${Math.round(ca*100)}%</strong></div><span class="other"><strong>WHY:</strong><br>${note}</span>`;result.classList.add("show");setTimeout(()=>ball.style.display="none",250);setTimeout(()=>{st.rep++;if(st.rep>st.total)st.rep=1;setup()},2300)
 }
-function animateHit(effectiveAim,quality,power){
-  const p=POS[st.pos],W=shell.clientWidth,H=shell.clientHeight;
-  const startX=W*p.contactX,startY=H*p.contactY;
-  const endX=W*(.15+effectiveAim*.70);
-  const powerDepth=.40-power*.24;
-  const endY=H*clamp(powerDepth+(1-quality)*.14,.12,.50);
-
-  hitBall.style.display="block";
-  hitBall.style.transition="none";
-  hitBall.style.left=startX+"px";hitBall.style.top=startY+"px";
-  hitBall.style.transform="translate(-50%,-50%) scale(1)";
-  void hitBall.offsetWidth;
-  const duration=520-power*150;
-  hitBall.style.transition=`left ${duration}ms cubic-bezier(.16,.75,.28,1),top ${duration}ms cubic-bezier(.16,.75,.28,1),transform ${duration}ms`;
-  hitBall.style.left=endX+"px";hitBall.style.top=endY+"px";
-  hitBall.style.transform=`translate(-50%,-50%) scale(.78) rotate(${420+(st.contactLocked-.5)*260}deg)`;
-  setTimeout(()=>hitBall.style.display="none",duration+40);
+function go(){
+ if(st.busy)return;
+ if(st.phase==="position"){stop();st.pl=st.p;st.phase="depth";place(st.pl,.5);stage("depth");label.textContent="LOCK DEPTH";depthLoop()}
+ else if(st.phase==="depth"){stop();st.dl=st.d;st.phase="contact";place(st.pl,st.dl);stage("contact");label.textContent="DIG";const e=st.pl-st.s.pos,rescue=clamp(.5+e/.28,.14,.86);st.s.ct=rescue;band(contactBand,rescue,.16);contactLoop();setTimeout(launch,100)}
+ else if(st.phase==="contact")finish()
 }
-function trigger(){
-  if(st.busy)return;
-  if(st.phase==="aim")lockAim();
-  else if(st.phase==="power")lockPower();
-  else if(st.phase==="contact")finish();
-}
-action.addEventListener("click",trigger);
-
-document.querySelectorAll(".posBtn").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    if(st.busy)return;
-    st.pos=btn.dataset.pos;
-    setup();
-  });
-});
-document.querySelectorAll(".modeBtn").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    if(st.busy)return;
-    st.mode=btn.dataset.mode;
-    setup();
-  });
-});
-
-document.addEventListener("keydown",e=>{
-  if(e.code!=="Space"||e.repeat)return;
-  const t=e.target;
-  if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable))return;
-  e.preventDefault();trigger();
-});
-
-setup();
+action.addEventListener("click",go);document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{if(st.busy)return;st.mode=b.dataset.mode;setup()}));document.addEventListener("keydown",e=>{if(e.code==="Space"&&!e.repeat){e.preventDefault();go()}});setup();
 })();
 </script>
 </body>
