@@ -49831,13 +49831,14 @@ window.ACE_PROJECT_BUILD='B21.36.299';
 
 <!-- PROJECT ACE V80 · MOBILE MIGRATION FIX -->
 <style id="ace-v80-mobile-migration-fix">
-#aceV79Migration{box-sizing:border-box;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 10px max(14px,env(safe-area-inset-bottom));touch-action:pan-y}
-#aceV79Migration .v79sheet{box-sizing:border-box;width:min(620px,100%);max-height:none;overflow:visible;margin:auto;padding:16px 14px calc(18px + env(safe-area-inset-bottom));border-radius:18px;flex:0 0 auto}
+#aceV79Migration{box-sizing:border-box;z-index:2147483647!important;overflow:hidden!important;align-items:stretch!important;padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom));touch-action:none}
+#aceV79Migration .v79sheet{box-sizing:border-box;width:min(620px,100%);height:100%;max-height:calc(100dvh - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin:0 auto;padding:16px 14px calc(92px + env(safe-area-inset-bottom));border-radius:18px;flex:1 1 auto;touch-action:pan-y}
 #aceV79Migration .v79groups{gap:12px}
 #aceV79Migration .v79nations{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 #aceV79Migration .v79nation{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:48px;padding:9px 7px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
 #aceV79Migration .v79read{min-height:52px}
-#aceV79Migration .v79confirm{position:sticky;bottom:max(8px,env(safe-area-inset-bottom));z-index:4;min-height:52px;margin-top:14px;box-shadow:0 -8px 20px rgba(11,17,24,.94)}
+#aceV79Migration .v79confirm{position:sticky;bottom:8px;z-index:4;min-height:52px;margin-top:14px;box-shadow:0 -8px 20px rgba(11,17,24,.94)}
+body.aceV79MigrationOpen .rta62Dock,body.aceV79MigrationOpen .vdsBottomNav,body.aceV79MigrationOpen .aceBetaFeedback,body.aceV79MigrationOpen [class*="bottomNav"],body.aceV79MigrationOpen [class*="BottomNav"]{visibility:hidden!important;pointer-events:none!important}
 @media(max-width:380px){#aceV79Migration{padding-left:8px;padding-right:8px}#aceV79Migration .v79sheet{padding-left:11px;padding-right:11px}.v79sheet h2{font-size:21px}.v79preserve{gap:5px}.v79preserve div{padding:8px}.v79nation{font-size:9px!important}}
 </style>
 <script id="ace-v80-mobile-migration-fix-script">
@@ -49846,18 +49847,24 @@ window.ACE_PROJECT_BUILD='B21.36.299';
 function unlockPage(){document.documentElement.style.overflow='';document.body.style.overflow=''}
 function fixDialog(){
  const el=document.getElementById('aceV79Migration'); if(!el)return;
+ document.body.classList.toggle('aceV79MigrationOpen',el.classList.contains('open'));
  if(el.dataset.v80Fixed==='1')return; el.dataset.v80Fixed='1';
+ const sheet=el.querySelector('.v79sheet');
+ if(sheet){
+   // Keep the migration gesture inside its own native scroller.
+   ['touchstart','touchmove','touchend','pointerdown','pointermove','pointerup'].forEach(type=>sheet.addEventListener(type,e=>e.stopPropagation(),{passive:true}));
+ }
  // Delegate taps from the overlay so mobile WebKit does not lose button events
  // when the sheet is inside a transformed/scrolling application surface.
  el.addEventListener('pointerup',e=>{
    const b=e.target.closest?.('[data-v79-nation]');
    if(!b||!el.contains(b))return;
    if(typeof b.click==='function')setTimeout(()=>{if(!b.classList.contains('active'))b.click()},0);
- },{passive:true});
+ },{capture:true,passive:true});
  const confirm=el.querySelector('#v79Confirm');
- if(confirm)confirm.addEventListener('click',()=>setTimeout(unlockPage,0),{once:true});
+ if(confirm)confirm.addEventListener('click',()=>setTimeout(()=>{unlockPage();document.body.classList.remove('aceV79MigrationOpen')},0),{once:true});
 }
-const mo=new MutationObserver(()=>fixDialog());mo.observe(document.documentElement,{childList:true,subtree:true});
+const mo=new MutationObserver(()=>fixDialog());mo.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 setTimeout(fixDialog,0);setTimeout(fixDialog,500);
 window.ACE_PROJECT_BUILD='B21.36.300';
 })();
