@@ -267,12 +267,110 @@ text-align:center;color:#8999aa;font-size:8px;font-weight:900}
    const cfg=window.ACE_ELITE?.PATHS?.[String(p).toUpperCase()==="MB"?"M":String(p).toUpperCase()]?.[path];
    const stats=(cfg?.stats||[]).map(x=>x.replaceAll("_"," ").toUpperCase()).join(" + ")||"SPECIALIST ATTRIBUTES";
    const el=document.createElement("div");el.className="aceV54EliteStrip";
-   el.innerHTML=`<small>PHASE 2 · ELITE OVER-CAP</small><b>${stats}</b><div class="aceV54EliteSteps"><span><strong>101</strong>ELITE</span><span><strong>103</strong>WORLD CLASS</span><span><strong>105</strong>TRANSCENDENT</span></div>`;
+   el.innerHTML=`<small>PHASE 2 · ELITE OVER-CAP</small><b>${stats}</b><div class="aceV54EliteSteps"><span><strong>101</strong>ELITE</span><span><strong>103</strong>WORLD CLASS</span><span><strong>105</strong>ACE</span></div>`;
    shell.appendChild(el);
   });
  }
  new MutationObserver(()=>requestAnimationFrame(add)).observe(document.documentElement,{subtree:true,childList:true});
  document.addEventListener("click",()=>setTimeout(add,0),true);setTimeout(add,100);
+})();
+</script>
+
+<style id="ace-v55-elite-nodes-style">
+#roadtoace .aceV55EliteTree{margin:12px 0 4px;padding:11px;border:1px solid rgba(236,188,82,.18);border-radius:14px;background:linear-gradient(180deg,rgba(23,20,28,.97),rgba(10,16,24,.98))}
+#roadtoace .aceV55EliteHead{padding:2px 2px 9px}
+#roadtoace .aceV55EliteHead small{color:#e7b85e;font-size:8px;font-weight:1000;letter-spacing:.16em}
+#roadtoace .aceV55EliteHead b{display:block;color:#fff;font-size:14px;margin-top:2px}
+#roadtoace .aceV55EliteHead span{display:block;color:#7f91a3;font-size:8px;margin-top:3px}
+#roadtoace .aceV55EliteNode{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:9px;align-items:center;margin:6px 0;padding:10px;border-radius:11px;border:1px solid rgba(255,255,255,.07);background:#0a1722;text-align:left}
+#roadtoace .aceV55EliteNode>i{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#122333;color:#8798a8;font-style:normal;font-weight:1000}
+#roadtoace .aceV55EliteNode small{display:block;color:#c99d50;font-size:7px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .aceV55EliteNode b{display:block;color:#eaf4fb;font-size:11px;margin-top:2px}
+#roadtoace .aceV55EliteNode em{display:block;color:#71879a;font-size:7px;font-style:normal;margin-top:2px}
+#roadtoace .aceV55EliteNode mark{background:transparent;color:#71879a;font-size:8px;font-weight:1000}
+#roadtoace .aceV55EliteNode.available{border-color:rgba(240,190,80,.42);box-shadow:inset 3px 0 0 rgba(240,190,80,.75)}
+#roadtoace .aceV55EliteNode.available>i{background:rgba(226,176,70,.15);color:#f2c56d}
+#roadtoace .aceV55EliteNode.owned{border-color:rgba(102,223,154,.25)}
+#roadtoace .aceV55EliteNode.owned>i{color:#70df9d;background:rgba(82,211,137,.12)}
+</style>
+
+<style id="ace-v56-ace-status-style">
+#roadtoace.aceV56CareerAce .rta93PlayerHero{border-color:rgba(244,196,86,.34)!important;box-shadow:0 0 0 1px rgba(244,196,86,.08),0 18px 52px rgba(0,0,0,.32)!important}
+#roadtoace .aceV56Badge{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:4px 8px;border:1px solid rgba(245,198,87,.32);border-radius:999px;background:rgba(221,166,50,.09);color:#f2c865;font-size:8px;font-weight:1000;letter-spacing:.11em}
+#roadtoace .aceV56Mastery{margin:9px 0;padding:10px 11px;border:1px solid rgba(245,198,87,.18);border-radius:12px;background:linear-gradient(135deg,rgba(227,174,58,.07),rgba(113,77,184,.05))}
+#roadtoace .aceV56Mastery small{display:block;color:#d9ad55;font-size:8px;font-weight:1000;letter-spacing:.13em}
+#roadtoace .aceV56Mastery b{display:block;color:#fff;font-size:13px;margin-top:2px}
+#roadtoace .aceV56Mastery span{display:block;color:#8092a3;font-size:8px;margin-top:3px}
+.aceV56Ascension{position:fixed;inset:0;z-index:999999;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 50% 43%,rgba(226,173,59,.19),transparent 30%),rgba(2,7,12,.97)}
+.aceV56AscensionCard{width:min(92vw,390px);padding:28px 20px;text-align:center;border:1px solid rgba(245,198,87,.28);border-radius:20px;background:linear-gradient(160deg,#101720,#080d13);box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.aceV56AscensionCard small{color:#caa04e;font-size:9px;font-weight:1000;letter-spacing:.22em}
+.aceV56AscensionCard h1{margin:8px 0 0;color:#fff;font-size:48px;line-height:.95;letter-spacing:-.05em}
+.aceV56AscensionCard h1 em{display:block;color:#efc660;font-size:18px;font-style:normal;letter-spacing:.22em;margin-top:9px}
+.aceV56AscensionCard p{margin:14px auto;color:#8fa0ae;font-size:10px;line-height:1.55;max-width:280px}
+.aceV56AscensionCard button{margin-top:8px;width:100%;padding:13px;border:1px solid rgba(245,198,87,.36);border-radius:11px;background:linear-gradient(180deg,#d6a641,#a97822);color:#080b0e;font-size:11px;font-weight:1000;letter-spacing:.08em}
+</style>
+<script id="ace-v56-ace-status-engine">
+(function(){
+"use strict";
+const KEY="projectAce:v56:ascension:";
+function career(){try{return S?.career||null}catch(_){return null}}
+function uid(){
+ try{return String(S?.career?.id||S?.career?.career_id||S?.activeSave||"career")}catch(_){return "career"}
+}
+function ovr(c){
+ const candidates=[c?.overall,c?.ovr,c?.overall_rating,c?.rating];
+ for(const v of candidates)if(Number.isFinite(Number(v)))return Math.min(100,Number(v));
+ return 0;
+}
+function isAce(){const c=career();return !!c&&ovr(c)>=100}
+function enforce(){
+ const c=career();if(!c)return;
+ ["overall","ovr","overall_rating","rating"].forEach(k=>{
+   if(Number.isFinite(Number(c[k]))&&Number(c[k])>100)c[k]=100;
+ });
+}
+function ascension(){
+ if(!isAce())return;
+ const k=KEY+uid();if(localStorage.getItem(k))return;
+ localStorage.setItem(k,"1");
+ const el=document.createElement("div");el.className="aceV56Ascension";
+ el.innerHTML=`<div class="aceV56AscensionCard"><small>PROJECT ACE · CAREER MILESTONE</small>
+ <h1>100<em>ACE</em></h1><p>You reached the overall ceiling. Rating progression is complete. Your career now enters Mastery.</p>
+ <button type="button">ENTER MASTERY</button></div>`;
+ el.querySelector("button").onclick=()=>el.remove();document.body.appendChild(el);
+}
+function decorate(){
+ enforce();
+ const page=document.getElementById("roadtoace");if(!page)return;
+ page.classList.toggle("aceV56CareerAce",isAce());
+ page.querySelectorAll(".aceV56Badge,.aceV56Mastery").forEach(x=>x.remove());
+ if(!isAce())return;
+ const identity=page.querySelector(".rta93PlayerIdentity");
+ if(identity){
+   const b=document.createElement("div");b.className="aceV56Badge";b.textContent="◆ 100 OVR · ACE";identity.appendChild(b);
+ }
+ const tabs=page.querySelector(".rta93PlayerTabs");
+ if(tabs){
+   const m=document.createElement("section");m.className="aceV56Mastery";
+   m.innerHTML="<small>POST-100 PROGRESSION</small><b>MASTERY</b><span>OVR is permanently capped at 100. Continue through Elite attributes, specialist paths, playstyles and future international mastery.</span>";
+   tabs.insertAdjacentElement("afterend",m);
+ }
+ ascension();
+}
+window.ACE_STATUS={
+ version:"V56",
+ isAce,
+ overall:()=>ovr(career()),
+ overallCap:100,
+ mode:()=>isAce()?"MASTERY":"DEVELOPMENT",
+ enforce
+};
+new MutationObserver(()=>requestAnimationFrame(decorate)).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener("click",()=>setTimeout(decorate,0),true);
+window.addEventListener("pageshow",()=>setTimeout(decorate,40));
+setTimeout(decorate,120);
+window.ACE_PROJECT_BUILD="B21.36.276";
+window.ACE_100_OVR_STATUS_BUILD="B21.36.276";
 })();
 </script>
 </head>
@@ -29048,9 +29146,9 @@ window.aceRuntimeHealth=function(){
     }
     if(identity)identity.innerHTML=aceSquadIdentityHTML(cards,{compact:true});
 
-    /* B21.36.274: UT Home stays focused on progression + Starting Six.
+    /* B21.36.276: UT Home stays focused on progression + Starting Six.
        Latest/featured cards belong in My Club, not on Home. */
-    /* spotlight retained by B21.36.274 */
+    /* spotlight retained by B21.36.276 */
   }
 
   const baseHomeRender=vdsRenderUltimateHubHome;
@@ -32622,7 +32720,7 @@ window.ACE_LEGACY_HOME_RUNTIME_DISABLED=true;
     const a=nextAction(s);
     const rookie=rookieSummary(),rookieDone=rookie.pct>=100;
 
-    /* B21.36.274: UT Home gets one progression hero only.
+    /* B21.36.276: UT Home gets one progression hero only.
        Squad, Missions and Club Goal live in their own navigation destinations. */
     return `
       <button class="ace35UTDeckCard next ace257UTNext" type="button" data-ace35-route="${safeEsc(a.target)}">
@@ -33114,7 +33212,7 @@ window.ACE_LEGACY_HOME_RUNTIME_DISABLED=true;
     ace352Booted=true;
     schedule();
 
-    /* B21.36.274: render/event hooks replace perpetual 1.6s DOM polling. */
+    /* B21.36.276: render/event hooks replace perpetual 1.6s DOM polling. */
     ace352RefreshTimer=null;
   }
 
@@ -45173,7 +45271,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   function init(){
     cleanHome();
-    /* B21.36.274: no permanent Home subtree observer. */
+    /* B21.36.276: no permanent Home subtree observer. */
     const home=document.getElementById('home');
     if(home)cleanHome();
     try{
@@ -46723,10 +46821,10 @@ window.ACE_MOBILE_HOME_UT_FIX_BUILD='B21.36.228';
       <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b><small>${status==="BENCH"?"The match advances until the coach sends you on.":status==="ROTATION"?"Fewer moments. Every touch matters.":"Control the important volleyball moments."}</small></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b><small>Sim the role the coach selected for you.</small></span></button></aside></section>
     </main>`;
   };
-  window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.274';
+  window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.276';
 })();
 </script>
-<script id="ace244-build-flag">window.ACE_MATCHDAY_BANNER_REMAKE_FILE='B21.36.274';</script>
+<script id="ace244-build-flag">window.ACE_MATCHDAY_BANNER_REMAKE_FILE='B21.36.276';</script>
 
 
 <style id="ace245-mobile-matchday-source-remake">#roadtoace .ace245FixtureHero{position:relative!important;display:block!important;height:auto!important;min-height:330px!important;padding:0!important;overflow:hidden!important;border-radius:20px!important;border:1px solid rgba(129,199,246,.14)!important;background: radial-gradient(circle at 12% 16%,rgba(111,82,226,.18),transparent 28%),radial-gradient(circle at 88% 18%,rgba(63,143,228,.16),transparent 26%),linear-gradient(155deg,#091421 0%,#0d1c2d 48%,#132940 100%)!important;box-shadow:0 18px 46px rgba(0,0,0,.22)!important;isolation:isolate!important;} #roadtoace .ace245FixtureHero::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.72!important;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px)!important;background-size:52px 52px!important;} #roadtoace .ace245FixtureHero::after{content:""!important;position:absolute!important;z-index:0!important;left:8%!important;right:8%!important;bottom:-26%!important;height:48%!important;pointer-events:none!important;transform:perspective(900px) rotateX(62deg)!important;transform-origin:top!important;border:1px solid rgba(221,241,255,.18)!important;background:linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.17) 49.85% 50.15%,transparent 50.3%),linear-gradient(90deg,transparent 29%,rgba(255,255,255,.08) 29.2% 29.45%,transparent 29.7% 70.3%,rgba(255,255,255,.08) 70.55% 70.8%,transparent 71%),linear-gradient(180deg,rgba(105,165,211,.10),rgba(27,58,91,.15))!important;} #roadtoace .ace245FixtureHeader,#roadtoace .ace245FixtureMain,#roadtoace .ace245FixtureFooter{position:relative!important;z-index:3!important;} #roadtoace .ace245FixtureAtmosphere{position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;overflow:hidden!important;} #roadtoace .ace245FixtureAtmosphere:before{content:"";position:absolute;left:12%;right:12%;top:42%;height:1px;background:linear-gradient(90deg,transparent,rgba(137,207,250,.18),transparent);} #roadtoace .ace245FixtureAtmosphere i{position:absolute;width:5px;height:5px;border-radius:50%;background:#89d7ff;box-shadow:0 0 18px rgba(95,198,250,.42);opacity:.35;} #roadtoace .ace245FixtureAtmosphere i:nth-child(1){left:18%;top:28%;}#roadtoace .ace245FixtureAtmosphere i:nth-child(2){right:18%;top:32%;}#roadtoace .ace245FixtureAtmosphere i:nth-child(3){left:50%;top:17%;opacity:.18;} #roadtoace .ace245FixtureHeader{display:flex!important;justify-content:space-between!important;gap:12px!important;align-items:flex-start!important;padding:18px 22px 3px!important;} #roadtoace .ace245FixtureHeader small{display:block!important;color:#6fbdf0!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.16em!important;} #roadtoace .ace245FixtureHeader b{display:block!important;margin-top:4px!important;color:#edf7ff!important;font-size:11px!important;letter-spacing:.04em!important;} #roadtoace .ace245FixtureHeader>span{color:#91a9bd!important;font-size:8px!important;font-weight:900!important;text-align:right!important;} #roadtoace .ace245FixtureMain{display:grid!important;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)!important;gap:18px!important;align-items:center!important;min-height:216px!important;padding:14px 28px 16px!important;} #roadtoace .ace245FixtureClub{min-width:0!important;display:grid!important;grid-template-columns:88px minmax(0,1fr)!important;gap:14px!important;align-items:center!important;padding:16px!important;border-radius:18px!important;border:1px solid rgba(129,200,244,.09)!important;background:linear-gradient(180deg,rgba(10,28,43,.68),rgba(8,20,32,.58))!important;overflow:visible!important;} #roadtoace .ace245FixtureClub.away{grid-template-columns:minmax(0,1fr) 88px!important;text-align:right!important;} #roadtoace .ace245FixtureClub.away .rta77ClubMark{grid-column:2!important;grid-row:1!important;} #roadtoace .ace245FixtureClub.away>div{grid-column:1!important;grid-row:1!important;} #roadtoace .ace245FixtureClub .rta77ClubMark.lg{width:82px!important;height:82px!important;border-radius:20px!important;margin:0!important;flex:0 0 82px!important;box-shadow:0 14px 28px rgba(0,0,0,.24)!important;} #roadtoace .ace245FixtureClub small{display:block!important;color:#849fb4!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.15em!important;} #roadtoace .ace245FixtureClub h1{margin:4px 0 0!important;color:#f2f8ff!important;font-size:clamp(25px,2.4vw,40px)!important;line-height:.94!important;letter-spacing:-.04em!important;white-space:normal!important;overflow:visible!important;text-overflow:unset!important;} #roadtoace .ace245FixtureClub p{margin:6px 0 0!important;color:#8fa8ba!important;font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #roadtoace .ace245FixtureVs{display:grid!important;justify-items:center!important;gap:8px!important;text-align:center!important;} #roadtoace .ace245FixtureVs>span{width:74px!important;height:74px!important;display:grid!important;place-items:center!important;border-radius:24px!important;background:linear-gradient(145deg,#183650,#0d2135)!important;border:1px solid rgba(174,219,255,.18)!important;color:#f1f8ff!important;font-size:24px!important;font-weight:1000!important;box-shadow:0 14px 32px rgba(0,0,0,.22)!important;} #roadtoace .ace245FixtureVs small{color:#a7c1d3!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.08em!important;} #roadtoace .ace245FixtureFooter{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;padding:0 28px 20px!important;} #roadtoace .ace245FixtureFooter span{padding:9px 10px!important;border-radius:12px!important;border:1px solid rgba(128,199,244,.08)!important;background:rgba(7,21,34,.54)!important;color:#7894aa!important;font-size:7px!important;font-weight:900!important;text-align:center!important;letter-spacing:.06em!important;} #roadtoace .ace245FixtureFooter b{display:block!important;margin-bottom:3px!important;color:#eaf6ff!important;font-size:11px!important;} @media(max-width:760px){#roadtoace .ace245MatchPage{width:100%!important;margin:0 0 82px!important;padding:0 6px!important;} #roadtoace .ace245FixtureHero{width:100%!important;margin:6px 0 8px!important;min-height:0!important;height:auto!important;border-radius:18px!important;overflow:hidden!important;} #roadtoace .ace245FixtureHeader{padding:13px 13px 4px!important;} #roadtoace .ace245FixtureHeader small{font-size:5.2px!important;} #roadtoace .ace245FixtureHeader b{font-size:8px!important;margin-top:2px!important;} #roadtoace .ace245FixtureHeader>span{max-width:46%!important;font-size:5.5px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #roadtoace .ace245FixtureMain{grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr)!important;gap:7px!important;min-height:126px!important;padding:10px 10px 8px!important;} #roadtoace .ace245FixtureClub,#roadtoace .ace245FixtureClub.away{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;text-align:center!important;padding:10px 6px 9px!important;border-radius:14px!important;min-height:112px!important;} #roadtoace .ace245FixtureClub .rta77ClubMark.lg{width:44px!important;height:44px!important;border-radius:13px!important;flex:0 0 44px!important;} #roadtoace .ace245FixtureClub>div,#roadtoace .ace245FixtureClub.away>div{width:100%!important;} #roadtoace .ace245FixtureClub small{font-size:4.8px!important;} #roadtoace .ace245FixtureClub h1{margin-top:3px!important;font-size:10.5px!important;line-height:.98!important;white-space:normal!important;overflow:visible!important;} #roadtoace .ace245FixtureClub p{display:none!important;} #roadtoace .ace245FixtureVs{gap:5px!important;} #roadtoace .ace245FixtureVs>span{width:40px!important;height:40px!important;border-radius:13px!important;font-size:13px!important;} #roadtoace .ace245FixtureVs small{font-size:4.7px!important;line-height:1.1!important;max-width:44px!important;} #roadtoace .ace245FixtureFooter{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;padding:0 10px 11px!important;} #roadtoace .ace245FixtureFooter span{padding:6px 3px!important;border-radius:9px!important;font-size:5px!important;letter-spacing:.03em!important;} #roadtoace .ace245FixtureFooter b{font-size:8px!important;margin-bottom:2px!important;} #roadtoace .ace245FixtureHero::after{left:7%!important;right:7%!important;bottom:-29%!important;height:42%!important;}}</style>
@@ -46750,7 +46848,7 @@ window.ACE_MULTIPLAYER_READY_SIM_FIX_BUILD='B21.36.247';
 
 <style id="ace251-starter-club-fix">#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(6,minmax(115px,1fr))!important;max-width:1040px!important;} @media(max-width:900px){#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(3,minmax(110px,1fr))!important;max-width:560px!important;}} @media(max-width:560px){#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;max-width:360px!important;}}</style>
 <script id="ace251-starter-club-build-flag">
-window.ACE_STARTER_CLUB_SILVER_GOLD_FIX_BUILD='B21.36.274';
+window.ACE_STARTER_CLUB_SILVER_GOLD_FIX_BUILD='B21.36.276';
 </script>
 
 
@@ -46885,7 +46983,7 @@ window.ACE_COMPACT_DESKTOP_NEXT_MATCH_BUILD='B21.36.258';
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",queue,{once:true});
   else queue();
   window.addEventListener("pageshow",queue,{passive:true});
-  window.ACE_PERFORMANCE_CLEANUP_BUILD="B21.36.274";
+  window.ACE_PERFORMANCE_CLEANUP_BUILD="B21.36.276";
 })();
 </script>
 
@@ -46986,7 +47084,7 @@ window.ACE_COMPACT_DESKTOP_NEXT_MATCH_BUILD='B21.36.258';
     setTimeout(schedule260, 120);
   }
 
-  window.ACE_PROJECT_BUILD="B21.36.274";
+  window.ACE_PROJECT_BUILD="B21.36.276";
   window.ACE_UT_SINGLE_PLAY_BUTTON=true;
   window.ACE_UT_BIG_ROOKIE_TOP=true;
 })();
@@ -47001,13 +47099,13 @@ window.ACE_REWARD_NOTIFICATION_POPUPS_BUILD='B21.36.261';
 
 <style id="ace262-remove-ut-featured-card">#ultimate #vdsUTHubHome .aceHomeSpotlight{display:none!important;}</style>
 <script id="ace262-build-flag">
-window.ACE_REMOVE_UT_FEATURED_CARD_BUILD='B21.36.274';
+window.ACE_REMOVE_UT_FEATURED_CARD_BUILD='B21.36.276';
 </script>
 
 
 <style id="ace263-remove-duplicate-career-week">@media(min-width:761px){#roadtoace .rta175CareerHome .ace258PrimaryGrid > .ace258CompactNextMove{display:none!important;} #roadtoace .rta175CareerHome .ace258PrimaryGrid{grid-template-columns:1fr!important;}}</style>
 <script id="ace263-build-flag">
-window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.274';
+window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.276';
 </script>
 
 
@@ -47365,14 +47463,14 @@ window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.274';
     setTimeout(mountResume,350);
   }
 
-  window.ACE_RESUME_RECOVERY_BUILD="B21.36.274";
+  window.ACE_RESUME_RECOVERY_BUILD="B21.36.276";
 })();
 </script>
 
 
 <style id="ace265-multiplayer-decline-reconnect-style">.ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{width:auto!important;min-width:92px!important;min-height:34px!important;padding:0 10px!important;border:1px solid rgba(231,92,100,.17)!important;border-radius:9px!important;background:rgba(92,25,31,.22)!important;color:#ef9299!important;font-size:5.7px!important;font-weight:1000!important;letter-spacing:.06em!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect:hover{border-color:rgba(239,98,107,.30)!important;background:rgba(112,31,38,.32)!important;color:#ffd2d5!important;} @media(max-width:760px){.ace264ResumeRibbon[data-kind="multiplayer"]{grid-template-columns:32px minmax(0,1fr)!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeAction,.ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{grid-column:auto!important;width:100%!important;min-width:0!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeAction{grid-column:1/2!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{grid-column:2/3!important;grid-row:auto!important;}}</style>
 <script id="ace265-build-flag">
-window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.274';
+window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.276';
 </script>
 
 
@@ -47435,7 +47533,7 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.274';
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(schedule,100),{once:true});
   else setTimeout(schedule,100);
 
-  window.ACE_ONE_CTA_AUDIT_BUILD="B21.36.274";
+  window.ACE_ONE_CTA_AUDIT_BUILD="B21.36.276";
 })();
 </script>
 
@@ -47486,7 +47584,7 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.274';
     document.addEventListener("DOMContentLoaded",()=>setTimeout(clean,100),{once:true});
   }else setTimeout(clean,100);
 
-  window.ACE_UT_HOME_SOURCE_CLEANUP_BUILD="B21.36.274";
+  window.ACE_UT_HOME_SOURCE_CLEANUP_BUILD="B21.36.276";
 })();
 </script>
 
@@ -47494,12 +47592,12 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.274';
 <style id="ace268-current-step-glow-rotating-card">#roadtoace .ace257CareerNext{display:none!important;} #roadtoace .rta77Calendar button.current,#roadtoace .ace229WeekStrip > .current{position:relative!important;border-color:rgba(91,199,255,.72)!important;background: radial-gradient(circle at 10% 50%,rgba(74,180,239,.14),transparent 42%),rgba(17,39,60,.92)!important;box-shadow: 0 0 0 2px rgba(86,194,251,.18),0 0 22px rgba(64,177,239,.30),inset 0 0 18px rgba(69,176,233,.06)!important;animation:ace268CurrentStepGlow 1.65s ease-in-out infinite!important;z-index:2!important;} #roadtoace .rta77Calendar button.current::after,#roadtoace .ace229WeekStrip > .current::after{content:"CURRENT";position:absolute;right:9px;top:8px;padding:3px 6px;border-radius:999px;background:#5fc6f4;color:#07131d;font-size:4.8px;font-weight:1000;letter-spacing:.08em;} #roadtoace .ace229WeekStrip > .current::after{right:6px;top:5px;font-size:4.3px;padding:2px 5px;} @keyframes ace268CurrentStepGlow{0%,100%{box-shadow:0 0 0 2px rgba(86,194,251,.16),0 0 15px rgba(64,177,239,.21),inset 0 0 18px rgba(69,176,233,.05);} 50%{box-shadow:0 0 0 3px rgba(86,194,251,.31),0 0 34px rgba(64,177,239,.43),inset 0 0 22px rgba(69,176,233,.09);}} #ultimate #vdsUTHubHome .aceHomeSpotlight.ace268RotatingSpotlight{display:grid!important;} @media(min-width:761px){#ultimate #vdsUTHubHome .aceUTHomeStage{grid-template-columns:275px minmax(0,1fr)!important;gap:22px!important;padding:22px!important;} #ultimate #vdsUTHubHome .aceUTHomeCopy{display:flex!important;flex-direction:column!important;align-self:stretch!important;padding-top:8px!important;} #ultimate #vdsUTHubHome .aceUTHomeGhost,#ultimate #vdsUTHubHome .aceUTHomePrimary{display:none!important;} #ultimate #vdsUTHubHome .aceUTHomeMainActions{width:100%!important;max-width:none!important;margin:7px 0 0!important;} #ultimate #vdsUTHubHome .aceUTHomeSecondary{width:100%!important;min-height:42px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlight.ace268RotatingSpotlight{width:100%!important;min-height:210px!important;margin:12px 0 0!important;padding:10px!important;grid-template-columns:120px minmax(0,1fr)!important;gap:11px!important;align-items:center!important;border:1px solid rgba(168,119,235,.14)!important;border-radius:14px!important;background: radial-gradient(circle at 8% 18%,rgba(137,79,212,.10),transparent 35%),#090d16!important;overflow:hidden!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard{min-width:0!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard .fifaPlayerCard{width:112px!important;max-width:112px!important;margin:0 auto!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy small{font-size:5.2px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy b{font-size:12px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy span{font-size:6px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview{min-height:500px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer{width:88px!important;height:118px!important;border-radius:14px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer img{border-radius:13px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer b{bottom:6px!important;font-size:9px!important;padding:4px 7px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewCourt{left:6%!important;right:6%!important;top:24%!important;bottom:-10%!important;}} @media(max-width:760px){#roadtoace .ace229WeekStrip > .current::after{content:"NOW";}}</style>
 
 <script id="ace268-build-flag">
-window.ACE_CURRENT_STEP_GLOW_ROTATING_CARD_BUILD='B21.36.274';
+window.ACE_CURRENT_STEP_GLOW_ROTATING_CARD_BUILD='B21.36.276';
 </script>
 
 
 <script id="ace269-starter-captain-fix-flag">
-window.ACE_STARTER_CAPTAIN_FIX_BUILD='B21.36.274';
+window.ACE_STARTER_CAPTAIN_FIX_BUILD='B21.36.276';
 </script>
 
 
@@ -47606,7 +47704,7 @@ window.ACE_FAST_PACK_REVEAL_BUILD='B21.36.270';
     setTimeout(measure,900);
   }
 
-  window.ACE_RUNTIME_PERFORMANCE_PASS_BUILD="B21.36.274";
+  window.ACE_RUNTIME_PERFORMANCE_PASS_BUILD="B21.36.276";
 })();
 </script>
 
@@ -47614,7 +47712,7 @@ window.ACE_FAST_PACK_REVEAL_BUILD='B21.36.270';
 <style id="ace272-training-blend-mastery-bar-style">#roadtoace .rta187TrainCard,#roadtoace .rta187PhysicalCard{background: radial-gradient(circle at 0% 50%,rgba(68,134,196,.08),transparent 38%),linear-gradient(150deg,#091522 0%,#0a1826 48%,#0b2030 100%)!important;} #roadtoace .rta187TrainCard:before,#roadtoace .rta187PhysicalCard:before{background: linear-gradient(90deg,rgba(6,16,26,.97) 0%,rgba(6,16,26,.95) 24%,rgba(6,16,26,.84) 42%,rgba(6,16,26,.58) 58%,rgba(6,16,26,.24) 76%,rgba(6,16,26,.05) 100%)!important;z-index:1!important;} #roadtoace .rta190TrainPhoto{opacity:.66!important;filter:saturate(.84) brightness(.74) contrast(1.02)!important;} #roadtoace .rta190TrainPhoto:after{content:""!important;position:absolute!important;inset:0!important;background: linear-gradient(90deg,rgba(7,17,28,.95) 0%,rgba(7,17,28,.82) 18%,rgba(7,17,28,.46) 40%,rgba(7,17,28,.14) 62%,rgba(7,17,28,.03) 100%),linear-gradient(180deg,rgba(11,21,34,.16) 0%,rgba(11,21,34,.08) 55%,rgba(11,21,34,.18) 100%)!important;} #roadtoace .rta187TrainCard.has-photo:hover .rta190TrainPhoto,#roadtoace .rta187PhysicalCard.has-photo:hover .rta190TrainPhoto{opacity:.72!important;filter:saturate(.88) brightness(.77) contrast(1.03)!important;} #roadtoace .rta187CardCopy{position:relative!important;z-index:4!important;} #roadtoace .ace221MasteryLine{position:absolute!important;left:0!important;right:0!important;bottom:4px!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;display:block!important;height:3px!important;opacity:.92!important;pointer-events:none!important;} #roadtoace .ace221MasteryLine > span,#roadtoace .ace221MasteryLine > b{display:none!important;} #roadtoace .ace221MasteryLine > i{display:block!important;width:100%!important;height:3px!important;margin:0!important;border-radius:999px!important;overflow:hidden!important;background:rgba(255,255,255,.08)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)!important;} #roadtoace .ace221MasteryLine > i > em{display:block!important;height:100%!important;border-radius:inherit!important;background:linear-gradient(90deg,rgba(75,156,219,.86),rgba(116,212,255,.98))!important;box-shadow:0 0 10px rgba(88,192,243,.16)!important;} #roadtoace .rta187TrainCard .rta187CardCopy,#roadtoace .rta187PhysicalCard .rta187CardCopy{padding-bottom:9px!important;} @media(max-width:760px){#roadtoace .ace221MasteryLine{bottom:3px!important;height:2px!important;} #roadtoace .ace221MasteryLine > i{height:2px!important;}}</style>
 
 <script id="ace272-build-flag">
-window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.274';
+window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.276';
 </script>
 
 
@@ -47718,7 +47816,7 @@ window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.274';
     setTimeout(schedule,120);
   }
 
-  window.ACE_UT_HOME_VISUAL_REBALANCE_BUILD='B21.36.274';
+  window.ACE_UT_HOME_VISUAL_REBALANCE_BUILD='B21.36.276';
 })();
 </script>
 
@@ -47797,7 +47895,7 @@ window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.274';
     setTimeout(bindSquadPreview,120);
   }
 
-  window.ACE_UT_HOME_ACTIONS_CLEANUP_BUILD="B21.36.274";
+  window.ACE_UT_HOME_ACTIONS_CLEANUP_BUILD="B21.36.276";
 })();
 </script>
 
@@ -47858,7 +47956,7 @@ window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.274';
     setTimeout(schedule,120);
   }
 
-  window.ACE_UT_HOME_NEGATIVE_SPACE_FIX_BUILD="B21.36.275";
+  window.ACE_UT_HOME_NEGATIVE_SPACE_FIX_BUILD="B21.36.276";
 })();
 </script>
 
@@ -48466,7 +48564,7 @@ window.ACE_GOOGLE_OAUTH_EXPLICIT_REDIRECT=false;
 window.ACE_AUTH_HANDOFF_BUILD="B21.36.231";
 </script>
 
-<script>window.ACE_SERVE_INTEGRATED_BUILD="B21.36.229-INTEGRATED";window.ACE_MATCH_SERVE_INTEGRATED_BUILD="B21.36.230";window.ACE_SERVE_MOBILE_LAYOUT_BUILD="B21.36.232";window.ACE_SERVE_SIDE_CONTROLS_BUILD="B21.36.233";window.ACE_CAREER_FAST_LOAD_BUILD="B21.36.234";window.ACE_SERVE_STAGE_VISIBILITY_BUILD="B21.36.235";window.ACE_MATCH_SERVE_TARGET_BUILD="B21.36.236";window.ACE_SERVE_PC_SCALE_BUILD="B21.36.236";window.ACE_INTEGRATED_HITTING_BUILD="B21.36.238";window.ACE_HIT_TORSO_FIX_BUILD="B21.36.238";window.ACE_CAREER_NONBLOCKING_LOAD_BUILD="B21.36.239";window.ACE_ATTACK_FORCE_NEW_RENDERER_BUILD="B21.36.240";window.ACE_QUICK_ATTACK_RETIRED_BUILD="B21.36.241";window.ACE_REAL_ATTACK_DRILL_FIX_BUILD="B21.36.242";window.ACE_DEAD_UI_CLEANUP_BUILD="B21.36.243";window.ACE_UT_FIXES_BUILD="B21.36.274";</script>
+<script>window.ACE_SERVE_INTEGRATED_BUILD="B21.36.229-INTEGRATED";window.ACE_MATCH_SERVE_INTEGRATED_BUILD="B21.36.230";window.ACE_SERVE_MOBILE_LAYOUT_BUILD="B21.36.232";window.ACE_SERVE_SIDE_CONTROLS_BUILD="B21.36.233";window.ACE_CAREER_FAST_LOAD_BUILD="B21.36.234";window.ACE_SERVE_STAGE_VISIBILITY_BUILD="B21.36.235";window.ACE_MATCH_SERVE_TARGET_BUILD="B21.36.236";window.ACE_SERVE_PC_SCALE_BUILD="B21.36.236";window.ACE_INTEGRATED_HITTING_BUILD="B21.36.238";window.ACE_HIT_TORSO_FIX_BUILD="B21.36.238";window.ACE_CAREER_NONBLOCKING_LOAD_BUILD="B21.36.239";window.ACE_ATTACK_FORCE_NEW_RENDERER_BUILD="B21.36.240";window.ACE_QUICK_ATTACK_RETIRED_BUILD="B21.36.241";window.ACE_REAL_ATTACK_DRILL_FIX_BUILD="B21.36.242";window.ACE_DEAD_UI_CLEANUP_BUILD="B21.36.243";window.ACE_UT_FIXES_BUILD="B21.36.276";</script>
 
 <style id="ace-b21-36-244-ut-ranking-pack10-fix">
 /* ---- UT home leaderboard entry ---- */
@@ -48595,7 +48693,7 @@ window.ACE_AUTH_HANDOFF_BUILD="B21.36.231";
 <script id="ace-b21-36-244-ut-ranking-pack10-runtime">
 (function(){
   "use strict";
-  window.ACE_PROJECT_BUILD="B21.36.274";
+  window.ACE_PROJECT_BUILD="B21.36.276";
   window.ACE_UT_VISIBLE_LEADERBOARD=true;
   window.ACE_PACK_REVIEW_MAPPING_FIX=true;
   window.ACE_UT_PACK_X10=true;
@@ -48920,7 +49018,7 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
 <script id="ace-v31-mobile-home-viewport-script">
 (function(){let raf=0,last=0;function sync(){raf=0;const v=window.visualViewport,h=Math.round(v&&v.height?v.height:window.innerHeight);if(!h||Math.abs(h-last)<2)return;last=h;document.documentElement.style.setProperty('--ace-v31-vh',h+'px')}function q(){if(!raf)raf=requestAnimationFrame(sync)}sync();window.addEventListener('resize',q,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(sync,80),{passive:true});window.addEventListener('pageshow',sync,{passive:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()},{passive:true});if(window.visualViewport){window.visualViewport.addEventListener('resize',q,{passive:true});window.visualViewport.addEventListener('scroll',q,{passive:true})}})();
 </script>
-<script>window.ACE_RECOVERY_BUILD='B21.36.274';</script>
+<script>window.ACE_RECOVERY_BUILD='B21.36.276';</script>
 
 
 <script id="ace-v53-force-skilltree2-live-route">
@@ -48965,7 +49063,7 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
   if(page)new MutationObserver(()=>requestAnimationFrame(mountSkillTree2)).observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:["class","aria-selected"]});
   window.addEventListener("pageshow",()=>setTimeout(mountSkillTree2,50));
   setTimeout(mountSkillTree2,100);
-  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.274";
+  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.276";
 })();
 </script>
 
@@ -49114,8 +49212,8 @@ window.ACE_ELITE={
   return Object.fromEntries(names.map(n=>[n,threshold(n)]));
  }
 };
-window.ACE_PROJECT_BUILD="B21.36.274";
-window.ACE_ELITE_OVERCAP_ENGINE_BUILD="B21.36.274";
+window.ACE_PROJECT_BUILD="B21.36.276";
+window.ACE_ELITE_OVERCAP_ENGINE_BUILD="B21.36.276";
 })();
 </script>
 
@@ -49172,6 +49270,62 @@ window.ACE_ELITE_APPLY={
 document.addEventListener("click",()=>setTimeout(css,0),true);
 window.addEventListener("pageshow",css);
 setTimeout(css,100);
+})();
+</script>
+
+<script id="ace-v55-elite-nodes-ui">
+(function(){
+"use strict";
+const cost=[3,4,5];
+function current(){
+ try{
+  const c=S?.career||{}, p=String(c.position||"OH").toUpperCase()==="MB"?"M":String(c.position||"OH").toUpperCase();
+  const path=document.querySelector("#roadtoace [data-ace-st2-path].active")?.dataset?.aceSt2Path||"";
+  return {c,p,path,cfg:window.ACE_ELITE?.PATHS?.[p]?.[path]};
+ }catch(_){return {}}
+}
+function owned(){
+ try{return typeof skillUnlockedSet==="function"?skillUnlockedSet():new Set(S?.career?.skill_nodes||[])}
+ catch(_){return new Set()}
+}
+function draw(){
+ document.querySelectorAll("#roadtoace .aceSt2Shell").forEach(shell=>{
+  shell.querySelector(".aceV55EliteTree")?.remove();
+  const {p,path,cfg}=current(); if(!p||!path||!cfg)return;
+  const o=owned();
+  const sig=`ST2_${p}_${path}_09`;
+  const sigOwned=o.has(sig);
+  let prev=sig;
+  const nodes=[1,2,3].map((rank,i)=>{
+   const id=`ST2_${p}_${path}_ELITE_${String(rank).padStart(2,"0")}`;
+   const got=o.has(id), prereq=(i===0?sigOwned:o.has(prev));
+   const cap=[101,103,105][i], label=["ELITE","WORLD CLASS","ACE"][i];
+   const html=`<button type="button" class="aceV55EliteNode ${got?"owned":prereq?"available":"locked"}"
+      data-ace-v55-elite="${id}" data-cost="${cost[i]}" ${prereq&&!got?"":"disabled"}>
+      <i>${got?"✓":prereq?"✦":"🔒"}</i><div><small>${label} · CAP ${cap}</small>
+      <b>${cfg.label} ${["I","II","III"][i]}</b>
+      <em>${cfg.stats.map(x=>x.replaceAll("_"," ").toUpperCase()).join(" + ")}</em></div>
+      <mark>${got?"OWNED":prereq?`${cost[i]} SP`:"LOCKED"}</mark></button>`;
+   prev=id; return html;
+  }).join("");
+  const box=document.createElement("section");box.className="aceV55EliteTree";
+  box.innerHTML=`<div class="aceV55EliteHead"><small>PHASE 2</small><b>ELITE SPECIALISATION</b>
+  <span>${sigOwned?"SIGNATURE COMPLETE · ELITE PATH OPEN":"COMPLETE YOUR ★ SIGNATURE TO ENTER"}</span></div>${nodes}`;
+  shell.appendChild(box);
+ });
+}
+document.addEventListener("click",e=>{
+ const b=e.target.closest?.("[data-ace-v55-elite]");
+ if(b){
+  /* Until backend migration is live, never fake a purchase. */
+  if(typeof toast==="function")toast("Elite node is ready, but server-side over-cap persistence must be enabled before purchase.","info");
+  return;
+ }
+ if(e.target.closest?.("[data-ace-st2-path]"))setTimeout(draw,0);
+},true);
+new MutationObserver(()=>requestAnimationFrame(draw)).observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(draw,120);
+window.ACE_ELITE_NODE_UI_BUILD="B21.36.276";
 })();
 </script>
 </body>
