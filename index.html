@@ -49828,3 +49828,37 @@ window.ACE_LEGACY_MIGRATION_V79={version:1,playableNations:24,check,hasMigration
 window.ACE_PROJECT_BUILD='B21.36.299';
 })();
 </script>
+
+<!-- PROJECT ACE V80 · MOBILE MIGRATION FIX -->
+<style id="ace-v80-mobile-migration-fix">
+#aceV79Migration{box-sizing:border-box;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 10px max(14px,env(safe-area-inset-bottom));touch-action:pan-y}
+#aceV79Migration .v79sheet{box-sizing:border-box;width:min(620px,100%);max-height:none;overflow:visible;margin:auto;padding:16px 14px calc(18px + env(safe-area-inset-bottom));border-radius:18px;flex:0 0 auto}
+#aceV79Migration .v79groups{gap:12px}
+#aceV79Migration .v79nations{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#aceV79Migration .v79nation{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:48px;padding:9px 7px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+#aceV79Migration .v79read{min-height:52px}
+#aceV79Migration .v79confirm{position:sticky;bottom:max(8px,env(safe-area-inset-bottom));z-index:4;min-height:52px;margin-top:14px;box-shadow:0 -8px 20px rgba(11,17,24,.94)}
+@media(max-width:380px){#aceV79Migration{padding-left:8px;padding-right:8px}#aceV79Migration .v79sheet{padding-left:11px;padding-right:11px}.v79sheet h2{font-size:21px}.v79preserve{gap:5px}.v79preserve div{padding:8px}.v79nation{font-size:9px!important}}
+</style>
+<script id="ace-v80-mobile-migration-fix-script">
+(()=>{
+'use strict';
+function unlockPage(){document.documentElement.style.overflow='';document.body.style.overflow=''}
+function fixDialog(){
+ const el=document.getElementById('aceV79Migration'); if(!el)return;
+ if(el.dataset.v80Fixed==='1')return; el.dataset.v80Fixed='1';
+ // Delegate taps from the overlay so mobile WebKit does not lose button events
+ // when the sheet is inside a transformed/scrolling application surface.
+ el.addEventListener('pointerup',e=>{
+   const b=e.target.closest?.('[data-v79-nation]');
+   if(!b||!el.contains(b))return;
+   if(typeof b.click==='function')setTimeout(()=>{if(!b.classList.contains('active'))b.click()},0);
+ },{passive:true});
+ const confirm=el.querySelector('#v79Confirm');
+ if(confirm)confirm.addEventListener('click',()=>setTimeout(unlockPage,0),{once:true});
+}
+const mo=new MutationObserver(()=>fixDialog());mo.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(fixDialog,0);setTimeout(fixDialog,500);
+window.ACE_PROJECT_BUILD='B21.36.300';
+})();
+</script>
