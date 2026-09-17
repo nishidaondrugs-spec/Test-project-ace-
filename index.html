@@ -49782,3 +49782,49 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
 
 </body>
 </html>
+
+<!-- PROJECT ACE V79 · LEGACY CAREER MIGRATION -->
+<style id="ace-v79-legacy-migration-style">
+#aceV79Migration{position:fixed;inset:0;z-index:2147483000;display:none;align-items:flex-end;justify-content:center;background:rgba(2,5,9,.82);backdrop-filter:blur(12px);padding:14px}
+#aceV79Migration.open{display:flex}
+#aceV79Migration .v79sheet{width:min(620px,100%);max-height:88%;overflow:auto;border:1px solid rgba(255,255,255,.11);border-radius:20px;background:#0b1118;padding:18px;color:#edf6fb;box-shadow:0 -20px 70px rgba(0,0,0,.42)}
+#aceV79Migration small{display:block;color:#75a8c7;font-size:9px;font-weight:900;letter-spacing:.12em}.v79sheet h2{margin:5px 0 5px;font-size:24px;line-height:1}.v79sheet>p{margin:0 0 14px;color:#8da0ad;font-size:12px;line-height:1.45}
+.v79preserve{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.v79preserve div{padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.025)}.v79preserve b{display:block;font-size:15px}.v79preserve span{font-size:8px;color:#708492;font-weight:900;letter-spacing:.08em}
+.v79groups{display:grid;gap:10px}.v79group label{display:block;margin-bottom:5px;color:#657b8b;font-size:8px;font-weight:1000;letter-spacing:.1em}.v79nations{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.v79nation{min-height:46px;border:1px solid rgba(255,255,255,.075);border-radius:10px;background:rgba(255,255,255,.02);color:#cbd8e0;font-size:10px;font-weight:900;padding:8px}.v79nation.active{border-color:#6fb8e6;background:rgba(79,157,207,.12);color:#fff}.v79read{margin-top:10px;padding:10px;border-radius:11px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06)}.v79read b{display:block;font-size:11px}.v79read span{display:block;margin-top:3px;color:#7f929f;font-size:9px;line-height:1.35}.v79confirm{width:100%;min-height:48px;margin-top:11px;border:0;border-radius:12px;background:#e8f4fb;color:#071018;font-size:11px;font-weight:1000;letter-spacing:.04em}.v79confirm:disabled{opacity:.35}.v79permanent{margin-top:8px!important;text-align:center!important;color:#607482!important;font-size:8px!important}
+@media(max-width:520px){.v79nations{grid-template-columns:repeat(2,1fr)}.v79preserve{grid-template-columns:1fr 1fr}.v79preserve div:last-child{grid-column:1/-1}}
+</style>
+<script id="ace-v79-legacy-migration">
+(()=>{
+'use strict';
+const KEY='projectAce:v79:legacyNationality:';
+let chosen='';
+const groups=[
+ ['FEATURED',['Japan','Poland','Italy','United States','Brazil','France']],
+ ['EUROPE',['Slovenia','Türkiye','Ukraine','Bulgaria','Serbia','Germany','Belgium','Czech Republic','Netherlands']],
+ ['ASIA / OCEANIA',['Iran','China','Qatar','Australia']],
+ ['AMERICAS',['Argentina','Canada','Cuba']],
+ ['AFRICA',['Egypt','Tunisia']]
+];
+const profiles=(window.ACE_INTL_NATIONALITY_V1&&window.ACE_INTL_NATIONALITY_V1.profiles)||{};
+function state(){return window.__ACE_RTA_STATE||null}
+function career(){return state()?.career||null}
+function ckey(c){return String(c?.id||c?.career_id||c?.created_at||c?.player_name||'career').replace(/[^a-z0-9_-]/gi,'_')}
+function storageKey(c){return KEY+ckey(c)}
+function saved(c){try{return localStorage.getItem(storageKey(c))||''}catch(_){return ''}}
+function valid(n){return groups.some(g=>g[1].includes(String(n||'')))}
+function applySaved(c){const n=saved(c);if(n&&valid(n)&&!valid(c.nationality)){c.nationality=n;return true}return false}
+function needs(c){return !!c&&!valid(c.nationality)&&!saved(c)}
+function ensure(){let el=document.getElementById('aceV79Migration');if(el)return el;el=document.createElement('div');el.id='aceV79Migration';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el);return el}
+function profile(n){const p=profiles[n]||['INTERNATIONAL','Playable national-team programme.'];return Array.isArray(p)?p:['INTERNATIONAL','Playable national-team programme.']}
+function draw(){const c=career();if(!c||!needs(c))return;const el=ensure();const ovr=Math.min(100,Number(c.overall??c.ovr??c.overall_rating??99)||99),sp=Math.max(0,Number(c.skill_points||0));el.innerHTML=`<div class="v79sheet"><small>PROJECT ACE · CAREER MIGRATION</small><h2>Your career stays yours.</h2><p>International Career is now available. Your existing player, attributes and progression are preserved — choose the nation this career will represent.</p><div class="v79preserve"><div><b>${ovr} OVR</b><span>PRESERVED</span></div><div><b>${sp.toLocaleString()} SP</b><span>PRESERVED</span></div><div><b>0 CAPS</b><span>INTERNATIONAL START</span></div></div><div class="v79groups">${groups.map(([label,ns])=>`<div class="v79group"><label>${label}</label><div class="v79nations">${ns.map(n=>`<button type="button" class="v79nation" data-v79-nation="${n.replace(/"/g,'&quot;')}">${n}</button>`).join('')}</div></div>`).join('')}</div><div class="v79read" id="v79Read"><b>SELECT YOUR NATIONALITY</b><span>This choice becomes permanent for this Career.</span></div><button class="v79confirm" id="v79Confirm" type="button" disabled>CONFIRM NATIONALITY →</button><p class="v79permanent">This does not spend SP, change OVR, reset attributes or grant retroactive international achievements.</p></div>`;
+el.classList.add('open');document.documentElement.style.overflow='hidden';
+el.querySelectorAll('[data-v79-nation]').forEach(b=>b.addEventListener('click',()=>{chosen=b.dataset.v79Nation||'';el.querySelectorAll('.v79nation').forEach(x=>x.classList.toggle('active',x===b));const p=profile(chosen);el.querySelector('#v79Read').innerHTML=`<b>${chosen} · ${p[0]}</b><span>${p[1]}</span>`;el.querySelector('#v79Confirm').disabled=false}));
+el.querySelector('#v79Confirm').addEventListener('click',()=>{if(!valid(chosen))return;try{localStorage.setItem(storageKey(c),chosen)}catch(_){}c.nationality=chosen;c.international_caps=Number(c.international_caps||0);c.international_achievements=Array.isArray(c.international_achievements)?c.international_achievements:[];el.classList.remove('open');document.documentElement.style.overflow='';chosen='';try{window.__ACE_RTA_RENDER?.()}catch(_){};try{window.dispatchEvent(new CustomEvent('ace:v79:nationality-migrated',{detail:{nationality:c.nationality}}))}catch(_){}})}
+function check(){const c=career();if(!c)return;const changed=applySaved(c);if(changed){try{window.__ACE_RTA_RENDER?.()}catch(_){}}if(needs(c))draw()}
+const oldLoaded=window.ace264CareerStateLoaded;window.ace264CareerStateLoaded=function(S){try{oldLoaded?.(S)}catch(_){}setTimeout(check,0)};
+const mo=new MutationObserver(()=>{const c=career();if(c&&(needs(c)||(!valid(c.nationality)&&saved(c))))setTimeout(check,0)});mo.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(check,400);
+window.ACE_LEGACY_MIGRATION_V79={version:1,playableNations:24,check,hasMigration:c=>!!saved(c),getNationality:c=>saved(c)};
+window.ACE_PROJECT_BUILD='B21.36.299';
+})();
+</script>
