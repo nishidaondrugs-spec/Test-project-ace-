@@ -39501,7 +39501,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       "Bulgaria":{code:"BUL",depth:92},"Serbia":{code:"SRB",depth:91},"Iran":{code:"IRI",depth:91},
       "Argentina":{code:"ARG",depth:91},"Cuba":{code:"CUB",depth:91},"Germany":{code:"GER",depth:90},
       "Canada":{code:"CAN",depth:90},"China":{code:"CHN",depth:89},"Belgium":{code:"BEL",depth:89},
-      "Czech Republic":{code:"CZE",depth:87},"Australia":{code:"AUS",depth:85},"Egypt":{code:"EGY",depth:86},
+      "Czech Republic":{code:"CZE",depth:87},"Netherlands":{code:"NED",depth:89},"Qatar":{code:"QAT",depth:86},"Australia":{code:"AUS",depth:85},"Egypt":{code:"EGY",depth:86},
       "Tunisia":{code:"TUN",depth:84}
     },
     positionPressure:{OH:1.5,OP:.5,M:0,S:1,L:1.5}
@@ -39513,7 +39513,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const avg=hist.reduce((a,h)=>a+Number(h.match_rating||6),0)/hist.length;
     return Math.max(20,Math.min(100,((avg-4)/6)*100));
   }
-  function aceV76Selection(c){
+  function aceV76SelectionBase(c){
     if(!c)return null;
     const nationality=String(c.nationality||"");
     const nation=ACE_V76_INTL.nations[nationality];
@@ -39548,6 +39548,18 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     else if(form<48)reason="Recent club form weakened your case despite your overall ability.";
     else if(ovr>=nation.depth-1)reason="Your level is close, but this position is especially deep for your national team.";
     return {eligible:true,nationality,code:nation.code,pos,score,form,fit,rank,slots,status,role,reason,gap,season:Number(c.season||1)};
+  }
+  function aceV76Selection(c){
+    const base=aceV76SelectionBase(c); if(!base?.eligible)return base;
+    if(typeof aceV77Squad!=="function")return base;
+    const sq=aceV77Squad(c); if(!sq)return base;
+    const pos=String(c.position||"OH"),slots=ACE_V76_INTL.activeSlots[pos]||2,starters=ACE_V76_INTL.starters[pos]||1;
+    const field=sq.players.filter(p=>p.position===pos).map(p=>({id:p.id,score:aceV77PlayerScore(p)}));field.push({id:"YOU",score:base.score});field.sort((a,b)=>b.score-a.score);
+    const rank=field.findIndex(x=>x.id==="YOU")+1;let status="UNSELECTED",role="OUTSIDE SQUAD";
+    if(rank<=starters){status="SELECTED";role="STARTER"}else if(rank<=slots){status="SELECTED";role="ROTATION"}else if(rank===slots+1){status="RESERVE";role="VNL RESERVE"}else if(rank<=slots+2){status="TRAINING SQUAD";role="TRAINING SQUAD"}
+    let reason="Strong positional competition kept you outside the active squad.";
+    if(status==="SELECTED")reason=rank<=starters?"Your club form and overall profile earned you a starting national-team role.":"You earned an active squad place. Your VNL minutes will depend on performance.";else if(status==="RESERVE")reason="You are first in line if the active squad changes through form, tactics or injury.";else if(status==="TRAINING SQUAD")reason="You have been called into camp, but you have not made the active tournament roster.";else if(base.form<48)reason="Recent club form weakened your case despite your overall ability.";
+    return {...base,rank,slots,status,role,reason,persistentSquad:true};
   }
   function aceV76SelectionReport(c){
     const r=aceV76Selection(c); if(!r)return "";
@@ -40919,18 +40931,82 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return rta103StoryPanel(c,inbox,offers,awards);
   }
 
+  // V77 · Persistent national-team depth charts.
+  const ACE_V77_SQUAD_VERSION=1;
+  const ACE_V77_COUNTS={OH:6,OP:3,M:6,S:3,L:3};
+  const ACE_V77_POS_LABEL={OH:"OUTSIDE HITTER",OP:"OPPOSITE",M:"MIDDLE BLOCKER",S:"SETTER",L:"LIBERO"};
+  const ACE_V77_SURNAMES={
+    JPN:["Sato","Kato","Ishida","Mori","Aoki","Endo"],POL:["Kowalski","Nowak","Mazur","Wojcik","Krawiec","Zielinski"],ITA:["Romano","Conti","Rossi","Gallo","Marino","Costa"],USA:["Miller","Carter","Brooks","Hayes","Reed","Turner"],BRA:["Silva","Costa","Rocha","Lima","Alves","Moura"],FRA:["Martin","Bernard","Moreau","Laurent","Roux","Simon"],SLO:["Novak","Kovac","Zupan","Kralj","Mlakar","Kos"],TUR:["Yilmaz","Kaya","Demir","Aydin","Arslan","Celik"],UKR:["Bondar","Koval","Melnyk","Tkachenko","Kravets","Shevchuk"],BUL:["Ivanov","Petrov","Dimitrov","Nikolov","Georgiev","Todorov"],SRB:["Jovic","Markovic","Nikolic","Petrovic","Ilic","Stojanovic"],GER:["Weber","Fischer","Wagner","Becker","Hoffmann","Klein"],BEL:["Peeters","Janssens","Maes","Willems","Jacobs","Claes"],CZE:["Novak","Svoboda","Dvorak","Cerny","Prochazka","Vesely"],NED:["De Vries","Jansen","Smit","Bakker","Visser","Meijer"],IRI:["Karimi","Hosseini","Rahimi","Moradi","Jafari","Azadi"],CHN:["Wang","Li","Zhang","Chen","Liu","Yang"],QAT:["Ali","Hassan","Ibrahim","Khalid","Nasser","Salem"],AUS:["Wilson","Taylor","Brown","Martin","Walker","Evans"],ARG:["Gomez","Rossi","Fernandez","Acosta","Pereyra","Vega"],CAN:["Martin","Wilson","Roy","Clark","Fraser","Bennett"],CUB:["Garcia","Diaz","Reyes","Castro","Mendez","Rojas"],EGY:["Hassan","Mahmoud","Ibrahim","Fathy","Said","Nabil"],TUN:["Ben Salah","Trabelsi","Ayari","Mansouri","Jaziri","Gharbi"]
+  };
+  function aceV77CareerKey(c){return String(c?.id||c?.career_id||c?.created_at||c?.player_name||"career").replace(/[^a-z0-9_-]/gi,"_")}
+  function aceV77Key(c){return `projectAce:v77:nationalSquad:${aceV77CareerKey(c)}:${String(c?.nationality||"none")}`}
+  function aceV77Clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function aceV77Name(code,pos,i,seed){
+    const bank=ACE_V77_SURNAMES[code]||["Adams","Bennett","Cole","Davis","Evans","Ford"];
+    const initials="ABCDEFGHIJKLMNOPQRSTUVWXYZ"; const x=Math.floor(aceV76Hash(`${seed}|name|${pos}|${i}`)*initials.length);
+    return `${initials[x]}. ${bank[i%bank.length]}`;
+  }
+  function aceV77NewPlayer(nation,pos,i,season,seed,prospect=false){
+    const base=Number(nation.depth||88), posAdj={OH:.4,OP:0,M:-.2,S:.3,L:.2}[pos]||0;
+    const spread=(aceV76Hash(`${seed}|ovr|${pos}|${i}`)-.5)*7-i*.72;
+    const age=prospect?18+Math.floor(aceV76Hash(`${seed}|age|${pos}|${i}`)*4):20+Math.floor(aceV76Hash(`${seed}|age|${pos}|${i}`)*14);
+    return {id:`${nation.code}-${pos}-${season}-${i}-${Math.floor(aceV76Hash(seed+pos+i)*99999)}`,name:aceV77Name(nation.code,pos,i,seed),position:pos,age,overall:Math.round(aceV77Clamp(base+posAdj+spread,72,99)),form:Math.round(50+aceV76Hash(`${seed}|form|${pos}|${i}`)*40),caps:Math.max(0,Math.round((age-20)*5+aceV76Hash(`${seed}|caps|${pos}|${i}`)*18)),generatedSeason:season};
+  }
+  function aceV77Generate(c){
+    const nation=ACE_V76_INTL.nations[String(c?.nationality||"")]; if(!nation)return null;
+    const season=Math.max(1,Number(c?.season||1)),seed=`${aceV77CareerKey(c)}|${nation.code}`;
+    const players=[]; Object.entries(ACE_V77_COUNTS).forEach(([pos,count])=>{for(let i=0;i<count;i++)players.push(aceV77NewPlayer(nation,pos,i,season,seed));});
+    return {version:ACE_V77_SQUAD_VERSION,nationality:String(c.nationality),code:nation.code,lastSeason:season,players};
+  }
+  function aceV77Advance(data,c){
+    const nation=ACE_V76_INTL.nations[String(c?.nationality||"")]; if(!nation)return data;
+    const target=Math.max(1,Number(c?.season||1));
+    while(data.lastSeason<target){
+      data.lastSeason++;
+      data.players=data.players.filter(p=>{
+        p.age=Number(p.age||22)+1;
+        const roll=aceV76Hash(`${p.id}|season|${data.lastSeason}`);
+        let delta=p.age<=23?(roll<.65?1:0):p.age>=32?(roll<.58?-1:0):(roll<.18?1:roll>.88?-1:0);
+        p.overall=Math.round(aceV77Clamp(Number(p.overall||80)+delta,70,99)); p.form=Math.round(aceV77Clamp(48+aceV76Hash(`${p.id}|form|${data.lastSeason}`)*45,35,96)); p.caps=Math.max(0,Number(p.caps||0)+Math.floor(aceV76Hash(`${p.id}|caps|${data.lastSeason}`)*10));
+        return !(p.age>=35&&roll>.28);
+      });
+      Object.entries(ACE_V77_COUNTS).forEach(([pos,count])=>{let arr=data.players.filter(p=>p.position===pos);while(arr.length<count){const i=arr.length+data.lastSeason*10;const p=aceV77NewPlayer(nation,pos,i,data.lastSeason,`${aceV77CareerKey(c)}|${nation.code}|regen|${data.lastSeason}`,true);data.players.push(p);arr.push(p);}});
+    }
+    return data;
+  }
+  function aceV77Squad(c){
+    if(!c||!ACE_V76_INTL.nations[String(c.nationality||"")])return null;
+    const key=aceV77Key(c);let data=null;try{data=JSON.parse(localStorage.getItem(key)||"null")}catch(_){data=null}
+    if(!data||data.version!==ACE_V77_SQUAD_VERSION||!Array.isArray(data.players))data=aceV77Generate(c);
+    data=aceV77Advance(data,c);try{localStorage.setItem(key,JSON.stringify(data))}catch(_){}
+    return data;
+  }
+  function aceV77PlayerScore(p){return Number(p.overall||0)*.86+Number(p.form||55)*.14}
+  function aceV77Depth(c){
+    const data=aceV77Squad(c); if(!data)return null; const pos=String(c.position||"OH");
+    const ai=data.players.filter(p=>p.position===pos).map(p=>({...p,selectionScore:aceV77PlayerScore(p)}));
+    const you=aceV76SelectionBase(c); ai.push({id:"YOU",name:String(c.player_name||"YOU"),position:pos,age:Number(c.age||20),overall:Number(c.overall||0),form:Math.round(aceV76FormScore(c)),caps:Number(c.international_caps||0),selectionScore:you.score,you:true});
+    ai.sort((a,b)=>b.selectionScore-a.selectionScore||b.overall-a.overall);return {data,pos,players:ai,rank:ai.findIndex(p=>p.you)+1};
+  }
+  function aceV77Role(i,pos){const starters=ACE_V76_INTL.starters[pos]||1,slots=ACE_V76_INTL.activeSlots[pos]||2;if(i<starters)return "STARTER";if(i<slots)return "ROTATION";if(i===slots)return "RESERVE";return "OUTSIDE SQUAD"}
+  function aceV77InternationalPanel(c){
+    const sel=aceV76Selection(c),depth=aceV77Depth(c); if(!sel?.eligible||!depth)return `<section class="aceV77Intl"><div class="aceV77Empty"><small>INTERNATIONAL CAREER</small><h2>NOT AVAILABLE</h2><p>${esc(sel?.reason||"Choose a supported nationality to access International Career.")}</p></div></section>`;
+    const posRows=depth.players.map((p,i)=>`<div class="aceV77DepthRow ${p.you?"you":""}"><span class="rank">${i+1}</span><div><b>${p.you?"YOU · ":""}${esc(p.name)}</b><small>${p.age?`${p.age} YRS · `:""}${aceV77Role(i,depth.pos)}${p.caps?` · ${p.caps} CAPS`:""}</small></div><strong>${Math.round(p.overall)}</strong><em>${Math.round(p.form||50)} FORM</em></div>`).join("");
+    const overview=Object.keys(ACE_V77_COUNTS).map(pos=>{const arr=depth.data.players.filter(p=>p.position===pos).sort((a,b)=>aceV77PlayerScore(b)-aceV77PlayerScore(a));return `<div><span>${posLabel(pos)}</span><b>${arr[0]?Math.round(arr[0].overall):"—"}</b><small>${arr.length} PLAYERS</small></div>`}).join("");
+    return `<section class="aceV77Intl"><header><div><small>${esc(sel.code)} · NATIONAL TEAM</small><h2>INTERNATIONAL CAREER</h2><p>Persistent squad · Season ${Number(c.season||1)}</p></div><strong>${esc(sel.status)}</strong></header><div class="aceV77Status"><span><small>YOUR DEPTH</small><b>#${depth.rank}</b></span><span><small>POSITION</small><b>${esc(posLabel(depth.pos))}</b></span><span><small>PROJECTED ROLE</small><b>${esc(sel.role)}</b></span></div><div class="aceV77Title"><div><small>YOUR POSITION</small><b>${esc(posLabel(depth.pos))} DEPTH CHART</b></div><span>OVR · FORM</span></div><div class="aceV77Depth">${posRows}</div><div class="aceV77Title secondary"><div><small>NATIONAL POOL</small><b>SQUAD OVERVIEW</b></div><span>${depth.data.players.length} PLAYERS</span></div><div class="aceV77Overview">${overview}</div><p class="aceV77Note">This squad persists across Career seasons. Players age, develop, decline and retire; new prospects enter the pool. Selection still considers club form and squad fit, not OVR alone.</p></section>`;
+  }
   function careerView(c){
     const table=Array.isArray(S.league?.table)?S.league.table:[],offers=Array.isArray(c.transfer_offers)?c.transfer_offers:[],awards=Array.isArray(c.last_awards)?c.last_awards:[],h=latestMatch(),inbox=rta255CareerInbox(c);
     const leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"CURRENT LEAGUE"),tier=Number(S.pathway?.current?.tier||c.career_tier||5);
     const panel=String(S.careerPanel||"overview");
-    const body=panel==="pathway"?rta92PathwayPanel(c):panel==="league"?rta92LeaguePanel(c,leagueName,table,h):panel==="story"?rta92StoryPanel(c,inbox,offers,awards):rta92OverviewPanel(c,leagueName,tier);
+    const body=panel==="pathway"?rta92PathwayPanel(c):panel==="league"?rta92LeaguePanel(c,leagueName,table,h):panel==="story"?rta92StoryPanel(c,inbox,offers,awards):panel==="international"?aceV77InternationalPanel(c):rta92OverviewPanel(c,leagueName,tier);
     return `<main class="rta92CareerHub">
       <section class="rta92CareerHeader">
         <div class="rta92CareerIdentity"><small>ROAD TO ACE · CAREER</small><h1>${esc(c.player_name)}</h1><p>${esc(c.club_name)} · ${esc(leagueName)}</p></div>
         <div class="rta92CareerHeaderStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${Number(c.season||1)}</b>SEASON</span><span><b>${tier}</b>WORLD TIER</span></div>
       </section>
       <nav class="rta92CareerTabs" aria-label="Career sections">
-        ${[["overview","OVERVIEW","⌂"],["pathway","PATHWAY","↗"],["league","LEAGUE","▦"],["story","STORY","✦"]].map(([v,l,i])=>`<button type="button" data-rta92-career-panel="${v}" class="${panel===v?"active":""}"><i>${i}</i><span>${l}</span></button>`).join("")}
+        ${[["overview","OVERVIEW","⌂"],["pathway","PATHWAY","↗"],["league","LEAGUE","▦"],["story","STORY","✦"],["international","INT’L","◎"]].map(([v,l,i])=>`<button type="button" data-rta92-career-panel="${v}" class="${panel===v?"active":""}"><i>${i}</i><span>${l}</span></button>`).join("")}
       </nav>
       <div class="rta92CareerBody">${body}</div>
       <div class="rta92CareerDanger"><button type="button" data-rta62-reset>RESET THIS CAREER SAVE</button></div>
@@ -40948,8 +41024,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   // (World Ranking/VNL + active continental competition), while keeping the simulation manageable.
   const RTA91_NATIONALITY_GROUPS=[
     ["FEATURED",["Japan","Poland","Italy","United States","Brazil","France"]],
-    ["EUROPE",["Slovenia","Türkiye","Ukraine","Bulgaria","Serbia","Germany","Belgium","Czech Republic"]],
-    ["ASIA / OCEANIA",["Iran","China","Australia"]],
+    ["EUROPE",["Slovenia","Türkiye","Ukraine","Bulgaria","Serbia","Germany","Belgium","Czech Republic","Netherlands"]],
+    ["ASIA / OCEANIA",["Iran","China","Qatar","Australia"]],
     ["AMERICAS",["Argentina","Canada","Cuba"]],
     ["AFRICA",["Egypt","Tunisia"]]
   ];
@@ -40973,7 +41049,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     "Germany":["HIGH","Established European programme with a demanding senior-team pathway."],
     "Belgium":["HIGH","Current VNL-level programme with competitive senior selection."],
     "China":["HIGH","Current VNL-level programme with a large national player pool."],
+    "Qatar":["ESTABLISHED","Competitive Asian programme with recent major-tournament qualification experience."],
     "Czech Republic":["ESTABLISHED","Strong European pathway; major-tournament selection remains competitive."],
+    "Netherlands":["HIGH","Established European programme with a strong international player pathway."],
     "Australia":["ESTABLISHED","Established international pathway with opportunities for high-performing players."],
     "Egypt":["ESTABLISHED","Leading African programme; continental performance matters heavily."],
     "Tunisia":["ESTABLISHED","Major African volleyball nation with strong continental expectations."],
@@ -49627,7 +49705,9 @@ const P={
 "Germany":["HIGH","Established European programme with a demanding senior-team pathway."],
 "Belgium":["HIGH","Current VNL-level programme with competitive senior selection."],
 "China":["HIGH","Current VNL-level programme with a large national player pool."],
+    "Qatar":["ESTABLISHED","Competitive Asian programme with recent major-tournament qualification experience."],
 "Czech Republic":["ESTABLISHED","Strong European pathway; major-tournament selection remains competitive."],
+    "Netherlands":["HIGH","Established European programme with a strong international player pathway."],
 "Australia":["ESTABLISHED","Established international pathway with opportunities for high-performing players."],
 "Egypt":["ESTABLISHED","Leading African programme; continental performance matters heavily."],
 "Tunisia":["ESTABLISHED","Major African volleyball nation with strong continental expectations."],
@@ -49646,5 +49726,59 @@ window.ACE_INTL_NATIONALITY_V1={playable:24,profiles:P,sourceSeason:2026};
 window.ACE_PROJECT_BUILD="B21.36.296";
 })();
 </script>
+
+<style id="ace-v77-national-depth-style">
+#roadtoace .rta92CareerTabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+#roadtoace .aceV77Intl{padding:14px;color:#eaf4fa}#roadtoace .aceV77Intl>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)}#roadtoace .aceV77Intl>header small,#roadtoace .aceV77Title small{display:block;font-size:7px;letter-spacing:.11em;color:#6f8b9d;font-weight:1000}#roadtoace .aceV77Intl>header h2{margin:3px 0 2px;font-size:20px}#roadtoace .aceV77Intl>header p{margin:0;color:#6f8493;font-size:8px}#roadtoace .aceV77Intl>header>strong{font-size:9px;color:#e2bb6c;padding:6px 8px;border:1px solid rgba(226,187,108,.16);border-radius:999px;white-space:nowrap}
+#roadtoace .aceV77Status{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 14px}#roadtoace .aceV77Status span{padding:8px;border-radius:9px;background:rgba(255,255,255,.025)}#roadtoace .aceV77Status small{display:block;color:#637d8f;font-size:6px;font-weight:900}#roadtoace .aceV77Status b{display:block;margin-top:2px;font-size:10px;color:#e7f2f8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .aceV77Title{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:12px 0 6px}#roadtoace .aceV77Title b{display:block;margin-top:2px;font-size:11px}#roadtoace .aceV77Title>span{font-size:6px;color:#607786;font-weight:900}#roadtoace .aceV77Title.secondary{margin-top:16px}
+#roadtoace .aceV77Depth{border-top:1px solid rgba(255,255,255,.06)}#roadtoace .aceV77DepthRow{display:grid;grid-template-columns:24px minmax(0,1fr) 32px 50px;align-items:center;gap:7px;min-height:45px;border-bottom:1px solid rgba(255,255,255,.045)}#roadtoace .aceV77DepthRow .rank{font-size:9px;color:#597181;text-align:center}#roadtoace .aceV77DepthRow b{display:block;font-size:9px;color:#dce9f0}#roadtoace .aceV77DepthRow small{display:block;margin-top:2px;font-size:6px;color:#607786}#roadtoace .aceV77DepthRow strong{font-size:13px;text-align:right}#roadtoace .aceV77DepthRow em{font-size:6px;color:#718896;font-style:normal;text-align:right}#roadtoace .aceV77DepthRow.you{background:rgba(78,166,220,.055);box-shadow:inset 2px 0 0 #63bce9}#roadtoace .aceV77DepthRow.you b,#roadtoace .aceV77DepthRow.you .rank{color:#dff5ff}
+#roadtoace .aceV77Overview{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}#roadtoace .aceV77Overview>div{padding:8px 5px;border-radius:8px;background:rgba(255,255,255,.022);text-align:center;min-width:0}#roadtoace .aceV77Overview span{display:block;font-size:6px;color:#647e8e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#roadtoace .aceV77Overview b{display:block;margin-top:3px;font-size:13px}#roadtoace .aceV77Overview small{display:block;margin-top:1px;font-size:5px;color:#536a79}#roadtoace .aceV77Note{margin:10px 0 0!important;color:#647c8b!important;font-size:7px!important;line-height:1.5!important}
+@media(max-width:760px){#roadtoace .rta92CareerTabs button{font-size:6px!important}#roadtoace .aceV77Intl{padding:10px 8px}#roadtoace .aceV77Intl>header h2{font-size:17px}#roadtoace .aceV77Status{gap:4px}#roadtoace .aceV77Status span{padding:7px 5px}#roadtoace .aceV77DepthRow{grid-template-columns:20px minmax(0,1fr) 28px 43px;gap:5px}#roadtoace .aceV77Overview{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}#roadtoace .aceV77Overview>div{padding:7px 2px}}
+</style>
+<script id="ace-v77-build-marker">window.ACE_PROJECT_BUILD="B21.36.297";window.ACE_INTL_DEPTH_CHART_V1={persistent:true,seasonalAging:true,retirement:true,playableNations:24};</script>
+
+
+<style id="ace-v78-offseason-transfer-style">
+#roadtoace .aceV78Decision{margin:10px 14px 12px;padding:14px;border:1px solid rgba(225,190,105,.18);border-radius:14px;background:linear-gradient(135deg,rgba(225,190,105,.07),rgba(255,255,255,.018));color:#edf5f8}
+#roadtoace .aceV78Decision small{display:block;color:#c5a85f;font-size:7px;font-weight:1000;letter-spacing:.12em}#roadtoace .aceV78Decision h2{margin:4px 0 3px;font-size:18px}#roadtoace .aceV78Decision p{margin:0;color:#8194a0;font-size:8px;line-height:1.45}#roadtoace .aceV78Decision button{width:100%;min-height:44px;margin-top:11px;border:1px solid rgba(225,190,105,.28);border-radius:10px;background:#e0bd68;color:#101417;font-size:9px;font-weight:1000;letter-spacing:.06em}
+.aceV78ChooserBackdrop{position:fixed;inset:0;z-index:100000;background:rgba(3,7,10,.78);display:flex;align-items:flex-end;justify-content:center;padding:14px;backdrop-filter:blur(8px)}.aceV78Chooser{width:min(620px,100%);max-height:82vh;overflow:auto;border:1px solid rgba(255,255,255,.10);border-radius:18px;background:#0b1218;color:#edf5f8;padding:16px;box-shadow:0 30px 80px rgba(0,0,0,.5)}.aceV78ChooserHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)}.aceV78ChooserHead small{display:block;color:#c5a85f;font-size:8px;font-weight:1000;letter-spacing:.12em}.aceV78ChooserHead h2{margin:4px 0 3px;font-size:22px}.aceV78ChooserHead p{margin:0;color:#7f929f;font-size:10px;line-height:1.45}.aceV78ChooserClose{width:42px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:#b9c7cf;font-size:18px}.aceV78OfferList{display:grid;gap:7px;margin-top:12px}.aceV78Offer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.025)}.aceV78Offer small{display:block;color:#6e8594;font-size:7px;font-weight:1000}.aceV78Offer b{display:block;margin-top:2px;font-size:13px}.aceV78Offer span{display:block;margin-top:3px;color:#8194a0;font-size:8px}.aceV78Offer button{min-width:92px;min-height:42px;border:1px solid rgba(225,190,105,.25);border-radius:9px;background:rgba(225,190,105,.10);color:#e6c875;font-size:8px;font-weight:1000}.aceV78NoOffers{padding:18px 4px;color:#8799a4;font-size:10px;line-height:1.5}.aceV78Flow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:12px}.aceV78Flow span{padding:7px 4px;border-radius:7px;background:rgba(255,255,255,.025);text-align:center;color:#607583;font-size:6px;font-weight:900}.aceV78Flow span:first-child{color:#e6c875;background:rgba(225,190,105,.07)}
+@media(max-width:760px){#roadtoace .aceV78Decision{margin:8px 14px 10px;padding:12px}#roadtoace .aceV78Decision h2{font-size:16px}#roadtoace .aceV78Decision p{font-size:9px}.aceV78ChooserBackdrop{padding:0;align-items:flex-end}.aceV78Chooser{border-radius:18px 18px 0 0;max-height:86vh;padding:14px}.aceV78Offer{grid-template-columns:1fr}.aceV78Offer button{width:100%}.aceV78Flow span{font-size:5.5px}}
+</style>
+<script id="ace-v78-offseason-transfer-flow">
+(function(){
+'use strict';
+function state(){return window.__ACE_RTA_STATE||null}
+function career(){return state()?.career||null}
+function esc(v){return String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]))}
+function offers(){const c=career();return Array.isArray(c?.transfer_offers)?c.transfer_offers:[]}
+function close(){document.querySelector('.aceV78ChooserBackdrop')?.remove()}
+function openChooser(){
+ close();const c=career();if(!c?.season_complete)return;
+ const os=offers();const wrap=document.createElement('div');wrap.className='aceV78ChooserBackdrop';
+ const rows=os.map(o=>`<article class="aceV78Offer"><div><small>${esc(o.type||'OFFER')}</small><b>${esc(o.club||'Club')}</b><span>${esc(o.league_name||'Career move')} · ${esc(o.role||'ROTATION')}</span></div><button type="button" data-rta62-next-season="${esc(o.club||'')}">${String(o.type||'').toUpperCase()==='STAY'?'RENEW & STAY':String(o.type||'').toUpperCase()==='SCHOLARSHIP'?'ACCEPT':'JOIN CLUB'} →</button></article>`).join('');
+ wrap.innerHTML=`<section class="aceV78Chooser" role="dialog" aria-modal="true" aria-label="Choose your next club"><header class="aceV78ChooserHead"><div><small>SEASON ${Number(c.season||1)} COMPLETE · NEXT CAREER DECISION</small><h2>Choose your club</h2><p>Pick where you will play next season. International selection happens after this decision and does not cancel your new club contract.</p></div><button type="button" class="aceV78ChooserClose" aria-label="Close">×</button></header>${rows?`<div class="aceV78OfferList">${rows}</div>`:`<div class="aceV78NoOffers">No end-of-season offers are available yet. Open your Agent desk to search the market.</div>`}<div class="aceV78Flow"><span>CHOOSE CLUB</span><span>INT'L SELECTION</span><span>VNL / OFF-SEASON</span><span>NEW SEASON</span></div></section>`;
+ document.body.appendChild(wrap);wrap.querySelector('.aceV78ChooserClose')?.addEventListener('click',close);wrap.addEventListener('click',e=>{if(e.target===wrap)close();if(e.target.closest?.('[data-rta62-next-season]'))setTimeout(close,500)});
+}
+function goStory(){const s=state();if(!s)return;s.view='career';s.careerPanel='story';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(()=>{const block=document.querySelector('#roadtoace .rta92OffersBlock');block?.scrollIntoView?.({behavior:'smooth',block:'start'})},80)}
+function decorate(){
+ const s=state(),c=career(),mount=document.querySelector('#roadtoace #rta62Mount');if(!s||!c||!mount)return;
+ if(!c.season_complete){mount.querySelectorAll('.aceV78Decision').forEach(x=>x.remove());return}
+ if(s.view==='home'&&!mount.querySelector('.aceV78Decision')){
+   const card=document.createElement('section');card.className='aceV78Decision';card.innerHTML=`<small>SEASON COMPLETE · ACTION REQUIRED</small><h2>Choose your club for next season</h2><p>Your club decision comes first. After you sign, your calendar branches into national-team duty or your off-season programme.</p><button type="button" data-ace-v78-choose>CHOOSE YOUR CLUB →</button>`;
+   const anchor=mount.querySelector('.aceV74Calendar,.rta93HomeHero,.rta227HomeHero');if(anchor)anchor.insertAdjacentElement(anchor.classList.contains('aceV74Calendar')?'beforebegin':'afterend',card);else mount.prepend(card);
+ }
+ if(s.view==='career'&&!mount.querySelector('.aceV78Decision')){
+   const card=document.createElement('section');card.className='aceV78Decision';card.innerHTML=`<small>NEXT CAREER DECISION</small><h2>Your next club is waiting</h2><p>${offers().length?`${offers().length} end-of-season option${offers().length===1?'':'s'} available.`:'Open your agent desk if no offers are available yet.'}</p><button type="button" data-ace-v78-choose>CHOOSE YOUR CLUB →</button>`;
+   const body=mount.querySelector('.rta92CareerBody');body?.insertAdjacentElement('beforebegin',card);
+ }
+}
+document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace-v78-choose]')){e.preventDefault();openChooser();return}const review=e.target.closest?.('[data-rta62-result-done]');if(review&&career()?.season_complete){setTimeout(openChooser,120)}},true);
+new MutationObserver(()=>requestAnimationFrame(decorate)).observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(decorate,120);
+window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.ACE_PROJECT_BUILD='B21.36.298';
+})();
+</script>
+
 </body>
 </html>
