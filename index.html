@@ -4471,7 +4471,7 @@ function resetCourtAfterRally(){
   placePlayersByRotation();
 }
 
-/* B21.36.291 — rally visuals must be single-flight. Old action tags,
+/* B21.36.292 — rally visuals must be single-flight. Old action tags,
    animation classes and phase states should never bleed into the next point. */
 function ace289ClearRallyVisualResidue(){
   ballArcToken++;
@@ -4886,7 +4886,7 @@ function ballPointForPlayer(teamNo,player){
   const el=id?document.getElementById(id):null;
   if(!el)return null;
 
-  /* B21.36.291 — player locations are already stored as court-relative
+  /* B21.36.292 — player locations are already stored as court-relative
      percentages. Using getBoundingClientRect() on the rotated 3D court turns
      those into perspective-distorted screen coordinates and makes the ball
      visibly miss moving players. Target the actual court coordinates instead. */
@@ -9149,7 +9149,7 @@ function applyRemoteAnimationSpeed(value){
 let mpRemoteRallyAnimating=false;
 let mpQueuedPostRallySnapshot=null;
 
-/* B21.36.291 — Supabase broadcasts may arrive slightly faster than a slower
+/* B21.36.292 — Supabase broadcasts may arrive slightly faster than a slower
    client can finish the visual rally. Previously a second rally_event could
    start animateRally() on top of the first one. */
 let mpRemoteRallyQueue=[];
@@ -9762,7 +9762,7 @@ function autoPlaySet(){
 
 
 async function skipToEndOfSet(){
-  /* B21.36.291 — Skip Set is an offline/AI convenience action.
+  /* B21.36.292 — Skip Set is an offline/AI convenience action.
      Real online matches must continue to use the mutual 2/2 Sim Match flow. */
   if(mpInMultiplayerRoom()){
     const status=document.getElementById("rallyStatus");
@@ -11998,7 +11998,7 @@ async function mpRefreshAuthority({allowTakeover=true}={}){
     const roomStatus=String(row?.room_status||"").toLowerCase();
 
     if(roomStatus==="forfeit_win"){
-      /* B21.36.291 — heartbeat is the guaranteed fallback if the realtime
+      /* B21.36.292 — heartbeat is the guaranteed fallback if the realtime
          forfeit broadcast was missed. Make the local result explicitly 2-0
          before releasing the finished room. */
       const mine=Number(row?.caller_team||mpOwnedTeam?.()||0);
@@ -27123,7 +27123,7 @@ console.info("[THE ACE PROJECT] B12.0 Cloud Ultimate Team active — inventory, 
     const mine=myTeam();
     const request=Number(simState.request_team||0);
 
-    /* B21.36.291 — clicking SIM MATCH now means "send the request".
+    /* B21.36.292 — clicking SIM MATCH now means "send the request".
        No hidden second click is required. */
     if(!request){
       btn.disabled=true;
@@ -27879,7 +27879,7 @@ window.aceRuntimeHealth=function(){
       try{
         close();
 
-        /* B21.36.291 — explicit ranked forfeit is a real match result,
+        /* B21.36.292 — explicit ranked forfeit is a real match result,
            not just "leave the room". The backend records 0-2 / 2-0 first. */
         let forfeitResult=null;
         try{
@@ -27947,7 +27947,7 @@ window.aceRuntimeHealth=function(){
     const show=!!window.aceUTOnlineMatchActive && !!window.liveState && !window.liveState.matchFinished;
     btn.classList.toggle("show",show);
 
-    /* B21.36.291 — Forfeit belongs in its own compact-control slot.
+    /* B21.36.292 — Forfeit belongs in its own compact-control slot.
        It must never float over / overlap Sim Match. */
     const head=command.querySelector(".ace283CompactControlHead");
     if(head){
@@ -29161,9 +29161,9 @@ min-width:118px;padding:5px 7px;border:1px solid rgba(255,255,255,.12);border-ra
     }
     if(identity)identity.innerHTML=aceSquadIdentityHTML(cards,{compact:true});
 
-    /* B21.36.291: UT Home stays focused on progression + Starting Six.
+    /* B21.36.292: UT Home stays focused on progression + Starting Six.
        Latest/featured cards belong in My Club, not on Home. */
-    /* spotlight retained by B21.36.291 */
+    /* spotlight retained by B21.36.292 */
   }
 
   const baseHomeRender=vdsRenderUltimateHubHome;
@@ -32740,7 +32740,7 @@ justify-content:space-between;gap:10px;padding:5px 8px;border-top:1px solid rgba
     const a=nextAction(s);
     const rookie=rookieSummary(),rookieDone=rookie.pct>=100;
 
-    /* B21.36.291: UT Home gets one progression hero only.
+    /* B21.36.292: UT Home gets one progression hero only.
        Squad, Missions and Club Goal live in their own navigation destinations. */
     return `
       <button class="ace35UTDeckCard next ace257UTNext" type="button" data-ace35-route="${safeEsc(a.target)}">
@@ -33232,7 +33232,7 @@ justify-content:space-between;gap:10px;padding:5px 8px;border-top:1px solid rgba
     ace352Booted=true;
     schedule();
 
-    /* B21.36.291: render/event hooks replace perpetual 1.6s DOM polling. */
+    /* B21.36.292: render/event hooks replace perpetual 1.6s DOM polling. */
     ace352RefreshTimer=null;
   }
 
@@ -45366,7 +45366,7 @@ bottom:24%;} body.ace152-theme #home .ace183Stat.s4{left:44%;bottom:0%;} body.ac
   }
   function init(){
     cleanHome();
-    /* B21.36.291: no permanent Home subtree observer. */
+    /* B21.36.292: no permanent Home subtree observer. */
     const home=document.getElementById('home');
     if(home)cleanHome();
     try{
@@ -46936,10 +46936,10 @@ height:20px!important;} #roadtoace .rta92TableCard .rta62ClubCell b{min-width:0!
       <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b><small>${status==="BENCH"?"The match advances until the coach sends you on.":status==="ROTATION"?"Fewer moments. Every touch matters.":"Control the important volleyball moments."}</small></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b><small>Sim the role the coach selected for you.</small></span></button></aside></section>
     </main>`;
   };
-  window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.291';
+  window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.292';
 })();
 </script>
-<script id="ace244-build-flag">window.ACE_MATCHDAY_BANNER_REMAKE_FILE='B21.36.291';</script>
+<script id="ace244-build-flag">window.ACE_MATCHDAY_BANNER_REMAKE_FILE='B21.36.292';</script>
 
 
 <style id="ace245-mobile-matchday-source-remake">#roadtoace .ace245FixtureHero{position:relative!important;display:block!important;height:auto!important;min-height:330px!important;padding:0!important;overflow:hidden!important;border-radius:20px!important;border:1px solid rgba(129,199,246,.14)!important;background: radial-gradient(circle at 12% 16%,rgba(111,82,226,.18),transparent 28%),radial-gradient(circle at 88% 18%,rgba(63,143,228,.16),transparent 26%),linear-gradient(155deg,#091421 0%,#0d1c2d 48%,#132940 100%)!important;box-shadow:0 18px 46px rgba(0,0,0,.22)!important;isolation:isolate!important;} #roadtoace .ace245FixtureHero::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.72!important;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px)!important;background-size:52px 52px!important;} #roadtoace .ace245FixtureHero::after{content:""!important;position:absolute!important;z-index:0!important;left:8%!important;right:8%!important;bottom:-26%!important;height:48%!important;pointer-events:none!important;transform:perspective(900px) rotateX(62deg)!important;transform-origin:top!important;border:1px solid rgba(221,241,255,.18)!important;background:linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.17) 49.85% 50.15%,transparent 50.3%),linear-gradient(90deg,transparent 29%,rgba(255,255,255,.08) 29.2% 29.45%,transparent 29.7% 70.3%,rgba(255,255,255,.08) 70.55% 70.8%,transparent 71%),linear-gradient(180deg,rgba(105,165,211,.10),rgba(27,58,91,.15))!important;} #roadtoace .ace245FixtureHeader,#roadtoace .ace245FixtureMain,#roadtoace .ace245FixtureFooter{position:relative!important;z-index:3!important;} #roadtoace .ace245FixtureAtmosphere{position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;overflow:hidden!important;} #roadtoace .ace245FixtureAtmosphere:before{content:"";position:absolute;left:12%;right:12%;top:42%;height:1px;background:linear-gradient(90deg,transparent,rgba(137,207,250,.18),transparent);} #roadtoace .ace245FixtureAtmosphere i{position:absolute;width:5px;height:5px;border-radius:50%;background:#89d7ff;box-shadow:0 0 18px rgba(95,198,250,.42);opacity:.35;} #roadtoace .ace245FixtureAtmosphere i:nth-child(1){left:18%;top:28%;}#roadtoace .ace245FixtureAtmosphere i:nth-child(2){right:18%;top:32%;}#roadtoace .ace245FixtureAtmosphere i:nth-child(3){left:50%;top:17%;opacity:.18;} #roadtoace .ace245FixtureHeader{display:flex!important;justify-content:space-between!important;gap:12px!important;align-items:flex-start!important;padding:18px 22px 3px!important;} #roadtoace .ace245FixtureHeader small{display:block!important;color:#6fbdf0!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.16em!important;} #roadtoace .ace245FixtureHeader b{display:block!important;margin-top:4px!important;color:#edf7ff!important;font-size:11px!important;letter-spacing:.04em!important;} #roadtoace .ace245FixtureHeader>span{color:#91a9bd!important;font-size:8px!important;font-weight:900!important;text-align:right!important;} #roadtoace .ace245FixtureMain{display:grid!important;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)!important;gap:18px!important;align-items:center!important;min-height:216px!important;padding:14px 28px 16px!important;} #roadtoace .ace245FixtureClub{min-width:0!important;display:grid!important;grid-template-columns:88px minmax(0,1fr)!important;gap:14px!important;align-items:center!important;padding:16px!important;border-radius:18px!important;border:1px solid rgba(129,200,244,.09)!important;background:linear-gradient(180deg,rgba(10,28,43,.68),rgba(8,20,32,.58))!important;overflow:visible!important;} #roadtoace .ace245FixtureClub.away{grid-template-columns:minmax(0,1fr) 88px!important;text-align:right!important;} #roadtoace .ace245FixtureClub.away .rta77ClubMark{grid-column:2!important;grid-row:1!important;} #roadtoace .ace245FixtureClub.away>div{grid-column:1!important;grid-row:1!important;} #roadtoace .ace245FixtureClub .rta77ClubMark.lg{width:82px!important;height:82px!important;border-radius:20px!important;margin:0!important;flex:0 0 82px!important;box-shadow:0 14px 28px rgba(0,0,0,.24)!important;} #roadtoace .ace245FixtureClub small{display:block!important;color:#849fb4!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.15em!important;} #roadtoace .ace245FixtureClub h1{margin:4px 0 0!important;color:#f2f8ff!important;font-size:clamp(25px,2.4vw,40px)!important;line-height:.94!important;letter-spacing:-.04em!important;white-space:normal!important;overflow:visible!important;text-overflow:unset!important;} #roadtoace .ace245FixtureClub p{margin:6px 0 0!important;color:#8fa8ba!important;font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #roadtoace .ace245FixtureVs{display:grid!important;justify-items:center!important;gap:8px!important;text-align:center!important;} #roadtoace .ace245FixtureVs>span{width:74px!important;height:74px!important;display:grid!important;place-items:center!important;border-radius:24px!important;background:linear-gradient(145deg,#183650,#0d2135)!important;border:1px solid rgba(174,219,255,.18)!important;color:#f1f8ff!important;font-size:24px!important;font-weight:1000!important;box-shadow:0 14px 32px rgba(0,0,0,.22)!important;} #roadtoace .ace245FixtureVs small{color:#a7c1d3!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.08em!important;} #roadtoace .ace245FixtureFooter{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;padding:0 28px 20px!important;} #roadtoace .ace245FixtureFooter span{padding:9px 10px!important;border-radius:12px!important;border:1px solid rgba(128,199,244,.08)!important;background:rgba(7,21,34,.54)!important;color:#7894aa!important;font-size:7px!important;font-weight:900!important;text-align:center!important;letter-spacing:.06em!important;} #roadtoace .ace245FixtureFooter b{display:block!important;margin-bottom:3px!important;color:#eaf6ff!important;font-size:11px!important;} @media(max-width:760px){#roadtoace .ace245MatchPage{width:100%!important;margin:0 0 82px!important;padding:0 6px!important;} #roadtoace .ace245FixtureHero{width:100%!important;margin:6px 0 8px!important;min-height:0!important;height:auto!important;border-radius:18px!important;overflow:hidden!important;} #roadtoace .ace245FixtureHeader{padding:13px 13px 4px!important;} #roadtoace .ace245FixtureHeader small{font-size:5.2px!important;} #roadtoace .ace245FixtureHeader b{font-size:8px!important;margin-top:2px!important;} #roadtoace .ace245FixtureHeader>span{max-width:46%!important;font-size:5.5px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #roadtoace .ace245FixtureMain{grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr)!important;gap:7px!important;min-height:126px!important;padding:10px 10px 8px!important;} #roadtoace .ace245FixtureClub,#roadtoace .ace245FixtureClub.away{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;text-align:center!important;padding:10px 6px 9px!important;border-radius:14px!important;min-height:112px!important;} #roadtoace .ace245FixtureClub .rta77ClubMark.lg{width:44px!important;height:44px!important;border-radius:13px!important;flex:0 0 44px!important;} #roadtoace .ace245FixtureClub>div,#roadtoace .ace245FixtureClub.away>div{width:100%!important;} #roadtoace .ace245FixtureClub small{font-size:4.8px!important;} #roadtoace .ace245FixtureClub h1{margin-top:3px!important;font-size:10.5px!important;line-height:.98!important;white-space:normal!important;overflow:visible!important;} #roadtoace .ace245FixtureClub p{display:none!important;} #roadtoace .ace245FixtureVs{gap:5px!important;} #roadtoace .ace245FixtureVs>span{width:40px!important;
@@ -46964,7 +46964,7 @@ window.ACE_MULTIPLAYER_READY_SIM_FIX_BUILD='B21.36.247';
 
 <style id="ace251-starter-club-fix">#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(6,minmax(115px,1fr))!important;max-width:1040px!important;} @media(max-width:900px){#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(3,minmax(110px,1fr))!important;max-width:560px!important;}} @media(max-width:560px){#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;max-width:360px!important;}}</style>
 <script id="ace251-starter-club-build-flag">
-window.ACE_STARTER_CLUB_SILVER_GOLD_FIX_BUILD='B21.36.291';
+window.ACE_STARTER_CLUB_SILVER_GOLD_FIX_BUILD='B21.36.292';
 </script>
 
 
@@ -47099,7 +47099,7 @@ window.ACE_COMPACT_DESKTOP_NEXT_MATCH_BUILD='B21.36.258';
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",queue,{once:true});
   else queue();
   window.addEventListener("pageshow",queue,{passive:true});
-  window.ACE_PERFORMANCE_CLEANUP_BUILD="B21.36.291";
+  window.ACE_PERFORMANCE_CLEANUP_BUILD="B21.36.292";
 })();
 </script>
 
@@ -47200,7 +47200,7 @@ window.ACE_COMPACT_DESKTOP_NEXT_MATCH_BUILD='B21.36.258';
     setTimeout(schedule260, 120);
   }
 
-  window.ACE_PROJECT_BUILD="B21.36.291";
+  window.ACE_PROJECT_BUILD="B21.36.292";
   window.ACE_UT_SINGLE_PLAY_BUTTON=true;
   window.ACE_UT_BIG_ROOKIE_TOP=true;
 })();
@@ -47215,13 +47215,13 @@ window.ACE_REWARD_NOTIFICATION_POPUPS_BUILD='B21.36.261';
 
 <style id="ace262-remove-ut-featured-card">#ultimate #vdsUTHubHome .aceHomeSpotlight{display:none!important;}</style>
 <script id="ace262-build-flag">
-window.ACE_REMOVE_UT_FEATURED_CARD_BUILD='B21.36.291';
+window.ACE_REMOVE_UT_FEATURED_CARD_BUILD='B21.36.292';
 </script>
 
 
 <style id="ace263-remove-duplicate-career-week">@media(min-width:761px){#roadtoace .rta175CareerHome .ace258PrimaryGrid > .ace258CompactNextMove{display:none!important;} #roadtoace .rta175CareerHome .ace258PrimaryGrid{grid-template-columns:1fr!important;}}</style>
 <script id="ace263-build-flag">
-window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.291';
+window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.292';
 </script>
 
 
@@ -47579,14 +47579,14 @@ window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.291';
     setTimeout(mountResume,350);
   }
 
-  window.ACE_RESUME_RECOVERY_BUILD="B21.36.291";
+  window.ACE_RESUME_RECOVERY_BUILD="B21.36.292";
 })();
 </script>
 
 
 <style id="ace265-multiplayer-decline-reconnect-style">.ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{width:auto!important;min-width:92px!important;min-height:34px!important;padding:0 10px!important;border:1px solid rgba(231,92,100,.17)!important;border-radius:9px!important;background:rgba(92,25,31,.22)!important;color:#ef9299!important;font-size:5.7px!important;font-weight:1000!important;letter-spacing:.06em!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect:hover{border-color:rgba(239,98,107,.30)!important;background:rgba(112,31,38,.32)!important;color:#ffd2d5!important;} @media(max-width:760px){.ace264ResumeRibbon[data-kind="multiplayer"]{grid-template-columns:32px minmax(0,1fr)!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeAction,.ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{grid-column:auto!important;width:100%!important;min-width:0!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeAction{grid-column:1/2!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{grid-column:2/3!important;grid-row:auto!important;}}</style>
 <script id="ace265-build-flag">
-window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.291';
+window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.292';
 </script>
 
 
@@ -47649,7 +47649,7 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.291';
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(schedule,100),{once:true});
   else setTimeout(schedule,100);
 
-  window.ACE_ONE_CTA_AUDIT_BUILD="B21.36.291";
+  window.ACE_ONE_CTA_AUDIT_BUILD="B21.36.292";
 })();
 </script>
 
@@ -47700,7 +47700,7 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.291';
     document.addEventListener("DOMContentLoaded",()=>setTimeout(clean,100),{once:true});
   }else setTimeout(clean,100);
 
-  window.ACE_UT_HOME_SOURCE_CLEANUP_BUILD="B21.36.291";
+  window.ACE_UT_HOME_SOURCE_CLEANUP_BUILD="B21.36.292";
 })();
 </script>
 
@@ -47708,12 +47708,12 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.291';
 <style id="ace268-current-step-glow-rotating-card">#roadtoace .ace257CareerNext{display:none!important;} #roadtoace .rta77Calendar button.current,#roadtoace .ace229WeekStrip > .current{position:relative!important;border-color:rgba(91,199,255,.72)!important;background: radial-gradient(circle at 10% 50%,rgba(74,180,239,.14),transparent 42%),rgba(17,39,60,.92)!important;box-shadow: 0 0 0 2px rgba(86,194,251,.18),0 0 22px rgba(64,177,239,.30),inset 0 0 18px rgba(69,176,233,.06)!important;animation:ace268CurrentStepGlow 1.65s ease-in-out infinite!important;z-index:2!important;} #roadtoace .rta77Calendar button.current::after,#roadtoace .ace229WeekStrip > .current::after{content:"CURRENT";position:absolute;right:9px;top:8px;padding:3px 6px;border-radius:999px;background:#5fc6f4;color:#07131d;font-size:4.8px;font-weight:1000;letter-spacing:.08em;} #roadtoace .ace229WeekStrip > .current::after{right:6px;top:5px;font-size:4.3px;padding:2px 5px;} @keyframes ace268CurrentStepGlow{0%,100%{box-shadow:0 0 0 2px rgba(86,194,251,.16),0 0 15px rgba(64,177,239,.21),inset 0 0 18px rgba(69,176,233,.05);} 50%{box-shadow:0 0 0 3px rgba(86,194,251,.31),0 0 34px rgba(64,177,239,.43),inset 0 0 22px rgba(69,176,233,.09);}} #ultimate #vdsUTHubHome .aceHomeSpotlight.ace268RotatingSpotlight{display:grid!important;} @media(min-width:761px){#ultimate #vdsUTHubHome .aceUTHomeStage{grid-template-columns:275px minmax(0,1fr)!important;gap:22px!important;padding:22px!important;} #ultimate #vdsUTHubHome .aceUTHomeCopy{display:flex!important;flex-direction:column!important;align-self:stretch!important;padding-top:8px!important;} #ultimate #vdsUTHubHome .aceUTHomeGhost,#ultimate #vdsUTHubHome .aceUTHomePrimary{display:none!important;} #ultimate #vdsUTHubHome .aceUTHomeMainActions{width:100%!important;max-width:none!important;margin:7px 0 0!important;} #ultimate #vdsUTHubHome .aceUTHomeSecondary{width:100%!important;min-height:42px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlight.ace268RotatingSpotlight{width:100%!important;min-height:210px!important;margin:12px 0 0!important;padding:10px!important;grid-template-columns:120px minmax(0,1fr)!important;gap:11px!important;align-items:center!important;border:1px solid rgba(168,119,235,.14)!important;border-radius:14px!important;background: radial-gradient(circle at 8% 18%,rgba(137,79,212,.10),transparent 35%),#090d16!important;overflow:hidden!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard{min-width:0!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard .fifaPlayerCard{width:112px!important;max-width:112px!important;margin:0 auto!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy small{font-size:5.2px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy b{font-size:12px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy span{font-size:6px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview{min-height:500px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer{width:88px!important;height:118px!important;border-radius:14px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer img{border-radius:13px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer b{bottom:6px!important;font-size:9px!important;padding:4px 7px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewCourt{left:6%!important;right:6%!important;top:24%!important;bottom:-10%!important;}} @media(max-width:760px){#roadtoace .ace229WeekStrip > .current::after{content:"NOW";}}</style>
 
 <script id="ace268-build-flag">
-window.ACE_CURRENT_STEP_GLOW_ROTATING_CARD_BUILD='B21.36.291';
+window.ACE_CURRENT_STEP_GLOW_ROTATING_CARD_BUILD='B21.36.292';
 </script>
 
 
 <script id="ace269-starter-captain-fix-flag">
-window.ACE_STARTER_CAPTAIN_FIX_BUILD='B21.36.291';
+window.ACE_STARTER_CAPTAIN_FIX_BUILD='B21.36.292';
 </script>
 
 
@@ -47820,7 +47820,7 @@ window.ACE_FAST_PACK_REVEAL_BUILD='B21.36.270';
     setTimeout(measure,900);
   }
 
-  window.ACE_RUNTIME_PERFORMANCE_PASS_BUILD="B21.36.291";
+  window.ACE_RUNTIME_PERFORMANCE_PASS_BUILD="B21.36.292";
 })();
 </script>
 
@@ -47828,7 +47828,7 @@ window.ACE_FAST_PACK_REVEAL_BUILD='B21.36.270';
 <style id="ace272-training-blend-mastery-bar-style">#roadtoace .rta187TrainCard,#roadtoace .rta187PhysicalCard{background: radial-gradient(circle at 0% 50%,rgba(68,134,196,.08),transparent 38%),linear-gradient(150deg,#091522 0%,#0a1826 48%,#0b2030 100%)!important;} #roadtoace .rta187TrainCard:before,#roadtoace .rta187PhysicalCard:before{background: linear-gradient(90deg,rgba(6,16,26,.97) 0%,rgba(6,16,26,.95) 24%,rgba(6,16,26,.84) 42%,rgba(6,16,26,.58) 58%,rgba(6,16,26,.24) 76%,rgba(6,16,26,.05) 100%)!important;z-index:1!important;} #roadtoace .rta190TrainPhoto{opacity:.66!important;filter:saturate(.84) brightness(.74) contrast(1.02)!important;} #roadtoace .rta190TrainPhoto:after{content:""!important;position:absolute!important;inset:0!important;background: linear-gradient(90deg,rgba(7,17,28,.95) 0%,rgba(7,17,28,.82) 18%,rgba(7,17,28,.46) 40%,rgba(7,17,28,.14) 62%,rgba(7,17,28,.03) 100%),linear-gradient(180deg,rgba(11,21,34,.16) 0%,rgba(11,21,34,.08) 55%,rgba(11,21,34,.18) 100%)!important;} #roadtoace .rta187TrainCard.has-photo:hover .rta190TrainPhoto,#roadtoace .rta187PhysicalCard.has-photo:hover .rta190TrainPhoto{opacity:.72!important;filter:saturate(.88) brightness(.77) contrast(1.03)!important;} #roadtoace .rta187CardCopy{position:relative!important;z-index:4!important;} #roadtoace .ace221MasteryLine{position:absolute!important;left:0!important;right:0!important;bottom:4px!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;display:block!important;height:3px!important;opacity:.92!important;pointer-events:none!important;} #roadtoace .ace221MasteryLine > span,#roadtoace .ace221MasteryLine > b{display:none!important;} #roadtoace .ace221MasteryLine > i{display:block!important;width:100%!important;height:3px!important;margin:0!important;border-radius:999px!important;overflow:hidden!important;background:rgba(255,255,255,.08)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)!important;} #roadtoace .ace221MasteryLine > i > em{display:block!important;height:100%!important;border-radius:inherit!important;background:linear-gradient(90deg,rgba(75,156,219,.86),rgba(116,212,255,.98))!important;box-shadow:0 0 10px rgba(88,192,243,.16)!important;} #roadtoace .rta187TrainCard .rta187CardCopy,#roadtoace .rta187PhysicalCard .rta187CardCopy{padding-bottom:9px!important;} @media(max-width:760px){#roadtoace .ace221MasteryLine{bottom:3px!important;height:2px!important;} #roadtoace .ace221MasteryLine > i{height:2px!important;}}</style>
 
 <script id="ace272-build-flag">
-window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.291';
+window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.292';
 </script>
 
 
@@ -47932,7 +47932,7 @@ window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.291';
     setTimeout(schedule,120);
   }
 
-  window.ACE_UT_HOME_VISUAL_REBALANCE_BUILD='B21.36.291';
+  window.ACE_UT_HOME_VISUAL_REBALANCE_BUILD='B21.36.292';
 })();
 </script>
 
@@ -48550,14 +48550,14 @@ window.ACE_CAREER_LOGO_SOURCE_FIX_BUILD="B21.36.282";
 
 
 <script id="ace284-build-flag">
-window.ACE_CAREER_ALERTS_REMOVED_BUILD="B21.36.291";
+window.ACE_CAREER_ALERTS_REMOVED_BUILD="B21.36.292";
 </script>
 
 
 <style id="ace285-skip-set-during-rally">#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;height:34px!important;margin:0!important;padding:0 11px!important;border-radius:9px!important;border:1px solid rgba(109,181,255,.17)!important;background:rgba(27,75,112,.15)!important;color:#78c9ff!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.055em!important;white-space:nowrap!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn:hover:not(:disabled){border-color:rgba(116,205,255,.34)!important;background:rgba(32,103,148,.22)!important;box-shadow:0 0 15px rgba(66,168,228,.10)!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn:disabled{opacity:.48!important;} #liveMatchCard.ace283OnlineAutoMatch .ace283CompactControlHead #skipSetBtn{display:none!important;} @media(max-width:760px){#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn{min-height:32px!important;height:32px!important;padding:0 8px!important;font-size:6px!important;}}</style>
 
 <script id="ace285-build-flag">
-window.ACE_SKIP_SET_DURING_RALLY_BUILD="B21.36.291";
+window.ACE_SKIP_SET_DURING_RALLY_BUILD="B21.36.292";
 </script>
 
 
@@ -48618,7 +48618,7 @@ window.ACE_SKIP_SET_DURING_RALLY_BUILD="B21.36.291";
     setTimeout(schedule,120);
   }
 
-  window.ACE_UT_HOME_PREMIUM_REDESIGN_BUILD="B21.36.291";
+  window.ACE_UT_HOME_PREMIUM_REDESIGN_BUILD="B21.36.292";
 })();
 </script>
 
@@ -48634,26 +48634,26 @@ window.ACE_UT_HOME_BALANCE_FIX_BUILD="B21.36.287";
 width:100%!important;max-width:none!important;flex:0 0 auto!important;display:grid!important;grid-template-columns:86px minmax(0,1fr)!important;gap:12px!important;align-items:center!important;min-height:122px!important;height:122px!important;margin:14px 0 0!important;padding:12px 0 0!important;border:0!important;border-top:1px solid rgba(255,255,255,.05)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard{width:82px!important;height:108px!important;overflow:hidden!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard .fifaPlayerCard{transform:scale(.245)!important;transform-origin:top left!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy{display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0!important;padding-right:0!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy small{color:#9079af!important;font-size:4.9px!important;letter-spacing:.14em!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy b{margin-top:4px!important;font-size:15px!important;line-height:1!important;color:#f6f3fa!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy span{margin-top:4px!important;font-size:6px!important;color:#7a92a6!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy button{align-self:flex-start!important;margin-top:9px!important;min-height:28px!important;height:28px!important;padding:0 9px!important;border-radius:9px!important;background:rgba(15,21,32,.62)!important;font-size:5.7px!important;} #ultimate #vdsUTHubHome .aceUTHomeVisual{position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;gap:0!important;min-width:0!important;padding:18px 20px 16px!important;background:radial-gradient(circle at 52% 72%,rgba(104,62,162,.07),transparent 40%)!important;cursor:pointer!important;} #ultimate #vdsUTHubHome .aceUTHomeVisualGlow{display:none!important;} #ultimate #vdsUTHubHome .aceUTHomeSquadLabel{display:flex!important;align-items:center!important;justify-content:space-between!important;min-height:28px!important;margin:0 0 4px!important;padding:0!important;} #ultimate #vdsUTHubHome .aceUTHomeSquadLabel > span{color:#9d84bb!important;font-size:6.3px!important;font-weight:1000!important;letter-spacing:.18em!important;} #ultimate #vdsUTHubHome .aceUTReadyChip{min-height:24px!important;padding:0 9px!important;border-radius:999px!important;font-size:5.8px!important;} #ultimate #vdsUTHubHome .aceHomeIdentityMount{margin:0 0 8px!important;padding:0!important;border:0!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;width:100%!important;margin:0!important;padding:0 0 10px!important;border:0!important;border-bottom:1px solid rgba(255,255,255,.05)!important;border-radius:0!important;background:transparent!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact > div{padding:0 12px!important;border-left:1px solid rgba(255,255,255,.05)!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact > div:first-child{padding-left:0!important;border-left:0!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact > div:last-child{padding-right:0!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact span{color:#637f97!important;font-size:5px!important;letter-spacing:.11em!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact b{margin-top:4px!important;color:#e9f4fc!important;font-size:12px!important;white-space:nowrap!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview{position:relative!important;flex:1 1 auto!important;min-height:372px!important;height:372px!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview::before{display:none!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewCourt{left:4%!important;right:4%!important;top:6%!important;bottom:-9%!important;opacity:.97!important;background:linear-gradient(180deg,rgba(132,88,169,.96),rgba(93,60,133,.98))!important;box-shadow: inset 0 0 0 2px rgba(236,219,255,.64),0 24px 58px rgba(46,19,72,.18)!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer{width:88px!important;height:120px!important;border-radius:14px!important;border:1px solid rgba(255,255,255,.11)!important;box-shadow:0 16px 28px rgba(0,0,0,.28)!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer:hover{border-color:rgba(220,187,255,.36)!important;box-shadow: 0 18px 32px rgba(0,0,0,.34),0 0 22px rgba(138,82,214,.12)!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer b{left:5px!important;top:5px!important;padding:4px 6px!important;font-size:8px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .aceUTPreviewName{font-size:5.4px!important;}} @media (min-width:981px) and (max-width:1250px){#ultimate #vdsUTHubHome .ace35UTDeckCard.next{padding-right:360px!important;} #ultimate #vdsUTHubHome .ace35DeckTag{right:268px!important;} #ultimate #vdsUTHubHome .ace257UTNext .ace257RookieInline{width:190px!important;right:42px!important;} #ultimate #vdsUTHubHome .aceUTHomeStage{grid-template-columns:270px minmax(0,1fr)!important;} #ultimate #vdsUTHubHome .aceUTHomeCopy{padding-left:15px!important;padding-right:15px!important;} #ultimate #vdsUTHubHome .aceUTHomeVisual{padding-left:16px!important;padding-right:16px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview{min-height:345px!important;height:345px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer{width:76px!important;height:106px!important;}}</style>
 
 <script id="ace288-build-flag">
-window.ACE_UT_HOME_RECOMPOSE_BUILD="B21.36.291";
+window.ACE_UT_HOME_RECOMPOSE_BUILD="B21.36.292";
 </script>
 
 
 <style id="ace289-rally-visual-stability">#liveMatchCard.ace289FastSim #courtStage .courtPlayer,#liveMatchCard.ace289FastSim #courtStage .ballAnim{transition:none!important;animation:none!important;} #liveMatchCard.ace289FastSim #rallyBanner,#liveMatchCard.ace289FastSim #courtStage .playerActionTag,#liveMatchCard.ace289FastSim #courtStage .passerBadge{display:none!important;}</style>
 
 <script id="ace289-build-flag">
-window.ACE_RALLY_VISUAL_STABILITY_BUILD="B21.36.291";
+window.ACE_RALLY_VISUAL_STABILITY_BUILD="B21.36.292";
 </script>
 
 
 <style id="ace290-forfeit-sim-match-ui-fix">#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead{flex-wrap:wrap!important;row-gap:6px!important;} #liveMatchCard.ace283AutoUTMatch .ace283SimSlot,#liveMatchCard.ace283AutoUTMatch .ace290ForfeitSlot,#liveMatchCard.ace283AutoUTMatch .ace285SkipSlot{display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn,#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn{position:static!important;inset:auto!important;transform:none!important;margin:0!important;min-height:34px!important;height:34px!important;padding:0 10px!important;border-radius:9px!important;font-size:6.6px!important;font-weight:1000!important;letter-spacing:.055em!important;white-space:nowrap!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid rgba(103,186,255,.20)!important;background:rgba(27,82,119,.16)!important;color:#7dcfff!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn{display:none!important;align-items:center!important;justify-content:center!important;border:1px solid rgba(235,91,108,.20)!important;background:rgba(118,31,44,.15)!important;color:#df8791!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn.show{display:inline-flex!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn:hover:not(:disabled){border-color:rgba(118,205,255,.38)!important;background:rgba(37,105,150,.23)!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn:hover:not(:disabled){border-color:rgba(245,111,126,.36)!important;background:rgba(138,39,53,.23)!important;} @media(max-width:760px){#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead{align-items:center!important;} #liveMatchCard.ace283AutoUTMatch .ace283AutoState{margin-right:auto!important;} #liveMatchCard.ace283AutoUTMatch .ace283SimSlot,#liveMatchCard.ace283AutoUTMatch .ace290ForfeitSlot{flex:1 1 calc(50% - 4px)!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn,#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn{width:100%!important;min-width:0!important;min-height:32px!important;height:32px!important;padding:0 7px!important;font-size:6px!important;}}</style>
 
 <script id="ace290-build-flag">
-window.ACE_FORFEIT_SIM_MATCH_FIX_BUILD="B21.36.291";
+window.ACE_FORFEIT_SIM_MATCH_FIX_BUILD="B21.36.292";
 </script>
 
 
 <script id="ace291-build-flag">
-window.ACE_MULTIPLAYER_RELEASE_HARDENING_BUILD="B21.36.291";
+window.ACE_MULTIPLAYER_RELEASE_HARDENING_BUILD="B21.36.292";
 </script>
 
 
@@ -48684,7 +48684,7 @@ window.ACE_GOOGLE_OAUTH_EXPLICIT_REDIRECT=false;
 window.ACE_AUTH_HANDOFF_BUILD="B21.36.231";
 </script>
 
-<script>window.ACE_SERVE_INTEGRATED_BUILD="B21.36.229-INTEGRATED";window.ACE_MATCH_SERVE_INTEGRATED_BUILD="B21.36.230";window.ACE_SERVE_MOBILE_LAYOUT_BUILD="B21.36.232";window.ACE_SERVE_SIDE_CONTROLS_BUILD="B21.36.233";window.ACE_CAREER_FAST_LOAD_BUILD="B21.36.234";window.ACE_SERVE_STAGE_VISIBILITY_BUILD="B21.36.235";window.ACE_MATCH_SERVE_TARGET_BUILD="B21.36.236";window.ACE_SERVE_PC_SCALE_BUILD="B21.36.236";window.ACE_INTEGRATED_HITTING_BUILD="B21.36.238";window.ACE_HIT_TORSO_FIX_BUILD="B21.36.238";window.ACE_CAREER_NONBLOCKING_LOAD_BUILD="B21.36.239";window.ACE_ATTACK_FORCE_NEW_RENDERER_BUILD="B21.36.240";window.ACE_QUICK_ATTACK_RETIRED_BUILD="B21.36.241";window.ACE_REAL_ATTACK_DRILL_FIX_BUILD="B21.36.242";window.ACE_DEAD_UI_CLEANUP_BUILD="B21.36.243";window.ACE_UT_FIXES_BUILD="B21.36.291";</script>
+<script>window.ACE_SERVE_INTEGRATED_BUILD="B21.36.229-INTEGRATED";window.ACE_MATCH_SERVE_INTEGRATED_BUILD="B21.36.230";window.ACE_SERVE_MOBILE_LAYOUT_BUILD="B21.36.232";window.ACE_SERVE_SIDE_CONTROLS_BUILD="B21.36.233";window.ACE_CAREER_FAST_LOAD_BUILD="B21.36.234";window.ACE_SERVE_STAGE_VISIBILITY_BUILD="B21.36.235";window.ACE_MATCH_SERVE_TARGET_BUILD="B21.36.236";window.ACE_SERVE_PC_SCALE_BUILD="B21.36.236";window.ACE_INTEGRATED_HITTING_BUILD="B21.36.238";window.ACE_HIT_TORSO_FIX_BUILD="B21.36.238";window.ACE_CAREER_NONBLOCKING_LOAD_BUILD="B21.36.239";window.ACE_ATTACK_FORCE_NEW_RENDERER_BUILD="B21.36.240";window.ACE_QUICK_ATTACK_RETIRED_BUILD="B21.36.241";window.ACE_REAL_ATTACK_DRILL_FIX_BUILD="B21.36.242";window.ACE_DEAD_UI_CLEANUP_BUILD="B21.36.243";window.ACE_UT_FIXES_BUILD="B21.36.292";</script>
 
 <style id="ace-b21-36-244-ut-ranking-pack10-fix">
 /* ---- UT home leaderboard entry ---- */
@@ -48813,7 +48813,7 @@ window.ACE_AUTH_HANDOFF_BUILD="B21.36.231";
 <script id="ace-b21-36-244-ut-ranking-pack10-runtime">
 (function(){
   "use strict";
-  window.ACE_PROJECT_BUILD="B21.36.291";
+  window.ACE_PROJECT_BUILD="B21.36.292";
   window.ACE_UT_VISIBLE_LEADERBOARD=true;
   window.ACE_PACK_REVIEW_MAPPING_FIX=true;
   window.ACE_UT_PACK_X10=true;
@@ -49138,7 +49138,7 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
 <script id="ace-v31-mobile-home-viewport-script">
 (function(){let raf=0,last=0;function sync(){raf=0;const v=window.visualViewport,h=Math.round(v&&v.height?v.height:window.innerHeight);if(!h||Math.abs(h-last)<2)return;last=h;document.documentElement.style.setProperty('--ace-v31-vh',h+'px')}function q(){if(!raf)raf=requestAnimationFrame(sync)}sync();window.addEventListener('resize',q,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(sync,80),{passive:true});window.addEventListener('pageshow',sync,{passive:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()},{passive:true});if(window.visualViewport){window.visualViewport.addEventListener('resize',q,{passive:true});window.visualViewport.addEventListener('scroll',q,{passive:true})}})();
 </script>
-<script>window.ACE_RECOVERY_BUILD='B21.36.291';</script>
+<script>window.ACE_RECOVERY_BUILD='B21.36.292';</script>
 
 
 <script id="ace-v53-force-skilltree2-live-route">
@@ -49183,7 +49183,7 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
   if(page)new MutationObserver(()=>requestAnimationFrame(mountSkillTree2)).observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:["class","aria-selected"]});
   window.addEventListener("pageshow",()=>setTimeout(mountSkillTree2,50));
   setTimeout(mountSkillTree2,100);
-  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.291";
+  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.292";
 })();
 </script>
 <style id="ace-v54-elite-ui">
@@ -49456,308 +49456,111 @@ window.ACE_100_OVR_STATUS_BUILD="B21.36.276";
 #aceV64Panel .grid button{min-height:40px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:#122331;color:#eaf2f6;font:900 9px/1 system-ui}
 #aceV64Panel .wide{grid-column:span 2}.aceV64NR{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translateX(-50%);z-index:2147483000;padding:6px 9px;border-radius:999px;background:#101820;color:#efc45f;font:1000 8px/1 system-ui}
 </style>
-<script id="ace-v64-qa">
-(function(){
-"use strict";
-const K="projectAce:v64:qa";let q={active:false,ovr:null,sp:null,stat:null,pos:null,skills:false};
-try{Object.assign(q,JSON.parse(localStorage.getItem(K)||"{}"))}catch(_){}
-const save=()=>localStorage.setItem(K,JSON.stringify(q));
-function mount(){
- if(!document.getElementById("aceV64QA")){
-  const b=document.createElement("button");b.id="aceV64QA";b.type="button";b.textContent="🧪 TEST PLAYER";document.body.appendChild(b);
- }
- if(!document.getElementById("aceV64Panel")){
-  const p=document.createElement("div");p.id="aceV64Panel";
-  p.innerHTML=`<div class="box"><header><div><small>PROJECT ACE · QA · NOT RANKED</small><h2>Test Player</h2></div><button class="close" data-x>✕</button></header>
-  <section><b>OVERALL</b><div class="grid">${[80,90,99,100].map(v=>`<button data-o="${v}">${v}${v===100?" ACE":""}</button>`).join("")}</div></section>
-  <section><b>SKILL POINTS</b><div class="grid">${[100,1000,9999,99999].map(v=>`<button data-sp="${v}">${v.toLocaleString()}</button>`).join("")}</div></section>
-  <section><b>ATTRIBUTES</b><div class="grid">${[99,101,103,105].map(v=>`<button data-st="${v}">${v}${v===105?" ACE":""}</button>`).join("")}</div></section>
-  <section><b>POSITION</b><div class="grid">${[["OH","OH"],["OP","OP"],["S","SET"],["M","MB"],["L","LIB"]].map(x=>`<button data-pos="${x[0]}">${x[1]}</button>`).join("")}</div></section>
-  <section><b>TOOLS</b><div class="grid"><button class="wide" data-sk>ALL SKILLS</button><button class="wide" data-ace>REPLAY ACE</button><button class="wide" data-reset>RESET TEST</button></div></section></div>`;
-  document.body.appendChild(p);
- }
- mark();
-}
-function mark(){document.querySelector(".aceV64NR")?.remove();if(q.active){let n=document.createElement("div");n.className="aceV64NR";n.textContent="TEST MODE · NOT RANKED";document.body.appendChild(n)}}
-document.addEventListener("click",e=>{
- if(e.target.closest("#aceV64QA")){e.preventDefault();document.getElementById("aceV64Panel").classList.add("open");return}
- const b=e.target.closest("#aceV64Panel button");if(!b)return;
- if(b.dataset.x!==undefined){document.getElementById("aceV64Panel").classList.remove("open");return}
- if(b.dataset.o){q.active=true;q.ovr=+b.dataset.o}
- if(b.dataset.sp){q.active=true;q.sp=+b.dataset.sp}
- if(b.dataset.st){q.active=true;q.stat=+b.dataset.st}
- if(b.dataset.pos){q.active=true;q.pos=b.dataset.pos}
- if(b.dataset.sk!==undefined){q.active=true;q.skills=true}
- if(b.dataset.ace!==undefined){q.active=true;q.ovr=100;Object.keys(localStorage).filter(k=>k.startsWith("projectAce:v56:ascension:")).forEach(k=>localStorage.removeItem(k))}
- if(b.dataset.reset!==undefined){localStorage.removeItem(K);location.reload();return}
- save();mark();
-},true);
-window.ACE_TEST={isActive:()=>q.active,notRanked:()=>q.active,overall:r=>q.active&&q.ovr!=null?q.ovr:r,skillPoints:r=>q.active&&q.sp!=null?q.sp:r,stat:(n,r)=>q.active&&q.stat!=null?q.stat:r,position:r=>q.active&&q.pos?q.pos:r,allSkills:()=>q.active&&q.skills,state:q};
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount);else mount();
-window.addEventListener("pageshow",mount);
-window.ACE_PROJECT_BUILD="B21.36.291";
-})();
-</script>
-
-
-<script id="ace-v65-wire-test-overrides">
-(function(){
-"use strict";
-function q(){return window.ACE_TEST?.state||null}
-function active(){return !!q()?.active}
-const STATS=["creativity","accuracy","hitting_power","serve_receive","positioning","covering","work_rate","vertical","speed","reaction_time","service","blocking","set_technique","set_creativity","mindset"];
-function preview(c){
- if(!c||!active())return c;
- const t=q(),x=Object.assign({},c);
- if(t.ovr!=null){
-   ["overall","ovr","overall_rating","rating"].forEach(k=>{if(k in x||k==="overall")x[k]=Number(t.ovr)});
- }
- if(t.sp!=null)x.skill_points=Number(t.sp);
- if(t.stat!=null)STATS.forEach(k=>x[k]=Number(t.stat));
- if(t.pos)x.position=t.pos;
- if(t.skills){
-   const pos=String(t.pos||x.position||"OH").toUpperCase();
-   try{
-     const nodes=(window.ACE_ST2_NODES||ACE_ST2_NODES||[]).filter(n=>String(n.position||"").toUpperCase()===pos).map(n=>n.id);
-     x.skill_nodes=[...new Set([...(x.skill_nodes||[]),...nodes])];
-   }catch(_){}
- }
- x.__ace_test_preview=true;
- return x;
-}
-window.ACE_TEST.previewCareer=preview;
-
-/* Canonical Skill Tree gets preview Career directly. */
-if(typeof window.skillTreeHTML==="function"){
- const real=window.skillTreeHTML;
- window.skillTreeHTML=function(c){return real(preview(c))};
- try{skillTreeHTML=window.skillTreeHTML}catch(_){}
-}
-
-/* Make the 100 OVR ACE system read test OVR. */
-if(window.ACE_STATUS){
- const realIs=window.ACE_STATUS.isAce?.bind(window.ACE_STATUS);
- window.ACE_STATUS.isAce=()=>active()&&Number(q()?.ovr)>=100?true:(realIs?realIs():false);
- const realOverall=window.ACE_STATUS.overall?.bind(window.ACE_STATUS);
- window.ACE_STATUS.overall=()=>active()&&q()?.ovr!=null?Math.min(100,Number(q().ovr)):(realOverall?realOverall():0);
- window.ACE_STATUS.mode=()=>window.ACE_STATUS.isAce()?"MASTERY":"DEVELOPMENT";
-}
-
-/* Patch visible Career values after every test selection. This is DOM-only. */
-function paint(){
- if(!active())return;
- const root=document.getElementById("roadtoace");if(!root)return;
- const t=q();
- if(t.ovr!=null){
-   root.querySelectorAll("[data-ovr],.rta93Overall,.rtaOverall,.playerOverall,.careerOverall").forEach(el=>{
-     if(el.children.length===0)el.textContent=String(t.ovr);
-   });
- }
- /* Force tree rerender using preview clone when on tree route. */
- try{
-   const z=window.__ACE_RTA_STATE;if(z?.playerPanel==="tree"&&z?.career&&typeof window.skillTreeHTML==="function"){
-     const tabs=root.querySelector(".rta93PlayerTabs");
-     if(tabs){
-       let host=root.querySelector(".aceV65PreviewTree");
-       if(!host){host=document.createElement("div");host.className="aceV65PreviewTree";tabs.insertAdjacentElement("afterend",host)}
-       host.innerHTML=window.skillTreeHTML(preview(z.career));
-     }
-   }
- }catch(_){}
-}
-
-/* Replay ACE explicitly instead of merely changing state. */
-function replayAce(){
- if(!active()||Number(q()?.ovr)!==100)return;
- try{
-   Object.keys(localStorage).filter(k=>k.startsWith("projectAce:v56:ascension:")).forEach(k=>localStorage.removeItem(k));
-   document.querySelector(".aceV56Ascension")?.remove();
-   const el=document.createElement("div");el.className="aceV56Ascension";
-   el.innerHTML=`<div class="aceV56AscensionCard"><small>PROJECT ACE · CAREER MILESTONE</small><h1>100<em>ACE</em></h1><p>Test preview: you reached the overall ceiling. Career progression now enters Mastery.</p><button type="button">ENTER MASTERY</button></div>`;
-   el.querySelector("button").onclick=()=>el.remove();document.body.appendChild(el);
- }catch(_){}
-}
-
-document.addEventListener("click",e=>{
- const b=e.target.closest?.("#aceV64Panel button");if(!b)return;
- setTimeout(()=>{
-   paint();
-   if(b.dataset.ace!==undefined)replayAce();
-   if(typeof toast==="function" && (b.dataset.o||b.dataset.sp||b.dataset.st||b.dataset.pos||b.dataset.sk!==undefined))
-     toast("Test preview applied · NOT RANKED","info");
- },20);
-},true);
-setInterval(paint,700);
-window.ACE_TEST_WIRING_BUILD="B21.36.291";
-window.ACE_PROJECT_BUILD="B21.36.291";
-})();
-</script>
-
-<script id="ace-v66-clean-build">window.ACE_PROJECT_BUILD="B21.36.291";window.ACE_SINGLE_FILE_CLEANUP_BUILD="B21.36.291";</script>
-<script id="ace-v68-github-safe">window.ACE_PROJECT_BUILD="B21.36.291";window.ACE_GITHUB_SAFE_BUILD="B21.36.291";</script>
-
-<script id="ace-v69-real-test-mode">
-(function(){
-"use strict";
-const SNAP="projectAce:v69:realCareerSnapshot";
-const TEST="projectAce:v64:qa";
-const stats=["creativity","accuracy","hitting_power","serve_receive","positioning","covering","work_rate","vertical","speed","reaction_time","service","blocking","set_technique","set_creativity","mindset"];
-function state(){try{return JSON.parse(localStorage.getItem(TEST)||"{}")}catch(_){return {}}}
-function c(){try{return window.__ACE_RTA_STATE?.career||null}catch(_){return null}}
-function snapshot(){
- const x=c();if(!x||localStorage.getItem(SNAP))return;
- const keep={};
- ["overall","ovr","overall_rating","rating","skill_points","position","skill_nodes",...stats].forEach(k=>keep[k]=x[k]);
- localStorage.setItem(SNAP,JSON.stringify(keep));
-}
-function apply(){
- const t=state(),x=c();if(!x||!t.active)return false;
- snapshot();
- if(t.ovr!=null){
-   ["overall","ovr","overall_rating","rating"].forEach(k=>{if(k in x||k==="overall")x[k]=Number(t.ovr)});
- }
- if(t.sp!=null)x.skill_points=Number(t.sp);
- if(t.stat!=null)stats.forEach(k=>x[k]=Number(t.stat));
- if(t.pos)x.position=t.pos;
- if(t.skills){
-   try{
-    const pos=String(t.pos||x.position||"OH").toUpperCase();
-    const ns=(window.ACE_ST2_NODES||ACE_ST2_NODES||[]).filter(n=>String(n.position).toUpperCase()===pos).map(n=>n.id);
-    x.skill_nodes=[...new Set([...(x.skill_nodes||[]),...ns])];
-   }catch(_){}
- }
- x.__ace_test_mode=true;
- return true;
-}
-function restore(){
- const x=c();let snap=null;try{snap=JSON.parse(localStorage.getItem(SNAP)||"null")}catch(_){}
- if(x&&snap)Object.keys(snap).forEach(k=>x[k]=snap[k]);
- localStorage.removeItem(SNAP);
-}
-function rerender(){
- if(!apply())return;
- try{window.__ACE_RTA_RENDER?.()}catch(_){}
- try{
-   if(typeof renderRTA==="function")renderRTA();
-   else if(typeof renderRoadToAce==="function")renderRoadToAce();
- }catch(_){}
- window.dispatchEvent(new Event("pageshow"));
-}
-document.addEventListener("click",e=>{
- const b=e.target.closest?.("#aceV64Panel button");if(!b)return;
- setTimeout(()=>{
-   if(b.dataset.reset!==undefined){restore();return}
-   rerender();
-   if(typeof toast==="function")toast("TEST VALUE APPLIED · NOT RANKED","info");
- },40);
-},true);
-
-/* Re-apply after any server refresh replaces S.career. */
-/* V71: superseded by authoritative V70 drift guard; no competing rerender loop. */
-
-/* Hard leaderboard safety: test mode never changes server values; this only marks local state.
-   Genuine leaderboard RPC remains untouched. */
-window.ACE_REAL_TEST_MODE={
- apply,restore,state,
- isActive:()=>!!state().active
-};
-if(state().active)setTimeout(rerender,150);
-window.ACE_PROJECT_BUILD="B21.36.291";
-window.ACE_REAL_TEST_MODE_BUILD="B21.36.291";
-})();
-</script>
-
+<script id="ace-v66-clean-build">window.ACE_PROJECT_BUILD="B21.36.292";window.ACE_SINGLE_FILE_CLEANUP_BUILD="B21.36.292";</script>
+<script id="ace-v68-github-safe">window.ACE_PROJECT_BUILD="B21.36.292";window.ACE_GITHUB_SAFE_BUILD="B21.36.292";</script>
 
 <style id="ace-v70-test-feedback">
 #aceV64Panel button.aceV70Selected{border-color:#efc45f!important;background:#253044!important;color:#ffd978!important;box-shadow:inset 0 0 0 1px rgba(239,196,95,.25)}
 #aceV64Panel .aceV70Readout{margin-top:10px;padding:9px;border-radius:9px;background:#071019;color:#8fa5b5;font:800 9px/1.45 system-ui}
 #aceV64Panel .aceV70Readout b{color:#efc45f}
 </style>
-<script id="ace-v70-authoritative-test-controls">
+
+<script id="ace-v72-single-test-controller">
 (function(){
 "use strict";
-function t(){return window.ACE_TEST?.state||{}}
-function apply(){
- const q=t(),S=window.__ACE_RTA_STATE,c=S?.career;
- if(!q.active||!c)return false;
- if(q.ovr!=null)c.overall=Number(q.ovr);
- if(q.sp!=null)c.skill_points=Number(q.sp);
- if(q.stat!=null){
-   ["creativity","accuracy","hitting_power","serve_receive","positioning","covering","work_rate","vertical","speed","reaction_time","service","blocking","set_technique","set_creativity","mindset"].forEach(k=>c[k]=Number(q.stat));
- }
- if(q.pos)c.position=q.pos;
- if(q.skills&&Array.isArray(window.ACE_ST2_NODES)){
-   const pos=String(q.pos||c.position||"OH").toUpperCase();
-   const ids=window.ACE_ST2_NODES.filter(n=>String(n.position).toUpperCase()===pos).map(n=>n.id);
+const KEY="projectAce:v72:test";
+const SNAP="projectAce:v72:snapshot";
+const attrs=["creativity","accuracy","hitting_power","serve_receive","positioning","covering","work_rate","vertical","speed","reaction_time","service","blocking","set_technique","set_creativity","mindset"];
+let Q={active:false,ovr:null,sp:null,stat:null,pos:null,skills:false};
+try{Q=Object.assign(Q,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(_){}
+const save=()=>localStorage.setItem(KEY,JSON.stringify(Q));
+const state=()=>window.__ACE_RTA_STATE;
+const career=()=>state()?.career||null;
+function snap(){
+ const c=career(); if(!c||localStorage.getItem(SNAP))return;
+ const x={};["overall","ovr","overall_rating","rating","skill_points","position","skill_nodes",...attrs].forEach(k=>x[k]=c[k]);
+ localStorage.setItem(SNAP,JSON.stringify(x));
+}
+function apply(renderIt=true){
+ const c=career();if(!c||!Q.active)return false;snap();
+ if(Q.ovr!=null){c.overall=+Q.ovr;if("ovr"in c)c.ovr=+Q.ovr;if("overall_rating"in c)c.overall_rating=+Q.ovr;if("rating"in c)c.rating=+Q.ovr}
+ if(Q.sp!=null)c.skill_points=+Q.sp;
+ if(Q.stat!=null)attrs.forEach(k=>c[k]=+Q.stat);
+ if(Q.pos)c.position=Q.pos;
+ if(Q.skills&&Array.isArray(window.ACE_ST2_NODES)){
+   const ids=window.ACE_ST2_NODES.filter(n=>String(n.position).toUpperCase()===String(c.position).toUpperCase()).map(n=>n.id);
    c.skill_nodes=[...new Set([...(c.skill_nodes||[]),...ids])];
-   if(S.skillTree){
-     S.skillTree.unlocked=[...new Set([...(S.skillTree.unlocked||[]),...ids])];
-     S.skillTree.skill_points=c.skill_points;
-   }
  }
  c.__ace_test_mode=true;
- window.__ACE_RTA_RENDER?.();
+ if(renderIt)window.__ACE_RTA_RENDER?.();
  return true;
 }
-function feedback(){
- const p=document.getElementById("aceV64Panel");if(!p)return;
- p.querySelectorAll("button").forEach(b=>b.classList.remove("aceV70Selected"));
- const q=t();
- if(q.ovr!=null)p.querySelector(`[data-o="${q.ovr}"]`)?.classList.add("aceV70Selected");
- if(q.sp!=null)p.querySelector(`[data-sp="${q.sp}"]`)?.classList.add("aceV70Selected");
- if(q.stat!=null)p.querySelector(`[data-st="${q.stat}"]`)?.classList.add("aceV70Selected");
- if(q.pos)p.querySelector(`[data-pos="${q.pos}"]`)?.classList.add("aceV70Selected");
- let r=p.querySelector(".aceV70Readout");
- if(!r){r=document.createElement("div");r.className="aceV70Readout";p.querySelector(".box")?.appendChild(r)}
- r.innerHTML=`ACTIVE PREVIEW · OVR <b>${q.ovr??"REAL"}</b> · SP <b>${q.sp??"REAL"}</b> · ATTR <b>${q.stat??"REAL"}</b> · POS <b>${q.pos??"REAL"}</b>`;
+function restore(){
+ const c=career();let x=null;try{x=JSON.parse(localStorage.getItem(SNAP)||"null")}catch(_){}
+ if(c&&x)Object.keys(x).forEach(k=>c[k]=x[k]);
+ localStorage.removeItem(SNAP);localStorage.removeItem(KEY);
+ Q={active:false,ovr:null,sp:null,stat:null,pos:null,skills:false};
+ window.__ACE_RTA_RENDER?.();paint();
 }
+function panel(){
+ let p=document.getElementById("aceV72Panel");
+ if(p){p.hidden=false;paint();return}
+ p=document.createElement("div");p.id="aceV72Panel";
+ p.innerHTML=`<div class="box"><div class="top"><b>TEST PLAYER</b><button data-close>×</button></div>
+ <label>OVR</label><div class="row">${[80,90,99,100].map(v=>`<button data-ovr="${v}">${v===100?"100 ACE":v}</button>`).join("")}</div>
+ <label>SKILL POINTS</label><div class="row">${[100,1000,9999,99999].map(v=>`<button data-sp="${v}">${v.toLocaleString()}</button>`).join("")}</div>
+ <label>ALL ATTRIBUTES</label><div class="row">${[99,101,103,105].map(v=>`<button data-stat="${v}">${v===105?"105 ACE":v}</button>`).join("")}</div>
+ <label>POSITION</label><div class="row">${["OH","OP","S","M","L"].map(v=>`<button data-pos="${v}">${v}</button>`).join("")}</div>
+ <div class="row"><button data-skills>UNLOCK ALL SKILLS</button><button data-replay>REPLAY ACE</button></div>
+ <div id="aceV72Read"></div><button class="reset" data-reset>RESET TEST MODE</button></div>`;
+ document.body.appendChild(p);paint();
+}
+function paint(){
+ const p=document.getElementById("aceV72Panel");if(!p)return;
+ p.querySelectorAll(".sel").forEach(x=>x.classList.remove("sel"));
+ [["ovr",Q.ovr],["sp",Q.sp],["stat",Q.stat],["pos",Q.pos]].forEach(([k,v])=>{if(v!=null)p.querySelector(`[data-${k}="${v}"]`)?.classList.add("sel")});
+ const r=p.querySelector("#aceV72Read");if(r)r.innerHTML=`PREVIEW · OVR <b>${Q.ovr??"REAL"}</b> · SP <b>${Q.sp??"REAL"}</b> · ATTR <b>${Q.stat??"REAL"}</b> · POS <b>${Q.pos??"REAL"}</b>`;
+}
+function choose(k,v){Q.active=true;Q[k]=v;save();apply(true);paint()}
 document.addEventListener("click",e=>{
- const b=e.target.closest?.("#aceV64Panel button");if(!b||b.dataset.reset!==undefined||b.dataset.x!==undefined)return;
- /* Earlier V64 listener changes ACE_TEST.state synchronously. */
- setTimeout(()=>{apply();feedback()},30);
-},false);
-document.addEventListener("click",e=>{if(e.target.closest?.("#aceV64QA"))setTimeout(feedback,10)},false);
-setInterval(()=>{
- const q=t(),c=window.__ACE_RTA_STATE?.career;
- if(!q.active||!c)return;
- let drift=false;
- if(q.ovr!=null && Number(c.overall)!==Number(q.ovr)) drift=true;
- if(q.sp!=null && Number(c.skill_points)!==Number(q.sp)) drift=true;
- if(q.pos && String(c.position)!==String(q.pos)) drift=true;
- if(q.stat!=null && Number(c.hitting_power)!==Number(q.stat)) drift=true;
- if(drift) apply();
-},1500);
-window.ACE_TEST_FORCE_APPLY=apply;
-window.ACE_PROJECT_BUILD="B21.36.291";
-window.ACE_TEST_ROOT_FIX_BUILD="B21.36.291";
+ const b=e.target.closest?.("button");if(!b)return;
+ if(b.id==="aceV72Launch"){panel();return}
+ if(!b.closest?.("#aceV72Panel"))return;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(b.dataset.close!==undefined){b.closest("#aceV72Panel").hidden=true;return}
+ if(b.dataset.reset!==undefined){restore();return}
+ if(b.dataset.ovr!==undefined)return choose("ovr",+b.dataset.ovr);
+ if(b.dataset.sp!==undefined)return choose("sp",+b.dataset.sp);
+ if(b.dataset.stat!==undefined)return choose("stat",+b.dataset.stat);
+ if(b.dataset.pos!==undefined)return choose("pos",b.dataset.pos);
+ if(b.dataset.skills!==undefined){Q.active=true;Q.skills=true;save();apply(true);paint();return}
+ if(b.dataset.replay!==undefined){try{localStorage.removeItem("ace:v56:ascended:"+String(career()?.id||"career"));window.__ACE_RTA_RENDER?.()}catch(_){}}
+},true);
+function launcher(){
+ if(document.getElementById("aceV72Launch"))return;
+ const b=document.createElement("button");b.id="aceV72Launch";b.textContent="🧪 TEST PLAYER";document.body.appendChild(b);
+}
+launcher();new MutationObserver(launcher).observe(document.body,{childList:true});
+/* Re-pin values after background server refresh WITHOUT rendering. */
+setInterval(()=>{if(Q.active)apply(false)},500);
+window.ACE_TEST={get state(){return Q},apply,restore};
+window.ACE_PROJECT_BUILD="B21.36.292";
 })();
 </script>
-
-
-<script id="ace-v71-ace100-stability">
-(function(){
-"use strict";
-function q(){return window.ACE_TEST?.state||{}}
-function pin(){
- const t=q(),c=window.__ACE_RTA_STATE?.career;
- if(!t.active||Number(t.ovr)!==100||!c)return;
- c.overall=100;
- if("ovr" in c)c.ovr=100;
- if("overall_rating" in c)c.overall_rating=100;
- if("rating" in c)c.rating=100;
- c.__ace_test_mode=true;
-}
-document.addEventListener("click",e=>{
- const b=e.target.closest?.('#aceV64Panel [data-o="100"]');if(!b)return;
- setTimeout(()=>{pin();window.__ACE_RTA_RENDER?.()},40);
-},false);
-/* Pin without rendering. Server/background refreshes may replace career fields,
-   but this guard does not cause a render loop. */
-setInterval(pin,250);
-window.ACE_PROJECT_BUILD="B21.36.291";
-window.ACE_100_STABILITY_BUILD="B21.36.291";
-})();
-</script>
+<style id="ace-v72-test-style">
+#aceV72Launch{position:fixed;right:12px;top:max(12px,env(safe-area-inset-top));z-index:2147483646;border:1px solid #d9ae50;background:#111a28;color:#ffd978;border-radius:10px;padding:9px 12px;font:900 10px system-ui}
+#aceV72Panel{position:fixed;inset:0;z-index:2147483647;background:#000b;display:grid;place-items:center;padding:14px}
+#aceV72Panel[hidden]{display:none}
+#aceV72Panel .box{width:min(420px,94vw);max-height:88vh;overflow:auto;background:#0b1420;border:1px solid #33445a;border-radius:16px;padding:16px;color:#eef6ff;font-family:system-ui}
+#aceV72Panel .top{display:flex;justify-content:space-between;align-items:center;font-size:18px;margin-bottom:14px}
+#aceV72Panel label{display:block;margin:13px 0 6px;color:#8fa5b5;font:900 9px system-ui;letter-spacing:.12em}
+#aceV72Panel .row{display:flex;flex-wrap:wrap;gap:6px}
+#aceV72Panel button{border:1px solid #33445a;background:#121e2d;color:#eef6ff;border-radius:8px;padding:9px 10px;font:800 10px system-ui}
+#aceV72Panel button.sel{border-color:#efc45f;background:#253044;color:#ffd978}
+#aceV72Read{margin:12px 0;padding:9px;background:#071019;border-radius:8px;color:#8fa5b5;font:800 9px system-ui}
+#aceV72Read b{color:#efc45f}
+#aceV72Panel .reset{width:100%;border-color:#7a3b43;color:#ffabb4}
+</style>
 
 </body>
 </html>
