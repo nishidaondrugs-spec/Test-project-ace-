@@ -39484,41 +39484,113 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     </main>`;
   }
 
+
+  // V76 · International Selection Engine.
+  // Front-end career simulation foundation: selection is based on current programme depth,
+  // position competition, OVR, club form, reputation and coach trust — never a hard OVR gate.
+  const ACE_V76_INTL={
+    version:1,
+    activeSlots:{OH:4,OP:2,M:4,S:2,L:2},
+    starters:{OH:2,OP:1,M:2,S:1,L:1},
+    // Relative selection depth calibrated to the current 2026 men's international landscape.
+    // These are game-simulation baselines, not literal FIVB ratings.
+    nations:{
+      "Poland":{code:"POL",depth:97},"Italy":{code:"ITA",depth:96},"Japan":{code:"JPN",depth:96},
+      "United States":{code:"USA",depth:95},"France":{code:"FRA",depth:95},"Brazil":{code:"BRA",depth:95},
+      "Slovenia":{code:"SLO",depth:93},"Türkiye":{code:"TUR",depth:92},"Ukraine":{code:"UKR",depth:92},
+      "Bulgaria":{code:"BUL",depth:92},"Serbia":{code:"SRB",depth:91},"Iran":{code:"IRI",depth:91},
+      "Argentina":{code:"ARG",depth:91},"Cuba":{code:"CUB",depth:91},"Germany":{code:"GER",depth:90},
+      "Canada":{code:"CAN",depth:90},"China":{code:"CHN",depth:89},"Belgium":{code:"BEL",depth:89},
+      "Czech Republic":{code:"CZE",depth:87},"Australia":{code:"AUS",depth:85},"Egypt":{code:"EGY",depth:86},
+      "Tunisia":{code:"TUN",depth:84}
+    },
+    positionPressure:{OH:1.5,OP:.5,M:0,S:1,L:1.5}
+  };
+  function aceV76Hash(x){let h=2166136261;for(const ch of String(x)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>0)/4294967295}
+  function aceV76FormScore(c){
+    const hist=Array.isArray(S.history)?S.history.slice(0,6):[];
+    if(!hist.length)return 55;
+    const avg=hist.reduce((a,h)=>a+Number(h.match_rating||6),0)/hist.length;
+    return Math.max(20,Math.min(100,((avg-4)/6)*100));
+  }
+  function aceV76Selection(c){
+    if(!c)return null;
+    const nationality=String(c.nationality||"");
+    const nation=ACE_V76_INTL.nations[nationality];
+    if(!nation)return {eligible:false,nationality,status:"UNAVAILABLE",reason:"International Career is not available for this nationality in V1."};
+    const pos=String(c.position||"OH");
+    const ovr=Math.max(0,Number(c.overall||0));
+    const form=aceV76FormScore(c);
+    const rep=Math.max(0,Math.min(100,Number(c.reputation||0)));
+    const trust=Math.max(0,Math.min(100,Number(c.coach_trust||0)));
+    const fit=45+aceV76Hash(`${nationality}|${pos}|${c.player_name}|fit`)*45;
+    const score=ovr*.52+form*.18+rep*.12+trust*.10+fit*.08;
+    const pressure=(ACE_V76_INTL.positionPressure[pos]||0);
+    const slots=ACE_V76_INTL.activeSlots[pos]||2, starters=ACE_V76_INTL.starters[pos]||1;
+    const field=[];
+    for(let i=0;i<slots+4;i++){
+      const jitter=(aceV76Hash(`${nationality}|${pos}|${i}|S${c.season||1}`)-.5)*5.2;
+      const curve=i*1.35;
+      field.push({id:`AI${i+1}`,score:nation.depth+pressure+jitter-curve});
+    }
+    field.push({id:"YOU",score}); field.sort((a,b)=>b.score-a.score);
+    const rank=field.findIndex(x=>x.id==="YOU")+1;
+    let status="UNSELECTED",role="OUTSIDE SQUAD";
+    if(rank<=starters){status="SELECTED";role="STARTER"}
+    else if(rank<=slots){status="SELECTED";role="ROTATION"}
+    else if(rank===slots+1){status="RESERVE";role="VNL RESERVE"}
+    else if(rank<=slots+2){status="TRAINING SQUAD";role="TRAINING SQUAD"}
+    const gap=rank>1?Math.max(0,field[rank-2].score-score):0;
+    let reason="Strong positional competition kept you outside the active squad.";
+    if(status==="SELECTED")reason=rank<=starters?"Your club form and overall profile earned you a starting national-team role.":"You earned an active squad place. Your VNL minutes will depend on performance.";
+    else if(status==="RESERVE")reason="You are first in line if the active squad changes through form, tactics or injury.";
+    else if(status==="TRAINING SQUAD")reason="You have been called into camp, but you have not made the active tournament roster.";
+    else if(form<48)reason="Recent club form weakened your case despite your overall ability.";
+    else if(ovr>=nation.depth-1)reason="Your level is close, but this position is especially deep for your national team.";
+    return {eligible:true,nationality,code:nation.code,pos,score,form,fit,rank,slots,status,role,reason,gap,season:Number(c.season||1)};
+  }
+  function aceV76SelectionReport(c){
+    const r=aceV76Selection(c); if(!r)return "";
+    if(!r.eligible)return `<div class="aceV76Report unavailable"><small>INTERNATIONAL CAREER</small><b>${esc(r.nationality||"NATIONAL TEAM")}</b><p>${esc(r.reason)}</p></div>`;
+    const live=!!c.season_complete;
+    return `<div class="aceV76Report ${live?String(r.status).toLowerCase().replace(/ /g,"-"):"preview"}">
+      <div class="aceV76ReportHead"><div><small>${live?"NATIONAL TEAM DECISION":"SELECTION OUTLOOK"}</small><b>${esc(r.code)} · ${esc(posLabel(r.pos))}</b></div><strong>${live?esc(r.status):`DEPTH #${r.rank}`}</strong></div>
+      <div class="aceV76Metrics"><span><small>DEPTH</small><b>#${r.rank}</b></span><span><small>CLUB FORM</small><b>${Math.round(r.form)}</b></span><span><small>ROLE</small><b>${live?esc(r.role):"IN CONTENTION"}</b></span></div>
+      <p>${live?esc(r.reason):`Current projection only. ${r.slots} active ${esc(posLabel(r.pos))} place${r.slots===1?"":"s"}; club form and reputation can still move you up or down.`}</p>
+    </div>`;
+  }
+  window.ACE_INTL_SELECTION_V1={config:ACE_V76_INTL,get:()=>aceV76Selection(S.career)};
+
   function aceV74CalendarModel(c){
     const played=Math.max(0,Number(c?.season_match||0));
     const complete=!!c?.season_complete;
+    const sel=aceV76Selection(c);
     const monthIndex=complete?8:Math.min(7,Math.floor(played/2));
     const months=["OCT","NOV","DEC","JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP"];
     const current=months[monthIndex];
     const nextOpp=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||"Opponent");
     let major={tag:"CLUB",title:`${c.club_name} vs ${nextOpp}`,meta:`MATCHDAY ${Math.min(14,played+1)} · NEXT UP`,tone:"club"};
-    let events=[
-      {label:"TRAIN",state:Number(c.training_used||0)>0?"done":"next"},
-      {label:"MATCH",state:Number(c.training_used||0)>=1?"next":"future"},
-      {label:"RECOVER",state:"future"},
-      {label:"MATCH",state:"future"},
-      {label:"INT'L",state:"future",intl:true}
-    ];
+    let events=[{label:"TRAIN",state:Number(c.training_used||0)>0?"done":"next"},{label:"MATCH",state:Number(c.training_used||0)>=1?"next":"future"},{label:"RECOVER",state:"future"},{label:"MATCH",state:"future"},{label:"INT'L",state:"future",intl:true}];
+    let teaser="June · national team selection";
     if(complete){
-      major={tag:"OFF-SEASON",title:"International selection window",meta:"NATIONAL TEAM DECISION AHEAD",tone:"intl"};
-      events=[
-        {label:"FINAL",state:"done"},{label:"RECOVER",state:"next"},{label:"SELECT",state:"future",intl:true},{label:"CAMP",state:"future",intl:true},{label:"VNL",state:"future",intl:true}
-      ];
+      const selected=sel?.status==="SELECTED", reserve=sel?.status==="RESERVE", training=sel?.status==="TRAINING SQUAD";
+      major={tag:"INTERNATIONAL",title:sel?.eligible?`${sel.code} · ${sel.status}`:"Off-season development",meta:sel?.eligible?sel.role:"INTERNATIONAL CAREER UNAVAILABLE",tone:"intl"};
+      if(selected){events=[{label:"FINAL",state:"done"},{label:"SELECTED",state:"done",intl:true},{label:"CAMP",state:"next",intl:true},{label:"VNL",state:"future",intl:true},{label:"VNL",state:"future",intl:true}];teaser=`${sel.code} camp · active squad`}
+      else if(reserve){events=[{label:"FINAL",state:"done"},{label:"RESERVE",state:"next",intl:true},{label:"TRAIN",state:"future"},{label:"VNL",state:"future",intl:true},{label:"PRE-SEASON",state:"future"}];teaser=`${sel.code} reserve · emergency call-up possible`}
+      else if(training){events=[{label:"FINAL",state:"done"},{label:"CAMP",state:"next",intl:true},{label:"TRAIN",state:"future",intl:true},{label:"RECOVER",state:"future"},{label:"PRE-SEASON",state:"future"}];teaser=`${sel.code} training squad · roster not guaranteed`}
+      else {events=[{label:"FINAL",state:"done"},{label:"RECOVER",state:"next"},{label:"DEVELOP",state:"future"},{label:"PRE-SEASON",state:"future"},{label:"INT'L",state:"future",intl:true}];teaser=sel?.eligible?`${sel.code} · not selected · next window ahead`:"Off-season development"}
     }
-    return {months,current,monthIndex,major,events,complete};
+    return {months,current,monthIndex,major,events,complete,selection:sel,teaser};
   }
   function aceV74HomeCalendar(c){
-    const m=aceV74CalendarModel(c);
-    const expanded=!!window.ACE_V74_CALENDAR_OPEN;
+    const m=aceV74CalendarModel(c),expanded=!!window.ACE_V74_CALENDAR_OPEN;
     const seasonMonths=m.months.map((x,i)=>`<span class="${i===m.monthIndex?"now":i<m.monthIndex?"past":""}">${x}</span>`).join("");
     const dots=m.events.map((e,i)=>`<div class="aceV74Event ${e.state} ${e.intl?"intl":""}"><i>${e.state==="done"?"✓":e.intl?"◆":"•"}</i><span>${e.label}</span>${i===1&&!m.complete?"<em>TODAY</em>":""}</div>`).join("");
     return `<section class="aceV74Calendar ${expanded?"open":""}">
-      <button type="button" class="aceV74Next" onclick="return window.ACE_V74_TOGGLE_CALENDAR(event)">
-        <div><small>${esc(m.major.tag)} · SEASON ${Number(c.season||1)}</small><b>${esc(m.major.title)}</b><span>${esc(m.major.meta)}</span></div><em>${expanded?"−":"+"}</em>
-      </button>
+      <button type="button" class="aceV74Next" onclick="return window.ACE_V74_TOGGLE_CALENDAR(event)"><div><small>${esc(m.major.tag)} · SEASON ${Number(c.season||1)}</small><b>${esc(m.major.title)}</b><span>${esc(m.major.meta)}</span></div><em>${expanded?"−":"+"}</em></button>
       <div class="aceV74Five">${dots}</div>
-      <div class="aceV74Teaser"><span>◆</span><div><small>INTERNATIONAL WINDOW</small><b>${m.complete?"National team selection next":"June · national team selection"}</b></div></div>
-      ${expanded?`<div class="aceV74Expanded"><div class="aceV74Months">${seasonMonths}</div><div class="aceV74SeasonBands"><span class="club">CLUB SEASON · OCT—MAY</span><span class="intl">INTERNATIONAL · JUN—SEP</span></div><p>Your calendar branches after national-team selection. If selected: camp → VNL → major tournaments. If not selected: recovery → individual development → club pre-season. The international world continues either way.</p></div>`:""}
+      <div class="aceV74Teaser"><span>◆</span><div><small>INTERNATIONAL WINDOW</small><b>${esc(m.teaser)}</b></div></div>
+      ${expanded?`<div class="aceV74Expanded"><div class="aceV74Months">${seasonMonths}</div><div class="aceV74SeasonBands"><span class="club">CLUB SEASON · OCT—MAY</span><span class="intl">INTERNATIONAL · JUN—SEP</span></div>${aceV76SelectionReport(c)}<p>The international world continues whether you make the squad or not. Selected players enter camp and VNL; reserves can receive emergency call-ups; unselected players move into recovery, development and pre-season.</p></div>`:""}
     </section>`;
   }
   window.ACE_V74_TOGGLE_CALENDAR=function(ev){try{ev?.preventDefault?.();ev?.stopPropagation?.()}catch(_){}window.ACE_V74_CALENDAR_OPEN=!window.ACE_V74_CALENDAR_OPEN;try{window.__ACE_RTA_RENDER?.()}catch(_){}return false;};
@@ -40871,19 +40943,45 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
 
 
-  const RTA91_NATIONALITIES=[
-    "England","Scotland","Wales","Northern Ireland","Ireland",
-    "Albania","Argentina","Australia","Austria","Belgium","Brazil","Bulgaria",
-    "Canada","Chile","China","Colombia","Croatia","Cuba","Czech Republic",
-    "Denmark","Egypt","Estonia","Finland","France","Germany","Greece","Hungary",
-    "India","Indonesia","Iran","Israel","Italy","Japan","Latvia","Lithuania",
-    "Mexico","Netherlands","New Zealand","North Macedonia","Norway","Pakistan",
-    "Philippines","Poland","Portugal","Puerto Rico","Romania","Russia","Serbia",
-    "Slovakia","Slovenia","South Korea","Spain","Sweden","Switzerland","Thailand",
-    "Tunisia","Türkiye","Ukraine","United States","Venezuela","Vietnam"
+  // V75 · International Career V1 nationality pool.
+  // 24 playable programmes chosen around the current 2026 men's international landscape
+  // (World Ranking/VNL + active continental competition), while keeping the simulation manageable.
+  const RTA91_NATIONALITY_GROUPS=[
+    ["FEATURED",["Japan","Poland","Italy","United States","Brazil","France"]],
+    ["EUROPE",["Slovenia","Türkiye","Ukraine","Bulgaria","Serbia","Germany","Belgium","Czech Republic"]],
+    ["ASIA / OCEANIA",["Iran","China","Australia"]],
+    ["AMERICAS",["Argentina","Canada","Cuba"]],
+    ["AFRICA",["Egypt","Tunisia"]]
   ];
-  function rta91NationalityOptions(selected="England"){
-    return RTA91_NATIONALITIES.map(n=>`<option value="${esc(n)}" ${n===selected?"selected":""}>${esc(n)}</option>`).join("");
+  const RTA91_NATIONALITIES=RTA91_NATIONALITY_GROUPS.flatMap(g=>g[1]);
+  const RTA91_INTL_PROFILE={
+    "Poland":["ELITE","One of the deepest elite player pools. Selection is extremely competitive."],
+    "Italy":["ELITE","World-level depth across the roster. Strong club form may still not guarantee a place."],
+    "United States":["ELITE","Deep, athletic player pool with heavy competition for tournament roles."],
+    "Japan":["ELITE","Current world-level programme with intense positional competition and high technical standards."],
+    "Brazil":["ELITE","Historic world power with deep competition for senior international places."],
+    "France":["ELITE","Olympic-level programme with strong depth and demanding selection."],
+    "Slovenia":["VERY HIGH","Established world-level contender. Breaking into the core squad is difficult."],
+    "Türkiye":["VERY HIGH","Fast-rising international programme with increasingly strong depth."],
+    "Ukraine":["VERY HIGH","Strong current international results make senior places competitive."],
+    "Bulgaria":["VERY HIGH","Strong volleyball tradition and a competitive current generation."],
+    "Iran":["HIGH","Major Asian programme with established international expectations."],
+    "Argentina":["HIGH","Established international programme with strong positional competition."],
+    "Cuba":["HIGH","High-upside international programme with strong physical profiles."],
+    "Canada":["HIGH","Established VNL-level programme with meaningful competition for roster spots."],
+    "Serbia":["HIGH","Deep European volleyball tradition and competitive senior pathway."],
+    "Germany":["HIGH","Established European programme with a demanding senior-team pathway."],
+    "Belgium":["HIGH","Current VNL-level programme with competitive senior selection."],
+    "China":["HIGH","Current VNL-level programme with a large national player pool."],
+    "Czech Republic":["ESTABLISHED","Strong European pathway; major-tournament selection remains competitive."],
+    "Australia":["ESTABLISHED","Established international pathway with opportunities for high-performing players."],
+    "Egypt":["ESTABLISHED","Leading African programme; continental performance matters heavily."],
+    "Tunisia":["ESTABLISHED","Major African volleyball nation with strong continental expectations."],
+    "Other Nationality":["IDENTITY ONLY","International Career is not available for this nationality in V1."]
+  };
+  function rta91NationalityOptions(selected="Japan"){
+    const groups=RTA91_NATIONALITY_GROUPS.map(([label,nations])=>`<optgroup label="${esc(label)}">${nations.map(n=>`<option value="${esc(n)}" ${n===selected?"selected":""}>${esc(n)}</option>`).join("")}</optgroup>`).join("");
+    return groups+`<optgroup label="OTHER"><option value="Other Nationality" ${selected==="Other Nationality"?"selected":""}>Other Nationality · International Career unavailable</option></optgroup>`;
   }
 
   function rta62CreateAvatarPreview(){
@@ -40908,7 +41006,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <div class="rta62Field full"><label>POSITION</label><div class="rta62Positions">${["OH","OP","M","S","L"].map(p=>`<button type="button" data-rta62-pos="${p}" class="${p===pos?"active":""}">${posLabel(p)}</button>`).join("")}</div></div>
         <div class="rta62Field full"><label>ARCHETYPE</label><select id="rta62Arch">${arches.map(a=>`<option value="${a[0]}">${esc(a[1])}</option>`).join("")}</select></div>
         <div class="rta62Field"><label>JERSEY NUMBER</label><input id="rta62Number" type="number" min="1" max="99" value="10"></div>
-        <div class="rta62Field rta91NationalityField"><label>NATIONALITY</label><select id="rta62Nationality">${rta91NationalityOptions("England")}</select><small>Choose your nationality. This stays with your player throughout the career.</small></div>
+        <div class="rta62Field rta91NationalityField"><label>NATIONALITY</label><select id="rta62Nationality">${rta91NationalityOptions("Japan")}</select><small>24 playable international programmes in V1. Nationality is permanent once your career begins.</small></div>
         <div class="rta62Field"><label>HEIGHT (CM)</label><input id="rta62Height" type="number" min="150" max="220" value="185"></div>
         <div class="rta62Field"><label>HANDEDNESS</label><select id="rta62Hand"><option value="RIGHT">Right handed</option><option value="LEFT">Left handed</option></select></div>
       </div><button class="rta62Btn primary" style="margin-top:14px" id="rta62CreateBtn" type="submit">BEGIN IN NVL DIVISION 3 →</button></form>
@@ -40936,7 +41034,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     try{
       const args={
         p_player_name:String(q("#rta62Name")?.value||"").trim(),p_position:S.createPos,p_archetype:q("#rta62Arch")?.value||"",
-        p_jersey_number:Number(q("#rta62Number")?.value||10),p_nationality:String(q("#rta62Nationality")?.value||"England").trim(),
+        p_jersey_number:Number(q("#rta62Number")?.value||10),p_nationality:String(q("#rta62Nationality")?.value||"Japan").trim(),
         p_height_cm:Number(q("#rta62Height")?.value||185),p_handedness:q("#rta62Hand")?.value||"RIGHT"
       };
       if(!args.p_player_name){toast("Give your player a name.","error");return}
@@ -49501,5 +49599,52 @@ window.ACE_100_OVR_STATUS_BUILD="B21.36.276";
 </style>
 <script id="ace-v74-career-calendar-marker">window.ACE_PROJECT_BUILD="B21.36.294";window.ACE_CAREER_CALENDAR_V74=true;</script>
 
+<style id="ace-v76-selection-style">
+#roadtoace .aceV76Report{margin:10px 0 0;padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.018)}
+#roadtoace .aceV76ReportHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}#roadtoace .aceV76ReportHead small{display:block;color:#7891a2;font-size:7px;font-weight:1000;letter-spacing:.1em}#roadtoace .aceV76ReportHead b{display:block;margin-top:2px;font-size:11px;color:#edf6fb}#roadtoace .aceV76ReportHead strong{font-size:9px;color:#e7bd68;text-align:right}
+#roadtoace .aceV76Metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}#roadtoace .aceV76Metrics span{min-width:0;padding:7px;border-radius:8px;background:rgba(255,255,255,.025)}#roadtoace .aceV76Metrics small{display:block;color:#657c8b;font-size:6px;font-weight:900}#roadtoace .aceV76Metrics b{display:block;margin-top:2px;color:#dcebf4;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#roadtoace .aceV76Report p{margin:8px 0 0!important;color:#7d919e!important;font-size:8px!important;line-height:1.45!important}
+@media(max-width:760px){#roadtoace .aceV76Report{padding:11px}#roadtoace .aceV76ReportHead small{font-size:8px}#roadtoace .aceV76ReportHead b{font-size:12px}#roadtoace .aceV76ReportHead strong{font-size:10px}#roadtoace .aceV76Metrics small{font-size:7px}#roadtoace .aceV76Metrics b{font-size:10px}#roadtoace .aceV76Report p{font-size:9px!important}}
+</style>
+<style id="ace-v75-nationality-style">\n#roadtoace .aceV75IntlReadout{margin-top:7px;padding:8px 9px;border:1px solid rgba(255,255,255,.055);border-radius:9px;background:rgba(255,255,255,.018)}\n#roadtoace .aceV75IntlReadout small{display:block;margin:0;color:#6e96ae;font-size:7px;font-weight:1000;letter-spacing:.09em}\n#roadtoace .aceV75IntlReadout b{display:block;margin-top:2px;color:#eaf4fb;font-size:10px}\n#roadtoace .aceV75IntlReadout span{display:block;margin-top:3px;color:#758b9a;font-size:8px;line-height:1.35}\n#roadtoace .aceV75IntlReadout[data-tier="ELITE"] b{color:#e7bd68}\n@media(max-width:760px){#roadtoace .aceV75IntlReadout small{font-size:8px!important}#roadtoace .aceV75IntlReadout b{font-size:11px!important}#roadtoace .aceV75IntlReadout span{font-size:9px!important}}\n</style><script id="ace-v75-nationality-engine">
+(function(){
+"use strict";
+const P={
+"Poland":["ELITE","One of the deepest elite player pools. Selection is extremely competitive."],
+"Italy":["ELITE","World-level depth across the roster. Strong club form may still not guarantee a place."],
+"United States":["ELITE","Deep, athletic player pool with heavy competition for tournament roles."],
+"Japan":["ELITE","Current world-level programme with intense positional competition and high technical standards."],
+"Brazil":["ELITE","Historic world power with deep competition for senior international places."],
+"France":["ELITE","Olympic-level programme with strong depth and demanding selection."],
+"Slovenia":["VERY HIGH","Established world-level contender. Breaking into the core squad is difficult."],
+"Türkiye":["VERY HIGH","Fast-rising international programme with increasingly strong depth."],
+"Ukraine":["VERY HIGH","Strong current international results make senior places competitive."],
+"Bulgaria":["VERY HIGH","Strong volleyball tradition and a competitive current generation."],
+"Iran":["HIGH","Major Asian programme with established international expectations."],
+"Argentina":["HIGH","Established international programme with strong positional competition."],
+"Cuba":["HIGH","High-upside international programme with strong physical profiles."],
+"Canada":["HIGH","Established VNL-level programme with meaningful competition for roster spots."],
+"Serbia":["HIGH","Deep European volleyball tradition and competitive senior pathway."],
+"Germany":["HIGH","Established European programme with a demanding senior-team pathway."],
+"Belgium":["HIGH","Current VNL-level programme with competitive senior selection."],
+"China":["HIGH","Current VNL-level programme with a large national player pool."],
+"Czech Republic":["ESTABLISHED","Strong European pathway; major-tournament selection remains competitive."],
+"Australia":["ESTABLISHED","Established international pathway with opportunities for high-performing players."],
+"Egypt":["ESTABLISHED","Leading African programme; continental performance matters heavily."],
+"Tunisia":["ESTABLISHED","Major African volleyball nation with strong continental expectations."],
+"Other Nationality":["IDENTITY ONLY","International Career is not available for this nationality in V1."]};
+function decorate(){
+ const sel=document.querySelector("#roadtoace #rta62Nationality"); if(!sel)return;
+ const field=sel.closest(".rta91NationalityField"); if(!field)return;
+ let box=field.querySelector(".aceV75IntlReadout");
+ if(!box){box=document.createElement("div");box.className="aceV75IntlReadout";field.appendChild(box);sel.addEventListener("change",update);}
+ update();
+ function update(){const x=P[sel.value]||["ESTABLISHED","International selection depends on form, role fit and competition at your position."];box.dataset.tier=x[0];box.innerHTML=`<small>INTERNATIONAL COMPETITION</small><b>${x[0]}</b><span>${x[1]}</span>`;}
+}
+new MutationObserver(()=>requestAnimationFrame(decorate)).observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(decorate,100);
+window.ACE_INTL_NATIONALITY_V1={playable:24,profiles:P,sourceSeason:2026};
+window.ACE_PROJECT_BUILD="B21.36.296";
+})();
+</script>
 </body>
 </html>
