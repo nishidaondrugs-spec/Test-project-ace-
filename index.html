@@ -4471,7 +4471,7 @@ function resetCourtAfterRally(){
   placePlayersByRotation();
 }
 
-/* B21.36.292 — rally visuals must be single-flight. Old action tags,
+/* B21.36.293 — rally visuals must be single-flight. Old action tags,
    animation classes and phase states should never bleed into the next point. */
 function ace289ClearRallyVisualResidue(){
   ballArcToken++;
@@ -4886,7 +4886,7 @@ function ballPointForPlayer(teamNo,player){
   const el=id?document.getElementById(id):null;
   if(!el)return null;
 
-  /* B21.36.292 — player locations are already stored as court-relative
+  /* B21.36.293 — player locations are already stored as court-relative
      percentages. Using getBoundingClientRect() on the rotated 3D court turns
      those into perspective-distorted screen coordinates and makes the ball
      visibly miss moving players. Target the actual court coordinates instead. */
@@ -9149,7 +9149,7 @@ function applyRemoteAnimationSpeed(value){
 let mpRemoteRallyAnimating=false;
 let mpQueuedPostRallySnapshot=null;
 
-/* B21.36.292 — Supabase broadcasts may arrive slightly faster than a slower
+/* B21.36.293 — Supabase broadcasts may arrive slightly faster than a slower
    client can finish the visual rally. Previously a second rally_event could
    start animateRally() on top of the first one. */
 let mpRemoteRallyQueue=[];
@@ -9762,7 +9762,7 @@ function autoPlaySet(){
 
 
 async function skipToEndOfSet(){
-  /* B21.36.292 — Skip Set is an offline/AI convenience action.
+  /* B21.36.293 — Skip Set is an offline/AI convenience action.
      Real online matches must continue to use the mutual 2/2 Sim Match flow. */
   if(mpInMultiplayerRoom()){
     const status=document.getElementById("rallyStatus");
@@ -11998,7 +11998,7 @@ async function mpRefreshAuthority({allowTakeover=true}={}){
     const roomStatus=String(row?.room_status||"").toLowerCase();
 
     if(roomStatus==="forfeit_win"){
-      /* B21.36.292 — heartbeat is the guaranteed fallback if the realtime
+      /* B21.36.293 — heartbeat is the guaranteed fallback if the realtime
          forfeit broadcast was missed. Make the local result explicitly 2-0
          before releasing the finished room. */
       const mine=Number(row?.caller_team||mpOwnedTeam?.()||0);
@@ -27123,7 +27123,7 @@ console.info("[THE ACE PROJECT] B12.0 Cloud Ultimate Team active — inventory, 
     const mine=myTeam();
     const request=Number(simState.request_team||0);
 
-    /* B21.36.292 — clicking SIM MATCH now means "send the request".
+    /* B21.36.293 — clicking SIM MATCH now means "send the request".
        No hidden second click is required. */
     if(!request){
       btn.disabled=true;
@@ -27879,7 +27879,7 @@ window.aceRuntimeHealth=function(){
       try{
         close();
 
-        /* B21.36.292 — explicit ranked forfeit is a real match result,
+        /* B21.36.293 — explicit ranked forfeit is a real match result,
            not just "leave the room". The backend records 0-2 / 2-0 first. */
         let forfeitResult=null;
         try{
@@ -27947,7 +27947,7 @@ window.aceRuntimeHealth=function(){
     const show=!!window.aceUTOnlineMatchActive && !!window.liveState && !window.liveState.matchFinished;
     btn.classList.toggle("show",show);
 
-    /* B21.36.292 — Forfeit belongs in its own compact-control slot.
+    /* B21.36.293 — Forfeit belongs in its own compact-control slot.
        It must never float over / overlap Sim Match. */
     const head=command.querySelector(".ace283CompactControlHead");
     if(head){
@@ -29161,9 +29161,9 @@ min-width:118px;padding:5px 7px;border:1px solid rgba(255,255,255,.12);border-ra
     }
     if(identity)identity.innerHTML=aceSquadIdentityHTML(cards,{compact:true});
 
-    /* B21.36.292: UT Home stays focused on progression + Starting Six.
+    /* B21.36.293: UT Home stays focused on progression + Starting Six.
        Latest/featured cards belong in My Club, not on Home. */
-    /* spotlight retained by B21.36.292 */
+    /* spotlight retained by B21.36.293 */
   }
 
   const baseHomeRender=vdsRenderUltimateHubHome;
@@ -32740,7 +32740,7 @@ justify-content:space-between;gap:10px;padding:5px 8px;border-top:1px solid rgba
     const a=nextAction(s);
     const rookie=rookieSummary(),rookieDone=rookie.pct>=100;
 
-    /* B21.36.292: UT Home gets one progression hero only.
+    /* B21.36.293: UT Home gets one progression hero only.
        Squad, Missions and Club Goal live in their own navigation destinations. */
     return `
       <button class="ace35UTDeckCard next ace257UTNext" type="button" data-ace35-route="${safeEsc(a.target)}">
@@ -33232,7 +33232,7 @@ justify-content:space-between;gap:10px;padding:5px 8px;border-top:1px solid rgba
     ace352Booted=true;
     schedule();
 
-    /* B21.36.292: render/event hooks replace perpetual 1.6s DOM polling. */
+    /* B21.36.293: render/event hooks replace perpetual 1.6s DOM polling. */
     ace352RefreshTimer=null;
   }
 
@@ -39471,6 +39471,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         </button>
       </section>
       
+      ${aceV74HomeCalendar(c)}
       <section class="ace246HomeTabsZone">
         <nav class="rta175BoardTabs ace227CareerTabs">
           <button type="button" data-rta77-homepanel="week" class="${panel==="week"?"active":""}"><span>THIS WEEK</span></button>
@@ -39482,6 +39483,45 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       <section class="ace227CareerPanel">${content}</section>
     </main>`;
   }
+
+  function aceV74CalendarModel(c){
+    const played=Math.max(0,Number(c?.season_match||0));
+    const complete=!!c?.season_complete;
+    const monthIndex=complete?8:Math.min(7,Math.floor(played/2));
+    const months=["OCT","NOV","DEC","JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP"];
+    const current=months[monthIndex];
+    const nextOpp=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||"Opponent");
+    let major={tag:"CLUB",title:`${c.club_name} vs ${nextOpp}`,meta:`MATCHDAY ${Math.min(14,played+1)} · NEXT UP`,tone:"club"};
+    let events=[
+      {label:"TRAIN",state:Number(c.training_used||0)>0?"done":"next"},
+      {label:"MATCH",state:Number(c.training_used||0)>=1?"next":"future"},
+      {label:"RECOVER",state:"future"},
+      {label:"MATCH",state:"future"},
+      {label:"INT'L",state:"future",intl:true}
+    ];
+    if(complete){
+      major={tag:"OFF-SEASON",title:"International selection window",meta:"NATIONAL TEAM DECISION AHEAD",tone:"intl"};
+      events=[
+        {label:"FINAL",state:"done"},{label:"RECOVER",state:"next"},{label:"SELECT",state:"future",intl:true},{label:"CAMP",state:"future",intl:true},{label:"VNL",state:"future",intl:true}
+      ];
+    }
+    return {months,current,monthIndex,major,events,complete};
+  }
+  function aceV74HomeCalendar(c){
+    const m=aceV74CalendarModel(c);
+    const expanded=!!window.ACE_V74_CALENDAR_OPEN;
+    const seasonMonths=m.months.map((x,i)=>`<span class="${i===m.monthIndex?"now":i<m.monthIndex?"past":""}">${x}</span>`).join("");
+    const dots=m.events.map((e,i)=>`<div class="aceV74Event ${e.state} ${e.intl?"intl":""}"><i>${e.state==="done"?"✓":e.intl?"◆":"•"}</i><span>${e.label}</span>${i===1&&!m.complete?"<em>TODAY</em>":""}</div>`).join("");
+    return `<section class="aceV74Calendar ${expanded?"open":""}">
+      <button type="button" class="aceV74Next" onclick="return window.ACE_V74_TOGGLE_CALENDAR(event)">
+        <div><small>${esc(m.major.tag)} · SEASON ${Number(c.season||1)}</small><b>${esc(m.major.title)}</b><span>${esc(m.major.meta)}</span></div><em>${expanded?"−":"+"}</em>
+      </button>
+      <div class="aceV74Five">${dots}</div>
+      <div class="aceV74Teaser"><span>◆</span><div><small>INTERNATIONAL WINDOW</small><b>${m.complete?"National team selection next":"June · national team selection"}</b></div></div>
+      ${expanded?`<div class="aceV74Expanded"><div class="aceV74Months">${seasonMonths}</div><div class="aceV74SeasonBands"><span class="club">CLUB SEASON · OCT—MAY</span><span class="intl">INTERNATIONAL · JUN—SEP</span></div><p>Your calendar branches after national-team selection. If selected: camp → VNL → major tournaments. If not selected: recovery → individual development → club pre-season. The international world continues either way.</p></div>`:""}
+    </section>`;
+  }
+  window.ACE_V74_TOGGLE_CALENDAR=function(ev){try{ev?.preventDefault?.();ev?.stopPropagation?.()}catch(_){}window.ACE_V74_CALENDAR_OPEN=!window.ACE_V74_CALENDAR_OPEN;try{window.__ACE_RTA_RENDER?.()}catch(_){}return false;};
 
   function homeView(c){
     if(window.matchMedia?.('(max-width:760px)')?.matches)return ace227MobileCareerHome(c);
@@ -39569,6 +39609,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         </button>
 
       </section>
+
+      ${aceV74HomeCalendar(c)}
 
       <section class="rta175CareerRibbon">
         <div><span>READINESS</span><b>${readinessPct}%</b><small>match preparation</small></div>
@@ -45366,7 +45408,7 @@ bottom:24%;} body.ace152-theme #home .ace183Stat.s4{left:44%;bottom:0%;} body.ac
   }
   function init(){
     cleanHome();
-    /* B21.36.292: no permanent Home subtree observer. */
+    /* B21.36.293: no permanent Home subtree observer. */
     const home=document.getElementById('home');
     if(home)cleanHome();
     try{
@@ -46936,10 +46978,10 @@ height:20px!important;} #roadtoace .rta92TableCard .rta62ClubCell b{min-width:0!
       <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b><small>${status==="BENCH"?"The match advances until the coach sends you on.":status==="ROTATION"?"Fewer moments. Every touch matters.":"Control the important volleyball moments."}</small></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b><small>Sim the role the coach selected for you.</small></span></button></aside></section>
     </main>`;
   };
-  window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.292';
+  window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.293';
 })();
 </script>
-<script id="ace244-build-flag">window.ACE_MATCHDAY_BANNER_REMAKE_FILE='B21.36.292';</script>
+<script id="ace244-build-flag">window.ACE_MATCHDAY_BANNER_REMAKE_FILE='B21.36.293';</script>
 
 
 <style id="ace245-mobile-matchday-source-remake">#roadtoace .ace245FixtureHero{position:relative!important;display:block!important;height:auto!important;min-height:330px!important;padding:0!important;overflow:hidden!important;border-radius:20px!important;border:1px solid rgba(129,199,246,.14)!important;background: radial-gradient(circle at 12% 16%,rgba(111,82,226,.18),transparent 28%),radial-gradient(circle at 88% 18%,rgba(63,143,228,.16),transparent 26%),linear-gradient(155deg,#091421 0%,#0d1c2d 48%,#132940 100%)!important;box-shadow:0 18px 46px rgba(0,0,0,.22)!important;isolation:isolate!important;} #roadtoace .ace245FixtureHero::before{content:""!important;position:absolute!important;inset:0!important;z-index:0!important;pointer-events:none!important;opacity:.72!important;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px)!important;background-size:52px 52px!important;} #roadtoace .ace245FixtureHero::after{content:""!important;position:absolute!important;z-index:0!important;left:8%!important;right:8%!important;bottom:-26%!important;height:48%!important;pointer-events:none!important;transform:perspective(900px) rotateX(62deg)!important;transform-origin:top!important;border:1px solid rgba(221,241,255,.18)!important;background:linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.17) 49.85% 50.15%,transparent 50.3%),linear-gradient(90deg,transparent 29%,rgba(255,255,255,.08) 29.2% 29.45%,transparent 29.7% 70.3%,rgba(255,255,255,.08) 70.55% 70.8%,transparent 71%),linear-gradient(180deg,rgba(105,165,211,.10),rgba(27,58,91,.15))!important;} #roadtoace .ace245FixtureHeader,#roadtoace .ace245FixtureMain,#roadtoace .ace245FixtureFooter{position:relative!important;z-index:3!important;} #roadtoace .ace245FixtureAtmosphere{position:absolute!important;inset:0!important;z-index:1!important;pointer-events:none!important;overflow:hidden!important;} #roadtoace .ace245FixtureAtmosphere:before{content:"";position:absolute;left:12%;right:12%;top:42%;height:1px;background:linear-gradient(90deg,transparent,rgba(137,207,250,.18),transparent);} #roadtoace .ace245FixtureAtmosphere i{position:absolute;width:5px;height:5px;border-radius:50%;background:#89d7ff;box-shadow:0 0 18px rgba(95,198,250,.42);opacity:.35;} #roadtoace .ace245FixtureAtmosphere i:nth-child(1){left:18%;top:28%;}#roadtoace .ace245FixtureAtmosphere i:nth-child(2){right:18%;top:32%;}#roadtoace .ace245FixtureAtmosphere i:nth-child(3){left:50%;top:17%;opacity:.18;} #roadtoace .ace245FixtureHeader{display:flex!important;justify-content:space-between!important;gap:12px!important;align-items:flex-start!important;padding:18px 22px 3px!important;} #roadtoace .ace245FixtureHeader small{display:block!important;color:#6fbdf0!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.16em!important;} #roadtoace .ace245FixtureHeader b{display:block!important;margin-top:4px!important;color:#edf7ff!important;font-size:11px!important;letter-spacing:.04em!important;} #roadtoace .ace245FixtureHeader>span{color:#91a9bd!important;font-size:8px!important;font-weight:900!important;text-align:right!important;} #roadtoace .ace245FixtureMain{display:grid!important;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)!important;gap:18px!important;align-items:center!important;min-height:216px!important;padding:14px 28px 16px!important;} #roadtoace .ace245FixtureClub{min-width:0!important;display:grid!important;grid-template-columns:88px minmax(0,1fr)!important;gap:14px!important;align-items:center!important;padding:16px!important;border-radius:18px!important;border:1px solid rgba(129,200,244,.09)!important;background:linear-gradient(180deg,rgba(10,28,43,.68),rgba(8,20,32,.58))!important;overflow:visible!important;} #roadtoace .ace245FixtureClub.away{grid-template-columns:minmax(0,1fr) 88px!important;text-align:right!important;} #roadtoace .ace245FixtureClub.away .rta77ClubMark{grid-column:2!important;grid-row:1!important;} #roadtoace .ace245FixtureClub.away>div{grid-column:1!important;grid-row:1!important;} #roadtoace .ace245FixtureClub .rta77ClubMark.lg{width:82px!important;height:82px!important;border-radius:20px!important;margin:0!important;flex:0 0 82px!important;box-shadow:0 14px 28px rgba(0,0,0,.24)!important;} #roadtoace .ace245FixtureClub small{display:block!important;color:#849fb4!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.15em!important;} #roadtoace .ace245FixtureClub h1{margin:4px 0 0!important;color:#f2f8ff!important;font-size:clamp(25px,2.4vw,40px)!important;line-height:.94!important;letter-spacing:-.04em!important;white-space:normal!important;overflow:visible!important;text-overflow:unset!important;} #roadtoace .ace245FixtureClub p{margin:6px 0 0!important;color:#8fa8ba!important;font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #roadtoace .ace245FixtureVs{display:grid!important;justify-items:center!important;gap:8px!important;text-align:center!important;} #roadtoace .ace245FixtureVs>span{width:74px!important;height:74px!important;display:grid!important;place-items:center!important;border-radius:24px!important;background:linear-gradient(145deg,#183650,#0d2135)!important;border:1px solid rgba(174,219,255,.18)!important;color:#f1f8ff!important;font-size:24px!important;font-weight:1000!important;box-shadow:0 14px 32px rgba(0,0,0,.22)!important;} #roadtoace .ace245FixtureVs small{color:#a7c1d3!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.08em!important;} #roadtoace .ace245FixtureFooter{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;padding:0 28px 20px!important;} #roadtoace .ace245FixtureFooter span{padding:9px 10px!important;border-radius:12px!important;border:1px solid rgba(128,199,244,.08)!important;background:rgba(7,21,34,.54)!important;color:#7894aa!important;font-size:7px!important;font-weight:900!important;text-align:center!important;letter-spacing:.06em!important;} #roadtoace .ace245FixtureFooter b{display:block!important;margin-bottom:3px!important;color:#eaf6ff!important;font-size:11px!important;} @media(max-width:760px){#roadtoace .ace245MatchPage{width:100%!important;margin:0 0 82px!important;padding:0 6px!important;} #roadtoace .ace245FixtureHero{width:100%!important;margin:6px 0 8px!important;min-height:0!important;height:auto!important;border-radius:18px!important;overflow:hidden!important;} #roadtoace .ace245FixtureHeader{padding:13px 13px 4px!important;} #roadtoace .ace245FixtureHeader small{font-size:5.2px!important;} #roadtoace .ace245FixtureHeader b{font-size:8px!important;margin-top:2px!important;} #roadtoace .ace245FixtureHeader>span{max-width:46%!important;font-size:5.5px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #roadtoace .ace245FixtureMain{grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr)!important;gap:7px!important;min-height:126px!important;padding:10px 10px 8px!important;} #roadtoace .ace245FixtureClub,#roadtoace .ace245FixtureClub.away{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;text-align:center!important;padding:10px 6px 9px!important;border-radius:14px!important;min-height:112px!important;} #roadtoace .ace245FixtureClub .rta77ClubMark.lg{width:44px!important;height:44px!important;border-radius:13px!important;flex:0 0 44px!important;} #roadtoace .ace245FixtureClub>div,#roadtoace .ace245FixtureClub.away>div{width:100%!important;} #roadtoace .ace245FixtureClub small{font-size:4.8px!important;} #roadtoace .ace245FixtureClub h1{margin-top:3px!important;font-size:10.5px!important;line-height:.98!important;white-space:normal!important;overflow:visible!important;} #roadtoace .ace245FixtureClub p{display:none!important;} #roadtoace .ace245FixtureVs{gap:5px!important;} #roadtoace .ace245FixtureVs>span{width:40px!important;
@@ -46964,7 +47006,7 @@ window.ACE_MULTIPLAYER_READY_SIM_FIX_BUILD='B21.36.247';
 
 <style id="ace251-starter-club-fix">#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(6,minmax(115px,1fr))!important;max-width:1040px!important;} @media(max-width:900px){#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(3,minmax(110px,1fr))!important;max-width:560px!important;}} @media(max-width:560px){#ultimate .vdsStarterCardGrid.six{grid-template-columns:repeat(2,minmax(0,1fr))!important;width:100%!important;max-width:360px!important;}}</style>
 <script id="ace251-starter-club-build-flag">
-window.ACE_STARTER_CLUB_SILVER_GOLD_FIX_BUILD='B21.36.292';
+window.ACE_STARTER_CLUB_SILVER_GOLD_FIX_BUILD='B21.36.293';
 </script>
 
 
@@ -47099,7 +47141,7 @@ window.ACE_COMPACT_DESKTOP_NEXT_MATCH_BUILD='B21.36.258';
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",queue,{once:true});
   else queue();
   window.addEventListener("pageshow",queue,{passive:true});
-  window.ACE_PERFORMANCE_CLEANUP_BUILD="B21.36.292";
+  window.ACE_PERFORMANCE_CLEANUP_BUILD="B21.36.293";
 })();
 </script>
 
@@ -47200,7 +47242,7 @@ window.ACE_COMPACT_DESKTOP_NEXT_MATCH_BUILD='B21.36.258';
     setTimeout(schedule260, 120);
   }
 
-  window.ACE_PROJECT_BUILD="B21.36.292";
+  window.ACE_PROJECT_BUILD="B21.36.293";
   window.ACE_UT_SINGLE_PLAY_BUTTON=true;
   window.ACE_UT_BIG_ROOKIE_TOP=true;
 })();
@@ -47215,13 +47257,13 @@ window.ACE_REWARD_NOTIFICATION_POPUPS_BUILD='B21.36.261';
 
 <style id="ace262-remove-ut-featured-card">#ultimate #vdsUTHubHome .aceHomeSpotlight{display:none!important;}</style>
 <script id="ace262-build-flag">
-window.ACE_REMOVE_UT_FEATURED_CARD_BUILD='B21.36.292';
+window.ACE_REMOVE_UT_FEATURED_CARD_BUILD='B21.36.293';
 </script>
 
 
 <style id="ace263-remove-duplicate-career-week">@media(min-width:761px){#roadtoace .rta175CareerHome .ace258PrimaryGrid > .ace258CompactNextMove{display:none!important;} #roadtoace .rta175CareerHome .ace258PrimaryGrid{grid-template-columns:1fr!important;}}</style>
 <script id="ace263-build-flag">
-window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.292';
+window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.293';
 </script>
 
 
@@ -47579,14 +47621,14 @@ window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.292';
     setTimeout(mountResume,350);
   }
 
-  window.ACE_RESUME_RECOVERY_BUILD="B21.36.292";
+  window.ACE_RESUME_RECOVERY_BUILD="B21.36.293";
 })();
 </script>
 
 
 <style id="ace265-multiplayer-decline-reconnect-style">.ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{width:auto!important;min-width:92px!important;min-height:34px!important;padding:0 10px!important;border:1px solid rgba(231,92,100,.17)!important;border-radius:9px!important;background:rgba(92,25,31,.22)!important;color:#ef9299!important;font-size:5.7px!important;font-weight:1000!important;letter-spacing:.06em!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect:hover{border-color:rgba(239,98,107,.30)!important;background:rgba(112,31,38,.32)!important;color:#ffd2d5!important;} @media(max-width:760px){.ace264ResumeRibbon[data-kind="multiplayer"]{grid-template-columns:32px minmax(0,1fr)!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeAction,.ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{grid-column:auto!important;width:100%!important;min-width:0!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeAction{grid-column:1/2!important;} .ace264ResumeRibbon[data-kind="multiplayer"] .ace264ResumeDismiss.ace265Disconnect{grid-column:2/3!important;grid-row:auto!important;}}</style>
 <script id="ace265-build-flag">
-window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.292';
+window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.293';
 </script>
 
 
@@ -47649,7 +47691,7 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.292';
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(schedule,100),{once:true});
   else setTimeout(schedule,100);
 
-  window.ACE_ONE_CTA_AUDIT_BUILD="B21.36.292";
+  window.ACE_ONE_CTA_AUDIT_BUILD="B21.36.293";
 })();
 </script>
 
@@ -47700,7 +47742,7 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.292';
     document.addEventListener("DOMContentLoaded",()=>setTimeout(clean,100),{once:true});
   }else setTimeout(clean,100);
 
-  window.ACE_UT_HOME_SOURCE_CLEANUP_BUILD="B21.36.292";
+  window.ACE_UT_HOME_SOURCE_CLEANUP_BUILD="B21.36.293";
 })();
 </script>
 
@@ -47708,12 +47750,12 @@ window.ACE_MULTIPLAYER_DECLINE_RECONNECT_BUILD='B21.36.292';
 <style id="ace268-current-step-glow-rotating-card">#roadtoace .ace257CareerNext{display:none!important;} #roadtoace .rta77Calendar button.current,#roadtoace .ace229WeekStrip > .current{position:relative!important;border-color:rgba(91,199,255,.72)!important;background: radial-gradient(circle at 10% 50%,rgba(74,180,239,.14),transparent 42%),rgba(17,39,60,.92)!important;box-shadow: 0 0 0 2px rgba(86,194,251,.18),0 0 22px rgba(64,177,239,.30),inset 0 0 18px rgba(69,176,233,.06)!important;animation:ace268CurrentStepGlow 1.65s ease-in-out infinite!important;z-index:2!important;} #roadtoace .rta77Calendar button.current::after,#roadtoace .ace229WeekStrip > .current::after{content:"CURRENT";position:absolute;right:9px;top:8px;padding:3px 6px;border-radius:999px;background:#5fc6f4;color:#07131d;font-size:4.8px;font-weight:1000;letter-spacing:.08em;} #roadtoace .ace229WeekStrip > .current::after{right:6px;top:5px;font-size:4.3px;padding:2px 5px;} @keyframes ace268CurrentStepGlow{0%,100%{box-shadow:0 0 0 2px rgba(86,194,251,.16),0 0 15px rgba(64,177,239,.21),inset 0 0 18px rgba(69,176,233,.05);} 50%{box-shadow:0 0 0 3px rgba(86,194,251,.31),0 0 34px rgba(64,177,239,.43),inset 0 0 22px rgba(69,176,233,.09);}} #ultimate #vdsUTHubHome .aceHomeSpotlight.ace268RotatingSpotlight{display:grid!important;} @media(min-width:761px){#ultimate #vdsUTHubHome .aceUTHomeStage{grid-template-columns:275px minmax(0,1fr)!important;gap:22px!important;padding:22px!important;} #ultimate #vdsUTHubHome .aceUTHomeCopy{display:flex!important;flex-direction:column!important;align-self:stretch!important;padding-top:8px!important;} #ultimate #vdsUTHubHome .aceUTHomeGhost,#ultimate #vdsUTHubHome .aceUTHomePrimary{display:none!important;} #ultimate #vdsUTHubHome .aceUTHomeMainActions{width:100%!important;max-width:none!important;margin:7px 0 0!important;} #ultimate #vdsUTHubHome .aceUTHomeSecondary{width:100%!important;min-height:42px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlight.ace268RotatingSpotlight{width:100%!important;min-height:210px!important;margin:12px 0 0!important;padding:10px!important;grid-template-columns:120px minmax(0,1fr)!important;gap:11px!important;align-items:center!important;border:1px solid rgba(168,119,235,.14)!important;border-radius:14px!important;background: radial-gradient(circle at 8% 18%,rgba(137,79,212,.10),transparent 35%),#090d16!important;overflow:hidden!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard{min-width:0!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard .fifaPlayerCard{width:112px!important;max-width:112px!important;margin:0 auto!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy small{font-size:5.2px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy b{font-size:12px!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy span{font-size:6px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview{min-height:500px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer{width:88px!important;height:118px!important;border-radius:14px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer img{border-radius:13px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer b{bottom:6px!important;font-size:9px!important;padding:4px 7px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewCourt{left:6%!important;right:6%!important;top:24%!important;bottom:-10%!important;}} @media(max-width:760px){#roadtoace .ace229WeekStrip > .current::after{content:"NOW";}}</style>
 
 <script id="ace268-build-flag">
-window.ACE_CURRENT_STEP_GLOW_ROTATING_CARD_BUILD='B21.36.292';
+window.ACE_CURRENT_STEP_GLOW_ROTATING_CARD_BUILD='B21.36.293';
 </script>
 
 
 <script id="ace269-starter-captain-fix-flag">
-window.ACE_STARTER_CAPTAIN_FIX_BUILD='B21.36.292';
+window.ACE_STARTER_CAPTAIN_FIX_BUILD='B21.36.293';
 </script>
 
 
@@ -47820,7 +47862,7 @@ window.ACE_FAST_PACK_REVEAL_BUILD='B21.36.270';
     setTimeout(measure,900);
   }
 
-  window.ACE_RUNTIME_PERFORMANCE_PASS_BUILD="B21.36.292";
+  window.ACE_RUNTIME_PERFORMANCE_PASS_BUILD="B21.36.293";
 })();
 </script>
 
@@ -47828,7 +47870,7 @@ window.ACE_FAST_PACK_REVEAL_BUILD='B21.36.270';
 <style id="ace272-training-blend-mastery-bar-style">#roadtoace .rta187TrainCard,#roadtoace .rta187PhysicalCard{background: radial-gradient(circle at 0% 50%,rgba(68,134,196,.08),transparent 38%),linear-gradient(150deg,#091522 0%,#0a1826 48%,#0b2030 100%)!important;} #roadtoace .rta187TrainCard:before,#roadtoace .rta187PhysicalCard:before{background: linear-gradient(90deg,rgba(6,16,26,.97) 0%,rgba(6,16,26,.95) 24%,rgba(6,16,26,.84) 42%,rgba(6,16,26,.58) 58%,rgba(6,16,26,.24) 76%,rgba(6,16,26,.05) 100%)!important;z-index:1!important;} #roadtoace .rta190TrainPhoto{opacity:.66!important;filter:saturate(.84) brightness(.74) contrast(1.02)!important;} #roadtoace .rta190TrainPhoto:after{content:""!important;position:absolute!important;inset:0!important;background: linear-gradient(90deg,rgba(7,17,28,.95) 0%,rgba(7,17,28,.82) 18%,rgba(7,17,28,.46) 40%,rgba(7,17,28,.14) 62%,rgba(7,17,28,.03) 100%),linear-gradient(180deg,rgba(11,21,34,.16) 0%,rgba(11,21,34,.08) 55%,rgba(11,21,34,.18) 100%)!important;} #roadtoace .rta187TrainCard.has-photo:hover .rta190TrainPhoto,#roadtoace .rta187PhysicalCard.has-photo:hover .rta190TrainPhoto{opacity:.72!important;filter:saturate(.88) brightness(.77) contrast(1.03)!important;} #roadtoace .rta187CardCopy{position:relative!important;z-index:4!important;} #roadtoace .ace221MasteryLine{position:absolute!important;left:0!important;right:0!important;bottom:4px!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;display:block!important;height:3px!important;opacity:.92!important;pointer-events:none!important;} #roadtoace .ace221MasteryLine > span,#roadtoace .ace221MasteryLine > b{display:none!important;} #roadtoace .ace221MasteryLine > i{display:block!important;width:100%!important;height:3px!important;margin:0!important;border-radius:999px!important;overflow:hidden!important;background:rgba(255,255,255,.08)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)!important;} #roadtoace .ace221MasteryLine > i > em{display:block!important;height:100%!important;border-radius:inherit!important;background:linear-gradient(90deg,rgba(75,156,219,.86),rgba(116,212,255,.98))!important;box-shadow:0 0 10px rgba(88,192,243,.16)!important;} #roadtoace .rta187TrainCard .rta187CardCopy,#roadtoace .rta187PhysicalCard .rta187CardCopy{padding-bottom:9px!important;} @media(max-width:760px){#roadtoace .ace221MasteryLine{bottom:3px!important;height:2px!important;} #roadtoace .ace221MasteryLine > i{height:2px!important;}}</style>
 
 <script id="ace272-build-flag">
-window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.292';
+window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.293';
 </script>
 
 
@@ -47932,7 +47974,7 @@ window.ACE_TRAINING_BLEND_MASTERY_BAR_BUILD='B21.36.292';
     setTimeout(schedule,120);
   }
 
-  window.ACE_UT_HOME_VISUAL_REBALANCE_BUILD='B21.36.292';
+  window.ACE_UT_HOME_VISUAL_REBALANCE_BUILD='B21.36.293';
 })();
 </script>
 
@@ -48550,14 +48592,14 @@ window.ACE_CAREER_LOGO_SOURCE_FIX_BUILD="B21.36.282";
 
 
 <script id="ace284-build-flag">
-window.ACE_CAREER_ALERTS_REMOVED_BUILD="B21.36.292";
+window.ACE_CAREER_ALERTS_REMOVED_BUILD="B21.36.293";
 </script>
 
 
 <style id="ace285-skip-set-during-rally">#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;height:34px!important;margin:0!important;padding:0 11px!important;border-radius:9px!important;border:1px solid rgba(109,181,255,.17)!important;background:rgba(27,75,112,.15)!important;color:#78c9ff!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.055em!important;white-space:nowrap!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn:hover:not(:disabled){border-color:rgba(116,205,255,.34)!important;background:rgba(32,103,148,.22)!important;box-shadow:0 0 15px rgba(66,168,228,.10)!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn:disabled{opacity:.48!important;} #liveMatchCard.ace283OnlineAutoMatch .ace283CompactControlHead #skipSetBtn{display:none!important;} @media(max-width:760px){#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #skipSetBtn{min-height:32px!important;height:32px!important;padding:0 8px!important;font-size:6px!important;}}</style>
 
 <script id="ace285-build-flag">
-window.ACE_SKIP_SET_DURING_RALLY_BUILD="B21.36.292";
+window.ACE_SKIP_SET_DURING_RALLY_BUILD="B21.36.293";
 </script>
 
 
@@ -48618,7 +48660,7 @@ window.ACE_SKIP_SET_DURING_RALLY_BUILD="B21.36.292";
     setTimeout(schedule,120);
   }
 
-  window.ACE_UT_HOME_PREMIUM_REDESIGN_BUILD="B21.36.292";
+  window.ACE_UT_HOME_PREMIUM_REDESIGN_BUILD="B21.36.293";
 })();
 </script>
 
@@ -48634,26 +48676,26 @@ window.ACE_UT_HOME_BALANCE_FIX_BUILD="B21.36.287";
 width:100%!important;max-width:none!important;flex:0 0 auto!important;display:grid!important;grid-template-columns:86px minmax(0,1fr)!important;gap:12px!important;align-items:center!important;min-height:122px!important;height:122px!important;margin:14px 0 0!important;padding:12px 0 0!important;border:0!important;border-top:1px solid rgba(255,255,255,.05)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard{width:82px!important;height:108px!important;overflow:hidden!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCard .fifaPlayerCard{transform:scale(.245)!important;transform-origin:top left!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy{display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0!important;padding-right:0!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy small{color:#9079af!important;font-size:4.9px!important;letter-spacing:.14em!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy b{margin-top:4px!important;font-size:15px!important;line-height:1!important;color:#f6f3fa!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy span{margin-top:4px!important;font-size:6px!important;color:#7a92a6!important;} #ultimate #vdsUTHubHome .aceHomeSpotlightCopy button{align-self:flex-start!important;margin-top:9px!important;min-height:28px!important;height:28px!important;padding:0 9px!important;border-radius:9px!important;background:rgba(15,21,32,.62)!important;font-size:5.7px!important;} #ultimate #vdsUTHubHome .aceUTHomeVisual{position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;gap:0!important;min-width:0!important;padding:18px 20px 16px!important;background:radial-gradient(circle at 52% 72%,rgba(104,62,162,.07),transparent 40%)!important;cursor:pointer!important;} #ultimate #vdsUTHubHome .aceUTHomeVisualGlow{display:none!important;} #ultimate #vdsUTHubHome .aceUTHomeSquadLabel{display:flex!important;align-items:center!important;justify-content:space-between!important;min-height:28px!important;margin:0 0 4px!important;padding:0!important;} #ultimate #vdsUTHubHome .aceUTHomeSquadLabel > span{color:#9d84bb!important;font-size:6.3px!important;font-weight:1000!important;letter-spacing:.18em!important;} #ultimate #vdsUTHubHome .aceUTReadyChip{min-height:24px!important;padding:0 9px!important;border-radius:999px!important;font-size:5.8px!important;} #ultimate #vdsUTHubHome .aceHomeIdentityMount{margin:0 0 8px!important;padding:0!important;border:0!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;width:100%!important;margin:0!important;padding:0 0 10px!important;border:0!important;border-bottom:1px solid rgba(255,255,255,.05)!important;border-radius:0!important;background:transparent!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact > div{padding:0 12px!important;border-left:1px solid rgba(255,255,255,.05)!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact > div:first-child{padding-left:0!important;border-left:0!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact > div:last-child{padding-right:0!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact span{color:#637f97!important;font-size:5px!important;letter-spacing:.11em!important;} #ultimate #vdsUTHubHome .aceSquadIdentityStrip.compact b{margin-top:4px!important;color:#e9f4fc!important;font-size:12px!important;white-space:nowrap!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview{position:relative!important;flex:1 1 auto!important;min-height:372px!important;height:372px!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview::before{display:none!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewCourt{left:4%!important;right:4%!important;top:6%!important;bottom:-9%!important;opacity:.97!important;background:linear-gradient(180deg,rgba(132,88,169,.96),rgba(93,60,133,.98))!important;box-shadow: inset 0 0 0 2px rgba(236,219,255,.64),0 24px 58px rgba(46,19,72,.18)!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer{width:88px!important;height:120px!important;border-radius:14px!important;border:1px solid rgba(255,255,255,.11)!important;box-shadow:0 16px 28px rgba(0,0,0,.28)!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer:hover{border-color:rgba(220,187,255,.36)!important;box-shadow: 0 18px 32px rgba(0,0,0,.34),0 0 22px rgba(138,82,214,.12)!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer b{left:5px!important;top:5px!important;padding:4px 6px!important;font-size:8px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .aceUTPreviewName{font-size:5.4px!important;}} @media (min-width:981px) and (max-width:1250px){#ultimate #vdsUTHubHome .ace35UTDeckCard.next{padding-right:360px!important;} #ultimate #vdsUTHubHome .ace35DeckTag{right:268px!important;} #ultimate #vdsUTHubHome .ace257UTNext .ace257RookieInline{width:190px!important;right:42px!important;} #ultimate #vdsUTHubHome .aceUTHomeStage{grid-template-columns:270px minmax(0,1fr)!important;} #ultimate #vdsUTHubHome .aceUTHomeCopy{padding-left:15px!important;padding-right:15px!important;} #ultimate #vdsUTHubHome .aceUTHomeVisual{padding-left:16px!important;padding-right:16px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview{min-height:345px!important;height:345px!important;} #ultimate #vdsUTHubHome .aceUTSquadPreview .vdsUTHubPreviewPlayer{width:76px!important;height:106px!important;}}</style>
 
 <script id="ace288-build-flag">
-window.ACE_UT_HOME_RECOMPOSE_BUILD="B21.36.292";
+window.ACE_UT_HOME_RECOMPOSE_BUILD="B21.36.293";
 </script>
 
 
 <style id="ace289-rally-visual-stability">#liveMatchCard.ace289FastSim #courtStage .courtPlayer,#liveMatchCard.ace289FastSim #courtStage .ballAnim{transition:none!important;animation:none!important;} #liveMatchCard.ace289FastSim #rallyBanner,#liveMatchCard.ace289FastSim #courtStage .playerActionTag,#liveMatchCard.ace289FastSim #courtStage .passerBadge{display:none!important;}</style>
 
 <script id="ace289-build-flag">
-window.ACE_RALLY_VISUAL_STABILITY_BUILD="B21.36.292";
+window.ACE_RALLY_VISUAL_STABILITY_BUILD="B21.36.293";
 </script>
 
 
 <style id="ace290-forfeit-sim-match-ui-fix">#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead{flex-wrap:wrap!important;row-gap:6px!important;} #liveMatchCard.ace283AutoUTMatch .ace283SimSlot,#liveMatchCard.ace283AutoUTMatch .ace290ForfeitSlot,#liveMatchCard.ace283AutoUTMatch .ace285SkipSlot{display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn,#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn{position:static!important;inset:auto!important;transform:none!important;margin:0!important;min-height:34px!important;height:34px!important;padding:0 10px!important;border-radius:9px!important;font-size:6.6px!important;font-weight:1000!important;letter-spacing:.055em!important;white-space:nowrap!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid rgba(103,186,255,.20)!important;background:rgba(27,82,119,.16)!important;color:#7dcfff!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn{display:none!important;align-items:center!important;justify-content:center!important;border:1px solid rgba(235,91,108,.20)!important;background:rgba(118,31,44,.15)!important;color:#df8791!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn.show{display:inline-flex!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn:hover:not(:disabled){border-color:rgba(118,205,255,.38)!important;background:rgba(37,105,150,.23)!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn:hover:not(:disabled){border-color:rgba(245,111,126,.36)!important;background:rgba(138,39,53,.23)!important;} @media(max-width:760px){#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead{align-items:center!important;} #liveMatchCard.ace283AutoUTMatch .ace283AutoState{margin-right:auto!important;} #liveMatchCard.ace283AutoUTMatch .ace283SimSlot,#liveMatchCard.ace283AutoUTMatch .ace290ForfeitSlot{flex:1 1 calc(50% - 4px)!important;} #liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #simMatchBtn,#liveMatchCard.ace283AutoUTMatch .ace283CompactControlHead #aceRankedQuitBtn{width:100%!important;min-width:0!important;min-height:32px!important;height:32px!important;padding:0 7px!important;font-size:6px!important;}}</style>
 
 <script id="ace290-build-flag">
-window.ACE_FORFEIT_SIM_MATCH_FIX_BUILD="B21.36.292";
+window.ACE_FORFEIT_SIM_MATCH_FIX_BUILD="B21.36.293";
 </script>
 
 
 <script id="ace291-build-flag">
-window.ACE_MULTIPLAYER_RELEASE_HARDENING_BUILD="B21.36.292";
+window.ACE_MULTIPLAYER_RELEASE_HARDENING_BUILD="B21.36.293";
 </script>
 
 
@@ -48664,12 +48706,12 @@ window.ACE_MULTIPLAYER_RELEASE_HARDENING_BUILD="B21.36.292";
   const logos={"tokyo_blaze":"assets/team_logos/japan/sv_league/tokyo_blaze.webp","nagoya_orbit":"assets/team_logos/japan/sv_league/nagoya_orbit.webp","osaka_phoenix":"assets/team_logos/japan/sv_league/osaka_phoenix.webp","sakai_steel":"assets/team_logos/japan/sv_league/sakai_steel.webp","hiroshima_thunder":"assets/team_logos/japan/sv_league/hiroshima_thunder.webp","aichi_edge":"assets/team_logos/japan/sv_league/aichi_edge.webp","hokkaido_north":"assets/team_logos/japan/v_league/hokkaido_north.webp","tokyo_circuit":"assets/team_logos/japan/v_league/tokyo_circuit.webp","kyoto_tempo":"assets/team_logos/japan/v_league/kyoto_tempo.webp","kobe_harbor":"assets/team_logos/japan/v_league/kobe_harbor.webp"};
   const map=window.ACE_TEAM_LOGOS_MAP||(window.ACE_TEAM_LOGOS_MAP={});
   Object.assign(map,logos);
-  window.ACE_JAPAN_REAL_CLUB_LOGOS_BUILD="B21.36.292";
+  window.ACE_JAPAN_REAL_CLUB_LOGOS_BUILD="B21.36.293";
 })();
 </script>
 
 <script id="ace292-build-flag">
-window.ACE_BETA_RELEASE_POLISH_BUILD="B21.36.292";
+window.ACE_BETA_RELEASE_POLISH_BUILD="B21.36.293";
 </script>
 
 <style id="ace-serve-v5-actual-css">#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Shell{width:100%;height:100%;display:flex;flex-direction:column;min-height:0;background:#030a11;color:#edf8ff} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0;overflow:hidden} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Scene{position:relative;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 19%,#183e45 19% 29%,#173427 29% 100%);touch-action:none} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Stands{position:absolute;inset:0 0 auto;height:28%;opacity:.55;background:linear-gradient(180deg,rgba(255,255,255,.035),transparent),repeating-linear-gradient(90deg,transparent 0 27px,rgba(255,255,255,.025) 27px 29px)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Court{position:absolute;left:6%;right:6%;top:8%;bottom:7%;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);background:linear-gradient(90deg,transparent 49.6%,rgba(255,255,255,.93) 49.6% 50.4%,transparent 50.4%),linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.95) 49.6% 50.4%,transparent 50.4%),linear-gradient(180deg,#bd7040,#985632);border:3px solid rgba(255,255,255,.94);box-shadow:0 24px 52px rgba(0,0,0,.35)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Court:before,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Court:after{content:"";position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.92)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Court:before{top:33%}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Court:after{top:66%} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Net{position:absolute;left:4%;right:4%;top:49%;height:15px;z-index:30;border-top:2px solid #fff;border-bottom:1px solid rgba(255,255,255,.7);background:repeating-linear-gradient(90deg,rgba(255,255,255,.43) 0 1px,transparent 1px 10px),repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.23) 4px 5px)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Net:before,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Net:after{content:"";position:absolute;top:-8px;width:4px;height:31px;background:#edf3f7}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Net:before{left:0}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Net:after{right:0} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver{position:absolute;width:34px;height:49px;transform:translate(-50%,-50%);z-index:18;transition:left .35s ease,top .35s ease,transform .2s ease} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver .h{position:absolute;left:10px;top:0;width:14px;height:14px;border-radius:50%;background:#d0a283}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver .b{position:absolute;left:7px;top:13px;width:20px;height:25px;border-radius:7px 7px 5px 5px;background:#dfe8ee;border:1px solid rgba(0,0,0,.25);box-shadow:0 6px 11px rgba(0,0,0,.25)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver.lib .b{background:#3fa37d}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver.set .b{background:#8198a7}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver.weak .b{box-shadow:0 0 0 2px rgba(240,201,104,.55),0 0 24px rgba(240,201,104,.25)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver:before,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver:after{content:"";position:absolute;top:36px;width:5px;height:13px;border-radius:4px;background:#17222a}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver:before{left:8px;transform:rotate(7deg)}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver:after{right:8px;transform:rotate(-7deg)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Receiver.react{transform:translate(-50%,-50%) rotate(-12deg) scale(.95)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Server{position:absolute;left:50%;bottom:1%;width:40px;height:54px;transform:translateX(-50%);z-index:24}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Server:before{content:"";position:absolute;left:12px;top:0;width:16px;height:16px;border-radius:50%;background:#c99978}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Server:after{content:"";position:absolute;left:8px;top:15px;width:24px;height:29px;border-radius:8px;background:#173249} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Coach{position:absolute;left:2%;bottom:15%;width:32px;height:52px;z-index:19;opacity:.75}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Coach:before{content:"";position:absolute;width:14px;height:14px;border-radius:50%;left:8px;top:0;background:#c99c7d}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Coach:after{content:"";position:absolute;width:21px;height:29px;border-radius:7px;left:5px;top:13px;background:#455a6a} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Hint{position:absolute;width:24px;height:24px;border:2px solid rgba(240,201,104,.86);border-radius:50%;transform:translate(-50%,-50%);z-index:17;animation:aceServeV5Pulse 1.1s ease-out infinite;opacity:.62}@keyframes aceServeV5Pulse{0%{box-shadow:0 0 0 0 rgba(240,201,104,.3)}100%{box-shadow:0 0 0 20px rgba(240,201,104,0)}} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Trajectory,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5PowerTrace{position:absolute;left:50%;bottom:30px;width:3px;height:72%;z-index:42;transform-origin:50% 100%;pointer-events:none} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Trajectory{background:linear-gradient(180deg,rgba(93,187,255,.98),rgba(93,187,255,.42) 52%,rgba(93,187,255,.08));filter:drop-shadow(0 0 7px rgba(93,187,255,.48))}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Trajectory:before{content:"";position:absolute;left:50%;top:-9px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #aee3ff;transform:translateX(-50%)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Trajectory.locked{background:linear-gradient(180deg,rgba(240,201,104,.96),rgba(240,201,104,.5),rgba(240,201,104,.08));filter:drop-shadow(0 0 7px rgba(240,201,104,.42))}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Trajectory.locked:before{border-bottom-color:#f0c968} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5PowerTrace{display:none;width:4px;height:28%;background:linear-gradient(180deg,#8bd4ff,#58baff 56%,rgba(88,186,255,.16));box-shadow:0 0 10px rgba(88,186,255,.36);border-radius:3px} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Ball,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5ContactBall,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5BtnBall{border-radius:50%;background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%);box-shadow:inset -5px -6px 8px rgba(0,0,0,.17),0 5px 12px rgba(0,0,0,.26)} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Ball{position:absolute;width:21px;height:21px;display:none;z-index:80}.aceServeV5Ball:after{content:""} #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Panel{min-height:0;
@@ -48684,7 +48726,7 @@ window.ACE_GOOGLE_OAUTH_EXPLICIT_REDIRECT=false;
 window.ACE_AUTH_HANDOFF_BUILD="B21.36.231";
 </script>
 
-<script>window.ACE_SERVE_INTEGRATED_BUILD="B21.36.229-INTEGRATED";window.ACE_MATCH_SERVE_INTEGRATED_BUILD="B21.36.230";window.ACE_SERVE_MOBILE_LAYOUT_BUILD="B21.36.232";window.ACE_SERVE_SIDE_CONTROLS_BUILD="B21.36.233";window.ACE_CAREER_FAST_LOAD_BUILD="B21.36.234";window.ACE_SERVE_STAGE_VISIBILITY_BUILD="B21.36.235";window.ACE_MATCH_SERVE_TARGET_BUILD="B21.36.236";window.ACE_SERVE_PC_SCALE_BUILD="B21.36.236";window.ACE_INTEGRATED_HITTING_BUILD="B21.36.238";window.ACE_HIT_TORSO_FIX_BUILD="B21.36.238";window.ACE_CAREER_NONBLOCKING_LOAD_BUILD="B21.36.239";window.ACE_ATTACK_FORCE_NEW_RENDERER_BUILD="B21.36.240";window.ACE_QUICK_ATTACK_RETIRED_BUILD="B21.36.241";window.ACE_REAL_ATTACK_DRILL_FIX_BUILD="B21.36.242";window.ACE_DEAD_UI_CLEANUP_BUILD="B21.36.243";window.ACE_UT_FIXES_BUILD="B21.36.292";</script>
+<script>window.ACE_SERVE_INTEGRATED_BUILD="B21.36.229-INTEGRATED";window.ACE_MATCH_SERVE_INTEGRATED_BUILD="B21.36.230";window.ACE_SERVE_MOBILE_LAYOUT_BUILD="B21.36.232";window.ACE_SERVE_SIDE_CONTROLS_BUILD="B21.36.233";window.ACE_CAREER_FAST_LOAD_BUILD="B21.36.234";window.ACE_SERVE_STAGE_VISIBILITY_BUILD="B21.36.235";window.ACE_MATCH_SERVE_TARGET_BUILD="B21.36.236";window.ACE_SERVE_PC_SCALE_BUILD="B21.36.236";window.ACE_INTEGRATED_HITTING_BUILD="B21.36.238";window.ACE_HIT_TORSO_FIX_BUILD="B21.36.238";window.ACE_CAREER_NONBLOCKING_LOAD_BUILD="B21.36.239";window.ACE_ATTACK_FORCE_NEW_RENDERER_BUILD="B21.36.240";window.ACE_QUICK_ATTACK_RETIRED_BUILD="B21.36.241";window.ACE_REAL_ATTACK_DRILL_FIX_BUILD="B21.36.242";window.ACE_DEAD_UI_CLEANUP_BUILD="B21.36.243";window.ACE_UT_FIXES_BUILD="B21.36.293";</script>
 
 <style id="ace-b21-36-244-ut-ranking-pack10-fix">
 /* ---- UT home leaderboard entry ---- */
@@ -48813,7 +48855,7 @@ window.ACE_AUTH_HANDOFF_BUILD="B21.36.231";
 <script id="ace-b21-36-244-ut-ranking-pack10-runtime">
 (function(){
   "use strict";
-  window.ACE_PROJECT_BUILD="B21.36.292";
+  window.ACE_PROJECT_BUILD="B21.36.293";
   window.ACE_UT_VISIBLE_LEADERBOARD=true;
   window.ACE_PACK_REVIEW_MAPPING_FIX=true;
   window.ACE_UT_PACK_X10=true;
@@ -49138,7 +49180,7 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
 <script id="ace-v31-mobile-home-viewport-script">
 (function(){let raf=0,last=0;function sync(){raf=0;const v=window.visualViewport,h=Math.round(v&&v.height?v.height:window.innerHeight);if(!h||Math.abs(h-last)<2)return;last=h;document.documentElement.style.setProperty('--ace-v31-vh',h+'px')}function q(){if(!raf)raf=requestAnimationFrame(sync)}sync();window.addEventListener('resize',q,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(sync,80),{passive:true});window.addEventListener('pageshow',sync,{passive:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()},{passive:true});if(window.visualViewport){window.visualViewport.addEventListener('resize',q,{passive:true});window.visualViewport.addEventListener('scroll',q,{passive:true})}})();
 </script>
-<script>window.ACE_RECOVERY_BUILD='B21.36.292';</script>
+<script>window.ACE_RECOVERY_BUILD='B21.36.293';</script>
 
 
 <script id="ace-v53-force-skilltree2-live-route">
@@ -49183,7 +49225,7 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
   if(page)new MutationObserver(()=>requestAnimationFrame(mountSkillTree2)).observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:["class","aria-selected"]});
   window.addEventListener("pageshow",()=>setTimeout(mountSkillTree2,50));
   setTimeout(mountSkillTree2,100);
-  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.292";
+  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.293";
 })();
 </script>
 <style id="ace-v54-elite-ui">
@@ -49442,125 +49484,22 @@ window.ACE_100_OVR_STATUS_BUILD="B21.36.276";
 })();
 </script>
 
-<style id="ace-v64-qa-style">
-#aceV64QA{position:fixed!important;right:12px!important;top:calc(env(safe-area-inset-top) + 62px)!important;z-index:2147483646!important;display:block!important;padding:12px 15px!important;border:1px solid #f0c45e!important;border-radius:999px!important;background:#d6a43d!important;color:#071018!important;font:1000 10px/1 system-ui!important;box-shadow:0 8px 28px rgba(0,0,0,.45)!important}
-#aceV64Panel{position:fixed;inset:0;z-index:2147483647;display:none;overflow:auto;padding:18px;background:rgba(2,7,12,.95)}
-#aceV64Panel.open{display:block!important}
-#aceV64Panel .box{max-width:430px;margin:30px auto 100px;padding:16px;border:1px solid rgba(240,196,94,.35);border-radius:18px;background:#09131d;color:#eef6fb}
-#aceV64Panel header{display:flex;justify-content:space-between;align-items:start}
-#aceV64Panel h2{margin:3px 0 4px;font:1000 21px/1 system-ui} #aceV64Panel small{color:#efc45f;font:900 8px/1 system-ui}
-#aceV64Panel .close{width:36px;height:36px;border:0;border-radius:9px;background:#142432;color:white}
-#aceV64Panel section{margin-top:12px;padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:#0c1823}
-#aceV64Panel section>b{display:block;margin-bottom:8px;color:#91a6b6;font:1000 9px/1 system-ui}
-#aceV64Panel .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-#aceV64Panel .grid button{min-height:40px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:#122331;color:#eaf2f6;font:900 9px/1 system-ui}
-#aceV64Panel .wide{grid-column:span 2}.aceV64NR{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translateX(-50%);z-index:2147483000;padding:6px 9px;border-radius:999px;background:#101820;color:#efc45f;font:1000 8px/1 system-ui}
-</style>
-<script id="ace-v66-clean-build">window.ACE_PROJECT_BUILD="B21.36.292";window.ACE_SINGLE_FILE_CLEANUP_BUILD="B21.36.292";</script>
-<script id="ace-v68-github-safe">window.ACE_PROJECT_BUILD="B21.36.292";window.ACE_GITHUB_SAFE_BUILD="B21.36.292";</script>
+<script id="ace-v66-clean-build">window.ACE_PROJECT_BUILD="B21.36.293";window.ACE_SINGLE_FILE_CLEANUP_BUILD="B21.36.293";</script>
+<script id="ace-v68-github-safe">window.ACE_PROJECT_BUILD="B21.36.293";window.ACE_GITHUB_SAFE_BUILD="B21.36.293";</script>
 
-<style id="ace-v70-test-feedback">
-#aceV64Panel button.aceV70Selected{border-color:#efc45f!important;background:#253044!important;color:#ffd978!important;box-shadow:inset 0 0 0 1px rgba(239,196,95,.25)}
-#aceV64Panel .aceV70Readout{margin-top:10px;padding:9px;border-radius:9px;background:#071019;color:#8fa5b5;font:800 9px/1.45 system-ui}
-#aceV64Panel .aceV70Readout b{color:#efc45f}
-</style>
+<script id="ace-v73-remove-test-state">(function(){try{["projectAce:v64:qa","projectAce:v69:realCareerSnapshot","projectAce:v72:test","projectAce:v72:snapshot"].forEach(k=>localStorage.removeItem(k));}catch(_){}window.ACE_TEST=undefined;window.ACE_PROJECT_BUILD="B21.36.293";})();</script>
 
-<script id="ace-v72-single-test-controller">
-(function(){
-"use strict";
-const KEY="projectAce:v72:test";
-const SNAP="projectAce:v72:snapshot";
-const attrs=["creativity","accuracy","hitting_power","serve_receive","positioning","covering","work_rate","vertical","speed","reaction_time","service","blocking","set_technique","set_creativity","mindset"];
-let Q={active:false,ovr:null,sp:null,stat:null,pos:null,skills:false};
-try{Q=Object.assign(Q,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(_){}
-const save=()=>localStorage.setItem(KEY,JSON.stringify(Q));
-const state=()=>window.__ACE_RTA_STATE;
-const career=()=>state()?.career||null;
-function snap(){
- const c=career(); if(!c||localStorage.getItem(SNAP))return;
- const x={};["overall","ovr","overall_rating","rating","skill_points","position","skill_nodes",...attrs].forEach(k=>x[k]=c[k]);
- localStorage.setItem(SNAP,JSON.stringify(x));
-}
-function apply(renderIt=true){
- const c=career();if(!c||!Q.active)return false;snap();
- if(Q.ovr!=null){c.overall=+Q.ovr;if("ovr"in c)c.ovr=+Q.ovr;if("overall_rating"in c)c.overall_rating=+Q.ovr;if("rating"in c)c.rating=+Q.ovr}
- if(Q.sp!=null)c.skill_points=+Q.sp;
- if(Q.stat!=null)attrs.forEach(k=>c[k]=+Q.stat);
- if(Q.pos)c.position=Q.pos;
- if(Q.skills&&Array.isArray(window.ACE_ST2_NODES)){
-   const ids=window.ACE_ST2_NODES.filter(n=>String(n.position).toUpperCase()===String(c.position).toUpperCase()).map(n=>n.id);
-   c.skill_nodes=[...new Set([...(c.skill_nodes||[]),...ids])];
- }
- c.__ace_test_mode=true;
- if(renderIt)window.__ACE_RTA_RENDER?.();
- return true;
-}
-function restore(){
- const c=career();let x=null;try{x=JSON.parse(localStorage.getItem(SNAP)||"null")}catch(_){}
- if(c&&x)Object.keys(x).forEach(k=>c[k]=x[k]);
- localStorage.removeItem(SNAP);localStorage.removeItem(KEY);
- Q={active:false,ovr:null,sp:null,stat:null,pos:null,skills:false};
- window.__ACE_RTA_RENDER?.();paint();
-}
-function panel(){
- let p=document.getElementById("aceV72Panel");
- if(p){p.hidden=false;paint();return}
- p=document.createElement("div");p.id="aceV72Panel";
- p.innerHTML=`<div class="box"><div class="top"><b>TEST PLAYER</b><button data-close>×</button></div>
- <label>OVR</label><div class="row">${[80,90,99,100].map(v=>`<button data-ovr="${v}">${v===100?"100 ACE":v}</button>`).join("")}</div>
- <label>SKILL POINTS</label><div class="row">${[100,1000,9999,99999].map(v=>`<button data-sp="${v}">${v.toLocaleString()}</button>`).join("")}</div>
- <label>ALL ATTRIBUTES</label><div class="row">${[99,101,103,105].map(v=>`<button data-stat="${v}">${v===105?"105 ACE":v}</button>`).join("")}</div>
- <label>POSITION</label><div class="row">${["OH","OP","S","M","L"].map(v=>`<button data-pos="${v}">${v}</button>`).join("")}</div>
- <div class="row"><button data-skills>UNLOCK ALL SKILLS</button><button data-replay>REPLAY ACE</button></div>
- <div id="aceV72Read"></div><button class="reset" data-reset>RESET TEST MODE</button></div>`;
- document.body.appendChild(p);paint();
-}
-function paint(){
- const p=document.getElementById("aceV72Panel");if(!p)return;
- p.querySelectorAll(".sel").forEach(x=>x.classList.remove("sel"));
- [["ovr",Q.ovr],["sp",Q.sp],["stat",Q.stat],["pos",Q.pos]].forEach(([k,v])=>{if(v!=null)p.querySelector(`[data-${k}="${v}"]`)?.classList.add("sel")});
- const r=p.querySelector("#aceV72Read");if(r)r.innerHTML=`PREVIEW · OVR <b>${Q.ovr??"REAL"}</b> · SP <b>${Q.sp??"REAL"}</b> · ATTR <b>${Q.stat??"REAL"}</b> · POS <b>${Q.pos??"REAL"}</b>`;
-}
-function choose(k,v){Q.active=true;Q[k]=v;save();apply(true);paint()}
-document.addEventListener("click",e=>{
- const b=e.target.closest?.("button");if(!b)return;
- if(b.id==="aceV72Launch"){panel();return}
- if(!b.closest?.("#aceV72Panel"))return;
- e.preventDefault();e.stopImmediatePropagation();
- if(b.dataset.close!==undefined){b.closest("#aceV72Panel").hidden=true;return}
- if(b.dataset.reset!==undefined){restore();return}
- if(b.dataset.ovr!==undefined)return choose("ovr",+b.dataset.ovr);
- if(b.dataset.sp!==undefined)return choose("sp",+b.dataset.sp);
- if(b.dataset.stat!==undefined)return choose("stat",+b.dataset.stat);
- if(b.dataset.pos!==undefined)return choose("pos",b.dataset.pos);
- if(b.dataset.skills!==undefined){Q.active=true;Q.skills=true;save();apply(true);paint();return}
- if(b.dataset.replay!==undefined){try{localStorage.removeItem("ace:v56:ascended:"+String(career()?.id||"career"));window.__ACE_RTA_RENDER?.()}catch(_){}}
-},true);
-function launcher(){
- if(document.getElementById("aceV72Launch"))return;
- const b=document.createElement("button");b.id="aceV72Launch";b.textContent="🧪 TEST PLAYER";document.body.appendChild(b);
-}
-launcher();new MutationObserver(launcher).observe(document.body,{childList:true});
-/* Re-pin values after background server refresh WITHOUT rendering. */
-setInterval(()=>{if(Q.active)apply(false)},500);
-window.ACE_TEST={get state(){return Q},apply,restore};
-window.ACE_PROJECT_BUILD="B21.36.292";
-})();
-</script>
-<style id="ace-v72-test-style">
-#aceV72Launch{position:fixed;right:12px;top:max(12px,env(safe-area-inset-top));z-index:2147483646;border:1px solid #d9ae50;background:#111a28;color:#ffd978;border-radius:10px;padding:9px 12px;font:900 10px system-ui}
-#aceV72Panel{position:fixed;inset:0;z-index:2147483647;background:#000b;display:grid;place-items:center;padding:14px}
-#aceV72Panel[hidden]{display:none}
-#aceV72Panel .box{width:min(420px,94vw);max-height:88vh;overflow:auto;background:#0b1420;border:1px solid #33445a;border-radius:16px;padding:16px;color:#eef6ff;font-family:system-ui}
-#aceV72Panel .top{display:flex;justify-content:space-between;align-items:center;font-size:18px;margin-bottom:14px}
-#aceV72Panel label{display:block;margin:13px 0 6px;color:#8fa5b5;font:900 9px system-ui;letter-spacing:.12em}
-#aceV72Panel .row{display:flex;flex-wrap:wrap;gap:6px}
-#aceV72Panel button{border:1px solid #33445a;background:#121e2d;color:#eef6ff;border-radius:8px;padding:9px 10px;font:800 10px system-ui}
-#aceV72Panel button.sel{border-color:#efc45f;background:#253044;color:#ffd978}
-#aceV72Read{margin:12px 0;padding:9px;background:#071019;border-radius:8px;color:#8fa5b5;font:800 9px system-ui}
-#aceV72Read b{color:#efc45f}
-#aceV72Panel .reset{width:100%;border-color:#7a3b43;color:#ffabb4}
+<style id="ace-v74-career-calendar-css">
+#roadtoace .aceV74Calendar{margin:12px 0 14px;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);padding:12px 0;color:#eaf2f7}
+#roadtoace .aceV74Next{width:100%;min-height:64px;border:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;padding:0 2px}
+#roadtoace .aceV74Next div{min-width:0}#roadtoace .aceV74Next small{display:block;font-size:8px;letter-spacing:.13em;color:#7f93a4;font-weight:900}#roadtoace .aceV74Next b{display:block;margin-top:4px;font-size:16px;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#roadtoace .aceV74Next span{display:block;margin-top:4px;font-size:8px;color:#8293a1;font-weight:800}#roadtoace .aceV74Next>em{font-style:normal;font-size:20px;color:#7f93a4;padding:8px}
+#roadtoace .aceV74Five{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:relative;margin:9px 0 8px}#roadtoace .aceV74Five:before{content:"";position:absolute;left:9%;right:9%;top:9px;height:1px;background:rgba(255,255,255,.10)}
+#roadtoace .aceV74Event{position:relative;z-index:1;text-align:center;min-width:0}#roadtoace .aceV74Event i{display:grid;place-items:center;margin:0 auto;width:19px;height:19px;border-radius:50%;background:#111d27;border:1px solid rgba(255,255,255,.12);color:#718594;font-size:8px;font-style:normal}#roadtoace .aceV74Event span{display:block;margin-top:5px;font-size:7px;letter-spacing:.05em;color:#657989;font-weight:900;white-space:nowrap}#roadtoace .aceV74Event.done i{color:#9eb2bf}#roadtoace .aceV74Event.next i{border-color:rgba(255,255,255,.42);color:#fff;background:#1b2934}#roadtoace .aceV74Event.next span{color:#eaf2f7}#roadtoace .aceV74Event.intl i{color:#d7b769}#roadtoace .aceV74Event em{display:block;margin-top:2px;font-size:6px;color:#9caebb;font-style:normal}
+#roadtoace .aceV74Teaser{display:flex;align-items:center;gap:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.055)}#roadtoace .aceV74Teaser>span{font-size:10px;color:#c4a65f}#roadtoace .aceV74Teaser small{display:block;font-size:7px;letter-spacing:.12em;color:#7b8e9c;font-weight:900}#roadtoace .aceV74Teaser b{display:block;margin-top:2px;font-size:10px;color:#cbd7de}
+#roadtoace .aceV74Expanded{margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.07)}#roadtoace .aceV74Months{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}#roadtoace .aceV74Months span{font-size:6px;text-align:center;color:#506473;font-weight:900;padding:5px 0;border-bottom:2px solid rgba(255,255,255,.05)}#roadtoace .aceV74Months span.past{color:#728796}#roadtoace .aceV74Months span.now{color:#fff;border-color:#c8d4dc}#roadtoace .aceV74SeasonBands{display:grid;grid-template-columns:2fr 1fr;gap:5px;margin-top:8px}#roadtoace .aceV74SeasonBands span{padding:6px 7px;border-radius:6px;background:rgba(255,255,255,.035);font-size:7px;color:#8093a1;font-weight:900}#roadtoace .aceV74SeasonBands .intl{color:#bca96e}#roadtoace .aceV74Expanded p{margin:9px 0 0;font-size:8px;line-height:1.55;color:#728694}
+@media(max-width:760px){#roadtoace .aceV74Calendar{margin:8px 14px 10px;padding:8px 0}#roadtoace .aceV74Next{min-height:54px}#roadtoace .aceV74Next b{font-size:13px}#roadtoace .aceV74Five{margin-top:6px}#roadtoace .aceV74Months{overflow:hidden}#roadtoace .aceV74Months span{font-size:5.5px}#roadtoace .aceV74Expanded p{font-size:7.5px}}
 </style>
+<script id="ace-v74-career-calendar-marker">window.ACE_PROJECT_BUILD="B21.36.294";window.ACE_CAREER_CALENDAR_V74=true;</script>
 
 </body>
 </html>
