@@ -30012,7 +30012,6 @@ window.ACE_LEGACY_HOME_RUNTIME_DISABLED=true;
     ensureFullCourt();
     ensurePreviewCourt();
     try{
-      window.ACE_PURPLE_COURTS_BUILD="B21.25";
       window.ACE_CORRECT_PURPLE_VOLLEYBALL_COURTS=true;
     }catch(e){}
   }
@@ -30083,7 +30082,6 @@ window.ACE_LEGACY_HOME_RUNTIME_DISABLED=true;
     }
 
     try{
-      window.ACE_HOME_HALF_COURT_BUILD="B21.26";
       window.ACE_HOME_HALF_COURT_PREVIEW=true;
     }catch(e){}
   }
@@ -38333,10 +38331,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function render(){
     const m=q("#rta62Mount");if(!m)return;
-    window.ACE_CAREER_LEGACY?.restore(S.career);
     S.career?renderCareer(m):renderCreate(m);
-    if(!S.career)window.aceNationalityReadout?.();
-    window.ACE_CAREER_LEGACY?.check();
     requestAnimationFrame(()=>{
       try{rta119RunEnhancers?.()}catch(_){}
       try{window.ace259SyncPageState?.()}catch(_){}
@@ -44760,12 +44755,7 @@ function renderAttackKeyOverlay(){
 
   const page=q("#roadtoace");
   if(page){
-    let wasCareerActive=page.classList.contains('active');
-    new MutationObserver(()=>{
-      const isCareerActive=page.classList.contains('active');
-      if(isCareerActive&&!wasCareerActive)loadState({silent:S.loaded});
-      wasCareerActive=isCareerActive;
-    })
+    new MutationObserver(()=>{if(page.classList.contains("active"))loadState({silent:S.loaded})})
       .observe(page,{attributes:true,attributeFilter:["class"]});
   }
 
@@ -45012,6 +45002,26 @@ function renderAttackKeyOverlay(){
     }
   }
 
+  function ace96DecorateCareerMobile(root){
+    return; /* retired: modern bottom nav + current-step glow replace this legacy compass */
+    const mount=root?.querySelector?.('.rta78Mode');
+    if(!mount || !S?.career)return;
+    mount.querySelector('.ace96CareerCompass')?.remove();
+    if(!window.matchMedia?.('(max-width:760px)')?.matches)return;
+    const c=S.career;
+    const used=typeof rta73UsedThisWeek==='function'?rta73UsedThisWeek():0;
+    const next=typeof rta93NextOpponent==='function'?rta93NextOpponent():'Next Match';
+    const nextView=used<2?'train':'match';
+    const nextTitle=used<2?'GO TO TRAINING':'GO TO MATCHDAY';
+    const nextMeta=used<2?`${2-used} session${2-used===1?'':'s'} left this week`:`vs ${next}`;
+    const compass=document.createElement('section');
+    compass.className='ace96CareerCompass';
+    compass.innerHTML=`
+      <button type="button" class="ace96CareerFocus primary" data-rta62-view="${nextView}"><small>NEXT STEP</small><b>${nextTitle}</b><span>${esc(nextMeta)}</span></button>
+      <button type="button" class="ace96CareerFocus" data-rta62-view="player"><small>MY PLAYER</small><b>${Number(c.overall||0)} OVR · ${esc(c.squad_role||'PLAYER')}</b><span>${Number(c.skill_points||0)} skill points ready</span></button>
+      <button type="button" class="ace96CareerFocus" data-rta62-view="career"><small>CAREER BOARD</small><b>${esc(next)}</b><span>${Number(c.coach_trust||0)} trust · season ${Number(c.season||1)}</span></button>`;
+    mount.prepend(compass);
+  }
 
   const ace96OrigInitUltimateHub=vdsInitUltimateHub;
   vdsInitUltimateHub=function(){
@@ -45025,10 +45035,16 @@ function renderAttackKeyOverlay(){
     try{ace96UpdateUltimateRail()}catch(_e){}
     return out;
   };
+  const ace96OrigRenderCareer=renderCareer;
+  renderCareer=function(){
+    const out=ace96OrigRenderCareer.apply(this,arguments);
+    try{ace96DecorateCareerMobile(arguments[0])}catch(_e){}
+    return out;
+  };
 
   window.ACE_PROJECT_BUILD="B21.36.126";
   window.ACE_UT_DESKTOP_LEFT_RAIL=true;
-  window.ACE_RTA_MOBILE_COMPASS=false;
+  window.ACE_RTA_MOBILE_COMPASS=true;
   window.aceRoadToAceReload=()=>loadState({silent:false});
 })();
 
@@ -45720,9 +45736,7 @@ padding:8px!important;}} @media (max-width:390px){#roadtoace .rta175FixtureCard{
 <script>window.ACE_RTA_TRAINING_GAMEPLAY_BUILD="B21.36.221";</script>
 <style id="ace220-technical-drills-v2">#rta62Overlay[data-kind="training"] .rta220TechBadge{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;border:1px solid rgba(91,184,255,.24);background:rgba(35,119,190,.10);color:#8fd2ff;font-size:8px;font-weight:1000;letter-spacing:.12em} #rta62Overlay[data-kind="training"] .rta220Hint{font-size:9px;line-height:1.45;color:#87a0b4} #rta62Overlay[data-kind="training"] .rta220MiniTitle{font-size:7px;font-weight:1000;letter-spacing:.16em;color:#71889c} #rta62Overlay[data-kind="training"] .rta220BeatBtn,#rta62Overlay[data-kind="training"] .rta220PowerBtn{height:48px;border:1px solid rgba(91,184,255,.34);border-radius:12px;background:linear-gradient(180deg,rgba(29,113,176,.35),rgba(10,56,91,.38));color:#f1f8ff;font-size:10px;font-weight:1000;letter-spacing:.13em;cursor:pointer} #rta62Overlay[data-kind="training"] .rta220BeatBtn:disabled,#rta62Overlay[data-kind="training"] .rta220PowerBtn:disabled{opacity:.36;cursor:not-allowed} #rta62Overlay[data-kind="training"] .rta220Power{display:grid;gap:8px;padding:11px;border:1px solid rgba(255,255,255,.075);border-radius:14px;background:rgba(255,255,255,.025)} #rta62Overlay[data-kind="training"] .rta220PowerTrack{height:14px;position:relative;border-radius:999px;background:linear-gradient(90deg,rgba(97,144,184,.20),rgba(235,190,58,.32) 58%,rgba(71,213,139,.43) 70%,rgba(235,93,93,.35));overflow:hidden} #rta62Overlay[data-kind="training"] .rta220PowerTrack i{position:absolute;top:-3px;bottom:-3px;width:4px;border-radius:3px;background:#fff;left:0;box-shadow:0 0 9px #fff} #rta62Overlay[data-kind="training"] .rta220PowerTrack b{position:absolute;left:65%;width:15%;top:0;bottom:0;border-left:1px solid rgba(255,255,255,.35);border-right:1px solid rgba(255,255,255,.35)} #rta62Overlay[data-kind="training"] .rta220PassAim{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:10px 11px;border:1px solid rgba(255,255,255,.075);border-radius:13px;background:rgba(255,255,255,.025);touch-action:none;user-select:none} #rta62Overlay[data-kind="training"] .rta220PassAim>span{font-size:13px;color:#6e879a;font-weight:1000} #rta62Overlay[data-kind="training"] .rta220AimTrack{height:18px;position:relative;border-radius:999px;background:rgba(255,255,255,.06)} #rta62Overlay[data-kind="training"] .rta220AimTrack:before{content:"SETTER";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:5.5px;font-weight:1000;letter-spacing:.12em;color:rgba(255,255,255,.38)} #rta62Overlay[data-kind="training"] .rta220AimTrack i{position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);border-radius:50%;background:#eef8ff;border:3px solid #2388ce;box-shadow:0 0 14px rgba(45,153,223,.45)} #rta62Overlay[data-kind="training"] .rta220SetChoices{display:grid;grid-template-columns:repeat(4,1fr);gap:7px} #rta62Overlay[data-kind="training"] .rta220SetChoices button{min-height:52px;padding:7px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:#9bb0c1;font-size:8px;font-weight:1000;letter-spacing:.09em;cursor:pointer} #rta62Overlay[data-kind="training"] .rta220SetChoices button b{display:block;color:#eef7fd;font-size:12px;margin-bottom:3px} #rta62Overlay[data-kind="training"] .rta220SetChoices button.selected{border-color:rgba(77,181,255,.50);background:rgba(39,133,205,.18);box-shadow:0 0 0 1px rgba(77,181,255,.12) inset;color:#bfe5ff} #rta62Overlay[data-kind="training"] .rta102SetCall{display:none!important} #rta62Overlay[data-kind="training"] .rta220DefCourt{position:relative;width:100%;height:100%;min-height:430px;overflow:hidden;border-radius:16px;background:linear-gradient(180deg,#07131d 0 34%,#94583d 34% 100%);touch-action:none} #rta62Overlay[data-kind="training"] .rta220DefCourt:before{content:"";position:absolute;left:7%;right:7%;top:34%;bottom:5%;border:2px solid rgba(255,255,255,.53);border-top-width:3px} #rta62Overlay[data-kind="training"] .rta220DefCourt:after{content:"";position:absolute;left:7%;right:7%;top:61%;border-top:1px solid rgba(255,255,255,.42)} #rta62Overlay[data-kind="training"] .rta220DefNet{position:absolute;left:6%;right:6%;top:34%;height:4px;background:#f4f7f9;box-shadow:0 4px 0 rgba(6,20,31,.38);z-index:3} #rta62Overlay[data-kind="training"] .rta220Attacker{position:absolute;left:50%;top:19%;transform:translate(-50%,-50%);width:54px;height:72px;z-index:4} #rta62Overlay[data-kind="training"] .rta220Attacker:before{content:"";position:absolute;width:19px;height:19px;border-radius:50%;left:18px;top:0;background:#c6d0d7}.rta220Attacker:after{content:"";position:absolute;left:8px;top:21px;width:38px;height:40px;border-radius:12px 12px 7px 7px;background:#1f6b9d} #rta62Overlay[data-kind="training"] .rta220DefBall{position:absolute;left:50%;top:28%;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8b5 0 18%,#f2d83c 20% 55%,#674fba 57% 82%,#dfcf3e 84%);transform:translate(-50%,-50%);z-index:8;box-shadow:0 4px 12px rgba(0,0,0,.32)} #rta62Overlay[data-kind="training"] .rta220DefPlayer{position:absolute;left:50%;top:81%;transform:translate(-50%,-50%);width:58px;height:68px;z-index:7;transition:left .05s linear,top .05s linear} #rta62Overlay[data-kind="training"] .rta220DefPlayer:before{content:"";position:absolute;width:18px;height:18px;border-radius:50%;left:20px;top:0;background:#d0d7dd}.rta220DefPlayer:after{content:"YOU";position:absolute;left:4px;right:4px;top:20px;height:38px;display:grid;place-items:center;border-radius:11px 11px 7px 7px;background:#0d78b7;color:#fff;font-size:8px;font-weight:1000} #rta62Overlay[data-kind="training"] .rta220DefTarget{position:absolute;width:78px;height:48px;border:2px solid rgba(103,206,255,.52);border-radius:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s;box-shadow:0 0 22px rgba(65,169,230,.17)} #rta62Overlay[data-kind="training"] .rta220DefPrompt{position:absolute;left:50%;top:9%;transform:translateX(-50%);padding:7px 10px;border-radius:999px;background:rgba(3,12,19,.80);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:1000;letter-spacing:.13em;color:#dce9f2;z-index:12;white-space:nowrap} #rta62Overlay[data-kind="training"] .rta220DefPrompt.perfect{color:#a7f2c6;border-color:rgba(69,210,137,.33)} #rta62Overlay[data-kind="training"] .rta220DefHud{position:absolute;left:10px;bottom:10px;padding:7px 9px;border-radius:9px;background:rgba(4,14,22,.82);font-size:7px;font-weight:900;color:#8aa1b2;z-index:10} #rta62Overlay[data-kind="training"] .rta112BlockHitters span.live{color:#dff4ff!important;text-shadow:0 0 14px rgba(74,184,255,.75);transform:scale(1.12)} #rta62Overlay[data-kind="training"] .rta112BlockTarget{transition:opacity .18s!important} #rta62Overlay[data-kind="training-result"] .rta220ResultShell{width:min(780px,calc(100vw - 28px));max-height:calc(100dvh - 28px);overflow:auto;background:#07121b;border:1px solid rgba(255,255,255,.08);border-radius:20px;box-shadow:0 28px 90px rgba(0,0,0,.55)} #rta62Overlay[data-kind="training-result"] .rta220ResultBody{padding:24px;display:grid;gap:16px} #rta62Overlay[data-kind="training-result"] .rta220Grade{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;border-radius:17px;background:linear-gradient(135deg,rgba(34,128,197,.22),rgba(12,33,49,.55));border:1px solid rgba(87,185,255,.19)} #rta62Overlay[data-kind="training-result"] .rta220Grade strong{font-size:64px;line-height:.85;letter-spacing:-.05em}.rta220Grade div{text-align:right}.rta220Grade small{display:block;color:#728da2;font-size:8px;font-weight:1000;letter-spacing:.15em}.rta220Grade b{display:block;margin-top:5px;font-size:24px}.rta220Grade span{display:block;margin-top:4px;color:#9eb1bf;font-size:10px} #rta62Overlay[data-kind="training-result"] .rta220ResultGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.rta220ResultGrid article{padding:13px;border-radius:13px;background:rgba(255,255,255,.032);border:1px solid rgba(255,255,255,.065)}
 .rta220ResultGrid small{display:block;color:#6f8799;font-size:7px;font-weight:1000;letter-spacing:.13em}.rta220ResultGrid b{display:block;margin-top:7px;font-size:15px;color:#eef7fb}.rta220ResultGrid span{display:block;margin-top:4px;font-size:8px;color:#8da2b1} #rta62Overlay[data-kind="training-result"] .rta220Continue{height:50px;border:1px solid rgba(82,183,252,.37);border-radius:12px;background:linear-gradient(180deg,#1477b6,#0c5687);color:#fff;font-size:10px;font-weight:1000;letter-spacing:.14em;cursor:pointer} @media (max-width:700px){#rta62Overlay[data-kind="training"] .rta220BeatPanel,#rta62Overlay[data-kind="training"] .rta220Power,#rta62Overlay[data-kind="training"] .rta220PassAim{border-radius:10px;padding:8px} #rta62Overlay[data-kind="training"] .rta220BeatBtn,#rta62Overlay[data-kind="training"] .rta220PowerBtn{height:44px;min-height:44px} #rta62Overlay[data-kind="training"] .rta220SetChoices{grid-template-columns:repeat(4,1fr);gap:5px} #rta62Overlay[data-kind="training"] .rta220SetChoices button{min-height:46px;padding:5px;font-size:6px}#rta62Overlay[data-kind="training"] .rta220SetChoices button b{font-size:10px} #rta62Overlay[data-kind="training"] .rta220DefCourt{min-height:0;height:100%;border-radius:0} #rta62Overlay[data-kind="training"] .rta94ActionPanel,#rta62Overlay[data-kind="training"] .rta102SkillSide,#rta62Overlay[data-kind="training"] .rta112DrillSide{padding:8px 9px calc(8px + env(safe-area-inset-bottom))!important;max-height:37dvh!important;overflow:auto!important} #rta62Overlay[data-kind="training"] .rta94ActionIntro p,#rta62Overlay[data-kind="training"] .rta94ActionIntro h2{display:none!important} #rta62Overlay[data-kind="training"] .rta220Hint{font-size:7px} #rta62Overlay[data-kind="training"] .rta94ServeTargets{grid-template-columns:repeat(4,1fr)!important;gap:5px!important} #rta62Overlay[data-kind="training"] .rta94ServeTargets button{min-height:44px!important;padding:5px!important}.rta94ServeTargets button small{display:none!important} #rta62Overlay[data-kind="training-result"] .rta220ResultShell{width:100vw;height:100dvh;max-height:none;border:0;border-radius:0;padding-top:env(safe-area-inset-top)} #rta62Overlay[data-kind="training-result"] .rta220ResultBody{padding:18px 13px calc(16px + env(safe-area-inset-bottom));gap:12px} #rta62Overlay[data-kind="training-result"] .rta220Grade{padding:16px}.rta220Grade strong{font-size:54px}.rta220Grade b{font-size:19px} #rta62Overlay[data-kind="training-result"] .rta220ResultGrid{grid-template-columns:1fr}.rta220ResultGrid article{padding:11px 12px}}</style>
-<!-- Retired V220 detached training patch: referenced private Career functions
-     from global scope and threw during boot. Active drills remain in the
-     scoped ace-b21-36-62-rta-script implementation. -->
+<script id="ace220-technical-drills-v2-js">/* B21.36.303: detached cross-scope drill patch retired; stable Career drill implementations remain in the main runtime. */</script>
 
 <style id="ace221-training-progression-css">#roadtoace .ace221MasteryLine{display:grid;grid-template-columns:auto minmax(48px,1fr) auto;align-items:center;gap:6px;margin-top:7px;max-width:210px;position:relative;z-index:4} #roadtoace .ace221MasteryLine>span{font-size:6.5px;font-weight:1000;letter-spacing:.13em;color:#9ec6df;white-space:nowrap} #roadtoace .ace221MasteryLine>i{display:block;height:3px;border-radius:99px;background:rgba(255,255,255,.10);overflow:hidden} #roadtoace .ace221MasteryLine>i>em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2d89cc,#76d0ff)} #roadtoace .ace221MasteryLine>b{font-size:6px;color:#6f8fa4;letter-spacing:.06em;white-space:nowrap} #roadtoace .rta187TrainCard:hover .ace221MasteryLine>span,#roadtoace .rta187PhysicalCard:hover .ace221MasteryLine>span{color:#d8f0ff} #rta62Overlay .ace221DrillMeta{display:flex;align-items:center;gap:7px;margin-left:auto;padding:5px 7px;border:1px solid rgba(102,191,244,.17);border-radius:999px;background:rgba(25,102,151,.10);white-space:nowrap} #rta62Overlay .ace221DrillMeta b{font-size:7px;letter-spacing:.12em;color:#bde6ff} #rta62Overlay .ace221DrillMeta span{font-size:6.5px;color:#6f91a7} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress{padding:13px;border-radius:13px;background:rgba(44,136,197,.085);border:1px solid rgba(86,184,239,.14)} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress>div{display:flex;align-items:flex-end;justify-content:space-between;gap:12px} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress small{font-size:7px;font-weight:1000;letter-spacing:.14em;color:#708ba0} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress b{font-size:15px;color:#e9f7ff} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress span{font-size:8px;color:#8ea6b7} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress i{display:block;height:5px;margin-top:9px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress i em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2f8fd1,#74d2ff)} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact{display:flex;gap:7px;flex-wrap:wrap;margin-top:-5px} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact span{padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);font-size:7px;font-weight:900;color:#8ea7b8} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact b{color:#e8f6fd} @media(max-width:760px){#roadtoace .ace221MasteryLine{grid-template-columns:auto 54px;margin-top:4px;max-width:120px;gap:5px} #roadtoace .ace221MasteryLine>b{display:none} #roadtoace .ace221MasteryLine>span{font-size:5.8px} #rta62Overlay .ace221DrillMeta{margin-left:4px;padding:4px 6px;gap:5px} #rta62Overlay .ace221DrillMeta span{display:none} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact{margin-top:0}}</style>
 <script id="ace221-training-progression-js">
@@ -49237,6 +49251,51 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
 <script>window.ACE_RECOVERY_BUILD='B21.36.293';</script>
 
 
+<script id="ace-v53-force-skilltree2-live-route">
+(function(){
+  let busy=false;
+  function mountSkillTree2(){
+    try{
+      if(busy)return;
+      const page=document.getElementById("roadtoace");
+      if(!page||!page.classList.contains("active"))return;
+      const activeTab=page.querySelector('[data-rta93-player-panel="tree"].active,[data-rta93-player-panel="tree"][aria-selected="true"]');
+      const anyTreeTab=page.querySelector('[data-rta93-player-panel="tree"]');
+      if(!anyTreeTab)return;
+      /* Prefer actual state when accessible; active class is fallback for late UI patches. */
+      const z=window.__ACE_RTA_STATE; const stateTree=!!(z&&z.playerPanel==="tree");
+      if(!stateTree&&!activeTab)return;
+      const c=z?.career||null;
+      if(!c||typeof skillTreeHTML!=="function")return;
+      const tabs=page.querySelector(".rta93PlayerTabs");
+      if(!tabs)return;
+      const player=tabs.closest(".rta93Player")||page.querySelector(".rta93Player");
+      if(!player)return;
+      const children=[...player.children];
+      const tabIndex=children.indexOf(tabs);
+      if(tabIndex<0)return;
+      let panel=children[tabIndex+1];
+      if(panel&&panel.classList.contains("aceSt2Shell"))return;
+      busy=true;
+      const holder=document.createElement("div");
+      holder.innerHTML=skillTreeHTML(c);
+      const fresh=holder.firstElementChild;
+      if(panel&&panel!==tabs)panel.replaceWith(fresh);
+      else tabs.insertAdjacentElement("afterend",fresh);
+      busy=false;
+    }catch(e){busy=false;console.error("ACE V53 Skill Tree mount",e)}
+  }
+  document.addEventListener("click",function(e){
+    if(e.target?.closest?.('[data-rta93-player-panel="tree"]'))setTimeout(mountSkillTree2,0);
+    if(e.target?.closest?.("[data-ace-st2-path]"))setTimeout(mountSkillTree2,0);
+  },true);
+  const page=document.getElementById("roadtoace");
+  if(page)new MutationObserver(()=>requestAnimationFrame(mountSkillTree2)).observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:["class","aria-selected"]});
+  window.addEventListener("pageshow",()=>setTimeout(mountSkillTree2,50));
+  setTimeout(mountSkillTree2,100);
+  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.293";
+})();
+</script>
 <style id="ace-v54-elite-ui">
 #roadtoace .aceV54EliteStrip{margin:10px 0 2px;padding:10px;border:1px solid rgba(255,197,84,.18);
 border-radius:12px;background:linear-gradient(135deg,rgba(255,190,69,.07),rgba(124,85,255,.06));}
@@ -49450,9 +49509,8 @@ function enforce(){
 }
 function ascension(){
  if(!isAce())return;
- const k=KEY+uid();if(ascension.seen===k)return;
- try{if(localStorage.getItem(k))return;localStorage.setItem(k,"1");}catch(_){}
- ascension.seen=k;
+ const k=KEY+uid();if(localStorage.getItem(k))return;
+ localStorage.setItem(k,"1");
  const el=document.createElement("div");el.className="aceV56Ascension";
  el.innerHTML=`<div class="aceV56AscensionCard"><small>PROJECT ACE · CAREER MILESTONE</small>
  <h1>100<em>ACE</em></h1><p>You reached the overall ceiling. Rating progression is complete. Your career now enters Mastery.</p>
@@ -49462,15 +49520,15 @@ function ascension(){
 function decorate(){
  enforce();
  const page=document.getElementById("roadtoace");if(!page)return;
- const ace=isAce();
- if(page.classList.contains("aceV56CareerAce")!==ace)page.classList.toggle("aceV56CareerAce",ace);
- if(!ace){page.querySelectorAll(".aceV56Badge,.aceV56Mastery").forEach(x=>x.remove());return;}
+ page.classList.toggle("aceV56CareerAce",isAce());
+ page.querySelectorAll(".aceV56Badge,.aceV56Mastery").forEach(x=>x.remove());
+ if(!isAce())return;
  const identity=page.querySelector(".rta93PlayerIdentity");
- if(identity&&!identity.querySelector('.aceV56Badge')){
+ if(identity){
    const b=document.createElement("div");b.className="aceV56Badge";b.textContent="◆ 100 OVR · ACE";identity.appendChild(b);
  }
  const tabs=page.querySelector(".rta93PlayerTabs");
- if(tabs&&!page.querySelector('.aceV56Mastery')){
+ if(tabs){
    const m=document.createElement("section");m.className="aceV56Mastery";
    m.innerHTML="<small>POST-100 PROGRESSION</small><b>MASTERY</b><span>OVR is permanently capped at 100. Continue through Elite attributes, specialist paths, playstyles and future international mastery.</span>";
    tabs.insertAdjacentElement("afterend",m);
@@ -49520,14 +49578,7 @@ window.ACE_100_OVR_STATUS_BUILD="B21.36.276";
 #roadtoace .aceV76Metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}#roadtoace .aceV76Metrics span{min-width:0;padding:7px;border-radius:8px;background:rgba(255,255,255,.025)}#roadtoace .aceV76Metrics small{display:block;color:#657c8b;font-size:6px;font-weight:900}#roadtoace .aceV76Metrics b{display:block;margin-top:2px;color:#dcebf4;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#roadtoace .aceV76Report p{margin:8px 0 0!important;color:#7d919e!important;font-size:8px!important;line-height:1.45!important}
 @media(max-width:760px){#roadtoace .aceV76Report{padding:11px}#roadtoace .aceV76ReportHead small{font-size:8px}#roadtoace .aceV76ReportHead b{font-size:12px}#roadtoace .aceV76ReportHead strong{font-size:10px}#roadtoace .aceV76Metrics small{font-size:7px}#roadtoace .aceV76Metrics b{font-size:10px}#roadtoace .aceV76Report p{font-size:9px!important}}
 </style>
-<style id="ace-v75-nationality-style">
-#roadtoace .aceV75IntlReadout{margin-top:7px;padding:8px 9px;border:1px solid rgba(255,255,255,.055);border-radius:9px;background:rgba(255,255,255,.018)}
-#roadtoace .aceV75IntlReadout small{display:block;margin:0;color:#6e96ae;font-size:7px;font-weight:1000;letter-spacing:.09em}
-#roadtoace .aceV75IntlReadout b{display:block;margin-top:2px;color:#eaf4fb;font-size:10px}
-#roadtoace .aceV75IntlReadout span{display:block;margin-top:3px;color:#758b9a;font-size:8px;line-height:1.35}
-#roadtoace .aceV75IntlReadout[data-tier="ELITE"] b{color:#e7bd68}
-@media(max-width:760px){#roadtoace .aceV75IntlReadout small{font-size:8px!important}#roadtoace .aceV75IntlReadout b{font-size:11px!important}#roadtoace .aceV75IntlReadout span{font-size:9px!important}}
-</style><script id="ace-v75-nationality-engine">
+<style id="ace-v75-nationality-style">\n#roadtoace .aceV75IntlReadout{margin-top:7px;padding:8px 9px;border:1px solid rgba(255,255,255,.055);border-radius:9px;background:rgba(255,255,255,.018)}\n#roadtoace .aceV75IntlReadout small{display:block;margin:0;color:#6e96ae;font-size:7px;font-weight:1000;letter-spacing:.09em}\n#roadtoace .aceV75IntlReadout b{display:block;margin-top:2px;color:#eaf4fb;font-size:10px}\n#roadtoace .aceV75IntlReadout span{display:block;margin-top:3px;color:#758b9a;font-size:8px;line-height:1.35}\n#roadtoace .aceV75IntlReadout[data-tier="ELITE"] b{color:#e7bd68}\n@media(max-width:760px){#roadtoace .aceV75IntlReadout small{font-size:8px!important}#roadtoace .aceV75IntlReadout b{font-size:11px!important}#roadtoace .aceV75IntlReadout span{font-size:9px!important}}\n</style><script id="ace-v75-nationality-engine">
 (function(){
 "use strict";
 const P={
@@ -49562,9 +49613,12 @@ function decorate(){
  let box=field.querySelector(".aceV75IntlReadout");
  if(!box){box=document.createElement("div");box.className="aceV75IntlReadout";field.appendChild(box);sel.addEventListener("change",update);}
  update();
- function update(){const x=P[sel.value]||["ESTABLISHED","International selection depends on form, role fit and competition at your position."];if(box.dataset.nation===sel.value)return;box.dataset.nation=sel.value;box.dataset.tier=x[0];box.innerHTML=`<small>INTERNATIONAL COMPETITION</small><b>${x[0]}</b><span>${x[1]}</span>`;}
+ function update(){const x=P[sel.value]||["ESTABLISHED","International selection depends on form, role fit and competition at your position."];box.dataset.tier=x[0];box.innerHTML=`<small>INTERNATIONAL COMPETITION</small><b>${x[0]}</b><span>${x[1]}</span>`;}
 }
-window.aceNationalityReadout=decorate;
+let decorationFrame=0;
+function queueDecoration(){if(!decorationFrame)decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decorate();});}
+const decorationPage=document.getElementById('roadtoace');
+if(decorationPage)new MutationObserver(queueDecoration).observe(decorationPage,{childList:true,subtree:true});
 setTimeout(decorate,100);
 window.ACE_INTL_NATIONALITY_V1={playable:24,profiles:P,sourceSeason:2026};
 window.ACE_PROJECT_BUILD="B21.36.296";
@@ -49601,7 +49655,7 @@ function openChooser(){
  close();const c=career();if(!c?.season_complete)return;
  const os=offers();const wrap=document.createElement('div');wrap.className='aceV78ChooserBackdrop';
  const rows=os.map(o=>`<article class="aceV78Offer"><div><small>${esc(o.type||'OFFER')}</small><b>${esc(o.club||'Club')}</b><span>${esc(o.league_name||'Career move')} · ${esc(o.role||'ROTATION')}</span></div><button type="button" data-rta62-next-season="${esc(o.club||'')}">${String(o.type||'').toUpperCase()==='STAY'?'RENEW & STAY':String(o.type||'').toUpperCase()==='SCHOLARSHIP'?'ACCEPT':'JOIN CLUB'} →</button></article>`).join('');
- wrap.innerHTML=`<section class="aceV78Chooser" role="dialog" aria-modal="true" aria-label="Choose your next club"><header class="aceV78ChooserHead"><div><small>SEASON ${Number(c.season||1)} COMPLETE · NEXT CAREER DECISION</small><h2>Choose your club</h2><p>Pick where you will play next season. International selection happens after this decision and does not cancel your new club contract.</p></div><button type="button" class="aceV78ChooserClose" aria-label="Close">×</button></header>${rows?`<div class="aceV78OfferList">${rows}</div>`:`<div class="aceV78NoOffers">No end-of-season offers are available yet. Open your Agent desk to search the market.</div>`}<div class="aceV78Flow"><span>CHOOSE CLUB</span><span>INT'L SELECTION</span><span>VNL / OFF-SEASON</span><span>NEW SEASON</span></div></section>`;
+ wrap.innerHTML=`<section class="aceV78Chooser" role="dialog" aria-modal="true" aria-label="Choose your next club"><header class="aceV78ChooserHead"><div><small>SEASON ${Number(c.season||1)} COMPLETE · NEXT CAREER DECISION</small><h2>Choose your club</h2><p>International selection is announced at season end. Your club choice still determines where the next club season begins.</p></div><button type="button" class="aceV78ChooserClose" aria-label="Close">×</button></header>${rows?`<div class="aceV78OfferList">${rows}</div>`:`<div class="aceV78NoOffers">No end-of-season offers are available yet. Open your Agent desk to search the market.</div>`}<div class="aceV78Flow"><span>INT'L SELECTION</span><span>CHOOSE CLUB</span><span>VNL / OFF-SEASON</span><span>NEW SEASON</span></div></section>`;
  document.body.appendChild(wrap);wrap.querySelector('.aceV78ChooserClose')?.addEventListener('click',close);wrap.addEventListener('click',e=>{if(e.target===wrap)close();if(e.target.closest?.('[data-rta62-next-season]'))setTimeout(close,500)});
 }
 function goStory(){const s=state();if(!s)return;s.view='career';s.careerPanel='story';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(()=>{const block=document.querySelector('#roadtoace .rta92OffersBlock');block?.scrollIntoView?.({behavior:'smooth',block:'start'})},80)}
@@ -49609,7 +49663,7 @@ function decorate(){
  const s=state(),c=career(),mount=document.querySelector('#roadtoace #rta62Mount');if(!s||!c||!mount)return;
  if(!c.season_complete){mount.querySelectorAll('.aceV78Decision').forEach(x=>x.remove());return}
  if(s.view==='home'&&!mount.querySelector('.aceV78Decision')){
-   const card=document.createElement('section');card.className='aceV78Decision';card.innerHTML=`<small>SEASON COMPLETE · ACTION REQUIRED</small><h2>Choose your club for next season</h2><p>Your club decision comes first. After you sign, your calendar branches into national-team duty or your off-season programme.</p><button type="button" data-ace-v78-choose>CHOOSE YOUR CLUB →</button>`;
+   const card=document.createElement('section');card.className='aceV78Decision';card.innerHTML=`<small>SEASON COMPLETE · ACTION REQUIRED</small><h2>Choose your club for next season</h2><p>Your national-team decision is announced now. Choose your next club before the new club season begins.</p><button type="button" data-ace-v78-choose>CHOOSE YOUR CLUB →</button>`;
    const anchor=mount.querySelector('.aceV74Calendar,.rta93HomeHero,.rta227HomeHero');if(anchor)anchor.insertAdjacentElement(anchor.classList.contains('aceV74Calendar')?'beforebegin':'afterend',card);else mount.prepend(card);
  }
  if(s.view==='career'&&!mount.querySelector('.aceV78Decision')){
@@ -49628,15 +49682,34 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
 </script>
 
 <!-- PROJECT ACE B21.36.302 · REBUILT LEGACY CAREER SETUP -->
-<style id="ace-career-legacy-backdrop">#aceLegacySetup::backdrop{background:rgba(2,5,9,.88)}</style>
+<style id="ace-career-legacy-backdrop">
+#aceLegacySetup::backdrop{background:rgba(2,5,9,.88);backdrop-filter:blur(10px)}
+#aceLegacySetup{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+#aceLegacySetup *{box-sizing:border-box}
+#aceLegacySetup .aceLegacySheet{padding:20px;background:#0b1118;color:#edf6fb}
+#aceLegacySetup .aceLegacyKicker{display:block;color:#75a8c7;font-size:9px;font-weight:1000;letter-spacing:.14em}
+#aceLegacySetup h2{margin:6px 0 6px;font-size:25px;line-height:1}
+#aceLegacySetup p{margin:0 0 14px;color:#8da0ad;font-size:12px;line-height:1.5}
+#aceLegacySetup label{display:block;margin:12px 0 6px;color:#738795;font-size:8px;font-weight:1000;letter-spacing:.12em}
+#aceLegacySetup select{width:100%;min-height:50px;padding:0 12px;border-radius:11px;border:1px solid #34404e;background:#111b25;color:#edf6fb;font-weight:800}
+#aceLegacySetup .aceLegacyDetail{min-height:47px;margin-top:10px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.025);color:#8da0ad;font-size:10px;line-height:1.4}
+#aceLegacySetup .aceLegacyActions{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:13px}
+#aceLegacySetup button{min-height:48px;border-radius:10px;border:0;font-weight:1000;cursor:pointer}
+#aceLegacySetup button[type=submit]{background:#e8f4fb;color:#071018}
+#aceLegacySetup button[type=submit]:disabled{opacity:.35;cursor:not-allowed}
+#aceLegacySetup button[data-cancel]{padding:0 14px;border:1px solid #34404e;background:#141e28;color:#9fb1bd}
+#aceLegacySetup .aceLegacyError{min-height:16px;margin-top:8px;color:#ff8794;font-size:9px}
+#aceLegacySetup .aceLegacyPermanent{margin:8px 0 0;text-align:center;color:#607482;font-size:8px}
+@media(max-width:420px){#aceLegacySetup .aceLegacySheet{padding:16px 13px}#aceLegacySetup h2{font-size:22px}.aceLegacyActions{grid-template-columns:1fr!important}#aceLegacySetup button[data-cancel]{order:2}}
+</style>
 <script id="ace-career-legacy-rebuilt">
 (()=>{
  'use strict';
  const groups=[['Featured',['Japan','Poland','Italy','United States','Brazil','France']],['Europe',['Slovenia','Türkiye','Ukraine','Bulgaria','Serbia','Germany','Belgium','Czech Republic','Netherlands']],['Asia / Oceania',['Iran','China','Qatar','Australia']],['Americas',['Argentina','Canada','Cuba']],['Africa',['Egypt','Tunisia']]];
  const nations=new Set(groups.flatMap(g=>g[1]));
- let dialog=null,root=null,openedKey='',dismissedKey='',frame=0,wasActive=false,previousFocus=null;
+ let dialog=null,openedKey='',dismissedKey='',frame=0,wasActive=false,previousFocus=null;
  const state=()=>window.__ACE_RTA_STATE;
- const valid=n=>nations.has(n);
+ const valid=n=>nations.has(String(n||''));
  const page=()=>document.getElementById('roadtoace');
  const active=()=>!!page()?.classList.contains('active');
  function identity(c){
@@ -49650,8 +49723,7 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
    const key=identity(c);if(!key)return '';
    try{
      const stored=localStorage.getItem(key);if(valid(stored))return stored;
-     // Import only an unambiguous old career-ID key. Never share name-only saves.
-     const id=c.id||c.career_id;if(!id)return '';
+     const id=c?.id||c?.career_id;if(!id)return '';
      const legacy=localStorage.getItem('projectAce:v79:legacyNationality:'+String(id).replace(/[^a-z0-9_-]/gi,'_'));
      if(valid(legacy)){localStorage.setItem(key,legacy);return legacy;}
    }catch(_){}
@@ -49660,7 +49732,10 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
  function restore(c){
    if(!c||valid(c.nationality)||c.nationality==='Other Nationality')return false;
    const saved=read(c);if(!saved)return false;
-   c.nationality=saved;return true;
+   c.nationality=saved;
+   c.international_caps=Number(c.international_caps||0);
+   c.international_achievements=Array.isArray(c.international_achievements)?c.international_achievements:[];
+   return true;
  }
  function needs(c){return !!c&&!valid(c.nationality)&&c.nationality!=='Other Nationality';}
  function close(){
@@ -49670,60 +49745,32 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
    previousFocus=null;
  }
  function dismiss(){dismissedKey=openedKey;close();schedule();}
+ function options(){return `<option value="">Choose a country…</option>`+groups.map(([label,ns])=>`<optgroup label="${label}">${ns.map(n=>`<option value="${n}">${n}</option>`).join('')}</optgroup>`).join('');}
  function makeDialog(){
    if(dialog)return;
-   dialog=document.createElement('dialog');dialog.id='aceLegacySetup';
-   dialog.setAttribute('aria-label','Choose your career nationality');
-   // Native top layer beats fixed game docks; Shadow DOM isolates old global CSS
-   // and retargets game-wide delegated events away from the form's controls.
-   dialog.style.cssText='position:fixed;inset:0;margin:auto;padding:0;border:1px solid #34404e;border-radius:18px;width:min(440px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 32px);overflow:auto;background:#0b1118;color:#edf6fb;box-sizing:border-box;touch-action:pan-y;overscroll-behavior:contain;z-index:2147483647';
-   const content=document.createElement('div');dialog.append(content);
-   root=content.attachShadow({mode:'open'});
-   root.innerHTML=`<style>
-     :host{font:16px/1.45 system-ui,-apple-system,sans-serif;color:#edf6fb;color-scheme:dark}
-     *{box-sizing:border-box}form{padding:22px;margin:0}h2{font-size:26px;line-height:1.15;margin:8px 0 12px;letter-spacing:-.02em}
-     p{font-size:14px;color:#a8b6c5;margin:0 0 18px}small{font-size:11px;color:#bda5ff;letter-spacing:.09em}
-     label{display:block;font-size:14px;font-weight:650;margin:0 0 8px}
-     select,button{font:inherit;min-height:48px;width:100%;border-radius:10px;padding:10px 12px}
-     select{background:#16202d;color:#fff;border:1px solid #607086;touch-action:manipulation}
-     button{cursor:pointer;border:1px solid #475569;background:#172130;color:#eef5ff;touch-action:manipulation}
-     button[type=submit]{background:#ccb8ff;color:#14101e;border-color:#ccb8ff;font-weight:750}
-     button:disabled{opacity:.45;cursor:default}button:focus-visible,select:focus-visible{outline:3px solid #81ceff;outline-offset:3px}
-     footer{display:grid;gap:9px;margin-top:20px;position:static}#detail{margin:12px 0 0;min-height:40px}#error{color:#ffb3b3;margin-top:12px}#error:empty{display:none}
-     .note{font-size:12px;margin:14px 0 0;color:#8799aa}@media(max-height:500px){form{padding:14px}h2{font-size:22px}p{margin-bottom:10px}}
-   </style><form><small>CAREER SETUP · 302</small><h2>Choose your national team</h2><p>Your player, OVR, skill points and progress stay unchanged. Confirm a country for this career.</p><label for="nation">Nationality</label><select id="nation" required><option value="">Choose a country…</option></select><p id="detail" aria-live="polite">Choose a country, then confirm below.</p><p id="error" role="alert"></p><footer><button type="submit" disabled>Confirm nationality</button><button type="button" id="later">Not now — return to Career</button></footer><p class="note">This choice is final for this career on this browser. Cloud synchronisation is not available for legacy nationality yet.</p></form>`;
-   const select=root.querySelector('select');
-   for(const [name,list] of groups){const group=document.createElement('optgroup');group.label=name;for(const n of list){const option=document.createElement('option');option.value=n;option.textContent=n;group.append(option);}select.append(group);}
-   select.addEventListener('change',()=>{
-     const n=select.value;root.querySelector('[type=submit]').disabled=!valid(n);
-     const profile=window.ACE_INTL_NATIONALITY_V1?.profiles?.[n];
-     root.querySelector('#detail').textContent=valid(n)?`${n}. ${profile?.[1]||'This choice is final once confirmed.'}`:'Choose a country, then confirm below.';
-     root.querySelector('#error').textContent='';
-   });
-   root.querySelector('#later').addEventListener('click',dismiss);
-   dialog.addEventListener('cancel',e=>{e.preventDefault();dismiss();});
-   root.querySelector('form').addEventListener('submit',e=>{
-     e.preventDefault();const c=state()?.career,n=select.value,key=identity(c);
-     if(!dialog.open||!valid(n))return;
-     if(!c||key!==openedKey){close();schedule();return;}
-     if(!needs(c)){close();schedule();return;}
-     try{
-       if(!key)throw Error('missing identity');
-       localStorage.setItem(key,n);
-       if(localStorage.getItem(key)!==n)throw Error('save verification failed');
-     }catch(_){root.querySelector('#error').textContent='Your choice could not be saved. Allow browser storage and try again, or choose Not now to continue playing.';return;}
-     c.nationality=n; // Do not rewrite caps, achievements, OVR, SP or attributes.
+   dialog=document.createElement('dialog');dialog.id='aceLegacySetup';dialog.setAttribute('aria-label','Choose your career nationality');
+   dialog.style.cssText='position:fixed;inset:0;margin:auto;padding:0;border:1px solid #34404e;border-radius:18px;width:min(440px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 32px);overflow:auto;background:#0b1118;color:#edf6fb;box-sizing:border-box;touch-action:pan-y;';
+   dialog.innerHTML=`<form method="dialog" class="aceLegacySheet"><span class="aceLegacyKicker">PROJECT ACE · CAREER UPDATE</span><h2>Choose your nationality.</h2><p>Your player, attributes, OVR, Skill Points and Career progress stay exactly as they are. This choice only activates International Career.</p><label for="aceLegacyNation">NATIONAL TEAM</label><select id="aceLegacyNation">${options()}</select><div id="aceLegacyDetail" class="aceLegacyDetail">Choose a country, then confirm below.</div><div class="aceLegacyActions"><button type="submit" disabled>CONFIRM NATIONALITY →</button><button type="button" data-cancel>NOT NOW</button></div><div id="aceLegacyError" class="aceLegacyError"></div><p class="aceLegacyPermanent">Nationality is permanent for this Career.</p></form>`;
+   document.body.appendChild(dialog);
+   const form=dialog.querySelector('form'),select=dialog.querySelector('select'),submit=dialog.querySelector('[type=submit]');
+   select.addEventListener('change',()=>{const n=select.value;submit.disabled=!valid(n);dialog.querySelector('#aceLegacyDetail').textContent=valid(n)?`${n} selected · your current Career progress will be preserved.`:'Choose a country, then confirm below.';});
+   form.addEventListener('submit',e=>{
+     e.preventDefault();
+     const c=state()?.career,n=select.value,key=identity(c);if(!c||!valid(n)||!key)return;
+     try{localStorage.setItem(key,n);}catch(error){dialog.querySelector('#aceLegacyError').textContent='Your browser blocked local save storage. Please allow site data and try again.';return;}
+     c.nationality=n;c.international_caps=Number(c.international_caps||0);c.international_achievements=Array.isArray(c.international_achievements)?c.international_achievements:[];
      dismissedKey='';close();removeBanner();
-     try{window.__ACE_RTA_RENDER?.();}catch(error){console.warn('Career refresh after nationality setup failed',error);}
-     window.dispatchEvent(new CustomEvent('ace:v79:nationality-migrated',{detail:{nationality:n}}));
+     try{window.__ACE_RTA_RENDER?.();}catch(_){}
+     try{window.dispatchEvent(new CustomEvent('ace:career-nationality-ready',{detail:{nationality:n}}));}catch(_){}
    });
-   document.body.append(dialog);
+   dialog.querySelector('[data-cancel]').addEventListener('click',dismiss);
+   dialog.addEventListener('cancel',e=>{e.preventDefault();dismiss();});
  }
- function removeBanner(){document.getElementById('aceLegacyNotice')?.remove();}
+ function removeBanner(){page()?.querySelector('.aceLegacySetupBanner')?.remove();}
  function banner(){
-   const mount=document.getElementById('rta62Mount');if(!mount||document.getElementById('aceLegacyNotice'))return;
-   const b=document.createElement('button');b.id='aceLegacyNotice';b.type='button';b.textContent='Choose your national team — finish Career setup';
-   b.style.cssText='display:block;width:100%;min-height:48px;margin:0 0 12px;padding:12px;border:1px solid #8b79b9;border-radius:10px;background:#171323;color:#e7dcff;font:14px system-ui;cursor:pointer';
+   const mount=page()?.querySelector('#rta62Mount');if(!mount||mount.querySelector('.aceLegacySetupBanner'))return;
+   const b=document.createElement('button');b.type='button';b.className='aceLegacySetupBanner';b.textContent='INTERNATIONAL CAREER SETUP · CHOOSE NATIONALITY →';
+   b.style.cssText='display:block;width:100%;min-height:48px;margin:0 0 12px;padding:12px;border:1px solid #8b79b9;border-radius:10px;background:#171323;color:#e7dcff;font:800 12px system-ui;cursor:pointer';
    b.addEventListener('click',()=>open(true));mount.prepend(b);
  }
  function open(force=false){
@@ -49731,28 +49778,108 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
    if(!force&&dismissedKey===key)return;
    makeDialog();if(dialog.open&&openedKey===key)return;
    close();openedKey=key;previousFocus=document.activeElement;
-   root.querySelector('select').value='';root.querySelector('[type=submit]').disabled=true;
-   root.querySelector('#detail').textContent='Choose a country, then confirm below.';root.querySelector('#error').textContent='';
-   try{dialog.showModal();}catch(error){openedKey='';console.warn('Career setup could not open',error);banner();}
+   const select=dialog.querySelector('select');select.value='';dialog.querySelector('[type=submit]').disabled=true;dialog.querySelector('#aceLegacyDetail').textContent='Choose a country, then confirm below.';dialog.querySelector('#aceLegacyError').textContent='';
+   try{dialog.showModal();select.focus({preventScroll:true});}catch(error){openedKey='';console.warn('Career setup could not open',error);banner();}
  }
  function check(){
    frame=0;const c=state()?.career;
    if(!active()){close();dismissedKey='';removeBanner();return;}
    const restored=restore(c);
    if(!needs(c)){close();removeBanner();if(restored)window.__ACE_RTA_RENDER?.();return;}
-   banner();
-   if(dialog?.open&&openedKey!==identity(c))close();
-   if(!state()?.overlay&&!state()?.busy)open();
+   banner();if(dialog?.open&&openedKey!==identity(c))close();if(!state()?.overlay&&!state()?.busy)open();
  }
  function schedule(){if(!frame)frame=requestAnimationFrame(check);}
  window.ACE_CAREER_LEGACY={version:302,check:schedule,open:()=>open(true),restore,getNationality:read};
- // Only page entry/exit is observed. Form mutations never schedule a redraw.
  const careerPage=page();if(careerPage)new MutationObserver(()=>{const now=active();if(now!==wasActive){wasActive=now;schedule();}}).observe(careerPage,{attributes:true,attributeFilter:['class']});
  window.addEventListener('storage',e=>{if(e.key?.startsWith('projectAce:legacyNationality:'))schedule();});
- window.addEventListener('pageshow',schedule);
- schedule();
+ window.addEventListener('pageshow',schedule);schedule();
  window.ACE_PROJECT_BUILD='B21.36.302';
 })();
 </script>
+
+<!-- PROJECT ACE B21.36.303 · INTERNATIONAL CALL-UP MOMENT -->
+<style id="ace-intl-callup-v303-style">
+#aceIntlCallup{position:fixed;inset:0;z-index:2147483300;display:none;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));background:radial-gradient(circle at 50% 25%,rgba(72,168,255,.20),transparent 30%),rgba(1,5,10,.94);backdrop-filter:blur(14px);overflow:auto}
+#aceIntlCallup.show{display:flex}
+#aceIntlCallup *{box-sizing:border-box}
+.aceIntlCallupStage{position:relative;width:min(760px,100%);min-height:530px;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:radial-gradient(circle at 50% 5%,rgba(96,183,255,.14),transparent 34%),linear-gradient(155deg,#071827,#04101a 62%,#020910);box-shadow:0 36px 110px rgba(0,0,0,.62);color:#f1f8fd;padding:34px}
+.aceIntlCallupStage::before{content:"";position:absolute;inset:-25%;background:repeating-linear-gradient(118deg,transparent 0 70px,rgba(255,255,255,.018) 71px 72px);animation:aceIntlSweep 10s linear infinite;pointer-events:none}
+.aceIntlCallupGlow{position:absolute;left:50%;top:38%;width:360px;height:360px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(91,186,255,.20),rgba(91,186,255,.03) 54%,transparent 70%);filter:blur(4px);pointer-events:none}
+.aceIntlCallupCode{position:absolute;right:-22px;top:18px;font-size:clamp(110px,22vw,210px);font-weight:1000;letter-spacing:-.09em;color:rgba(255,255,255,.035);line-height:.8;user-select:none}
+.aceIntlKicker{position:relative;z-index:2;color:#65baff;font-size:9px;font-weight:1000;letter-spacing:.24em}
+.aceIntlCallupStage h1{position:relative;z-index:2;margin:22px 0 7px;font-size:clamp(44px,8vw,74px);line-height:.88;letter-spacing:-.055em;font-weight:1000;max-width:600px}.aceIntlCallupStage h1 em{display:block;color:#68bfff;font-style:normal}
+.aceIntlNation{position:relative;z-index:2;display:flex;align-items:center;gap:12px;margin-top:20px}.aceIntlNationBadge{min-width:70px;height:46px;padding:0 12px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e8f4fb;color:#06111b;font-size:18px;font-weight:1000;letter-spacing:.08em;box-shadow:0 8px 25px rgba(102,187,255,.13)}.aceIntlNationText b{display:block;font-size:17px}.aceIntlNationText span{display:block;margin-top:3px;color:#7890a4;font-size:9px;font-weight:900;letter-spacing:.08em}
+.aceIntlCallupMetrics{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:24px 0 18px;max-width:560px}.aceIntlCallupMetrics div{padding:11px 12px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.028)}.aceIntlCallupMetrics span{display:block;color:#687f92;font-size:7px;font-weight:1000;letter-spacing:.13em}.aceIntlCallupMetrics b{display:block;margin-top:4px;font-size:17px}
+.aceIntlCallupMessage{position:relative;z-index:2;max-width:580px;color:#9bb0c0;font-size:12px;line-height:1.55}.aceIntlCallupMessage strong{color:#eaf6ff}
+.aceIntlCallupPath{position:relative;z-index:2;display:flex;align-items:center;gap:6px;margin-top:22px;flex-wrap:wrap}.aceIntlCallupPath span{padding:6px 9px;border:1px solid rgba(255,255,255,.07);border-radius:999px;color:#61798d;font-size:7px;font-weight:1000;letter-spacing:.09em}.aceIntlCallupPath span.done{color:#7dd7a8;border-color:rgba(77,211,145,.25);background:rgba(77,211,145,.05)}.aceIntlCallupPath span.now{color:#dff3ff;border-color:rgba(90,180,255,.38);background:rgba(90,180,255,.09);box-shadow:0 0 22px rgba(90,180,255,.08)}
+.aceIntlCallupActions{position:relative;z-index:2;display:flex;gap:8px;margin-top:24px}.aceIntlCallupActions button{min-height:50px;padding:0 18px;border-radius:10px;border:1px solid rgba(255,255,255,.10);font-weight:1000;cursor:pointer}.aceIntlCallupEnter{flex:1;background:linear-gradient(135deg,#238de7,#56baff);color:#fff;box-shadow:0 12px 28px rgba(50,155,239,.16)}.aceIntlCallupLater{background:#0c1b29;color:#8299ad}.aceIntlReplay{margin-left:auto!important}
+.aceIntlHubHero{position:relative;overflow:hidden;margin:0 0 12px;padding:18px;border:1px solid rgba(99,184,255,.24);border-radius:15px;background:radial-gradient(circle at 85% 15%,rgba(89,178,244,.13),transparent 35%),linear-gradient(145deg,#0a2032,#06131f)}.aceIntlHubHero::after{content:attr(data-code);position:absolute;right:-7px;bottom:-18px;color:rgba(255,255,255,.035);font-size:94px;font-weight:1000;letter-spacing:-.08em}.aceIntlHubHero small{display:block;color:#69baff;font-size:8px;font-weight:1000;letter-spacing:.15em}.aceIntlHubHero h3{margin:5px 0 3px;font-size:25px}.aceIntlHubHero p{margin:0;color:#8398aa;font-size:10px}.aceIntlHubStrip{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}.aceIntlHubStrip span{padding:9px;border-radius:9px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.055)}.aceIntlHubStrip small{color:#60788b!important;font-size:6px!important}.aceIntlHubStrip b{display:block;margin-top:3px;font-size:13px}.aceIntlHubActions{position:relative;z-index:1;margin-top:12px;display:flex;justify-content:flex-end}.aceIntlHubActions button{min-height:38px;padding:0 12px;border-radius:8px;border:1px solid rgba(99,184,255,.25);background:rgba(99,184,255,.08);color:#b8ddf8;font-size:8px;font-weight:1000;cursor:pointer}
+@keyframes aceIntlSweep{from{transform:translateX(-60px)}to{transform:translateX(60px)}}
+@media(max-width:600px){.aceIntlCallupStage{padding:25px 18px;min-height:0}.aceIntlCallupMetrics{grid-template-columns:1fr 1fr}.aceIntlCallupMetrics div:last-child{grid-column:1/-1}.aceIntlCallupActions{flex-direction:column}.aceIntlCallupLater{order:2}.aceIntlHubStrip{grid-template-columns:1fr 1fr}}
+@media(max-height:620px){#aceIntlCallup{align-items:flex-start}.aceIntlCallupStage{margin:0 auto}}
+@media(prefers-reduced-motion:reduce){.aceIntlCallupStage::before{animation:none!important}}
+</style>
+<script id="ace-intl-callup-v303-script">
+(()=>{
+ 'use strict';
+ let modal=null,frame=0,lastKey='',observer=null;const seenSession=new Set();
+ const state=()=>window.__ACE_RTA_STATE;
+ const road=()=>document.getElementById('roadtoace');
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function career(){return state()?.career||null}
+ function selection(){try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}}
+ function owner(){return window.vdsAccountSession?.user?.id||career()?.user_id||'local'}
+ function ckey(c){return String(c?.id||c?.career_id||c?.created_at||c?.player_name||'career').replace(/[^a-z0-9_-]/gi,'_')}
+ function revealKey(c,s){return `projectAce:intlCallup:v303:${encodeURIComponent(owner())}:${ckey(c)}:S${Number(c?.season||1)}:${String(s?.code||'INT')}`}
+ function hasSeen(k){if(seenSession.has(k))return true;try{return localStorage.getItem(k)==='1'}catch(_){return false}}
+ function markSeen(k){seenSession.add(k);try{localStorage.setItem(k,'1')}catch(_){}}
+ function ensureModal(){
+   if(modal)return modal;
+   modal=document.createElement('div');modal.id='aceIntlCallup';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-hidden','true');document.body.appendChild(modal);
+   modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest?.('[data-intl-later]'))close();const go=e.target.closest?.('[data-intl-enter]');if(go){close();openHub();}});
+   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal?.classList.contains('show'))close()});
+   return modal;
+ }
+ function openHub(){
+   const S=state();if(!S)return;S.view='career';S.careerPanel='international';try{window.__ACE_RTA_RENDER?.()}catch(_){}
+   requestAnimationFrame(()=>road()?.querySelector('[data-rta92-career-panel="international"]')?.scrollIntoView({block:'nearest'}));
+ }
+ function close(){if(!modal)return;modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+ function copy(c,s){
+   const starter=s.role==='STARTER',caps=Number(c.international_caps||0),first=caps===0;
+   return {title:first?'YOU’VE BEEN CALLED UP.':'YOU’RE BACK WITH THE NATIONAL TEAM.',sub:starter?'YOU’RE IN THE STARTING GROUP.':'YOU’VE MADE THE ACTIVE SQUAD.',note:starter?'Your club season forced the selectors’ hand. You report to camp as part of the projected starting unit.':'Your club form earned an active roster place. Camp now decides how large your VNL role becomes.'};
+ }
+ function show(force=false){
+   const c=career(),s=selection();if(!c||!s?.eligible||s.status!=='SELECTED'||!c.season_complete)return false;
+   const k=revealKey(c,s);if(!force&&hasSeen(k))return false;markSeen(k);lastKey=k;
+   const m=ensureModal(),txt=copy(c,s),caps=Number(c.international_caps||0),ach=Array.isArray(c.international_achievements)?c.international_achievements.length:0;
+   m.innerHTML=`<section class="aceIntlCallupStage"><div class="aceIntlCallupGlow"></div><div class="aceIntlCallupCode">${esc(s.code)}</div><span class="aceIntlKicker">PROJECT ACE · INTERNATIONAL CAREER</span><h1>${esc(txt.title)}<em>${esc(txt.sub)}</em></h1><div class="aceIntlNation"><div class="aceIntlNationBadge">${esc(s.code)}</div><div class="aceIntlNationText"><b>${esc(c.nationality)}</b><span>SENIOR NATIONAL TEAM · SEASON ${Number(c.season||1)}</span></div></div><div class="aceIntlCallupMetrics"><div><span>SQUAD ROLE</span><b>${esc(s.role)}</b></div><div><span>POSITION DEPTH</span><b>#${Number(s.rank||0)}</b></div><div><span>CAPS</span><b>${caps}${caps===0?' · DEBUT AWAITS':''}</b></div></div><p class="aceIntlCallupMessage"><strong>${esc(c.player_name||'Your player')}</strong>, ${esc(txt.note)} Your club Career is paused only for the international window — nothing is reset.</p><div class="aceIntlCallupPath"><span class="done">CLUB SEASON ✓</span><span class="done">SELECTION ✓</span><span class="now">NATIONAL CAMP</span><span>VNL</span><span>FINALS</span></div><div class="aceIntlCallupActions"><button type="button" class="aceIntlCallupEnter" data-intl-enter>ENTER NATIONAL TEAM →</button><button type="button" class="aceIntlCallupLater" data-intl-later>CONTINUE CAREER</button></div></section>`;
+   m.classList.add('show');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+   try{navigator.vibrate?.([28,45,28])}catch(_){}
+   requestAnimationFrame(()=>m.querySelector('[data-intl-enter]')?.focus({preventScroll:true}));return true;
+ }
+ function decorateHub(){
+   const c=career(),s=selection(),hub=road()?.querySelector('.aceV77Intl');if(!c||!s?.eligible||!hub||hub.querySelector('.aceIntlHubHero'))return;
+   const caps=Number(c.international_caps||0),ach=Array.isArray(c.international_achievements)?c.international_achievements.length:0,selected=s.status==='SELECTED';
+   const hero=document.createElement('section');hero.className='aceIntlHubHero';hero.dataset.code=s.code||'INT';
+   hero.innerHTML=`<small>${esc(s.code)} · SENIOR NATIONAL TEAM</small><h3>${selected?'YOU MADE THE SQUAD.':esc(s.status)}</h3><p>${selected?`${esc(s.role)} · report to national-team camp after the club season.`:esc(s.reason||'Keep building your case through club form.')}</p><div class="aceIntlHubStrip"><span><small>STATUS</small><b>${esc(s.status)}</b></span><span><small>ROLE</small><b>${esc(s.role)}</b></span><span><small>CAPS</small><b>${caps}</b></span><span><small>ACHIEVEMENTS</small><b>${ach}</b></span></div>${selected?'<div class="aceIntlHubActions"><button type="button" data-intl-replay>REPLAY CALL-UP</button></div>':''}`;
+   hub.prepend(hero);
+ }
+ function check(){
+   frame=0;decorateHub();
+   const c=career(),s=selection();if(!c||!s?.eligible||s.status!=='SELECTED'||!c.season_complete)return;
+   if(state()?.busy||state()?.overlay||document.getElementById('aceLegacySetup')?.open)return;
+   if(road()?.classList.contains('active'))show(false);
+ }
+ function schedule(){if(!frame)frame=requestAnimationFrame(check)}
+ document.addEventListener('click',e=>{if(e.target.closest?.('[data-intl-replay]')){e.preventDefault();show(true);return;}if(e.target.closest?.('[data-rta92-career-panel="international"]'))setTimeout(schedule,0);},true);
+ window.addEventListener('ace:career-nationality-ready',()=>setTimeout(schedule,80));window.addEventListener('pageshow',schedule);
+ const r=road();if(r){observer=new MutationObserver(schedule);observer.observe(r,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});}
+ setTimeout(schedule,350);
+ window.ACE_INTL_CALLUP_V303={show:()=>show(true),openHub,check:schedule};
+ window.ACE_PROJECT_BUILD='B21.36.303';
+})();
+</script>
+
 </body>
 </html>
