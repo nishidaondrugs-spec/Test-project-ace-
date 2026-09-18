@@ -13037,23 +13037,43 @@ async function vdsApplySignedInSession(session,{resumeRoom=true}={}){
     return false;
   }
 
+  /* B21.36.308 — authentication success must never wait for profile,
+     wallet, artwork or Ultimate Team hydration. On weak/mobile networks
+     those secondary requests can be slow even though Google sign-in itself
+     has already succeeded. Open the game immediately, hydrate afterwards. */
   vdsAccountSession=session;
   mpIdentityUserId=session.user.id;
   mpPlayerId=session.user.id;
+  vdsAccountAuthBusy=false;
   try{ensureMultiplayerClient()?.realtime.setAuth(session.access_token);}catch(e){}
-
-  await vdsEnsureProfile(session.user);
   vdsUpdateAccountUI();
-  try{
-    if(typeof vdsSyncUltimateTeamCloud==="function")await vdsSyncUltimateTeamCloud({allowLegacyImport:true});
-  }catch(error){console.warn("Ultimate Team account sync on sign-in failed",error);}
-  setTimeout(()=>vdsRefreshAccountProgression({loadPanels:true}),60);
-  setTimeout(()=>vdsForceWalletSyncFromServer({rerender:true,quiet:false}),240);
   vdsHideAccountGate();
   vdsSetAuthStatus("Signed in.","ok");
-  aceMaybeShowFirstLoginOnboarding();
 
-  if(resumeRoom && !mpChannel && mpResumeRecord()?.code)setTimeout(()=>mpTryAutoResume(),180);
+  const timeout=(promise,ms,label)=>Promise.race([
+    Promise.resolve(promise),
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error(label||"AUTH_HYDRATION_TIMEOUT")),ms))
+  ]);
+
+  try{
+    await timeout(vdsEnsureProfile(session.user),6500,"PROFILE_LOAD_TIMEOUT");
+    vdsUpdateAccountUI();
+  }catch(error){
+    console.warn("ACE profile hydration did not block sign-in",error);
+  }
+
+  /* Everything below is intentionally detached from the login gate. */
+  setTimeout(async()=>{
+    try{
+      if(typeof vdsSyncUltimateTeamCloud==="function")
+        await timeout(vdsSyncUltimateTeamCloud({allowLegacyImport:true}),8000,"UT_SYNC_TIMEOUT");
+    }catch(error){console.warn("Ultimate Team background sync after sign-in failed",error);}
+  },0);
+  setTimeout(()=>{try{vdsRefreshAccountProgression({loadPanels:true})}catch(e){}},80);
+  setTimeout(()=>{try{vdsForceWalletSyncFromServer({rerender:true,quiet:false})}catch(e){}},280);
+  setTimeout(()=>{try{aceMaybeShowFirstLoginOnboarding()}catch(e){}},120);
+
+  if(resumeRoom && !mpChannel && mpResumeRecord()?.code)setTimeout(()=>mpTryAutoResume(),220);
   return true;
 }
 
@@ -13096,7 +13116,7 @@ async function vdsSignInWithGoogle(){
     // Use Supabase's normal browser OAuth redirect.
     // This is the supported browser flow and is more reliable on iOS/in-app browsers
     // than manually requesting the URL and navigating after the async call.
-    const {error}=await client.auth.signInWithOAuth({
+    const oauthStart=client.auth.signInWithOAuth({
       provider:"google",
       options:{
         redirectTo,
@@ -13104,6 +13124,8 @@ async function vdsSignInWithGoogle(){
         queryParams:{prompt:"select_account"}
       }
     });
+    const oauthTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("GOOGLE_OAUTH_START_TIMEOUT")),10000));
+    const {error}=await Promise.race([oauthStart,oauthTimeout]);
     if(error)throw error;
   }catch(error){
     console.error("VDS Google sign-in failed",error);
@@ -13112,6 +13134,8 @@ async function vdsSignInWithGoogle(){
       vdsSetAuthStatus("Google sign-in is not enabled in Supabase yet. Add the Google Client ID and Secret, then try again.","error");
     }else if(/redirect/i.test(message)){
       vdsSetAuthStatus("This website URL is not yet allowed in the Supabase / Google OAuth redirect settings.","error");
+    }else if(/GOOGLE_OAUTH_START_TIMEOUT/i.test(message)){
+      vdsSetAuthStatus("Google sign-in took too long to open. Check your connection, then tap Google again.","error");
     }else{
       vdsSetAuthStatus(message||"Google sign-in could not start.","error");
     }
@@ -13635,7 +13659,19 @@ async function vdsInitAccountGate(){
   document.getElementById("vdsSaveProfileBtn")?.addEventListener("click",vdsSaveProfile);
   document.getElementById("vdsSignOutBtn")?.addEventListener("click",vdsSignOut);
 
-  let {data,error}=await client.auth.getSession();
+  let data=null,error=null;
+  try{
+    const sessionCheck=await Promise.race([
+      client.auth.getSession(),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error("SESSION_CHECK_TIMEOUT")),6500))
+    ]);
+    data=sessionCheck?.data||null;
+    error=sessionCheck?.error||null;
+  }catch(e){
+    console.warn("VDS account session check timed out; sign-in remains available",e);
+    vdsAccountAuthBusy=false;
+    if(btn)btn.disabled=false;
+  }
   if(error)console.warn("VDS account session check failed",error);
 
   let session=data?.session||null;
@@ -49920,7 +49956,7 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
 #aceIntlMatchResult{position:fixed;inset:0;z-index:100030;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(1,7,12,.9);backdrop-filter:blur(12px)}#aceIntlMatchResult.show{display:flex}.aceIntlResultStage{width:min(430px,100%);padding:25px;border-radius:16px;border:1px solid rgba(99,184,255,.22);background:linear-gradient(145deg,#0a2032,#06131f);text-align:center}.aceIntlResultStage small{color:#69baff;font-size:7px;font-weight:1000;letter-spacing:.14em}.aceIntlResultStage h2{margin:7px 0 0;font-size:31px}.aceIntlResultStage h2.win{color:#83e3ae}.aceIntlResultStage h2.loss{color:#ff9999}.aceIntlResultScore{margin:15px 0;font-size:42px;font-weight:1000}.aceIntlResultStage p{color:#8398aa;font-size:9px}.aceIntlResultStage button{margin-top:12px}
 @media(max-width:600px){.aceIntlFixtureList,.aceIntlCampGrid,.aceIntlApproachGrid{grid-template-columns:1fr}.aceIntlChoice{min-height:64px}.aceIntlWindowStats{grid-template-columns:1fr 1fr}.aceIntlWindowStats div:last-child{grid-column:1/-1}}
 </style>
-<script id="ace-intl-window-v305-script">
+<script id="ace-intl-tournament-v307-script">
 (()=>{
 'use strict';
 let busy=false,raf=0,resultModal=null;
@@ -49931,29 +49967,43 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const selection=()=>{try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}};
 const rpc=async(name,args={})=>{if(typeof window.ACE_RTA_RPC!=='function')throw new Error('Career connection unavailable.');return window.ACE_RTA_RPC(name,args)};
 function comp(c){const n=String(c?.nationality||'');if(n==='England')return 'EUROPEAN QUALIFIERS';if(n==='Malaysia')return 'ASIAN CHAMPIONSHIP';return 'VNL'}
-function currentWindow(c){const w=c?.international_window;return w&&typeof w==='object'&&!Array.isArray(w)&&Number(w.season||0)===Number(c?.season||0)?w:null}
+function currentWindow(c){const w=c?.international_window;return w&&typeof w==='object'&&!Array.isArray(w)&&Number(w.season||0)===Number(c?.season||0)&&Number(w.version||0)>=2?w:null}
 function setStatus(msg,error=false){const e=road()?.querySelector('.aceIntlStatus');if(e){e.textContent=msg||'';e.classList.toggle('error',!!error)}}
-function fixtures(w){
- const list=Array.isArray(w?.fixtures)?w.fixtures:[];const results=Array.isArray(w?.results)?w.results:[];
- return list.map((x,i)=>{const r=results[i];return `<div class="aceIntlFixture ${r?'done':''}"><small>MATCH ${i+1}${r?' · FINAL':''}</small><b>${esc(x)}</b>${r?`<span>${r.won?'W':'L'} · ${Number(r.sets_for)}–${Number(r.sets_against)}</span>`:''}</div>`}).join('');
+function table(w,c){
+ const rows=Array.isArray(w?.group_table)?w.group_table:[];
+ if(!rows.length)return '';
+ return `<div class="ace307Table"><div class="ace307TR ace307TH"><span>#</span><span>TEAM</span><span>P</span><span>W</span><span>PTS</span><span>SD</span></div>${rows.map(r=>`<div class="ace307TR ${r.team===c.nationality?'user':''} ${Number(r.rank)<=2?'qual':''}"><span>${Number(r.rank)}</span><span>${esc(r.team)}${r.team===c.nationality?' <i>YOU</i>':''}</span><span>${Number(r.played)}</span><span>${Number(r.wins)}</span><span>${Number(r.points)}</span><span>${Number(r.set_diff)>0?'+':''}${Number(r.set_diff)}</span></div>`).join('')}</div><div class="ace307QualKey"><b>TOP 2</b> advance to the knockout stage</div>`;
 }
 function results(w){
- const a=Array.isArray(w?.results)?w.results:[];return a.map(r=>`<div class="aceIntlResultRow ${r.won?'':'loss'}"><strong>${r.won?'W':'L'}</strong><div><small>MATCH ${Number(r.match_no)} · ${esc(r.approach)}</small><b>${esc(r.opponent)}</b></div><span>${Number(r.sets_for)}–${Number(r.sets_against)}</span></div>`).join('');
+ const a=Array.isArray(w?.results)?w.results:[];
+ return a.map(r=>`<div class="aceIntlResultRow ${r.won?'':'loss'}"><strong>${r.won?'W':'L'}</strong><div><small>${esc(r.stage||'GROUP')} · ${esc(r.approach)}</small><b>${esc(r.opponent)}</b></div><span>${Number(r.sets_for)}–${Number(r.sets_against)}</span></div>`).join('');
+}
+function approachButtons(stage){
+ return `<div class="aceIntlApproachGrid"><button class="aceIntlChoice" data-intl-match="CONTROLLED"><b>CONTROLLED</b><span>Trust structure and reduce cheap errors.</span></button><button class="aceIntlChoice" data-intl-match="AGGRESSIVE"><b>AGGRESSIVE</b><span>Push serve and attack pressure from the first whistle.</span></button><button class="aceIntlChoice" data-intl-match="TACTICAL"><b>TACTICAL</b><span>Target match-ups and adapt to the opponent.</span></button></div><div class="aceIntlStatus">${stage==='FINAL'?'One match for the trophy. Choose how you want to play it.':'Choose your match approach.'}</div>`;
+}
+function path(stage){
+ const order=['CAMP','GROUP','SEMIFINAL','FINAL','COMPLETE'],i=Math.max(0,order.indexOf(stage));
+ return `<div class="ace307Path"><span class="${i>0?'done':i===0?'now':''}">CAMP${i>0?' ✓':''}</span><span class="${i>1?'done':i===1?'now':''}">GROUP${i>1?' ✓':''}</span><span class="${i>2?'done':i===2?'now':''}">SEMI${i>2?' ✓':''}</span><span class="${i>3?'done':i===3?'now':''}">FINAL${i>3?' ✓':''}</span></div>`;
 }
 function html(c,s,w){
  const competition=String(w?.competition||comp(c));
- if(!w)return `<section class="aceIntlWindow"><div class="aceIntlWindowHead"><div><small>INTERNATIONAL WINDOW · SEASON ${Number(c.season||1)}</small><h4>${esc(competition)}</h4></div><span>${esc(s.role)}</span></div><div class="aceIntlWindowPath"><span class="now">01 · CAMP</span><span>02 · MATCHES</span><span>03 · WINDOW REVIEW</span></div><p class="aceV77Note">Your club season is complete. Report to camp, choose a preparation focus, then play three senior international fixtures. Results, caps and achievements save to this Career.</p><button type="button" class="aceIntlPrimary" data-intl-start-window>REPORT TO NATIONAL TEAM CAMP →</button><div class="aceIntlStatus"></div></section>`;
- if(w.stage==='CAMP')return `<section class="aceIntlWindow"><div class="aceIntlWindowHead"><div><small>${esc(w.code)} · NATIONAL TEAM CAMP</small><h4>PREPARE FOR ${esc(competition)}</h4></div><span>${esc(w.role)}</span></div><div class="aceIntlWindowPath"><span class="now">01 · CAMP</span><span>02 · MATCHES</span><span>03 · REVIEW</span></div><div class="aceIntlWindowStats"><div><small>BASE READINESS</small><b>${Number(w.readiness||50)}%</b></div><div><small>CAPS</small><b>${Number(c.international_caps||0)}</b></div><div><small>FIXTURES</small><b>${Array.isArray(w.fixtures)?w.fixtures.length:3}</b></div></div><div class="aceIntlCampGrid"><button class="aceIntlChoice" data-intl-camp="ATTACK"><b>ATTACK TEMPO</b><span>Sharpen hitting, timing and transition offence.</span></button><button class="aceIntlChoice" data-intl-camp="SERVE_RECEIVE"><b>SERVE + RECEIVE</b><span>Build first-contact stability and serving pressure.</span></button><button class="aceIntlChoice" data-intl-camp="BLOCK_DEFENCE"><b>BLOCK + DEFENCE</b><span>Prepare reading, reaction and defensive structure.</span></button></div><div class="aceIntlStatus">Choose one camp focus. It cannot be replayed this window.</div></section>`;
- if(w.stage==='MATCHES'){
+ if(!w)return `<section class="aceIntlWindow ace307Tournament"><div class="aceIntlWindowHead"><div><small>INTERNATIONAL TOURNAMENT · SEASON ${Number(c.season||1)}</small><h4>${esc(competition)}</h4></div><span>${esc(s.role)}</span></div>${path('CAMP')}<p class="aceV77Note">Report to camp, play the group stage and earn your way into the knockouts. International caps and honours are permanent.</p><button type="button" class="aceIntlPrimary" data-intl-start-window>REPORT TO NATIONAL TEAM CAMP →</button><div class="aceIntlStatus"></div></section>`;
+ if(w.stage==='CAMP')return `<section class="aceIntlWindow ace307Tournament"><div class="aceIntlWindowHead"><div><small>${esc(w.code)} · NATIONAL TEAM CAMP</small><h4>PREPARE FOR ${esc(competition)}</h4></div><span>${esc(w.role)}</span></div>${path('CAMP')}<div class="aceIntlWindowStats"><div><small>READINESS</small><b>${Number(w.readiness||50)}%</b></div><div><small>CAPS</small><b>${Number(c.international_caps||0)}</b></div><div><small>FORMAT</small><b>TOP 2</b></div></div><div class="aceIntlCampGrid"><button class="aceIntlChoice" data-intl-camp="ATTACK"><b>ATTACK TEMPO</b><span>Sharpen hitting, timing and transition offence.</span></button><button class="aceIntlChoice" data-intl-camp="SERVE_RECEIVE"><b>SERVE + RECEIVE</b><span>Build first-contact stability and serving pressure.</span></button><button class="aceIntlChoice" data-intl-camp="BLOCK_DEFENCE"><b>BLOCK + DEFENCE</b><span>Prepare reading, reaction and defensive structure.</span></button></div><div class="aceIntlStatus">Choose one camp focus. Then the group stage begins.</div></section>`;
+ if(w.stage==='GROUP'){
    const idx=Number(w.match_index||0),next=(Array.isArray(w.fixtures)?w.fixtures:[])[idx]||'Opponent';
-   return `<section class="aceIntlWindow"><div class="aceIntlWindowHead"><div><small>${esc(w.code)} · ${esc(competition)}</small><h4>NEXT: ${esc(next)}</h4></div><span>MATCH ${idx+1}/3</span></div><div class="aceIntlWindowPath"><span class="done">01 · CAMP ✓</span><span class="now">02 · MATCHES</span><span>03 · REVIEW</span></div><div class="aceIntlWindowStats"><div><small>READINESS</small><b>${Number(w.readiness||50)}%</b></div><div><small>RECORD</small><b>${Number(w.wins||0)}–${Number(w.losses||0)}</b></div><div><small>CAPS</small><b>${Number(c.international_caps||0)}</b></div></div><div class="aceIntlFixtureList">${fixtures(w)}</div><div class="aceIntlApproachGrid"><button class="aceIntlChoice" data-intl-match="CONTROLLED"><b>CONTROLLED</b><span>Low-risk volleyball. Trust your structure and make them earn points.</span></button><button class="aceIntlChoice" data-intl-match="AGGRESSIVE"><b>AGGRESSIVE</b><span>Push serve and attack pressure. Higher intent, less margin.</span></button><button class="aceIntlChoice" data-intl-match="TACTICAL"><b>TACTICAL</b><span>Read the opponent and attack match-ups. Best all-round preparation.</span></button></div><div class="aceIntlStatus">Choose your match approach.</div></section>`;
+   return `<section class="aceIntlWindow ace307Tournament"><div class="aceIntlWindowHead"><div><small>${esc(w.code)} · ${esc(competition)} · GROUP STAGE</small><h4>NEXT: ${esc(next)}</h4></div><span>ROUND ${idx+1}/3</span></div>${path('GROUP')}<div class="aceIntlWindowStats"><div><small>READINESS</small><b>${Number(w.readiness||50)}%</b></div><div><small>TOURNAMENT</small><b>${Number(w.wins||0)}–${Number(w.losses||0)}</b></div><div><small>CAPS</small><b>${Number(c.international_caps||0)}</b></div></div>${table(w,c)}${approachButtons('GROUP')}</section>`;
  }
- const wins=Number(w.wins||0),losses=Number(w.losses||0);
- return `<section class="aceIntlWindow"><div class="aceIntlWindowHead"><div><small>${esc(w.code)} · INTERNATIONAL WINDOW COMPLETE</small><h4>${esc(competition)} REVIEW</h4></div><span>${wins}–${losses}</span></div><div class="aceIntlWindowPath"><span class="done">01 · CAMP ✓</span><span class="done">02 · MATCHES ✓</span><span class="now">03 · REVIEW</span></div><div class="aceIntlWindowStats"><div><small>FINAL RECORD</small><b>${wins}–${losses}</b></div><div><small>CAREER CAPS</small><b>${Number(c.international_caps||0)}</b></div><div><small>ACHIEVEMENTS</small><b>${Array.isArray(c.international_achievements)?c.international_achievements.length:0}</b></div></div><div class="aceIntlResults">${results(w)}</div><div class="aceIntlTrophy"><small>${wins===3?'PERFECT WINDOW':wins>=2?'WINNING INTERNATIONAL WINDOW':'INTERNATIONAL EXPERIENCE'}</small><b>${wins===3?'3–0 · STATEMENT MADE':wins>=2?'SENIOR TEAM IMPACT':'CAPS EARNED'}</b></div><button type="button" class="aceIntlPrimary" data-intl-back-career>RETURN TO CLUB CAREER →</button><div class="aceIntlStatus"></div></section>`;
+ if(w.stage==='SEMIFINAL'||w.stage==='FINAL'){
+   const final=w.stage==='FINAL',opp=w?.knockout?.opponent||'Opponent';
+   return `<section class="aceIntlWindow ace307Tournament ${final?'ace307Final':''}"><div class="aceIntlWindowHead"><div><small>${esc(w.code)} · ${esc(competition)} · ${final?'CHAMPIONSHIP FINAL':'SEMIFINAL'}</small><h4>${final?'🏆 ONE MATCH FROM THE TITLE':'WIN AND REACH THE FINAL'}</h4></div><span>${esc(w.role)}</span></div>${path(w.stage)}<div class="ace307Knockout"><div class="ace307KOCard active"><small>${final?'FINAL':'SEMIFINAL'}</small><b>${esc(c.nationality)} <em>vs</em> ${esc(opp)}</b><span>${final?'THE TROPHY IS ON THE LINE':'WINNER ADVANCES'}</span></div>${!final?'<div class="ace307KOArrow">→</div><div class="ace307KOCard locked"><small>FINAL</small><b>LOCKED</b><span>WIN THE SEMIFINAL</span></div>':''}</div><div class="aceIntlWindowStats"><div><small>READINESS</small><b>${Number(w.readiness||50)}%</b></div><div><small>RECORD</small><b>${Number(w.wins||0)}–${Number(w.losses||0)}</b></div><div><small>CAREER CAPS</small><b>${Number(c.international_caps||0)}</b></div></div>${final?'<div class="ace307FinalBanner">🏆 <b>CHAMPIONSHIP MATCH</b><span>Everything in this international window comes down to this.</span></div>':''}${approachButtons(w.stage)}</section>`;
+ }
+ const outcome=String(w.outcome||'TOURNAMENT COMPLETE'),champ=outcome==='CHAMPION',runner=outcome==='RUNNER-UP';
+ return `<section class="aceIntlWindow ace307Tournament ${champ?'ace307Champion':''}"><div class="aceIntlWindowHead"><div><small>${esc(w.code)} · ${esc(competition)} · COMPLETE</small><h4>${champ?'🏆 CHAMPIONS':runner?'🥈 RUNNERS-UP':outcome==='SEMIFINALIST'?'FINAL FOUR':'TOURNAMENT REVIEW'}</h4></div><span>${esc(outcome)}</span></div>${path('COMPLETE')}${champ?`<div class="ace307Trophy"><span>🏆</span><small>${esc(competition)}</small><b>${esc(c.nationality)} CHAMPIONS</b><em>SEASON ${Number(c.season||1)}</em></div>`:''}<div class="aceIntlWindowStats"><div><small>TOURNAMENT RECORD</small><b>${Number(w.wins||0)}–${Number(w.losses||0)}</b></div><div><small>CAREER CAPS</small><b>${Number(c.international_caps||0)}</b></div><div><small>HONOURS</small><b>${Array.isArray(c.international_achievements)?c.international_achievements.length:0}</b></div></div>${table(w,c)}<div class="aceIntlResults">${results(w)}</div>${w.award?`<div class="ace307Award"><small>TOURNAMENT AWARD</small><b>★ ${esc(w.award)}</b></div>`:''}<button type="button" class="aceIntlPrimary" data-intl-back-career>RETURN TO CLUB CAREER →</button><div class="aceIntlStatus"></div></section>`;
 }
 function decorate(){
- raf=0;const c=career(),s=selection(),hub=road()?.querySelector('.aceV77Intl');if(!c||!hub||!s?.eligible||s.status!=='SELECTED'||!c.season_complete)return;
- if(hub.querySelector('.aceIntlWindow'))return;
+ raf=0;const c=career(),s=selection(),hub=road()?.querySelector('.aceV77Intl');
+ if(!c||!hub||!s?.eligible||s.status!=='SELECTED'||!c.season_complete)return;
+ const old=hub.querySelector('.aceIntlWindow');if(old)old.remove();
  const box=document.createElement('div');box.innerHTML=html(c,s,currentWindow(c));const node=box.firstElementChild;
  const hero=hub.querySelector('.aceIntlHubHero');if(hero)hero.after(node);else hub.prepend(node);
 }
@@ -49966,27 +50016,27 @@ async function sync(data){
  try{window.__ACE_RTA_RENDER?.()}catch(_){}
  setTimeout(schedule,0);
 }
-function resultPopup(r){
+function resultPopup(r,w){
  if(!resultModal){resultModal=document.createElement('div');resultModal.id='aceIntlMatchResult';document.body.appendChild(resultModal);resultModal.addEventListener('click',e=>{if(e.target===resultModal||e.target.closest?.('[data-intl-result-close]'))resultModal.classList.remove('show')})}
- resultModal.innerHTML=`<section class="aceIntlResultStage"><small>SENIOR INTERNATIONAL · FULL TIME</small><h2 class="${r.won?'win':'loss'}">${r.won?'VICTORY':'DEFEAT'}</h2><div class="aceIntlResultScore">${Number(r.sets_for)}–${Number(r.sets_against)}</div><p>vs ${esc(r.opponent)} · ${esc(r.approach)} approach</p><button type="button" class="aceIntlPrimary" data-intl-result-close>CONTINUE →</button></section>`;resultModal.classList.add('show');
+ const final=String(r.stage)==='FINAL',champ=final&&w?.outcome==='CHAMPION',semi=String(r.stage)==='SEMIFINAL';
+ resultModal.innerHTML=`<section class="aceIntlResultStage ${champ?'ace307ResultChampion':''}"><small>${final?'CHAMPIONSHIP FINAL':semi?'KNOCKOUT STAGE':'GROUP STAGE'} · FULL TIME</small><h2 class="${r.won?'win':'loss'}">${champ?'🏆 CHAMPIONS':r.won?(semi?'FINAL BOUND':'VICTORY'):(final?'RUNNERS-UP':semi?'ELIMINATED':'DEFEAT')}</h2><div class="aceIntlResultScore">${Number(r.sets_for)}–${Number(r.sets_against)}</div><p>vs ${esc(r.opponent)} · ${esc(r.approach)} approach</p>${champ?'<div class="ace307MiniTrophy">THE TITLE IS YOURS.</div>':''}<button type="button" class="aceIntlPrimary" data-intl-result-close>${w?.stage==='COMPLETE'?'VIEW TOURNAMENT REVIEW':'CONTINUE →'}</button></section>`;resultModal.classList.add('show');
 }
 document.addEventListener('click',async e=>{
  const start=e.target.closest?.('[data-intl-start-window]'),camp=e.target.closest?.('[data-intl-camp]'),match=e.target.closest?.('[data-intl-match]'),back=e.target.closest?.('[data-intl-back-career]');
  if(back){const st=S();if(st){st.careerPanel='overview';window.__ACE_RTA_RENDER?.()}return}
  if(!start&&!camp&&!match)return;
- e.preventDefault();if(busy)return;busy=true;
- road()?.querySelectorAll('.aceIntlWindow button').forEach(b=>b.disabled=true);
+ e.preventDefault();if(busy)return;busy=true;road()?.querySelectorAll('.aceIntlWindow button').forEach(b=>b.disabled=true);
  try{
    if(start){setStatus('Opening national-team camp…');await sync(await rpc('vds_rta_start_international_window',{p_role:selection()?.role||'ROTATION'}));}
    else if(camp){setStatus('Completing camp session…');await sync(await rpc('vds_rta_complete_international_camp',{p_focus:camp.dataset.intlCamp}));}
-   else if(match){setStatus('Playing international match…');const d=await rpc('vds_rta_play_international_match',{p_approach:match.dataset.intlMatch});await sync(d);if(d?.result)resultPopup(d.result);}
- }catch(err){setStatus(String(err?.message||err||'International Career request failed.'),true)}
+   else if(match){const stage=currentWindow(career())?.stage||'MATCH';setStatus(stage==='FINAL'?'Playing the championship final…':stage==='SEMIFINAL'?'Playing the semifinal…':'Playing group-stage match…');const d=await rpc('vds_rta_play_international_match',{p_approach:match.dataset.intlMatch});await sync(d);if(d?.result)resultPopup(d.result,d.window);}
+ }catch(err){setStatus(String(err?.message||err||'International tournament request failed.'),true)}
  finally{busy=false;road()?.querySelectorAll('.aceIntlWindow button').forEach(b=>b.disabled=false)}
 },true);
 const r=road();if(r)new MutationObserver(schedule).observe(r,{childList:true,subtree:true});
 window.addEventListener('ace:career-nationality-ready',schedule);window.addEventListener('pageshow',schedule);setTimeout(schedule,300);
-window.ACE_INTL_WINDOW_V305={decorate:schedule};
-window.ACE_PROJECT_BUILD='B21.36.305';
+window.ACE_INTL_TOURNAMENT_V307={decorate:schedule};
+window.ACE_PROJECT_BUILD='B21.36.307';
 })();
 </script>
 
@@ -50007,7 +50057,37 @@ document.addEventListener('click',e=>{
  handoff=true;
  setTimeout(()=>{try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}},260);
 },true);
-window.ACE_PROJECT_BUILD='B21.36.306';
+window.ACE_PROJECT_BUILD='B21.36.307';
+})();
+</script>
+
+
+<style id="ace-intl-tournament-v307-css">
+.ace307Path{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:13px 0}.ace307Path span{padding:8px 4px;text-align:center;border-radius:7px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);color:#536b7d;font-size:6px;font-weight:1000}.ace307Path span.now{color:#dff3ff;border-color:rgba(99,184,255,.32);background:rgba(99,184,255,.09)}.ace307Path span.done{color:#8fe0b3;border-color:rgba(105,216,160,.18)}
+.ace307Table{margin:12px 0;border:1px solid rgba(255,255,255,.055);border-radius:10px;overflow:hidden}.ace307TR{display:grid;grid-template-columns:28px 1fr 30px 30px 38px 38px;align-items:center;min-height:36px;padding:0 8px;border-top:1px solid rgba(255,255,255,.045);font-size:8px}.ace307TR:first-child{border-top:0}.ace307TH{min-height:28px;color:#587286;background:rgba(255,255,255,.025);font-size:6px;font-weight:1000}.ace307TR span:not(:nth-child(2)){text-align:center}.ace307TR.user{background:rgba(99,184,255,.08);color:#dff3ff}.ace307TR.qual>span:first-child{color:#75dca5;font-weight:1000}.ace307TR i{margin-left:5px;padding:2px 4px;border-radius:4px;background:#69baff;color:#06131f;font-size:5px;font-style:normal;font-weight:1000}.ace307QualKey{margin-top:-5px;color:#60788b;font-size:6px}.ace307QualKey b{color:#75dca5}
+.ace307Knockout{display:flex;align-items:center;gap:8px;margin:14px 0}.ace307KOCard{flex:1;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.025)}.ace307KOCard.active{border-color:rgba(99,184,255,.3);background:rgba(99,184,255,.07)}.ace307KOCard.locked{opacity:.5}.ace307KOCard small{display:block;color:#69baff;font-size:6px;font-weight:1000}.ace307KOCard b{display:block;margin-top:6px;font-size:12px}.ace307KOCard b em{padding:0 5px;color:#5f7789;font-size:7px;font-style:normal}.ace307KOCard span{display:block;margin-top:5px;color:#6e8799;font-size:6px;font-weight:900}.ace307KOArrow{color:#69baff;font-weight:1000}
+.ace307Final{border-color:rgba(255,210,90,.22);background:radial-gradient(circle at 50% 0,rgba(255,210,90,.08),transparent 35%),linear-gradient(145deg,rgba(8,25,39,.98),rgba(5,15,24,.98))}.ace307FinalBanner{margin:12px 0;padding:14px;border-radius:10px;text-align:center;border:1px solid rgba(255,210,90,.18);background:rgba(255,210,90,.05);font-size:20px}.ace307FinalBanner b,.ace307FinalBanner span{display:block}.ace307FinalBanner b{margin-top:5px;color:#f4d67b;font-size:10px}.ace307FinalBanner span{margin-top:4px;color:#897c5c;font-size:7px}
+.ace307Champion{border-color:rgba(255,210,90,.25)}.ace307Trophy{margin:14px 0;padding:22px;text-align:center;border-radius:12px;border:1px solid rgba(255,210,90,.2);background:radial-gradient(circle at 50% 20%,rgba(255,215,100,.16),transparent 60%)}.ace307Trophy>span{display:block;font-size:42px}.ace307Trophy small{display:block;margin-top:7px;color:#bfa75f;font-size:7px;font-weight:1000}.ace307Trophy b{display:block;margin-top:5px;color:#ffe39a;font-size:20px}.ace307Trophy em{display:block;margin-top:4px;color:#756b50;font-size:7px;font-style:normal;font-weight:900}.ace307Award{margin:12px 0;padding:13px;text-align:center;border-radius:10px;border:1px solid rgba(177,119,255,.2);background:rgba(177,119,255,.06)}.ace307Award small{display:block;color:#9c79c5;font-size:6px;font-weight:1000}.ace307Award b{display:block;margin-top:5px;color:#d8b8ff;font-size:12px}.ace307MiniTrophy{margin:10px 0;color:#f0cf72;font-size:9px;font-weight:1000;letter-spacing:.08em}.ace307ResultChampion{border-color:rgba(255,210,90,.3)!important;background:radial-gradient(circle at 50% 0,rgba(255,210,90,.13),transparent 50%),linear-gradient(145deg,#0a2032,#06131f)!important}
+@media(max-width:520px){.ace307TR{grid-template-columns:24px 1fr 26px 26px 32px 32px;padding:0 5px}.ace307Knockout{align-items:stretch}.ace307KOArrow{display:flex;align-items:center}.ace307Path span{font-size:5.5px}}
+</style>
+
+
+<script id="ace-google-auth-v308-recovery">
+(()=>{
+  const recover=()=>{
+    try{
+      if(!window.vdsAccountSession){
+        window.vdsAccountAuthBusy=false;
+        const b=document.getElementById("vdsGoogleSignIn");
+        if(b)b.disabled=false;
+      }
+    }catch(_){}
+  };
+  window.addEventListener("pageshow",recover);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")recover()});
+  window.addEventListener("online",recover);
+  window.ACE_GOOGLE_AUTH_HOTFIX_BUILD="B21.36.308";
+  window.ACE_PROJECT_BUILD="B21.36.308";
 })();
 </script>
 
