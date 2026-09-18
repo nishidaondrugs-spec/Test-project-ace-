@@ -30012,7 +30012,7 @@ window.ACE_LEGACY_HOME_RUNTIME_DISABLED=true;
     ensureFullCourt();
     ensurePreviewCourt();
     try{
-      window.ACE_PROJECT_BUILD="B21.25";
+      window.ACE_PURPLE_COURTS_BUILD="B21.25";
       window.ACE_CORRECT_PURPLE_VOLLEYBALL_COURTS=true;
     }catch(e){}
   }
@@ -30083,7 +30083,7 @@ window.ACE_LEGACY_HOME_RUNTIME_DISABLED=true;
     }
 
     try{
-      window.ACE_PROJECT_BUILD="B21.26";
+      window.ACE_HOME_HALF_COURT_BUILD="B21.26";
       window.ACE_HOME_HALF_COURT_PREVIEW=true;
     }catch(e){}
   }
@@ -38333,7 +38333,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function render(){
     const m=q("#rta62Mount");if(!m)return;
+    window.ACE_CAREER_LEGACY?.restore(S.career);
     S.career?renderCareer(m):renderCreate(m);
+    if(!S.career)window.aceNationalityReadout?.();
+    window.ACE_CAREER_LEGACY?.check();
     requestAnimationFrame(()=>{
       try{rta119RunEnhancers?.()}catch(_){}
       try{window.ace259SyncPageState?.()}catch(_){}
@@ -44757,7 +44760,12 @@ function renderAttackKeyOverlay(){
 
   const page=q("#roadtoace");
   if(page){
-    new MutationObserver(()=>{if(page.classList.contains("active"))loadState({silent:S.loaded})})
+    let wasCareerActive=page.classList.contains('active');
+    new MutationObserver(()=>{
+      const isCareerActive=page.classList.contains('active');
+      if(isCareerActive&&!wasCareerActive)loadState({silent:S.loaded});
+      wasCareerActive=isCareerActive;
+    })
       .observe(page,{attributes:true,attributeFilter:["class"]});
   }
 
@@ -45004,26 +45012,6 @@ function renderAttackKeyOverlay(){
     }
   }
 
-  function ace96DecorateCareerMobile(root){
-    return; /* retired: modern bottom nav + current-step glow replace this legacy compass */
-    const mount=root?.querySelector?.('.rta78Mode');
-    if(!mount || !S?.career)return;
-    mount.querySelector('.ace96CareerCompass')?.remove();
-    if(!window.matchMedia?.('(max-width:760px)')?.matches)return;
-    const c=S.career;
-    const used=typeof rta73UsedThisWeek==='function'?rta73UsedThisWeek():0;
-    const next=typeof rta93NextOpponent==='function'?rta93NextOpponent():'Next Match';
-    const nextView=used<2?'train':'match';
-    const nextTitle=used<2?'GO TO TRAINING':'GO TO MATCHDAY';
-    const nextMeta=used<2?`${2-used} session${2-used===1?'':'s'} left this week`:`vs ${next}`;
-    const compass=document.createElement('section');
-    compass.className='ace96CareerCompass';
-    compass.innerHTML=`
-      <button type="button" class="ace96CareerFocus primary" data-rta62-view="${nextView}"><small>NEXT STEP</small><b>${nextTitle}</b><span>${esc(nextMeta)}</span></button>
-      <button type="button" class="ace96CareerFocus" data-rta62-view="player"><small>MY PLAYER</small><b>${Number(c.overall||0)} OVR · ${esc(c.squad_role||'PLAYER')}</b><span>${Number(c.skill_points||0)} skill points ready</span></button>
-      <button type="button" class="ace96CareerFocus" data-rta62-view="career"><small>CAREER BOARD</small><b>${esc(next)}</b><span>${Number(c.coach_trust||0)} trust · season ${Number(c.season||1)}</span></button>`;
-    mount.prepend(compass);
-  }
 
   const ace96OrigInitUltimateHub=vdsInitUltimateHub;
   vdsInitUltimateHub=function(){
@@ -45037,16 +45025,10 @@ function renderAttackKeyOverlay(){
     try{ace96UpdateUltimateRail()}catch(_e){}
     return out;
   };
-  const ace96OrigRenderCareer=renderCareer;
-  renderCareer=function(){
-    const out=ace96OrigRenderCareer.apply(this,arguments);
-    try{ace96DecorateCareerMobile(arguments[0])}catch(_e){}
-    return out;
-  };
 
   window.ACE_PROJECT_BUILD="B21.36.126";
   window.ACE_UT_DESKTOP_LEFT_RAIL=true;
-  window.ACE_RTA_MOBILE_COMPASS=true;
+  window.ACE_RTA_MOBILE_COMPASS=false;
   window.aceRoadToAceReload=()=>loadState({silent:false});
 })();
 
@@ -45738,113 +45720,9 @@ padding:8px!important;}} @media (max-width:390px){#roadtoace .rta175FixtureCard{
 <script>window.ACE_RTA_TRAINING_GAMEPLAY_BUILD="B21.36.221";</script>
 <style id="ace220-technical-drills-v2">#rta62Overlay[data-kind="training"] .rta220TechBadge{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;border:1px solid rgba(91,184,255,.24);background:rgba(35,119,190,.10);color:#8fd2ff;font-size:8px;font-weight:1000;letter-spacing:.12em} #rta62Overlay[data-kind="training"] .rta220Hint{font-size:9px;line-height:1.45;color:#87a0b4} #rta62Overlay[data-kind="training"] .rta220MiniTitle{font-size:7px;font-weight:1000;letter-spacing:.16em;color:#71889c} #rta62Overlay[data-kind="training"] .rta220BeatBtn,#rta62Overlay[data-kind="training"] .rta220PowerBtn{height:48px;border:1px solid rgba(91,184,255,.34);border-radius:12px;background:linear-gradient(180deg,rgba(29,113,176,.35),rgba(10,56,91,.38));color:#f1f8ff;font-size:10px;font-weight:1000;letter-spacing:.13em;cursor:pointer} #rta62Overlay[data-kind="training"] .rta220BeatBtn:disabled,#rta62Overlay[data-kind="training"] .rta220PowerBtn:disabled{opacity:.36;cursor:not-allowed} #rta62Overlay[data-kind="training"] .rta220Power{display:grid;gap:8px;padding:11px;border:1px solid rgba(255,255,255,.075);border-radius:14px;background:rgba(255,255,255,.025)} #rta62Overlay[data-kind="training"] .rta220PowerTrack{height:14px;position:relative;border-radius:999px;background:linear-gradient(90deg,rgba(97,144,184,.20),rgba(235,190,58,.32) 58%,rgba(71,213,139,.43) 70%,rgba(235,93,93,.35));overflow:hidden} #rta62Overlay[data-kind="training"] .rta220PowerTrack i{position:absolute;top:-3px;bottom:-3px;width:4px;border-radius:3px;background:#fff;left:0;box-shadow:0 0 9px #fff} #rta62Overlay[data-kind="training"] .rta220PowerTrack b{position:absolute;left:65%;width:15%;top:0;bottom:0;border-left:1px solid rgba(255,255,255,.35);border-right:1px solid rgba(255,255,255,.35)} #rta62Overlay[data-kind="training"] .rta220PassAim{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:10px 11px;border:1px solid rgba(255,255,255,.075);border-radius:13px;background:rgba(255,255,255,.025);touch-action:none;user-select:none} #rta62Overlay[data-kind="training"] .rta220PassAim>span{font-size:13px;color:#6e879a;font-weight:1000} #rta62Overlay[data-kind="training"] .rta220AimTrack{height:18px;position:relative;border-radius:999px;background:rgba(255,255,255,.06)} #rta62Overlay[data-kind="training"] .rta220AimTrack:before{content:"SETTER";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:5.5px;font-weight:1000;letter-spacing:.12em;color:rgba(255,255,255,.38)} #rta62Overlay[data-kind="training"] .rta220AimTrack i{position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);border-radius:50%;background:#eef8ff;border:3px solid #2388ce;box-shadow:0 0 14px rgba(45,153,223,.45)} #rta62Overlay[data-kind="training"] .rta220SetChoices{display:grid;grid-template-columns:repeat(4,1fr);gap:7px} #rta62Overlay[data-kind="training"] .rta220SetChoices button{min-height:52px;padding:7px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:#9bb0c1;font-size:8px;font-weight:1000;letter-spacing:.09em;cursor:pointer} #rta62Overlay[data-kind="training"] .rta220SetChoices button b{display:block;color:#eef7fd;font-size:12px;margin-bottom:3px} #rta62Overlay[data-kind="training"] .rta220SetChoices button.selected{border-color:rgba(77,181,255,.50);background:rgba(39,133,205,.18);box-shadow:0 0 0 1px rgba(77,181,255,.12) inset;color:#bfe5ff} #rta62Overlay[data-kind="training"] .rta102SetCall{display:none!important} #rta62Overlay[data-kind="training"] .rta220DefCourt{position:relative;width:100%;height:100%;min-height:430px;overflow:hidden;border-radius:16px;background:linear-gradient(180deg,#07131d 0 34%,#94583d 34% 100%);touch-action:none} #rta62Overlay[data-kind="training"] .rta220DefCourt:before{content:"";position:absolute;left:7%;right:7%;top:34%;bottom:5%;border:2px solid rgba(255,255,255,.53);border-top-width:3px} #rta62Overlay[data-kind="training"] .rta220DefCourt:after{content:"";position:absolute;left:7%;right:7%;top:61%;border-top:1px solid rgba(255,255,255,.42)} #rta62Overlay[data-kind="training"] .rta220DefNet{position:absolute;left:6%;right:6%;top:34%;height:4px;background:#f4f7f9;box-shadow:0 4px 0 rgba(6,20,31,.38);z-index:3} #rta62Overlay[data-kind="training"] .rta220Attacker{position:absolute;left:50%;top:19%;transform:translate(-50%,-50%);width:54px;height:72px;z-index:4} #rta62Overlay[data-kind="training"] .rta220Attacker:before{content:"";position:absolute;width:19px;height:19px;border-radius:50%;left:18px;top:0;background:#c6d0d7}.rta220Attacker:after{content:"";position:absolute;left:8px;top:21px;width:38px;height:40px;border-radius:12px 12px 7px 7px;background:#1f6b9d} #rta62Overlay[data-kind="training"] .rta220DefBall{position:absolute;left:50%;top:28%;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8b5 0 18%,#f2d83c 20% 55%,#674fba 57% 82%,#dfcf3e 84%);transform:translate(-50%,-50%);z-index:8;box-shadow:0 4px 12px rgba(0,0,0,.32)} #rta62Overlay[data-kind="training"] .rta220DefPlayer{position:absolute;left:50%;top:81%;transform:translate(-50%,-50%);width:58px;height:68px;z-index:7;transition:left .05s linear,top .05s linear} #rta62Overlay[data-kind="training"] .rta220DefPlayer:before{content:"";position:absolute;width:18px;height:18px;border-radius:50%;left:20px;top:0;background:#d0d7dd}.rta220DefPlayer:after{content:"YOU";position:absolute;left:4px;right:4px;top:20px;height:38px;display:grid;place-items:center;border-radius:11px 11px 7px 7px;background:#0d78b7;color:#fff;font-size:8px;font-weight:1000} #rta62Overlay[data-kind="training"] .rta220DefTarget{position:absolute;width:78px;height:48px;border:2px solid rgba(103,206,255,.52);border-radius:50%;transform:translate(-50%,-50%);opacity:0;transition:opacity .2s;box-shadow:0 0 22px rgba(65,169,230,.17)} #rta62Overlay[data-kind="training"] .rta220DefPrompt{position:absolute;left:50%;top:9%;transform:translateX(-50%);padding:7px 10px;border-radius:999px;background:rgba(3,12,19,.80);border:1px solid rgba(255,255,255,.08);font-size:8px;font-weight:1000;letter-spacing:.13em;color:#dce9f2;z-index:12;white-space:nowrap} #rta62Overlay[data-kind="training"] .rta220DefPrompt.perfect{color:#a7f2c6;border-color:rgba(69,210,137,.33)} #rta62Overlay[data-kind="training"] .rta220DefHud{position:absolute;left:10px;bottom:10px;padding:7px 9px;border-radius:9px;background:rgba(4,14,22,.82);font-size:7px;font-weight:900;color:#8aa1b2;z-index:10} #rta62Overlay[data-kind="training"] .rta112BlockHitters span.live{color:#dff4ff!important;text-shadow:0 0 14px rgba(74,184,255,.75);transform:scale(1.12)} #rta62Overlay[data-kind="training"] .rta112BlockTarget{transition:opacity .18s!important} #rta62Overlay[data-kind="training-result"] .rta220ResultShell{width:min(780px,calc(100vw - 28px));max-height:calc(100dvh - 28px);overflow:auto;background:#07121b;border:1px solid rgba(255,255,255,.08);border-radius:20px;box-shadow:0 28px 90px rgba(0,0,0,.55)} #rta62Overlay[data-kind="training-result"] .rta220ResultBody{padding:24px;display:grid;gap:16px} #rta62Overlay[data-kind="training-result"] .rta220Grade{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;border-radius:17px;background:linear-gradient(135deg,rgba(34,128,197,.22),rgba(12,33,49,.55));border:1px solid rgba(87,185,255,.19)} #rta62Overlay[data-kind="training-result"] .rta220Grade strong{font-size:64px;line-height:.85;letter-spacing:-.05em}.rta220Grade div{text-align:right}.rta220Grade small{display:block;color:#728da2;font-size:8px;font-weight:1000;letter-spacing:.15em}.rta220Grade b{display:block;margin-top:5px;font-size:24px}.rta220Grade span{display:block;margin-top:4px;color:#9eb1bf;font-size:10px} #rta62Overlay[data-kind="training-result"] .rta220ResultGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.rta220ResultGrid article{padding:13px;border-radius:13px;background:rgba(255,255,255,.032);border:1px solid rgba(255,255,255,.065)}
 .rta220ResultGrid small{display:block;color:#6f8799;font-size:7px;font-weight:1000;letter-spacing:.13em}.rta220ResultGrid b{display:block;margin-top:7px;font-size:15px;color:#eef7fb}.rta220ResultGrid span{display:block;margin-top:4px;font-size:8px;color:#8da2b1} #rta62Overlay[data-kind="training-result"] .rta220Continue{height:50px;border:1px solid rgba(82,183,252,.37);border-radius:12px;background:linear-gradient(180deg,#1477b6,#0c5687);color:#fff;font-size:10px;font-weight:1000;letter-spacing:.14em;cursor:pointer} @media (max-width:700px){#rta62Overlay[data-kind="training"] .rta220BeatPanel,#rta62Overlay[data-kind="training"] .rta220Power,#rta62Overlay[data-kind="training"] .rta220PassAim{border-radius:10px;padding:8px} #rta62Overlay[data-kind="training"] .rta220BeatBtn,#rta62Overlay[data-kind="training"] .rta220PowerBtn{height:44px;min-height:44px} #rta62Overlay[data-kind="training"] .rta220SetChoices{grid-template-columns:repeat(4,1fr);gap:5px} #rta62Overlay[data-kind="training"] .rta220SetChoices button{min-height:46px;padding:5px;font-size:6px}#rta62Overlay[data-kind="training"] .rta220SetChoices button b{font-size:10px} #rta62Overlay[data-kind="training"] .rta220DefCourt{min-height:0;height:100%;border-radius:0} #rta62Overlay[data-kind="training"] .rta94ActionPanel,#rta62Overlay[data-kind="training"] .rta102SkillSide,#rta62Overlay[data-kind="training"] .rta112DrillSide{padding:8px 9px calc(8px + env(safe-area-inset-bottom))!important;max-height:37dvh!important;overflow:auto!important} #rta62Overlay[data-kind="training"] .rta94ActionIntro p,#rta62Overlay[data-kind="training"] .rta94ActionIntro h2{display:none!important} #rta62Overlay[data-kind="training"] .rta220Hint{font-size:7px} #rta62Overlay[data-kind="training"] .rta94ServeTargets{grid-template-columns:repeat(4,1fr)!important;gap:5px!important} #rta62Overlay[data-kind="training"] .rta94ServeTargets button{min-height:44px!important;padding:5px!important}.rta94ServeTargets button small{display:none!important} #rta62Overlay[data-kind="training-result"] .rta220ResultShell{width:100vw;height:100dvh;max-height:none;border:0;border-radius:0;padding-top:env(safe-area-inset-top)} #rta62Overlay[data-kind="training-result"] .rta220ResultBody{padding:18px 13px calc(16px + env(safe-area-inset-bottom));gap:12px} #rta62Overlay[data-kind="training-result"] .rta220Grade{padding:16px}.rta220Grade strong{font-size:54px}.rta220Grade b{font-size:19px} #rta62Overlay[data-kind="training-result"] .rta220ResultGrid{grid-template-columns:1fr}.rta220ResultGrid article{padding:11px 12px}}</style>
-<script id="ace220-technical-drills-v2-js">
-(()=>{
-  window.ACE_RTA_TECHNICAL_V2_BUILD='B21.36.220';
-  const T={focus:'',bestQuality:0,bestLabel:'',lastRep:0,
-    attack:{phase:0,start:0,duration:2100,errors:[],quality:1,raf:0},
-    serve:{charging:false,power:0,powerQuality:1,powerSet:false,start:0,raf:0},
-    receive:{aim:0},setting:{choice:''},
-    defence:{x:.5,y:.82,start:0,last:0,t:0,duration:1550,raf:0,locked:false,keys:{w:false,a:false,s:false,d:false},target:{x:.5,y:.75}}
-  };
-  window.ACE_RTA_TECH_STATE=T;
-
-  function focusNow(){return String(S.training?.physical_stat||S.training?.focus||'TRAINING').toUpperCase()}
-  function track(d,label){
-    const f=focusNow(),rep=Number(S.training?.rep_no||d?.rep_no||0);
-    if(T.focus!==f || (rep===1&&T.lastRep>1)){T.focus=f;T.bestQuality=0;T.bestLabel='';}
-    T.lastRep=rep;
-    const qq=Number(d?.quality||0);
-    if(Number.isFinite(qq)&&qq>=T.bestQuality){T.bestQuality=qq;T.bestLabel=String(label||d?.outcome||'BEST REP')}
-  }
-  function penaltyTiming(t,q){
-    t=clamp(Number(t),0,1);q=clamp(Number(q),0,1);
-    const p=(1-q)*.22;if(p<=.001)return t;
-    return clamp(t+(t>=.5?p:-p),0,1);
-  }
-  function progressHTML(d){return `<div class="rta62Progress">${Array.from({length:Number(d.total_reps||8)},(_,i)=>`<i class="${i<Number(d.rep_no)-1?'done':''}"></i>`).join('')}</div>`}
-
-  /* SERVE — target -> power -> contact */
-  function resetServeV2(){if(T.serve.raf)cancelAnimationFrame(T.serve.raf);T.serve={charging:false,power:0,powerQuality:1,powerSet:false,start:0,raf:0};serveTargetChoice='';serveContactReady=false;serveContactLocked=false;}
-  function powerPanel(){return `<div class="rta220Power"><div class="rta220MiniTitle">SERVE POWER</div><div class="rta220PowerTrack"><b></b><i id="rta220PowerNeedle"></i></div><button class="rta220PowerBtn" type="button" data-rta220-serve-power disabled>${rta112IsTouch()?'HOLD + RELEASE':'HOLD SPACE + RELEASE'}</button><div class="rta220Hint">Build power into the green, then time contact on the toss.</div></div>`}
-  rta94UpdateServeTarget=function(id){serveTargetChoice=String(id||'');document.querySelectorAll('[data-rta94-serve-target]').forEach(b=>b.classList.toggle('selected',b.dataset.rta94ServeTarget===serveTargetChoice));document.querySelectorAll('.rta94ServeZones span').forEach(z=>z.classList.remove('selected'));const zones=[...document.querySelectorAll('.rta94ServeZones span')],map={ZONE5:0,SEAM:1,ZONE1:2,SHORT:3,POWER:1};if(zones[map[serveTargetChoice]])zones[map[serveTargetChoice]].classList.add('selected');const p=q('#rta94ServePrompt');if(p)p.textContent='BUILD POWER';const btn=q('[data-rta220-serve-power]');if(btn)btn.disabled=false;const contact=q('[data-rta94-serve-contact]');if(contact)contact.disabled=true;T.serve.powerSet=false;};
-  function startServePower(){if(T.serve.charging||T.serve.powerSet||!serveTargetChoice||S.overlay!=='training')return;T.serve.charging=true;T.serve.start=performance.now();const tick=now=>{if(!T.serve.charging)return;const t=clamp((now-T.serve.start)/1100,0,1);T.serve.power=t;const n=q('#rta220PowerNeedle');if(n)n.style.left=(t*100)+'%';if(t<1)T.serve.raf=requestAnimationFrame(tick);else releaseServePower()};T.serve.raf=requestAnimationFrame(tick);}
-  function releaseServePower(){if(!T.serve.charging)return;T.serve.charging=false;if(T.serve.raf)cancelAnimationFrame(T.serve.raf);T.serve.raf=0;T.serve.powerSet=true;T.serve.powerQuality=clamp(1-Math.abs(T.serve.power-.72)/(window.ACE221_TUNE?window.ACE221_TUNE("SERVE").powerSpread:.42),.06,1);const b=q('[data-rta220-serve-power]');if(b){b.textContent=T.serve.powerQuality>.82?'POWER LOCKED':'POWER SET';b.disabled=true}const c=q('[data-rta94-serve-contact]');if(c)c.disabled=false;rta94StartServeTiming();}
-  renderServeTrainingOverlay=function(){
-    const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();resetServeV2();const coachTarget=rta94TrainingServeTarget(rep),options=[{id:'ZONE5',label:'ZONE 5',desc:'Deep left-back'},{id:'SEAM',label:'SEAM',desc:'Split passers'},{id:'ZONE1',label:'ZONE 1',desc:'Deep right-back'},{id:'SHORT',label:'SHORT',desc:'Pull passer forward'}];
-    setOverlay(`<div class="rta62OverlayShell rta94GameplayShell">${overlayTop(`SERVE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,'TARGET · POWER · CONTACT')}<div class="rta94GameplayLayout serve"><div class="rta94SceneColumn">${rta94ServeScene({coachTarget,serveType:String(rep.ball_type||'SERVE')})}</div><aside class="rta94ActionPanel rta94ServeActions"><div class="rta94ActionIntro"><small>COACH TARGET · ${esc(pretty(coachTarget))}</small><h2>Build a complete serve.</h2><p>${esc(rep.cue||'Choose the zone, build power, then time clean contact.')}</p></div>${rta94ServeTargetButtons(options)}${powerPanel()}<button class="rta94ContactBtn" type="button" data-rta94-serve-contact disabled>CONTACT</button>${progressHTML(d)}${S.feedback?`<div class="rta62Feedback ${S.feedback.good?'good':'bad'}">${esc(S.feedback.text||'')}</div>`:''}</aside></div></div>`,'training');
-  };
-  rta94ServeTrainingContact=async function(timedOut=false){
-    if(S.busy||S.overlay!=='training'||!S.training?.rep||serveContactLocked)return;if(!T.serve.powerSet&&!timedOut)return;if(!serveTargetChoice&&!timedOut)return;serveContactLocked=true;serveContactReady=false;if(serveRaf)cancelAnimationFrame(serveRaf);serveRaf=0;
-    const rep=S.training.rep;let timing=timedOut?1:rta94ServeTimingValue();timing=penaltyTiming(timing,T.serve.powerQuality);const [x,y]=timedOut?[.98,.96]:rta94ServeTargetCoords(serveTargetChoice,rep),chosen=serveTargetChoice||'SEAM';
-    rta94AnimateServeFlight(chosen,rep,timing,async()=>{S.busy=true;try{const d=await rpc('vds_rta_submit_training_rep',{p_x:Number(x.toFixed(4)),p_y:Number(y.toFixed(4)),p_timing:Number(timing.toFixed(4))});track(d,`${pretty(chosen)} · ${Math.round(Number(d.quality||0)*100)}%`);vibrate(d.success?25:[18,28,18]);if(d.done){S.training=d;showTrainingResult(d);await loadState({silent:true,world:false})}else{S.training=d;S.feedback={good:!!d.success,text:`${timedOut?'SERVICE ERROR':d.outcome} · ${Math.round(Number(d.quality||0)*100)}% · POWER ${Math.round(T.serve.power*100)}%`};renderTrainingOverlay()}}catch(e){toast(errText(e),'error');renderServeTrainingOverlay()}finally{S.busy=false}});
-  };
-
-  /* RECEIVE — move + platform angle + contact */
-  function aimPanel(){return `<div class="rta220PassAim" id="rta220PassAim"><span>↙</span><div class="rta220AimTrack"><i id="rta220AimKnob"></i></div><span>↘</span></div><div class="rta220Hint">Angle the platform toward the setter. ${rta112IsTouch()?'Drag the aim dot':'Q / E adjusts angle'} · ${rta112IsTouch()?'tap CONTACT':'SPACE contacts'}.</div>`}
-  function setAim(v){T.receive.aim=clamp(Number(v),-1,1);const k=q('#rta220AimKnob');if(k)k.style.left=((T.receive.aim+1)*50)+'%';}
-  function bindAim(){const pad=q('#rta220PassAim');if(!pad)return;const move=e=>{const r=pad.getBoundingClientRect();setAim(((e.clientX-r.left)/r.width)*2-1)};pad.addEventListener('pointerdown',e=>{move(e);try{pad.setPointerCapture(e.pointerId)}catch(_){}},{passive:true});pad.addEventListener('pointermove',e=>{if(e.buttons||e.pressure>0)move(e)},{passive:true});}
-  renderDynamicReceiveTrainingOverlay=function(){
-    const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();T.receive.aim=0;
-    setOverlay(`<div class="rta62OverlayShell rta102SkillShell">${overlayTop(`RECEIVE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,'MOVE · ANGLE · PASS')}<div class="rta102SkillLayout"><div class="rta102SceneCol">${rta102ReceiveScene(rep)}</div><aside class="rta102SkillSide"><small>${esc(rep.ball_type||'SERVE RECEIVE')}</small><h2>Own the first contact.</h2><div class="rta102ControlLine"><b>${rta102IsTouch()?'DRAG':'WASD'}</b><span>MOVE</span><i>+</i><b>${rta102IsTouch()?'AIM':'Q / E'}</b><span>PLATFORM</span></div>${aimPanel()}<button type="button" class="rta102ContactBtn" data-rta102-contact>PASS / CONTACT</button>${progressHTML(d)}${S.feedback?`<div class="rta102RepFeedback ${S.feedback.good?'good':'bad'}">${esc(S.feedback.text||'')}</div>`:''}</aside></div></div>`,'training');
-    rta102PrepareSkillRep('RECEIVE',rep);requestAnimationFrame(bindAim);
-  };
-
-  /* SETTING — move under pass + choose hitter + release */
-  function setChoicePanel(){return `<div class="rta220SetChoices">${[['OH','4','OUTSIDE'],['QUICK','3','MIDDLE'],['OP','2','OPPOSITE'],['PIPE','6','PIPE']].map(([id,num,label])=>`<button type="button" data-rta220-set-target="${id}"><b>${num}</b>${label}</button>`).join('')}</div>`}
-  function chooseSet(id){T.setting.choice=String(id||'').toUpperCase();qa('[data-rta220-set-target]').forEach(b=>b.classList.toggle('selected',b.dataset.rta220SetTarget===T.setting.choice));const rel=q('[data-rta102-contact]');if(rel)rel.disabled=!T.setting.choice;qa('.rta102SetTargets span').forEach(x=>x.classList.remove('hot'));const sel={OH:'.oh',QUICK:'.quick',OP:'.op',PIPE:'.pipe'}[T.setting.choice];if(sel)q('.rta102SetTargets '+sel)?.classList.add('hot');}
-  renderSettingTrainingOverlay=function(){
-    const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();T.setting.choice='';const expected=rta95TrainingSetterTarget(rep);
-    setOverlay(`<div class="rta62OverlayShell rta102SkillShell">${overlayTop(`SETTING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,'MOVE · READ · DELIVER')}<div class="rta102SkillLayout"><div class="rta102SceneCol">${rta102SettingScene(rep,'')}</div><aside class="rta102SkillSide"><small>READ THE BLOCK</small><h2>Choose the hitter.</h2><div class="rta220Hint">${esc(rep.cue||'Get under the pass, identify the best option, then release on time.')}</div>${setChoicePanel()}<div class="rta102ControlLine"><b>${rta102IsTouch()?'DRAG':'WASD'}</b><span>GET UNDER</span><i>+</i><b>${rta102IsTouch()?'TAP':'SPACE'}</b><span>RELEASE</span></div><button type="button" class="rta102ContactBtn setting" data-rta102-contact disabled>SET BALL</button>${progressHTML(d)}${S.feedback?`<div class="rta102RepFeedback ${S.feedback.good?'good':'bad'}">${esc(S.feedback.text||'')}</div>`:''}</aside></div></div>`,'training');
-    rta102PrepareSkillRep('SETTING',rep,expected);
-  };
-
-  /* Replace contact submission for RECEIVE + SETTING, preserving movement engine. */
-  rta102SkillContact=async function(timedOut=false){
-    if(S.busy||S.overlay!=='training'||!S.training?.rep||skillLocked||!skillMode)return;const rep=S.training.rep,mode=skillMode;if(mode==='SETTING'&&!T.setting.choice&&!timedOut)return;
-    skillLocked=true;if(skillRaf)cancelAnimationFrame(skillRaf);skillRaf=0;const t=timedOut?1:skillFlight,ideal=mode==='RECEIVE'?.86:.83,posErr=Math.hypot(skillPlayer.x-skillPassTarget.x,skillPlayer.y-skillPassTarget.y);let timing=timedOut?1:clamp(.5+(t-ideal)*2.25,0,1);let px,py,label='';
-    if(mode==='RECEIVE'){
-      const desired=clamp((.5-skillPlayer.x)*2.15,-1,1),aimErr=Math.abs(T.receive.aim-desired);const aimQ=clamp(1-aimErr/1.25,.05,1);timing=penaltyTiming(timing,aimQ);px=skillPlayer.x;py=skillPlayer.y;label=timedOut?'MISSED':aimQ>.82?'PERFECT PLATFORM':aimQ>.58?'CONTROLLED PASS':'POOR ANGLE';
-    }else{
-      const choice=T.setting.choice||rta95TrainingSetterTarget(rep),coords={OH:[.24,.27],QUICK:[.50,.23],OP:[.76,.27],PIPE:[.50,.50]}[choice]||[.5,.25],expected=rta95TrainingSetterTarget(rep),readQ=choice===expected?1:.34;timing=penaltyTiming(timing,readQ);px=clamp(coords[0]+(skillPlayer.x-skillPassTarget.x)*.65,0,1);py=clamp(coords[1]+(skillPlayer.y-skillPassTarget.y)*.35,0,1);label=timedOut?'MISSED':choice===expected?'GOOD READ':'WRONG HITTER';skillSetCall=choice;
-    }
-    const prompt=q('#rta102SkillPrompt'),court=q('#rta102SkillCourt'),player=q('#rta102SkillPlayer');if(prompt){prompt.textContent=label;prompt.classList.toggle('perfect',label.includes('PERFECT')||label==='GOOD READ')}court?.classList.add('contact');player?.classList.add('contact');
-    if(mode==='SETTING'){const ball=q('#rta102SkillBall'),dest={OH:[19,28],QUICK:[50,24],OP:[81,28],PIPE:[50,44]}[skillSetCall]||[50,25];if(ball){ball.style.transition='left 360ms cubic-bezier(.15,.75,.25,1),top 360ms ease,transform 360ms ease';requestAnimationFrame(()=>{ball.style.left=dest[0]+'%';ball.style.top=dest[1]+'%';ball.style.transform='translate(-50%,-50%) scale(.54)'})}}
-    S.busy=true;try{const d=await rpc('vds_rta_submit_training_rep',{p_x:Number(px.toFixed(4)),p_y:Number(py.toFixed(4)),p_timing:Number(timing.toFixed(4))});track(d,`${label} · ${Math.round(Number(d.quality||0)*100)}%`);vibrate(d.success?22:[18,28,18]);await new Promise(r=>setTimeout(r,mode==='SETTING'?360:220));if(d.done){S.training=d;showTrainingResult(d);await loadState({silent:true,world:false})}else{S.training=d;S.feedback={good:!!d.success,text:`${d.outcome} · ${Math.round(Number(d.quality||0)*100)}% · ${label}`};renderTrainingOverlay()}}catch(e){toast(errText(e),'error');skillLocked=false;if(mode==='RECEIVE')renderDynamicReceiveTrainingOverlay();else renderSettingTrainingOverlay()}finally{S.busy=false}
-  };
-
-  /* DEFENCE — read hitter + move to landing zone + dig timing */
-  function defScene(rep){const tx=clamp(Number(rep?.target_x||.5),.13,.87),ty=clamp(Number(rep?.target_y||.76),.53,.90);T.defence.target={x:tx,y:ty};return `<div class="rta220DefCourt" id="rta220DefCourt"><div class="rta220DefNet"></div><div class="rta220Attacker"></div><div class="rta220DefTarget" id="rta220DefTarget" style="left:${tx*100}%;top:${ty*100}%"></div><div class="rta220DefBall" id="rta220DefBall"></div><div class="rta220DefPlayer" id="rta220DefPlayer"></div><div class="rta220DefPrompt" id="rta220DefPrompt">READ THE HITTER</div><div class="rta220DefHud">${rta112IsTouch()?'DRAG TO MOVE · TAP DIG':'WASD / ARROWS · SPACE TO DIG'}</div></div>`}
-  function moveDef(x,y){T.defence.x=clamp(Number(x),.10,.90);T.defence.y=clamp(Number(y),.58,.91);const p=q('#rta220DefPlayer');if(p){p.style.left=T.defence.x*100+'%';p.style.top=T.defence.y*100+'%'}}
-  function bindDefTouch(){const c=q('#rta220DefCourt');if(!c)return;const move=e=>{const r=c.getBoundingClientRect();moveDef((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height)};c.addEventListener('pointerdown',e=>{if(T.defence.locked)return;move(e);try{c.setPointerCapture(e.pointerId)}catch(_){}},{passive:true});c.addEventListener('pointermove',e=>{if(T.defence.locked||!(e.buttons||e.pressure>0))return;move(e)},{passive:true});}
-  function startDef(){const rep=S.training?.rep;if(!rep)return;T.defence.x=.5;T.defence.y=.82;T.defence.t=0;T.defence.locked=false;T.defence.keys={w:false,a:false,s:false,d:false};T.defence.start=performance.now();T.defence.last=T.defence.start;const tune=window.ACE221_TUNE?window.ACE221_TUNE("DEFENCE"):null;T.defence.duration=(1450/Math.max(.72,Number(rep.speed||1)))*(tune?tune.windowScale:1);moveDef(.5,.82);bindDefTouch();const tick=now=>{if(S.overlay!=='training'||T.defence.locked)return;const dt=Math.min(36,now-T.defence.last);T.defence.last=now;const mv=.00046*dt;if(T.defence.keys.w)T.defence.y-=mv;if(T.defence.keys.s)T.defence.y+=mv;if(T.defence.keys.a)T.defence.x-=mv;if(T.defence.keys.d)T.defence.x+=mv;moveDef(T.defence.x,T.defence.y);const t=clamp((now-T.defence.start)/T.defence.duration,0,1);T.defence.t=t;const b=q('#rta220DefBall'),target=q('#rta220DefTarget'),prompt=q('#rta220DefPrompt'),arc=Math.sin(Math.PI*t),tx=T.defence.target.x,ty=T.defence.target.y,x=.5+(tx-.5)*t,y=.28+(ty-.28)*t-arc*.07;if(b){b.style.left=x*100+'%';b.style.top=y*100+'%';b.style.transform=`translate(-50%,-50%) scale(${.75+t*.28})`}if(target)target.style.opacity=String(clamp((t-.42)*1.8,0,.58));const posErr=Math.hypot(T.defence.x-tx,T.defence.y-ty);if(prompt){prompt.classList.toggle('perfect',Math.abs(t-.87)<.07&&posErr<.12);prompt.textContent=t<.32?'READ THE HITTER':t<.65?'MOVE TO THE BALL':t<.91?(posErr<.13?'DIG NOW!':'GET BEHIND IT'):'LATE'}if(t<1)T.defence.raf=requestAnimationFrame(tick);else{T.defence.raf=0;setTimeout(()=>submitDef(true),20)}};T.defence.raf=requestAnimationFrame(tick);}
-  async function submitDef(timedOut=false){if(S.busy||S.overlay!=='training'||!S.training?.rep||T.defence.locked)return;T.defence.locked=true;if(T.defence.raf)cancelAnimationFrame(T.defence.raf);T.defence.raf=0;const t=timedOut?1:T.defence.t,ideal=.87,posErr=Math.hypot(T.defence.x-T.defence.target.x,T.defence.y-T.defence.target.y),label=timedOut?'MISSED':posErr>.19?'WRONG READ':Math.abs(t-ideal)<.06?'CLEAN DIG':t<ideal?'EARLY':'LATE',timing=timedOut?1:clamp(.5+(t-ideal)*2.05,0,1);const p=q('#rta220DefPrompt');if(p){p.textContent=label;p.classList.toggle('perfect',label==='CLEAN DIG')}S.busy=true;try{const d=await rpc('vds_rta_submit_training_rep',{p_x:Number(T.defence.x.toFixed(4)),p_y:Number(T.defence.y.toFixed(4)),p_timing:Number(timing.toFixed(4))});track(d,`${label} · ${Math.round(Number(d.quality||0)*100)}%`);vibrate(d.success?24:[18,30,18]);await new Promise(r=>setTimeout(r,220));if(d.done){S.training=d;showTrainingResult(d);await loadState({silent:true,world:false})}else{S.training=d;S.feedback={good:!!d.success,text:`${d.outcome} · ${Math.round(Number(d.quality||0)*100)}% · ${label}`};renderTrainingOverlay()}}catch(e){toast(errText(e),'error');T.defence.locked=false;renderDefenceTraining()}finally{S.busy=false}}
-  function renderDefenceTraining(){const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();setOverlay(`<div class="rta62OverlayShell rta112DrillShell">${overlayTop(`DEFENCE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,'READ · POSITION · DIG')}<div class="rta112DrillLayout"><div class="rta112SceneCol">${defScene(rep)}</div><aside class="rta112DrillSide"><small>COURT DEFENCE</small><h2>Read before you react.</h2><p>${esc(rep.cue||'Read the hitter, get behind the ball, then time the dig.')}</p><div class="rta112ControlStrip"><b>${rta112IsTouch()?'DRAG':'WASD'}</b><span>MOVE</span><i>+</i><b>${rta112IsTouch()?'TAP':'SPACE'}</b><span>DIG</span></div><button type="button" class="rta112BigAction block" data-rta220-def-dig>DIG BALL</button>${progressHTML(d)}${S.feedback?`<div class="rta112RepFeedback ${S.feedback.good?'good':'bad'}">${esc(S.feedback.text||'')}</div>`:''}</aside></div></div>`,'training');requestAnimationFrame(startDef)}
-  const oldLiberoTraining=renderLiberoTrainingOverlay;renderLiberoTrainingOverlay=function(type){if(String(type||'').toUpperCase()==='DEFENCE_READ')return renderDefenceTraining();return oldLiberoTraining(type)};
-
-  /* BLOCK — hide answer until setter release; result distinguishes read vs timing */
-  rta112StartBlockRep=function(){if(blockTrainRaf)cancelAnimationFrame(blockTrainRaf);const rep=S.training?.rep;if(!rep)return;blockTrainLocked=false;blockTrainPos=.5;blockTrainY=.70;blockTrainT=0;blockTrainKeys={w:false,a:false,s:false,d:false};rta112MoveBlocker(.5,.70);rta112SetupBlockTouch();blockTrainStart=performance.now();blockTrainLast=blockTrainStart;const tune=window.ACE221_TUNE?window.ACE221_TUNE("BLOCK"):null,duration=(1900/Math.max(.72,Number(rep.speed||1)))*(tune?tune.windowScale:1),tx=clamp(Number(rep.target_x||.5),.18,.82);const hitSel=tx<.39?'.left':tx>.61?'.right':'.mid';const tick=now=>{if(S.overlay!=='training'||blockTrainLocked)return;const dt=Math.min(36,now-blockTrainLast);blockTrainLast=now,mv=.00048*dt;if(blockTrainKeys.a)blockTrainPos-=mv;if(blockTrainKeys.d)blockTrainPos+=mv;if(blockTrainKeys.w)blockTrainY-=mv*.55;if(blockTrainKeys.s)blockTrainY+=mv*.55;rta112MoveBlocker(blockTrainPos,blockTrainY);const t=clamp((now-blockTrainStart)/duration,0,1);blockTrainT=t;const ball=q('#rta112BlockBall'),prompt=q('#rta112BlockPrompt'),target=q('#rta112BlockTarget'),arc=Math.sin(Math.PI*t),bx=.5+(tx-.5)*Math.min(1,t*1.12),by=.27+Math.min(1,t)*.20-arc*.07;if(ball){ball.style.left=bx*100+'%';ball.style.top=by*100+'%';ball.style.transform=`translate(-50%,-50%) scale(${.72+t*.28})`}if(t>.23)q('.rta112BlockHitters '+hitSel)?.classList.add('live');if(target)target.style.opacity=String(clamp((t-.47)*2.7,0,.60));const posErr=Math.abs(blockTrainPos-tx);if(prompt){prompt.classList.toggle('perfect',Math.abs(t-.79)<.06&&posErr<.10);prompt.textContent=t<.24?'WATCH SETTER':t<.47?'READ HITTER':t<.66?'CLOSE THE BLOCK':t<.86?(posErr<.12?'JUMP!':'MOVE TO BALL'):'LATE'}if(t<1)blockTrainRaf=requestAnimationFrame(tick);else{blockTrainRaf=0;setTimeout(()=>{if(!blockTrainLocked)rta112BlockJump(true)},20)}};blockTrainRaf=requestAnimationFrame(tick)};
-  rta112BlockJump=async function(timedOut=false){if(S.busy||S.overlay!=='training'||String(S.training?.focus||'').toUpperCase()!=='BLOCK'||blockTrainLocked)return;blockTrainLocked=true;if(blockTrainRaf)cancelAnimationFrame(blockTrainRaf);blockTrainRaf=0;const rep=S.training.rep,t=timedOut?1:blockTrainT,ideal=.79,posErr=Math.abs(blockTrainPos-clamp(Number(rep.target_x||.5),.18,.82)),timing=timedOut?1:clamp(.5+(t-ideal)*1.8,0,1),label=timedOut?'MISSED':posErr>.18?'WRONG READ':Math.abs(t-ideal)<.055?'ROOF IT!':t<ideal?'EARLY JUMP':'LATE JUMP';q('#rta112TrainBlocker')?.classList.add('jump');const p=q('#rta112BlockPrompt');if(p)p.textContent=label;S.busy=true;try{const d=await rpc('vds_rta_submit_block_training_rep',{p_x:Number(blockTrainPos.toFixed(4)),p_y:Number(Number(rep.target_y||.54).toFixed(4)),p_timing:Number(timing.toFixed(4))});track(d,`${label} · ${Math.round(Number(d.quality||0)*100)}%`);vibrate(d.success?28:[18,30,18]);await new Promise(r=>setTimeout(r,230));if(d.done){S.training=d;showTrainingResult(d);await loadState({silent:true,world:false})}else{S.training=d;S.feedback={good:!!d.success,text:`${d.outcome} · ${Math.round(Number(d.quality||0)*100)}% · ${label}`};renderBlockingTrainingOverlay()}}catch(e){blockTrainLocked=false;toast(errText(e),'error');renderBlockingTrainingOverlay()}finally{S.busy=false}};
-
-  /* Compact, consistent result screen. */
-  showTrainingResult=function(d){const focus=String(d?.physical_stat||d?.focus||S.training?.physical_stat||S.training?.focus||'TRAINING').toUpperCase(),physical=String(d?.physical_stat||'').toUpperCase(),label=physical?rta113PhysicalStatMeta(physical).label:pretty(focus),avg=Math.round(Number(d?.average_quality||0)*100),good=Number(d?.successful_reps||0),total=Number(d?.total_reps||8),bonus=Number(d?.coach_bonus||0),best=(T.focus===focus?T.bestLabel:'')||`${good} GOOD REP${good===1?'':'S'}`,ovr=Number(d?.career?.overall||S.career?.overall||0);setOverlay(`<div class="rta220ResultShell">${overlayTop('TRAINING COMPLETE',label)}<div class="rta220ResultBody"><section class="rta220Grade"><strong>${esc(d?.grade||'—')}</strong><div><small>SESSION SCORE</small><b>${good} / ${total}</b><span>${avg}% average quality</span></div></section><section class="rta220ResultGrid"><article><small>STAT IMPACT</small><b>${esc(label)}</b><span>${bonus>0?`+${bonus} coach bonus applied`:'Development progress applied'}</span></article><article><small>BEST MOMENT</small><b>${esc(best)}</b><span>${T.bestQuality?Math.round(T.bestQuality*100)+'% quality':'Session highlight'}</span></article><article><small>PLAYER</small><b>${ovr||'—'} OVR</b><span>XP +${Number(d?.xp_earned||0)} · Trust ${Number(d?.coach_trust_change||0)>=0?'+':''}${Number(d?.coach_trust_change||0)}</span></article></section><button class="rta220Continue" type="button" data-rta62-training-done>CONTINUE</button></div></div>`,'training-result')};
-
-
-  /* Extra controls for PC + phone. */
-  document.addEventListener('pointerdown',e=>{if(S.overlay!=='training')return;if(e.target.closest?.('[data-rta220-serve-power]')){e.preventDefault();startServePower()}},{passive:false});
-  document.addEventListener('pointerup',e=>{if(S.overlay!=='training')return;if(T.serve.charging){e.preventDefault();releaseServePower()}},{passive:false});document.addEventListener('pointercancel',()=>{if(S.overlay==='training'&&T.serve.charging)releaseServePower()},{passive:true});
-  document.addEventListener('click',e=>{if(S.overlay!=='training')return;const set=e.target.closest?.('[data-rta220-set-target]');if(set){e.preventDefault();chooseSet(set.dataset.rta220SetTarget);return}if(e.target.closest?.('[data-rta220-attack-beat]')){e.preventDefault();return}if(e.target.closest?.('[data-rta220-def-dig]')){e.preventDefault();submitDef(false);return}if(e.target.closest?.('[data-rta94-serve-target]')){setTimeout(()=>{const c=q('[data-rta94-serve-contact]');if(c&&!T.serve.powerSet)c.disabled=true},0)}},{passive:false});
-  document.addEventListener('keydown',e=>{
-    if(S.overlay!=='training')return;const focus=String(S.training?.focus||'').toUpperCase(),raw=String(e.key||'').toLowerCase(),map={arrowup:'w',arrowleft:'a',arrowdown:'s',arrowright:'d'},k=map[raw]||raw;
-    if(focus==='SERVE'&&e.code==='Space'){e.preventDefault();if(e.repeat)return;if(serveContactReady&&T.serve.powerSet){rta94ServeTrainingContact(false);return}if(serveTargetChoice&&!T.serve.powerSet){startServePower();return}}
-    if(skillMode==='RECEIVE'&&(raw==='q'||raw==='e')){e.preventDefault();setAim(T.receive.aim+(raw==='q'?-.13:.13));return}
-    if(skillMode==='SETTING'&&['1','2','3','4'].includes(raw)){e.preventDefault();chooseSet({1:'OH',2:'QUICK',3:'OP',4:'PIPE'}[raw]);return}
-    if(focus==='DEFENCE'&&['w','a','s','d'].includes(k)){e.preventDefault();T.defence.keys[k]=true;return}
-    if(focus==='DEFENCE'&&e.code==='Space'){e.preventDefault();if(!e.repeat)submitDef(false);return}
-  },{passive:false});
-  document.addEventListener('keyup',e=>{if(S.overlay!=='training')return;const focus=String(S.training?.focus||'').toUpperCase(),raw=String(e.key||'').toLowerCase(),map={arrowup:'w',arrowleft:'a',arrowdown:'s',arrowright:'d'},k=map[raw]||raw;if(focus==='SERVE'&&e.code==='Space'&&T.serve.charging){e.preventDefault();releaseServePower();return}if(focus==='DEFENCE'&&['w','a','s','d'].includes(k))T.defence.keys[k]=false},{passive:false});
-})();
-</script>
+<!-- Retired V220 detached training patch: referenced private Career functions
+     from global scope and threw during boot. Active drills remain in the
+     scoped ace-b21-36-62-rta-script implementation. -->
 
 <style id="ace221-training-progression-css">#roadtoace .ace221MasteryLine{display:grid;grid-template-columns:auto minmax(48px,1fr) auto;align-items:center;gap:6px;margin-top:7px;max-width:210px;position:relative;z-index:4} #roadtoace .ace221MasteryLine>span{font-size:6.5px;font-weight:1000;letter-spacing:.13em;color:#9ec6df;white-space:nowrap} #roadtoace .ace221MasteryLine>i{display:block;height:3px;border-radius:99px;background:rgba(255,255,255,.10);overflow:hidden} #roadtoace .ace221MasteryLine>i>em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2d89cc,#76d0ff)} #roadtoace .ace221MasteryLine>b{font-size:6px;color:#6f8fa4;letter-spacing:.06em;white-space:nowrap} #roadtoace .rta187TrainCard:hover .ace221MasteryLine>span,#roadtoace .rta187PhysicalCard:hover .ace221MasteryLine>span{color:#d8f0ff} #rta62Overlay .ace221DrillMeta{display:flex;align-items:center;gap:7px;margin-left:auto;padding:5px 7px;border:1px solid rgba(102,191,244,.17);border-radius:999px;background:rgba(25,102,151,.10);white-space:nowrap} #rta62Overlay .ace221DrillMeta b{font-size:7px;letter-spacing:.12em;color:#bde6ff} #rta62Overlay .ace221DrillMeta span{font-size:6.5px;color:#6f91a7} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress{padding:13px;border-radius:13px;background:rgba(44,136,197,.085);border:1px solid rgba(86,184,239,.14)} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress>div{display:flex;align-items:flex-end;justify-content:space-between;gap:12px} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress small{font-size:7px;font-weight:1000;letter-spacing:.14em;color:#708ba0} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress b{font-size:15px;color:#e9f7ff} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress span{font-size:8px;color:#8ea6b7} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress i{display:block;height:5px;margin-top:9px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden} #rta62Overlay[data-kind="training-result"] .ace221ResultProgress i em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2f8fd1,#74d2ff)} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact{display:flex;gap:7px;flex-wrap:wrap;margin-top:-5px} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact span{padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);font-size:7px;font-weight:900;color:#8ea7b8} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact b{color:#e8f6fd} @media(max-width:760px){#roadtoace .ace221MasteryLine{grid-template-columns:auto 54px;margin-top:4px;max-width:120px;gap:5px} #roadtoace .ace221MasteryLine>b{display:none} #roadtoace .ace221MasteryLine>span{font-size:5.8px} #rta62Overlay .ace221DrillMeta{margin-left:4px;padding:4px 6px;gap:5px} #rta62Overlay .ace221DrillMeta span{display:none} #rta62Overlay[data-kind="training-result"] .ace221CareerImpact{margin-top:0}}</style>
 <script id="ace221-training-progression-js">
@@ -49359,51 +49237,6 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
 <script>window.ACE_RECOVERY_BUILD='B21.36.293';</script>
 
 
-<script id="ace-v53-force-skilltree2-live-route">
-(function(){
-  let busy=false;
-  function mountSkillTree2(){
-    try{
-      if(busy)return;
-      const page=document.getElementById("roadtoace");
-      if(!page||!page.classList.contains("active"))return;
-      const activeTab=page.querySelector('[data-rta93-player-panel="tree"].active,[data-rta93-player-panel="tree"][aria-selected="true"]');
-      const anyTreeTab=page.querySelector('[data-rta93-player-panel="tree"]');
-      if(!anyTreeTab)return;
-      /* Prefer actual state when accessible; active class is fallback for late UI patches. */
-      const z=window.__ACE_RTA_STATE; const stateTree=!!(z&&z.playerPanel==="tree");
-      if(!stateTree&&!activeTab)return;
-      const c=z?.career||null;
-      if(!c||typeof skillTreeHTML!=="function")return;
-      const tabs=page.querySelector(".rta93PlayerTabs");
-      if(!tabs)return;
-      const player=tabs.closest(".rta93Player")||page.querySelector(".rta93Player");
-      if(!player)return;
-      const children=[...player.children];
-      const tabIndex=children.indexOf(tabs);
-      if(tabIndex<0)return;
-      let panel=children[tabIndex+1];
-      if(panel&&panel.classList.contains("aceSt2Shell"))return;
-      busy=true;
-      const holder=document.createElement("div");
-      holder.innerHTML=skillTreeHTML(c);
-      const fresh=holder.firstElementChild;
-      if(panel&&panel!==tabs)panel.replaceWith(fresh);
-      else tabs.insertAdjacentElement("afterend",fresh);
-      busy=false;
-    }catch(e){busy=false;console.error("ACE V53 Skill Tree mount",e)}
-  }
-  document.addEventListener("click",function(e){
-    if(e.target?.closest?.('[data-rta93-player-panel="tree"]'))setTimeout(mountSkillTree2,0);
-    if(e.target?.closest?.("[data-ace-st2-path]"))setTimeout(mountSkillTree2,0);
-  },true);
-  const page=document.getElementById("roadtoace");
-  if(page)new MutationObserver(()=>requestAnimationFrame(mountSkillTree2)).observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:["class","aria-selected"]});
-  window.addEventListener("pageshow",()=>setTimeout(mountSkillTree2,50));
-  setTimeout(mountSkillTree2,100);
-  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.293";
-})();
-</script>
 <style id="ace-v54-elite-ui">
 #roadtoace .aceV54EliteStrip{margin:10px 0 2px;padding:10px;border:1px solid rgba(255,197,84,.18);
 border-radius:12px;background:linear-gradient(135deg,rgba(255,190,69,.07),rgba(124,85,255,.06));}
@@ -49617,8 +49450,9 @@ function enforce(){
 }
 function ascension(){
  if(!isAce())return;
- const k=KEY+uid();if(localStorage.getItem(k))return;
- localStorage.setItem(k,"1");
+ const k=KEY+uid();if(ascension.seen===k)return;
+ try{if(localStorage.getItem(k))return;localStorage.setItem(k,"1");}catch(_){}
+ ascension.seen=k;
  const el=document.createElement("div");el.className="aceV56Ascension";
  el.innerHTML=`<div class="aceV56AscensionCard"><small>PROJECT ACE · CAREER MILESTONE</small>
  <h1>100<em>ACE</em></h1><p>You reached the overall ceiling. Rating progression is complete. Your career now enters Mastery.</p>
@@ -49628,15 +49462,15 @@ function ascension(){
 function decorate(){
  enforce();
  const page=document.getElementById("roadtoace");if(!page)return;
- page.classList.toggle("aceV56CareerAce",isAce());
- page.querySelectorAll(".aceV56Badge,.aceV56Mastery").forEach(x=>x.remove());
- if(!isAce())return;
+ const ace=isAce();
+ if(page.classList.contains("aceV56CareerAce")!==ace)page.classList.toggle("aceV56CareerAce",ace);
+ if(!ace){page.querySelectorAll(".aceV56Badge,.aceV56Mastery").forEach(x=>x.remove());return;}
  const identity=page.querySelector(".rta93PlayerIdentity");
- if(identity){
+ if(identity&&!identity.querySelector('.aceV56Badge')){
    const b=document.createElement("div");b.className="aceV56Badge";b.textContent="◆ 100 OVR · ACE";identity.appendChild(b);
  }
  const tabs=page.querySelector(".rta93PlayerTabs");
- if(tabs){
+ if(tabs&&!page.querySelector('.aceV56Mastery')){
    const m=document.createElement("section");m.className="aceV56Mastery";
    m.innerHTML="<small>POST-100 PROGRESSION</small><b>MASTERY</b><span>OVR is permanently capped at 100. Continue through Elite attributes, specialist paths, playstyles and future international mastery.</span>";
    tabs.insertAdjacentElement("afterend",m);
@@ -49651,7 +49485,10 @@ window.ACE_STATUS={
  mode:()=>isAce()?"MASTERY":"DEVELOPMENT",
  enforce
 };
-new MutationObserver(()=>requestAnimationFrame(decorate)).observe(document.documentElement,{childList:true,subtree:true});
+let decorationFrame=0;
+function queueDecoration(){if(!decorationFrame)decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decorate();});}
+const decorationPage=document.getElementById('roadtoace');
+if(decorationPage)new MutationObserver(queueDecoration).observe(decorationPage,{childList:true,subtree:true});
 document.addEventListener("click",()=>setTimeout(decorate,0),true);
 window.addEventListener("pageshow",()=>setTimeout(decorate,40));
 setTimeout(decorate,120);
@@ -49683,7 +49520,14 @@ window.ACE_100_OVR_STATUS_BUILD="B21.36.276";
 #roadtoace .aceV76Metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}#roadtoace .aceV76Metrics span{min-width:0;padding:7px;border-radius:8px;background:rgba(255,255,255,.025)}#roadtoace .aceV76Metrics small{display:block;color:#657c8b;font-size:6px;font-weight:900}#roadtoace .aceV76Metrics b{display:block;margin-top:2px;color:#dcebf4;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#roadtoace .aceV76Report p{margin:8px 0 0!important;color:#7d919e!important;font-size:8px!important;line-height:1.45!important}
 @media(max-width:760px){#roadtoace .aceV76Report{padding:11px}#roadtoace .aceV76ReportHead small{font-size:8px}#roadtoace .aceV76ReportHead b{font-size:12px}#roadtoace .aceV76ReportHead strong{font-size:10px}#roadtoace .aceV76Metrics small{font-size:7px}#roadtoace .aceV76Metrics b{font-size:10px}#roadtoace .aceV76Report p{font-size:9px!important}}
 </style>
-<style id="ace-v75-nationality-style">\n#roadtoace .aceV75IntlReadout{margin-top:7px;padding:8px 9px;border:1px solid rgba(255,255,255,.055);border-radius:9px;background:rgba(255,255,255,.018)}\n#roadtoace .aceV75IntlReadout small{display:block;margin:0;color:#6e96ae;font-size:7px;font-weight:1000;letter-spacing:.09em}\n#roadtoace .aceV75IntlReadout b{display:block;margin-top:2px;color:#eaf4fb;font-size:10px}\n#roadtoace .aceV75IntlReadout span{display:block;margin-top:3px;color:#758b9a;font-size:8px;line-height:1.35}\n#roadtoace .aceV75IntlReadout[data-tier="ELITE"] b{color:#e7bd68}\n@media(max-width:760px){#roadtoace .aceV75IntlReadout small{font-size:8px!important}#roadtoace .aceV75IntlReadout b{font-size:11px!important}#roadtoace .aceV75IntlReadout span{font-size:9px!important}}\n</style><script id="ace-v75-nationality-engine">
+<style id="ace-v75-nationality-style">
+#roadtoace .aceV75IntlReadout{margin-top:7px;padding:8px 9px;border:1px solid rgba(255,255,255,.055);border-radius:9px;background:rgba(255,255,255,.018)}
+#roadtoace .aceV75IntlReadout small{display:block;margin:0;color:#6e96ae;font-size:7px;font-weight:1000;letter-spacing:.09em}
+#roadtoace .aceV75IntlReadout b{display:block;margin-top:2px;color:#eaf4fb;font-size:10px}
+#roadtoace .aceV75IntlReadout span{display:block;margin-top:3px;color:#758b9a;font-size:8px;line-height:1.35}
+#roadtoace .aceV75IntlReadout[data-tier="ELITE"] b{color:#e7bd68}
+@media(max-width:760px){#roadtoace .aceV75IntlReadout small{font-size:8px!important}#roadtoace .aceV75IntlReadout b{font-size:11px!important}#roadtoace .aceV75IntlReadout span{font-size:9px!important}}
+</style><script id="ace-v75-nationality-engine">
 (function(){
 "use strict";
 const P={
@@ -49718,9 +49562,9 @@ function decorate(){
  let box=field.querySelector(".aceV75IntlReadout");
  if(!box){box=document.createElement("div");box.className="aceV75IntlReadout";field.appendChild(box);sel.addEventListener("change",update);}
  update();
- function update(){const x=P[sel.value]||["ESTABLISHED","International selection depends on form, role fit and competition at your position."];box.dataset.tier=x[0];box.innerHTML=`<small>INTERNATIONAL COMPETITION</small><b>${x[0]}</b><span>${x[1]}</span>`;}
+ function update(){const x=P[sel.value]||["ESTABLISHED","International selection depends on form, role fit and competition at your position."];if(box.dataset.nation===sel.value)return;box.dataset.nation=sel.value;box.dataset.tier=x[0];box.innerHTML=`<small>INTERNATIONAL COMPETITION</small><b>${x[0]}</b><span>${x[1]}</span>`;}
 }
-new MutationObserver(()=>requestAnimationFrame(decorate)).observe(document.documentElement,{childList:true,subtree:true});
+window.aceNationalityReadout=decorate;
 setTimeout(decorate,100);
 window.ACE_INTL_NATIONALITY_V1={playable:24,profiles:P,sourceSeason:2026};
 window.ACE_PROJECT_BUILD="B21.36.296";
@@ -49774,98 +49618,141 @@ function decorate(){
  }
 }
 document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace-v78-choose]')){e.preventDefault();openChooser();return}const review=e.target.closest?.('[data-rta62-result-done]');if(review&&career()?.season_complete){setTimeout(openChooser,120)}},true);
-new MutationObserver(()=>requestAnimationFrame(decorate)).observe(document.documentElement,{childList:true,subtree:true});
+let decorationFrame=0;
+function queueDecoration(){if(!decorationFrame)decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decorate();});}
+const decorationPage=document.getElementById('roadtoace');
+if(decorationPage)new MutationObserver(queueDecoration).observe(decorationPage,{childList:true,subtree:true});
 setTimeout(decorate,120);
 window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.ACE_PROJECT_BUILD='B21.36.298';
 })();
 </script>
 
+<!-- PROJECT ACE B21.36.302 · REBUILT LEGACY CAREER SETUP -->
+<style id="ace-career-legacy-backdrop">#aceLegacySetup::backdrop{background:rgba(2,5,9,.88)}</style>
+<script id="ace-career-legacy-rebuilt">
+(()=>{
+ 'use strict';
+ const groups=[['Featured',['Japan','Poland','Italy','United States','Brazil','France']],['Europe',['Slovenia','Türkiye','Ukraine','Bulgaria','Serbia','Germany','Belgium','Czech Republic','Netherlands']],['Asia / Oceania',['Iran','China','Qatar','Australia']],['Americas',['Argentina','Canada','Cuba']],['Africa',['Egypt','Tunisia']]];
+ const nations=new Set(groups.flatMap(g=>g[1]));
+ let dialog=null,root=null,openedKey='',dismissedKey='',frame=0,wasActive=false,previousFocus=null;
+ const state=()=>window.__ACE_RTA_STATE;
+ const valid=n=>nations.has(n);
+ const page=()=>document.getElementById('roadtoace');
+ const active=()=>!!page()?.classList.contains('active');
+ function identity(c){
+   if(!c)return '';
+   const id=c.id||c.career_id||(c.created_at?`${c.created_at}:${state()?.activeSave||1}`:'');
+   if(!id)return '';
+   const owner=window.vdsAccountSession?.user?.id||c.user_id||'local';
+   return `projectAce:legacyNationality:v2:${encodeURIComponent(owner)}:${encodeURIComponent(id)}`;
+ }
+ function read(c){
+   const key=identity(c);if(!key)return '';
+   try{
+     const stored=localStorage.getItem(key);if(valid(stored))return stored;
+     // Import only an unambiguous old career-ID key. Never share name-only saves.
+     const id=c.id||c.career_id;if(!id)return '';
+     const legacy=localStorage.getItem('projectAce:v79:legacyNationality:'+String(id).replace(/[^a-z0-9_-]/gi,'_'));
+     if(valid(legacy)){localStorage.setItem(key,legacy);return legacy;}
+   }catch(_){}
+   return '';
+ }
+ function restore(c){
+   if(!c||valid(c.nationality)||c.nationality==='Other Nationality')return false;
+   const saved=read(c);if(!saved)return false;
+   c.nationality=saved;return true;
+ }
+ function needs(c){return !!c&&!valid(c.nationality)&&c.nationality!=='Other Nationality';}
+ function close(){
+   if(dialog?.open)dialog.close();
+   openedKey='';
+   if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true});
+   previousFocus=null;
+ }
+ function dismiss(){dismissedKey=openedKey;close();schedule();}
+ function makeDialog(){
+   if(dialog)return;
+   dialog=document.createElement('dialog');dialog.id='aceLegacySetup';
+   dialog.setAttribute('aria-label','Choose your career nationality');
+   // Native top layer beats fixed game docks; Shadow DOM isolates old global CSS
+   // and retargets game-wide delegated events away from the form's controls.
+   dialog.style.cssText='position:fixed;inset:0;margin:auto;padding:0;border:1px solid #34404e;border-radius:18px;width:min(440px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 32px);overflow:auto;background:#0b1118;color:#edf6fb;box-sizing:border-box;touch-action:pan-y;overscroll-behavior:contain;z-index:2147483647';
+   const content=document.createElement('div');dialog.append(content);
+   root=content.attachShadow({mode:'open'});
+   root.innerHTML=`<style>
+     :host{font:16px/1.45 system-ui,-apple-system,sans-serif;color:#edf6fb;color-scheme:dark}
+     *{box-sizing:border-box}form{padding:22px;margin:0}h2{font-size:26px;line-height:1.15;margin:8px 0 12px;letter-spacing:-.02em}
+     p{font-size:14px;color:#a8b6c5;margin:0 0 18px}small{font-size:11px;color:#bda5ff;letter-spacing:.09em}
+     label{display:block;font-size:14px;font-weight:650;margin:0 0 8px}
+     select,button{font:inherit;min-height:48px;width:100%;border-radius:10px;padding:10px 12px}
+     select{background:#16202d;color:#fff;border:1px solid #607086;touch-action:manipulation}
+     button{cursor:pointer;border:1px solid #475569;background:#172130;color:#eef5ff;touch-action:manipulation}
+     button[type=submit]{background:#ccb8ff;color:#14101e;border-color:#ccb8ff;font-weight:750}
+     button:disabled{opacity:.45;cursor:default}button:focus-visible,select:focus-visible{outline:3px solid #81ceff;outline-offset:3px}
+     footer{display:grid;gap:9px;margin-top:20px;position:static}#detail{margin:12px 0 0;min-height:40px}#error{color:#ffb3b3;margin-top:12px}#error:empty{display:none}
+     .note{font-size:12px;margin:14px 0 0;color:#8799aa}@media(max-height:500px){form{padding:14px}h2{font-size:22px}p{margin-bottom:10px}}
+   </style><form><small>CAREER SETUP · 302</small><h2>Choose your national team</h2><p>Your player, OVR, skill points and progress stay unchanged. Confirm a country for this career.</p><label for="nation">Nationality</label><select id="nation" required><option value="">Choose a country…</option></select><p id="detail" aria-live="polite">Choose a country, then confirm below.</p><p id="error" role="alert"></p><footer><button type="submit" disabled>Confirm nationality</button><button type="button" id="later">Not now — return to Career</button></footer><p class="note">This choice is final for this career on this browser. Cloud synchronisation is not available for legacy nationality yet.</p></form>`;
+   const select=root.querySelector('select');
+   for(const [name,list] of groups){const group=document.createElement('optgroup');group.label=name;for(const n of list){const option=document.createElement('option');option.value=n;option.textContent=n;group.append(option);}select.append(group);}
+   select.addEventListener('change',()=>{
+     const n=select.value;root.querySelector('[type=submit]').disabled=!valid(n);
+     const profile=window.ACE_INTL_NATIONALITY_V1?.profiles?.[n];
+     root.querySelector('#detail').textContent=valid(n)?`${n}. ${profile?.[1]||'This choice is final once confirmed.'}`:'Choose a country, then confirm below.';
+     root.querySelector('#error').textContent='';
+   });
+   root.querySelector('#later').addEventListener('click',dismiss);
+   dialog.addEventListener('cancel',e=>{e.preventDefault();dismiss();});
+   root.querySelector('form').addEventListener('submit',e=>{
+     e.preventDefault();const c=state()?.career,n=select.value,key=identity(c);
+     if(!dialog.open||!valid(n))return;
+     if(!c||key!==openedKey){close();schedule();return;}
+     if(!needs(c)){close();schedule();return;}
+     try{
+       if(!key)throw Error('missing identity');
+       localStorage.setItem(key,n);
+       if(localStorage.getItem(key)!==n)throw Error('save verification failed');
+     }catch(_){root.querySelector('#error').textContent='Your choice could not be saved. Allow browser storage and try again, or choose Not now to continue playing.';return;}
+     c.nationality=n; // Do not rewrite caps, achievements, OVR, SP or attributes.
+     dismissedKey='';close();removeBanner();
+     try{window.__ACE_RTA_RENDER?.();}catch(error){console.warn('Career refresh after nationality setup failed',error);}
+     window.dispatchEvent(new CustomEvent('ace:v79:nationality-migrated',{detail:{nationality:n}}));
+   });
+   document.body.append(dialog);
+ }
+ function removeBanner(){document.getElementById('aceLegacyNotice')?.remove();}
+ function banner(){
+   const mount=document.getElementById('rta62Mount');if(!mount||document.getElementById('aceLegacyNotice'))return;
+   const b=document.createElement('button');b.id='aceLegacyNotice';b.type='button';b.textContent='Choose your national team — finish Career setup';
+   b.style.cssText='display:block;width:100%;min-height:48px;margin:0 0 12px;padding:12px;border:1px solid #8b79b9;border-radius:10px;background:#171323;color:#e7dcff;font:14px system-ui;cursor:pointer';
+   b.addEventListener('click',()=>open(true));mount.prepend(b);
+ }
+ function open(force=false){
+   const c=state()?.career,key=identity(c);if(!active()||!needs(c))return;
+   if(!force&&dismissedKey===key)return;
+   makeDialog();if(dialog.open&&openedKey===key)return;
+   close();openedKey=key;previousFocus=document.activeElement;
+   root.querySelector('select').value='';root.querySelector('[type=submit]').disabled=true;
+   root.querySelector('#detail').textContent='Choose a country, then confirm below.';root.querySelector('#error').textContent='';
+   try{dialog.showModal();}catch(error){openedKey='';console.warn('Career setup could not open',error);banner();}
+ }
+ function check(){
+   frame=0;const c=state()?.career;
+   if(!active()){close();dismissedKey='';removeBanner();return;}
+   const restored=restore(c);
+   if(!needs(c)){close();removeBanner();if(restored)window.__ACE_RTA_RENDER?.();return;}
+   banner();
+   if(dialog?.open&&openedKey!==identity(c))close();
+   if(!state()?.overlay&&!state()?.busy)open();
+ }
+ function schedule(){if(!frame)frame=requestAnimationFrame(check);}
+ window.ACE_CAREER_LEGACY={version:302,check:schedule,open:()=>open(true),restore,getNationality:read};
+ // Only page entry/exit is observed. Form mutations never schedule a redraw.
+ const careerPage=page();if(careerPage)new MutationObserver(()=>{const now=active();if(now!==wasActive){wasActive=now;schedule();}}).observe(careerPage,{attributes:true,attributeFilter:['class']});
+ window.addEventListener('storage',e=>{if(e.key?.startsWith('projectAce:legacyNationality:'))schedule();});
+ window.addEventListener('pageshow',schedule);
+ schedule();
+ window.ACE_PROJECT_BUILD='B21.36.302';
+})();
+</script>
 </body>
 </html>
-
-<!-- PROJECT ACE V79 · LEGACY CAREER MIGRATION -->
-<style id="ace-v79-legacy-migration-style">
-#aceV79Migration{position:fixed;inset:0;z-index:2147483000;display:none;align-items:flex-end;justify-content:center;background:rgba(2,5,9,.82);backdrop-filter:blur(12px);padding:14px}
-#aceV79Migration.open{display:flex}
-#aceV79Migration .v79sheet{width:min(620px,100%);max-height:88%;overflow:auto;border:1px solid rgba(255,255,255,.11);border-radius:20px;background:#0b1118;padding:18px;color:#edf6fb;box-shadow:0 -20px 70px rgba(0,0,0,.42)}
-#aceV79Migration small{display:block;color:#75a8c7;font-size:9px;font-weight:900;letter-spacing:.12em}.v79sheet h2{margin:5px 0 5px;font-size:24px;line-height:1}.v79sheet>p{margin:0 0 14px;color:#8da0ad;font-size:12px;line-height:1.45}
-.v79preserve{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.v79preserve div{padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.025)}.v79preserve b{display:block;font-size:15px}.v79preserve span{font-size:8px;color:#708492;font-weight:900;letter-spacing:.08em}
-.v79groups{display:grid;gap:10px}.v79group label{display:block;margin-bottom:5px;color:#657b8b;font-size:8px;font-weight:1000;letter-spacing:.1em}.v79nations{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.v79nation{min-height:46px;border:1px solid rgba(255,255,255,.075);border-radius:10px;background:rgba(255,255,255,.02);color:#cbd8e0;font-size:10px;font-weight:900;padding:8px}.v79nation.active{border-color:#6fb8e6;background:rgba(79,157,207,.12);color:#fff}.v79read{margin-top:10px;padding:10px;border-radius:11px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06)}.v79read b{display:block;font-size:11px}.v79read span{display:block;margin-top:3px;color:#7f929f;font-size:9px;line-height:1.35}.v79confirm{width:100%;min-height:48px;margin-top:11px;border:0;border-radius:12px;background:#e8f4fb;color:#071018;font-size:11px;font-weight:1000;letter-spacing:.04em}.v79confirm:disabled{opacity:.35}.v79permanent{margin-top:8px!important;text-align:center!important;color:#607482!important;font-size:8px!important}
-@media(max-width:520px){.v79nations{grid-template-columns:repeat(2,1fr)}.v79preserve{grid-template-columns:1fr 1fr}.v79preserve div:last-child{grid-column:1/-1}}
-</style>
-<script id="ace-v79-legacy-migration">
-(()=>{
-'use strict';
-const KEY='projectAce:v79:legacyNationality:';
-let chosen='';
-const groups=[
- ['FEATURED',['Japan','Poland','Italy','United States','Brazil','France']],
- ['EUROPE',['Slovenia','Türkiye','Ukraine','Bulgaria','Serbia','Germany','Belgium','Czech Republic','Netherlands']],
- ['ASIA / OCEANIA',['Iran','China','Qatar','Australia']],
- ['AMERICAS',['Argentina','Canada','Cuba']],
- ['AFRICA',['Egypt','Tunisia']]
-];
-const profiles=(window.ACE_INTL_NATIONALITY_V1&&window.ACE_INTL_NATIONALITY_V1.profiles)||{};
-function state(){return window.__ACE_RTA_STATE||null}
-function career(){return state()?.career||null}
-function ckey(c){return String(c?.id||c?.career_id||c?.created_at||c?.player_name||'career').replace(/[^a-z0-9_-]/gi,'_')}
-function storageKey(c){return KEY+ckey(c)}
-function saved(c){try{return localStorage.getItem(storageKey(c))||''}catch(_){return ''}}
-function valid(n){return groups.some(g=>g[1].includes(String(n||'')))}
-function applySaved(c){const n=saved(c);if(n&&valid(n)&&!valid(c.nationality)){c.nationality=n;return true}return false}
-function needs(c){return !!c&&!valid(c.nationality)&&!saved(c)}
-function ensure(){let el=document.getElementById('aceV79Migration');if(el)return el;el=document.createElement('div');el.id='aceV79Migration';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el);return el}
-function profile(n){const p=profiles[n]||['INTERNATIONAL','Playable national-team programme.'];return Array.isArray(p)?p:['INTERNATIONAL','Playable national-team programme.']}
-function draw(){const c=career();if(!c||!needs(c))return;const el=ensure();const ovr=Math.min(100,Number(c.overall??c.ovr??c.overall_rating??99)||99),sp=Math.max(0,Number(c.skill_points||0));el.innerHTML=`<div class="v79sheet"><small>PROJECT ACE · CAREER MIGRATION</small><h2>Your career stays yours.</h2><p>International Career is now available. Your existing player, attributes and progression are preserved — choose the nation this career will represent.</p><div class="v79preserve"><div><b>${ovr} OVR</b><span>PRESERVED</span></div><div><b>${sp.toLocaleString()} SP</b><span>PRESERVED</span></div><div><b>0 CAPS</b><span>INTERNATIONAL START</span></div></div><div class="v79groups">${groups.map(([label,ns])=>`<div class="v79group"><label>${label}</label><div class="v79nations">${ns.map(n=>`<button type="button" class="v79nation" data-v79-nation="${n.replace(/"/g,'&quot;')}">${n}</button>`).join('')}</div></div>`).join('')}</div><div class="v79read" id="v79Read"><b>SELECT YOUR NATIONALITY</b><span>This choice becomes permanent for this Career.</span></div><button class="v79confirm" id="v79Confirm" type="button" disabled>CONFIRM NATIONALITY →</button><p class="v79permanent">This does not spend SP, change OVR, reset attributes or grant retroactive international achievements.</p></div>`;
-el.classList.add('open');document.documentElement.style.overflow='hidden';
-el.querySelectorAll('[data-v79-nation]').forEach(b=>b.addEventListener('click',()=>{chosen=b.dataset.v79Nation||'';el.querySelectorAll('.v79nation').forEach(x=>x.classList.toggle('active',x===b));const p=profile(chosen);el.querySelector('#v79Read').innerHTML=`<b>${chosen} · ${p[0]}</b><span>${p[1]}</span>`;el.querySelector('#v79Confirm').disabled=false}));
-el.querySelector('#v79Confirm').addEventListener('click',()=>{if(!valid(chosen))return;try{localStorage.setItem(storageKey(c),chosen)}catch(_){}c.nationality=chosen;c.international_caps=Number(c.international_caps||0);c.international_achievements=Array.isArray(c.international_achievements)?c.international_achievements:[];el.classList.remove('open');document.documentElement.style.overflow='';chosen='';try{window.__ACE_RTA_RENDER?.()}catch(_){};try{window.dispatchEvent(new CustomEvent('ace:v79:nationality-migrated',{detail:{nationality:c.nationality}}))}catch(_){}})}
-function check(){const c=career();if(!c)return;const changed=applySaved(c);if(changed){try{window.__ACE_RTA_RENDER?.()}catch(_){}}if(needs(c))draw()}
-const oldLoaded=window.ace264CareerStateLoaded;window.ace264CareerStateLoaded=function(S){try{oldLoaded?.(S)}catch(_){}setTimeout(check,0)};
-const mo=new MutationObserver(()=>{const c=career();if(c&&(needs(c)||(!valid(c.nationality)&&saved(c))))setTimeout(check,0)});mo.observe(document.documentElement,{childList:true,subtree:true});
-setTimeout(check,400);
-window.ACE_LEGACY_MIGRATION_V79={version:1,playableNations:24,check,hasMigration:c=>!!saved(c),getNationality:c=>saved(c)};
-window.ACE_PROJECT_BUILD='B21.36.299';
-})();
-</script>
-
-<!-- PROJECT ACE V80 · MOBILE MIGRATION FIX -->
-<style id="ace-v80-mobile-migration-fix">
-#aceV79Migration{box-sizing:border-box;z-index:2147483647!important;overflow:hidden!important;align-items:stretch!important;padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom));touch-action:pan-y!important}
-#aceV79Migration .v79sheet{box-sizing:border-box;width:min(620px,100%);height:100%;max-height:calc(100dvh - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin:0 auto;padding:16px 14px calc(92px + env(safe-area-inset-bottom));border-radius:18px;flex:1 1 auto;touch-action:pan-y}
-#aceV79Migration .v79groups{gap:12px}
-#aceV79Migration .v79nations{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-#aceV79Migration .v79nation{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:48px;padding:9px 7px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
-#aceV79Migration .v79read{min-height:52px}
-#aceV79Migration .v79confirm{position:sticky;bottom:8px;z-index:4;min-height:52px;margin-top:14px;box-shadow:0 -8px 20px rgba(11,17,24,.94)}
-body.aceV79MigrationOpen .rta62Dock,body.aceV79MigrationOpen .vdsBottomNav,body.aceV79MigrationOpen .aceBetaFeedback,body.aceV79MigrationOpen [class*="bottomNav"],body.aceV79MigrationOpen [class*="BottomNav"]{visibility:hidden!important;pointer-events:none!important}
-@media(max-width:380px){#aceV79Migration{padding-left:8px;padding-right:8px}#aceV79Migration .v79sheet{padding-left:11px;padding-right:11px}.v79sheet h2{font-size:21px}.v79preserve{gap:5px}.v79preserve div{padding:8px}.v79nation{font-size:9px!important}}
-</style>
-<script id="ace-v80-mobile-migration-fix-script">
-(()=>{
-'use strict';
-function unlockPage(){document.documentElement.style.overflow='';document.body.style.overflow=''}
-function fixDialog(){
- const el=document.getElementById('aceV79Migration'); if(!el)return;
- document.body.classList.toggle('aceV79MigrationOpen',el.classList.contains('open'));
- if(el.dataset.v80Fixed==='1')return; el.dataset.v80Fixed='1';
- const sheet=el.querySelector('.v79sheet');
- if(sheet){
-   // Keep the migration gesture inside its own native scroller.
-   ['touchstart','touchmove','touchend','pointerdown','pointermove','pointerup'].forEach(type=>sheet.addEventListener(type,e=>e.stopPropagation(),{passive:true}));
- }
- // Delegate taps from the overlay so mobile WebKit does not lose button events
- // when the sheet is inside a transformed/scrolling application surface.
- el.addEventListener('pointerup',e=>{
-   const b=e.target.closest?.('[data-v79-nation]');
-   if(!b||!el.contains(b))return;
-   if(typeof b.click==='function')setTimeout(()=>{if(!b.classList.contains('active'))b.click()},0);
- },{capture:true,passive:true});
- const confirm=el.querySelector('#v79Confirm');
- if(confirm)confirm.addEventListener('click',()=>setTimeout(()=>{unlockPage();document.body.classList.remove('aceV79MigrationOpen')},0),{once:true});
-}
-const mo=new MutationObserver(()=>fixDialog());mo.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-setTimeout(fixDialog,0);setTimeout(fixDialog,500);
-window.ACE_PROJECT_BUILD='B21.36.300';
-})();
-</script>
