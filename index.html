@@ -44147,7 +44147,7 @@ function renderAttackKeyOverlay(){
   function showTrainingResult(d){
     const cardCareer=d?.career||S.career,coach=d?.coach_profile||S.clubWorld?.club||{},bonus=Number(d?.coach_bonus||0);
     const resultFocus=String(d?.physical_stat||"").toUpperCase()?rta113PhysicalStatMeta(d.physical_stat).label:pretty(d.focus);
-    setOverlay(`<div class="rta62OverlayShell">${overlayTop("TRAINING COMPLETE",resultFocus)}<div class="rta62OverlayBody rta66RewardOverlay"><div class="rta66RewardCard">${cardCareer?careerCardHTML(cardCareer,{mini:true,result:true}):""}</div><div class="rta62Result"><strong>${esc(d.grade||"—")}</strong><h2>${Number(d.successful_reps||0)} / ${Number(d.total_reps||8)} good reps</h2><p class="rta62Sub">Average quality · ${Math.round(Number(d.average_quality||0)*100)}%</p><div class="rta62Reward"><div><span>XP</span><b>+${Number(d.xp_earned||0)}</b></div><div><span>COACH TRUST</span><b>${Number(d.coach_trust_change||0)>=0?"+":""}${Number(d.coach_trust_change||0)}</b></div><div><span>MENTAL FORM</span><b>${Number(d.mental_form_change||0)>=0?"+":""}${Number(d.mental_form_change||0)}</b></div></div>${bonus>0?`<div class="rta87CoachBonus"><i>↑</i><div><small>${esc(coach.coach_name||coach.coach||"COACH")} · SPECIALIST DEVELOPMENT</small><b>+${bonus} EXTRA ${esc(pretty(d.focus))} GAIN</b><span>${esc(coach.philosophy||"Club coaching expertise")} rewarded this session.</span></div></div>`:`<div class="rta87CoachBonus quiet"><i>◇</i><div><small>COACH DEVELOPMENT</small><b>${esc(pretty(coach.primary_focus||"OPEN"))} PRIMARY · ${esc(pretty(coach.secondary_focus||"OPEN"))} SECONDARY</b><span>Higher training grades in specialist areas unlock extra development.</span></div></div>`}<div class="rta66CardChange"><span>CAREER CARD</span><b>${Number(cardCareer?.overall||S.career?.overall||0)} OVR · ${careerCardTier(cardCareer||S.career).label}</b></div><button class="rta62Btn primary" data-rta62-training-done>RETURN TO TRAINING →</button></div></div></div>`,"training-result");
+    setOverlay(`<div class="rta62OverlayShell">${overlayTop("TRAINING COMPLETE",resultFocus)}<div class="rta62OverlayBody rta66RewardOverlay"><div class="rta66RewardCard">${cardCareer?careerCardHTML(cardCareer,{mini:true,result:true}):""}</div><div class="rta62Result"><strong>${esc(d.grade||"—")}</strong><h2>${Number(d.successful_reps||0)} / ${Number(d.total_reps||8)} good reps</h2><p class="rta62Sub">Average quality · ${Math.round(Number(d.average_quality||0)*100)}%</p><div class="rta62Reward"><div><span>XP</span><b>+${Number(d.xp_earned||0)}</b></div><div><span>COACH TRUST</span><b>${Number(d.coach_trust_change||0)>=0?"+":""}${Number(d.coach_trust_change||0)}</b></div><div><span>MENTAL FORM</span><b>${Number(d.mental_form_change||0)>=0?"+":""}${Number(d.mental_form_change||0)}</b></div></div>${bonus>0?`<div class="rta87CoachBonus"><i>↑</i><div><small>${esc(coach.coach_name||coach.coach||"COACH")} · SPECIALIST DEVELOPMENT</small><b>+${bonus} EXTRA ${esc(pretty(d.focus))} GAIN</b><span>${esc(coach.philosophy||"Club coaching expertise")} rewarded this session.</span></div></div>`:`<div class="rta87CoachBonus quiet"><i>◇</i><div><small>COACH DEVELOPMENT</small><b>${esc(pretty(coach.primary_focus||"OPEN"))} PRIMARY · ${esc(pretty(coach.secondary_focus||"OPEN"))} SECONDARY</b><span>Higher training grades in specialist areas unlock extra development.</span></div></div>`}<div class="rta66CardChange"><span>CAREER CARD</span><b>${Number(cardCareer?.overall||S.career?.overall||0)} OVR · ${careerCardTier(cardCareer||S.career).label}</b></div><button class="rta62Btn primary" data-rta62-training-done>${Number(cardCareer?.training_used||0)<2?"CHOOSE NEXT DRILL →":"BACK TO TRAINING →"}</button></div></div></div>`,"training-result");
   }
 
   async function startKeyMatch(){
@@ -44687,7 +44687,23 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta83-clear-photo]")){rta83RemoveCurrentCardPhoto();return}
     if(e.target.closest?.("[data-rta83-reset-placement]")){rta83ResetPlacement();return}
     if(e.target.closest?.("[data-rta62-close]")){closeOverlay();return}
-    if(e.target.closest?.("[data-rta62-training-done]")){closeOverlay();S.view="train";render();return}
+    if(e.target.closest?.("[data-rta62-training-done]")){
+      /* B21.36.313C — phone drill completion must return to a LIVE Training Centre.
+         The result overlay can be dismissed before the silent post-drill state refresh
+         has finished. Rendering immediately from that stale state leaves activeTraining
+         truthy, so every drill looks disabled until the player taps DRILLS again. */
+      const completedCareer=S.training?.career||null;
+      closeOverlay();
+      S.view="train";S.feedback=null;S.activeTraining=null;
+      if(completedCareer)S.career=completedCareer;
+      render();
+      /* Let an in-flight result refresh finish, then do one authoritative lightweight
+         refresh. This keeps the second available weekly session tappable immediately. */
+      for(let i=0;i<20&&S.loading;i++)await new Promise(r=>setTimeout(r,50));
+      if(!S.loading){try{await loadState({silent:true,world:false})}catch(_){}}
+      S.view="train";S.activeTraining=null;render();
+      return
+    }
     if(e.target.closest?.("[data-rta-intl-result-done]")){closeOverlay();S.view="career";S.careerPanel="international";render();return}
     if(e.target.closest?.("[data-rta62-result-done]")){
       closeOverlay();
@@ -50329,6 +50345,78 @@ window.ACE_SQUAD_BATTLE_V313={refresh:()=>refresh(true),get:()=>battle};window.A
   queue(0);
   window.ACE_PROJECT_BUILD='B21.36.313B';
 })();
+</script>
+
+<style id="ace313c-phone-drills-ui">
+@media (max-width:760px){
+  /* Put the action first. Coach detail remains available, but below the drills. */
+  #roadtoace .rta187TrainingCentre>.rta187TrainingHero{order:1!important}
+  #roadtoace .rta187TrainingCentre>.ace252FirstMatchGuide,
+  #roadtoace .rta187TrainingCentre>.rta78TrainingResume{order:2!important}
+  #roadtoace .rta187TrainingCentre>.rta187RecommendedRail{order:3!important}
+  #roadtoace .rta187TrainingCentre>.rta187TrainingSection.technical{order:4!important}
+  #roadtoace .rta187TrainingCentre>.rta187TrainingSection.physical{order:5!important}
+  #roadtoace .rta187TrainingCentre>.rta187CoachStrip{order:6!important}
+
+  /* The old phone hero consumed too much of the first screen. */
+  #roadtoace .rta187TrainingHero{min-height:132px!important;height:132px!important}
+  #roadtoace .rta187HeroCopy{padding:15px 11px!important;max-width:68%!important}
+  #roadtoace .rta187HeroCopy h1{font-size:23px!important;line-height:.92!important;margin-top:4px!important}
+  #roadtoace .rta187HeroCopy p{display:none!important}
+  #roadtoace .rta187SessionPill{top:9px!important;right:8px!important;min-width:96px!important;padding:7px 8px!important}
+  #roadtoace .rta187HeroVisual{left:38%!important;opacity:.30!important}
+
+  /* Show the whole drill menu instead of hiding most drills in sideways carousels. */
+  #roadtoace .rta187TechnicalGrid,#roadtoace .rta187PhysicalGrid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;overflow:visible!important;scroll-snap-type:none!important;
+    padding:0 8px 4px!important
+  }
+  #roadtoace .rta187TrainCard,#roadtoace .rta187PhysicalCard{
+    width:auto!important;min-width:0!important;max-width:none!important;flex:none!important;
+    min-height:126px!important;padding:9px!important;scroll-snap-align:none!important;border-radius:13px!important
+  }
+  #roadtoace .rta187PhysicalCard{min-height:118px!important}
+  #roadtoace .rta187CardIcon{width:31px!important;height:31px!important}
+  #roadtoace .rta187CardCopy,#roadtoace .rta187PhysicalCard .rta187CardCopy{max-width:72%!important;margin-top:7px!important}
+  #roadtoace .rta187CardCopy small{font-size:7px!important}
+  #roadtoace .rta187CardCopy b{font-size:23px!important}
+  #roadtoace .rta187CardCopy p{display:none!important}
+  #roadtoace .rta187CardCopy em{font-size:7px!important;margin-top:8px!important}
+  #roadtoace .rta187RecTag{font-size:5.5px!important;padding:4px 5px!important;max-width:88%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  #roadtoace .rta187SectionHead{padding:2px 9px 6px!important}
+  #roadtoace .rta187SectionHead h2{font-size:9px!important;line-height:1.2!important}
+
+  /* Recommended drill becomes the obvious primary phone action. */
+  #roadtoace .rta187RecommendedRail{margin:1px 8px 3px!important;padding:10px!important;background:linear-gradient(135deg,rgba(36,122,185,.17),rgba(9,27,43,.96))!important}
+  #roadtoace .rta187RecommendedRail>button{min-height:50px!important;font-size:9px!important;border-radius:11px!important}
+  #roadtoace .rta187RecommendIntro h2{font-size:14px!important}
+  #roadtoace .rta187RecommendIntro p{font-size:7px!important;line-height:1.35!important}
+
+  /* Coach information is secondary on a phone: compact cards after the playable drills. */
+  #roadtoace .rta187CoachStrip{margin-top:4px!important;padding:0 8px 4px!important}
+  #roadtoace .rta187CoachStrip>article{flex-basis:76vw!important;min-height:96px!important;padding:10px!important}
+
+  /* Result screen remains scrollable on short iPhones and keeps the next action reachable. */
+  #rta62Overlay[data-kind="training-result"] .rta62OverlayShell,
+  #rta62Overlay[data-kind="training-result"] .rta220ResultShell{height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+  #rta62Overlay[data-kind="training-result"] [data-rta62-training-done]{
+    position:sticky!important;bottom:max(8px,env(safe-area-inset-bottom))!important;z-index:20!important;
+    min-height:52px!important;box-shadow:0 10px 30px rgba(0,0,0,.38)!important
+  }
+  #roadtoace .rta187TrainCard,#roadtoace .rta187PhysicalCard,#roadtoace .rta187RecommendedRail>button,
+  #rta62Overlay[data-kind="training"] button{touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important}
+}
+@media (max-width:360px){
+  #roadtoace .rta187TechnicalGrid,#roadtoace .rta187PhysicalGrid{gap:5px!important;padding-left:6px!important;padding-right:6px!important}
+  #roadtoace .rta187TrainCard,#roadtoace .rta187PhysicalCard{min-height:120px!important;padding:8px!important}
+  #roadtoace .rta187CardCopy b{font-size:21px!important}
+}
+</style>
+<script id="ace313c-phone-drills-build">
+window.ACE_PROJECT_BUILD="B21.36.313C";
+window.ACE_PHONE_DRILL_RETURN_FIX_V313C=true;
+window.ACE_PHONE_DRILL_UI_V313C=true;
 </script>
 </body>
 </html>
