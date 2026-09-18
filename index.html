@@ -13037,43 +13037,23 @@ async function vdsApplySignedInSession(session,{resumeRoom=true}={}){
     return false;
   }
 
-  /* B21.36.308 — authentication success must never wait for profile,
-     wallet, artwork or Ultimate Team hydration. On weak/mobile networks
-     those secondary requests can be slow even though Google sign-in itself
-     has already succeeded. Open the game immediately, hydrate afterwards. */
   vdsAccountSession=session;
   mpIdentityUserId=session.user.id;
   mpPlayerId=session.user.id;
-  vdsAccountAuthBusy=false;
   try{ensureMultiplayerClient()?.realtime.setAuth(session.access_token);}catch(e){}
+
+  await vdsEnsureProfile(session.user);
   vdsUpdateAccountUI();
+  try{
+    if(typeof vdsSyncUltimateTeamCloud==="function")await vdsSyncUltimateTeamCloud({allowLegacyImport:true});
+  }catch(error){console.warn("Ultimate Team account sync on sign-in failed",error);}
+  setTimeout(()=>vdsRefreshAccountProgression({loadPanels:true}),60);
+  setTimeout(()=>vdsForceWalletSyncFromServer({rerender:true,quiet:false}),240);
   vdsHideAccountGate();
   vdsSetAuthStatus("Signed in.","ok");
+  aceMaybeShowFirstLoginOnboarding();
 
-  const timeout=(promise,ms,label)=>Promise.race([
-    Promise.resolve(promise),
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error(label||"AUTH_HYDRATION_TIMEOUT")),ms))
-  ]);
-
-  try{
-    await timeout(vdsEnsureProfile(session.user),6500,"PROFILE_LOAD_TIMEOUT");
-    vdsUpdateAccountUI();
-  }catch(error){
-    console.warn("ACE profile hydration did not block sign-in",error);
-  }
-
-  /* Everything below is intentionally detached from the login gate. */
-  setTimeout(async()=>{
-    try{
-      if(typeof vdsSyncUltimateTeamCloud==="function")
-        await timeout(vdsSyncUltimateTeamCloud({allowLegacyImport:true}),8000,"UT_SYNC_TIMEOUT");
-    }catch(error){console.warn("Ultimate Team background sync after sign-in failed",error);}
-  },0);
-  setTimeout(()=>{try{vdsRefreshAccountProgression({loadPanels:true})}catch(e){}},80);
-  setTimeout(()=>{try{vdsForceWalletSyncFromServer({rerender:true,quiet:false})}catch(e){}},280);
-  setTimeout(()=>{try{aceMaybeShowFirstLoginOnboarding()}catch(e){}},120);
-
-  if(resumeRoom && !mpChannel && mpResumeRecord()?.code)setTimeout(()=>mpTryAutoResume(),220);
+  if(resumeRoom && !mpChannel && mpResumeRecord()?.code)setTimeout(()=>mpTryAutoResume(),180);
   return true;
 }
 
@@ -13116,7 +13096,7 @@ async function vdsSignInWithGoogle(){
     // Use Supabase's normal browser OAuth redirect.
     // This is the supported browser flow and is more reliable on iOS/in-app browsers
     // than manually requesting the URL and navigating after the async call.
-    const oauthStart=client.auth.signInWithOAuth({
+    const {error}=await client.auth.signInWithOAuth({
       provider:"google",
       options:{
         redirectTo,
@@ -13124,8 +13104,6 @@ async function vdsSignInWithGoogle(){
         queryParams:{prompt:"select_account"}
       }
     });
-    const oauthTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("GOOGLE_OAUTH_START_TIMEOUT")),10000));
-    const {error}=await Promise.race([oauthStart,oauthTimeout]);
     if(error)throw error;
   }catch(error){
     console.error("VDS Google sign-in failed",error);
@@ -13134,8 +13112,6 @@ async function vdsSignInWithGoogle(){
       vdsSetAuthStatus("Google sign-in is not enabled in Supabase yet. Add the Google Client ID and Secret, then try again.","error");
     }else if(/redirect/i.test(message)){
       vdsSetAuthStatus("This website URL is not yet allowed in the Supabase / Google OAuth redirect settings.","error");
-    }else if(/GOOGLE_OAUTH_START_TIMEOUT/i.test(message)){
-      vdsSetAuthStatus("Google sign-in took too long to open. Check your connection, then tap Google again.","error");
     }else{
       vdsSetAuthStatus(message||"Google sign-in could not start.","error");
     }
@@ -13659,19 +13635,7 @@ async function vdsInitAccountGate(){
   document.getElementById("vdsSaveProfileBtn")?.addEventListener("click",vdsSaveProfile);
   document.getElementById("vdsSignOutBtn")?.addEventListener("click",vdsSignOut);
 
-  let data=null,error=null;
-  try{
-    const sessionCheck=await Promise.race([
-      client.auth.getSession(),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error("SESSION_CHECK_TIMEOUT")),6500))
-    ]);
-    data=sessionCheck?.data||null;
-    error=sessionCheck?.error||null;
-  }catch(e){
-    console.warn("VDS account session check timed out; sign-in remains available",e);
-    vdsAccountAuthBusy=false;
-    if(btn)btn.disabled=false;
-  }
+  let {data,error}=await client.auth.getSession();
   if(error)console.warn("VDS account session check failed",error);
 
   let session=data?.session||null;
@@ -49679,47 +49643,67 @@ window.ACE_PROJECT_BUILD="B21.36.296";
 <script id="ace-v77-build-marker">window.ACE_PROJECT_BUILD="B21.36.297";window.ACE_INTL_DEPTH_CHART_V1={persistent:true,seasonalAging:true,retirement:true,playableNations:24};</script>
 
 
-<style id="ace-v78-offseason-transfer-style">
-#roadtoace .aceV78Decision{margin:10px 14px 12px;padding:14px;border:1px solid rgba(225,190,105,.18);border-radius:14px;background:linear-gradient(135deg,rgba(225,190,105,.07),rgba(255,255,255,.018));color:#edf5f8}
-#roadtoace .aceV78Decision small{display:block;color:#c5a85f;font-size:7px;font-weight:1000;letter-spacing:.12em}#roadtoace .aceV78Decision h2{margin:4px 0 3px;font-size:18px}#roadtoace .aceV78Decision p{margin:0;color:#8194a0;font-size:8px;line-height:1.45}#roadtoace .aceV78Decision button{width:100%;min-height:44px;margin-top:11px;border:1px solid rgba(225,190,105,.28);border-radius:10px;background:#e0bd68;color:#101417;font-size:9px;font-weight:1000;letter-spacing:.06em}
-.aceV78ChooserBackdrop{position:fixed;inset:0;z-index:100000;background:rgba(3,7,10,.78);display:flex;align-items:flex-end;justify-content:center;padding:14px;backdrop-filter:blur(8px)}.aceV78Chooser{width:min(620px,100%);max-height:82vh;overflow:auto;border:1px solid rgba(255,255,255,.10);border-radius:18px;background:#0b1218;color:#edf5f8;padding:16px;box-shadow:0 30px 80px rgba(0,0,0,.5)}.aceV78ChooserHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)}.aceV78ChooserHead small{display:block;color:#c5a85f;font-size:8px;font-weight:1000;letter-spacing:.12em}.aceV78ChooserHead h2{margin:4px 0 3px;font-size:22px}.aceV78ChooserHead p{margin:0;color:#7f929f;font-size:10px;line-height:1.45}.aceV78ChooserClose{width:42px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:#b9c7cf;font-size:18px}.aceV78OfferList{display:grid;gap:7px;margin-top:12px}.aceV78Offer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.025)}.aceV78Offer small{display:block;color:#6e8594;font-size:7px;font-weight:1000}.aceV78Offer b{display:block;margin-top:2px;font-size:13px}.aceV78Offer span{display:block;margin-top:3px;color:#8194a0;font-size:8px}.aceV78Offer button{min-width:92px;min-height:42px;border:1px solid rgba(225,190,105,.25);border-radius:9px;background:rgba(225,190,105,.10);color:#e6c875;font-size:8px;font-weight:1000}.aceV78NoOffers{padding:18px 4px;color:#8799a4;font-size:10px;line-height:1.5}.aceV78Flow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:12px}.aceV78Flow span{padding:7px 4px;border-radius:7px;background:rgba(255,255,255,.025);text-align:center;color:#607583;font-size:6px;font-weight:900}.aceV78Flow span:first-child{color:#e6c875;background:rgba(225,190,105,.07)}
-@media(max-width:760px){#roadtoace .aceV78Decision{margin:8px 14px 10px;padding:12px}#roadtoace .aceV78Decision h2{font-size:16px}#roadtoace .aceV78Decision p{font-size:9px}.aceV78ChooserBackdrop{padding:0;align-items:flex-end}.aceV78Chooser{border-radius:18px 18px 0 0;max-height:86vh;padding:14px}.aceV78Offer{grid-template-columns:1fr}.aceV78Offer button{width:100%}.aceV78Flow span{font-size:5.5px}}
+<style id="ace-v311-offseason-transfer-style">
+#roadtoace .ace311Decision{margin:10px 14px 12px;padding:15px;border:1px solid rgba(225,190,105,.20);border-radius:15px;background:radial-gradient(circle at 88% 10%,rgba(225,190,105,.09),transparent 34%),linear-gradient(135deg,rgba(225,190,105,.065),rgba(255,255,255,.015));color:#edf5f8}
+#roadtoace .ace311Decision small{display:block;color:#d0af60;font-size:7px;font-weight:1000;letter-spacing:.13em}#roadtoace .ace311Decision h2{margin:5px 0 4px;font-size:19px}#roadtoace .ace311Decision p{margin:0;color:#8194a0;font-size:8px;line-height:1.5}#roadtoace .ace311Decision button{width:100%;min-height:46px;margin-top:12px;border:1px solid rgba(225,190,105,.30);border-radius:10px;background:#e0bd68;color:#101417;font-size:9px;font-weight:1000;letter-spacing:.06em;cursor:pointer}
+.ace311Backdrop{position:fixed;inset:0;z-index:100040;background:rgba(2,6,10,.84);display:flex;align-items:flex-end;justify-content:center;padding:14px;backdrop-filter:blur(10px)}.ace311Sheet{width:min(760px,100%);max-height:88vh;overflow:auto;border:1px solid rgba(255,255,255,.10);border-radius:20px;background:linear-gradient(180deg,#0d151c,#091016);color:#edf5f8;padding:17px;box-shadow:0 32px 90px rgba(0,0,0,.58)}
+.ace311Head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.07)}.ace311Head small{display:block;color:#d0af60;font-size:8px;font-weight:1000;letter-spacing:.13em}.ace311Head h2{margin:4px 0 3px;font-size:24px}.ace311Head p{margin:0;color:#8194a0;font-size:10px;line-height:1.45}.ace311Close{width:42px;height:42px;flex:0 0 42px;border-radius:10px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:#b9c7cf;font-size:18px;cursor:pointer}
+.ace311Spotlight{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin:12px 0;padding:11px;border:1px solid rgba(93,181,241,.14);border-radius:11px;background:rgba(72,159,220,.055)}.ace311Spotlight>span{font-size:22px}.ace311Spotlight small{display:block;color:#6caee0;font-size:7px;font-weight:1000}.ace311Spotlight b{display:block;margin-top:2px;font-size:11px}.ace311Spotlight em{display:block;margin-top:2px;color:#7790a0;font-size:8px;font-style:normal}
+.ace311Offers{display:grid;gap:8px;margin-top:12px}.ace311Offer{position:relative;overflow:hidden;padding:13px;border:1px solid rgba(255,255,255,.075);border-radius:13px;background:rgba(255,255,255,.025)}.ace311Offer.priority{border-color:rgba(225,190,105,.24);background:linear-gradient(135deg,rgba(225,190,105,.055),rgba(255,255,255,.02))}.ace311OfferTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.ace311OfferTop small{display:block;color:#6f8593;font-size:7px;font-weight:1000;letter-spacing:.08em}.ace311OfferTop h3{margin:3px 0 2px;font-size:15px}.ace311OfferTop p{margin:0;color:#7f929f;font-size:8px}.ace311Interest{padding:5px 8px;border-radius:999px;border:1px solid rgba(225,190,105,.18);background:rgba(225,190,105,.07);color:#dfc271;font-size:6px;font-weight:1000;white-space:nowrap}
+.ace311Metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:10px 0}.ace311Metrics span{min-width:0;padding:8px 6px;border-radius:8px;background:rgba(255,255,255,.026)}.ace311Metrics small{display:block;color:#617785;font-size:6px;font-weight:900}.ace311Metrics b{display:block;margin-top:3px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace311Reason{min-height:30px;margin:0 0 10px;color:#8094a0;font-size:8px;line-height:1.45}.ace311Accept{width:100%;min-height:43px;border:1px solid rgba(225,190,105,.24);border-radius:9px;background:rgba(225,190,105,.10);color:#e8cb7a;font-size:8px;font-weight:1000;cursor:pointer}.ace311Offer.priority .ace311Accept{background:#e0bd68;color:#11161a}.ace311Empty{padding:20px 5px;color:#8799a4;font-size:10px;line-height:1.5}.ace311Flow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:13px}.ace311Flow span{padding:7px 4px;border-radius:7px;background:rgba(255,255,255,.025);text-align:center;color:#607583;font-size:6px;font-weight:900}.ace311Flow span.done{color:#72d6a2;background:rgba(74,204,139,.055)}.ace311Flow span.now{color:#e6c875;background:rgba(225,190,105,.07)}
+@media(max-width:760px){#roadtoace .ace311Decision{margin:8px 12px 10px;padding:12px}#roadtoace .ace311Decision h2{font-size:17px}#roadtoace .ace311Decision p{font-size:9px}.ace311Backdrop{padding:0;align-items:flex-end}.ace311Sheet{border-radius:19px 19px 0 0;max-height:91vh;padding:14px}.ace311Head h2{font-size:21px}.ace311Metrics{grid-template-columns:repeat(2,1fr)}.ace311Metrics span:last-child{grid-column:1/-1}.ace311Flow span{font-size:5.5px}}
 </style>
-<script id="ace-v78-offseason-transfer-flow">
-(function(){
+<script id="ace-v311-offseason-transfer-flow">
+(()=>{
 'use strict';
-function state(){return window.__ACE_RTA_STATE||null}
-function career(){return state()?.career||null}
-function esc(v){return String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]))}
+let refreshKey='',opening=false,frame=0;
+const state=()=>window.__ACE_RTA_STATE||null;
+const career=()=>state()?.career||null;
+const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+const money=n=>'£'+Number(n||0).toLocaleString('en-GB')+'/wk';
+function selection(){try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}}
 function offers(){const c=career();return Array.isArray(c?.transfer_offers)?c.transfer_offers:[]}
-function close(){document.querySelector('.aceV78ChooserBackdrop')?.remove()}
-function openChooser(){
- close();const c=career();if(!c?.season_complete)return;
- const os=offers();const wrap=document.createElement('div');wrap.className='aceV78ChooserBackdrop';
- const rows=os.map(o=>`<article class="aceV78Offer"><div><small>${esc(o.type||'OFFER')}</small><b>${esc(o.club||'Club')}</b><span>${esc(o.league_name||'Career move')} · ${esc(o.role||'ROTATION')}</span></div><button type="button" data-rta62-next-season="${esc(o.club||'')}">${String(o.type||'').toUpperCase()==='STAY'?'RENEW & STAY':String(o.type||'').toUpperCase()==='SCHOLARSHIP'?'ACCEPT':'JOIN CLUB'} →</button></article>`).join('');
- wrap.innerHTML=`<section class="aceV78Chooser" role="dialog" aria-modal="true" aria-label="Choose your next club"><header class="aceV78ChooserHead"><div><small>SEASON ${Number(c.season||1)} COMPLETE · NEXT CAREER DECISION</small><h2>Choose your club</h2><p>International selection is announced at season end. Your club choice still determines where the next club season begins.</p></div><button type="button" class="aceV78ChooserClose" aria-label="Close">×</button></header>${rows?`<div class="aceV78OfferList">${rows}</div>`:`<div class="aceV78NoOffers">No end-of-season offers are available yet. Open your Agent desk to search the market.</div>`}<div class="aceV78Flow"><span>INT'L SELECTION</span><span>CHOOSE CLUB</span><span>VNL / OFF-SEASON</span><span>NEW SEASON</span></div></section>`;
- document.body.appendChild(wrap);wrap.querySelector('.aceV78ChooserClose')?.addEventListener('click',close);wrap.addEventListener('click',e=>{if(e.target===wrap)close();if(e.target.closest?.('[data-rta62-next-season]'))setTimeout(close,500)});
+function intlPending(){const c=career(),s=selection();if(!c?.season_complete||s?.status!=='SELECTED')return false;return String(c?.international_window?.stage||'')!=='COMPLETE'}
+function close(){document.querySelector('.ace311Backdrop')?.remove();document.body.style.overflow=''}
+async function refreshMarket(force=false){
+ const c=career();if(!c?.season_complete||typeof window.ACE_RTA_RPC!=='function')return offers();
+ const key=`${c.season}|${c.international_window?.stage||'NONE'}|${c.international_window?.outcome||''}|${c.reputation||0}`;
+ if(!force&&refreshKey===key&&offers().length)return offers();
+ const d=await window.ACE_RTA_RPC('vds_rta_refresh_offseason_market',{});
+ if(d?.career&&state())state().career=d.career;else if(Array.isArray(d?.offers))c.transfer_offers=d.offers;
+ refreshKey=key;return Array.isArray(d?.offers)?d.offers:offers();
 }
-function goStory(){const s=state();if(!s)return;s.view='career';s.careerPanel='story';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(()=>{const block=document.querySelector('#roadtoace .rta92OffersBlock');block?.scrollIntoView?.({behavior:'smooth',block:'start'})},80)}
+function internationalGate(){
+ close();const c=career(),s=selection();const wrap=document.createElement('div');wrap.className='ace311Backdrop';
+ wrap.innerHTML=`<section class="ace311Sheet" role="dialog" aria-modal="true"><header class="ace311Head"><div><small>INTERNATIONAL DUTY COMES FIRST</small><h2>Your club market is waiting.</h2><p>${esc(c?.nationality||'Your national team')} selected you as ${esc(s?.role||'ROTATION')}. Finish this international window before signing your next club contract.</p></div><button class="ace311Close" type="button">×</button></header><div class="ace311Spotlight"><span>✈</span><div><small>CAREER ORDER</small><b>CLUB SEASON ✓ → INTERNATIONAL DUTY → TRANSFER WINDOW</b><em>Your international performances can increase club interest and improve your offers.</em></div></div><button type="button" class="ace311Accept" data-ace311-intl>CONTINUE INTERNATIONAL DUTY →</button></section>`;
+ document.body.appendChild(wrap);document.body.style.overflow='hidden';wrap.querySelector('.ace311Close')?.addEventListener('click',close);wrap.addEventListener('click',e=>{if(e.target===wrap)close();if(e.target.closest?.('[data-ace311-intl]')){close();try{window.ACE_INTL_CALLUP_V303?.openHub?.()}catch(_){}}});
+}
+function offerCard(o,i){
+ const tag=String(o.market_tag||o.type||'OFFER');const priority=/PRIORITY|STRONG/.test(tag);const wage=Number(o.weekly_wage||0);const years=Number(o.contract_years||1);const strength=Number(o.team_strength||0);const fit=Number(o.fit||0);const interest=Number(o.interest_score||fit);
+ return `<article class="ace311Offer ${priority?'priority':''}"><div class="ace311OfferTop"><div><small>${esc(o.type||'OFFER')} · ${esc(o.country||'')}</small><h3>${esc(o.club||'Club')}</h3><p>${esc(o.league_name||'Career move')}</p></div><span class="ace311Interest">${esc(tag)}</span></div><div class="ace311Metrics"><span><small>ROLE</small><b>${esc(o.role||'ROTATION')}</b></span><span><small>TEAM OVR</small><b>${strength||'—'}</b></span><span><small>CLUB FIT</small><b>${fit}%</b></span><span><small>CONTRACT</small><b>${years} YEAR${years===1?'':'S'}</b></span><span><small>WAGE</small><b>${wage?money(wage):'—'}</b></span></div><p class="ace311Reason">${esc(o.reason||'A new career opportunity.')}${interest>=96?' The club sees you as a major target.':''}</p><button type="button" class="ace311Accept" data-rta62-next-season="${esc(o.club||'')}">${String(o.type||'').toUpperCase()==='STAY'?'RENEW & STAY':String(o.type||'').toUpperCase()==='SCHOLARSHIP'?'ACCEPT SCHOLARSHIP':'ACCEPT TRANSFER'} →</button></article>`;
+}
+async function openChooser(){
+ if(opening)return;const c=career();if(!c?.season_complete)return;if(intlPending()){internationalGate();return}
+ opening=true;close();
+ try{await refreshMarket(true)}catch(err){console.warn('ACE 311 market refresh failed',err)}finally{opening=false}
+ const now=career();if(!now?.season_complete)return;const os=offers(),w=now.international_window||{},spot=Number(os[0]?.international_spotlight||0),outcome=String(w.outcome||'');const wrap=document.createElement('div');wrap.className='ace311Backdrop';
+ wrap.innerHTML=`<section class="ace311Sheet" role="dialog" aria-modal="true" aria-label="Off-season transfer window"><header class="ace311Head"><div><small>SEASON ${Number(now.season||1)} · OFF-SEASON</small><h2>Transfer Window</h2><p>Compare your role, team strength, contract and club fit. Once you sign, the next season begins.</p></div><button type="button" class="ace311Close" aria-label="Close">×</button></header>${spot?`<div class="ace311Spotlight"><span>★</span><div><small>INTERNATIONAL SPOTLIGHT +${spot}</small><b>${esc(outcome||'NATIONAL TEAM')} raised your market profile.</b><em>Your international run has been included in club interest and contract value.</em></div></div>`:''}${os.length?`<div class="ace311Offers">${os.map(offerCard).join('')}</div>`:`<div class="ace311Empty">No offers are available yet. Your agent can continue working the market.</div>`}<div class="ace311Flow"><span class="done">CLUB SEASON ✓</span><span class="done">INT'L WINDOW ✓</span><span class="now">TRANSFER WINDOW</span><span>NEW SEASON</span></div></section>`;
+ document.body.appendChild(wrap);document.body.style.overflow='hidden';wrap.querySelector('.ace311Close')?.addEventListener('click',close);wrap.addEventListener('click',e=>{if(e.target===wrap)close();if(e.target.closest?.('[data-rta62-next-season]'))setTimeout(close,650)});
+}
 function decorate(){
- const s=state(),c=career(),mount=document.querySelector('#roadtoace #rta62Mount');if(!s||!c||!mount)return;
- if(!c.season_complete){mount.querySelectorAll('.aceV78Decision').forEach(x=>x.remove());return}
- if(s.view==='home'&&!mount.querySelector('.aceV78Decision')){
-   const card=document.createElement('section');card.className='aceV78Decision';card.innerHTML=`<small>SEASON COMPLETE · ACTION REQUIRED</small><h2>Choose your club for next season</h2><p>Your national-team decision is announced now. Choose your next club before the new club season begins.</p><button type="button" data-ace-v78-choose>CHOOSE YOUR CLUB →</button>`;
-   const anchor=mount.querySelector('.aceV74Calendar,.rta93HomeHero,.rta227HomeHero');if(anchor)anchor.insertAdjacentElement(anchor.classList.contains('aceV74Calendar')?'beforebegin':'afterend',card);else mount.prepend(card);
- }
- if(s.view==='career'&&!mount.querySelector('.aceV78Decision')){
-   const card=document.createElement('section');card.className='aceV78Decision';card.innerHTML=`<small>NEXT CAREER DECISION</small><h2>Your next club is waiting</h2><p>${offers().length?`${offers().length} end-of-season option${offers().length===1?'':'s'} available.`:'Open your agent desk if no offers are available yet.'}</p><button type="button" data-ace-v78-choose>CHOOSE YOUR CLUB →</button>`;
-   const body=mount.querySelector('.rta92CareerBody');body?.insertAdjacentElement('beforebegin',card);
- }
+ frame=0;const s=state(),c=career(),mount=document.querySelector('#roadtoace #rta62Mount');if(!s||!c||!mount)return;
+ mount.querySelectorAll('.aceV78Decision').forEach(x=>x.remove());
+ if(!c.season_complete){mount.querySelectorAll('.ace311Decision').forEach(x=>x.remove());return}
+ const pending=intlPending();const existing=mount.querySelector('.ace311Decision');const sig=`${s.view}|${pending}|${offers().length}|${c.international_window?.stage||''}`;if(existing?.dataset.sig===sig)return;existing?.remove();
+ if(s.view!=='home'&&s.view!=='career')return;
+ const card=document.createElement('section');card.className='ace311Decision';card.dataset.sig=sig;
+ card.innerHTML=pending?`<small>INTERNATIONAL DUTY · ACTION REQUIRED</small><h2>Finish your national-team window first.</h2><p>Your transfer market will update after international duty. A big tournament can change which clubs come for you.</p><button type="button" data-ace311-intl-card>CONTINUE INTERNATIONAL DUTY →</button>`:`<small>OFF-SEASON · TRANSFER WINDOW</small><h2>${offers().length?'Your next contract is waiting.':'Your club market is ready.'}</h2><p>Compare offers, projected role, team strength and contract value before starting the next season.</p><button type="button" data-ace311-open>OPEN TRANSFER WINDOW →</button>`;
+ const anchor=mount.querySelector('.aceV74Calendar,.rta93HomeHero,.rta227HomeHero,.rta92CareerBody');if(anchor)anchor.insertAdjacentElement(anchor.classList.contains('rta92CareerBody')?'beforebegin':'afterend',card);else mount.prepend(card);
 }
-document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace-v78-choose]')){e.preventDefault();openChooser();return}const review=e.target.closest?.('[data-rta62-result-done]');if(review&&career()?.season_complete){setTimeout(openChooser,120)}},true);
-let decorationFrame=0;
-function queueDecoration(){if(!decorationFrame)decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decorate();});}
-const decorationPage=document.getElementById('roadtoace');
-if(decorationPage)new MutationObserver(queueDecoration).observe(decorationPage,{childList:true,subtree:true});
-setTimeout(decorate,120);
-window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.ACE_PROJECT_BUILD='B21.36.298';
+document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace311-open]')){e.preventDefault();openChooser();return}if(e.target.closest?.('[data-ace311-intl-card]')){e.preventDefault();try{window.ACE_INTL_CALLUP_V303?.openHub?.()}catch(_){}return}const done=e.target.closest?.('[data-rta62-result-done]');if(done&&career()?.season_complete&&!intlPending())setTimeout(openChooser,160)},true);
+function queue(){if(!frame)frame=requestAnimationFrame(decorate)}
+const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});window.addEventListener('pageshow',queue);setTimeout(queue,180);
+window.ACE_OFFSEASON_TRANSFER_V311={open:openChooser,refresh:refreshMarket,pendingInternational:intlPending};window.ACE_PROJECT_BUILD='B21.36.311';
 })();
 </script>
 
@@ -50003,9 +49987,10 @@ function html(c,s,w){
 function decorate(){
  raf=0;const c=career(),s=selection(),hub=road()?.querySelector('.aceV77Intl');
  if(!c||!hub||!s?.eligible||s.status!=='SELECTED'||!c.season_complete)return;
- const old=hub.querySelector('.aceIntlWindow');if(old)old.remove();
- const box=document.createElement('div');box.innerHTML=html(c,s,currentWindow(c));const node=box.firstElementChild;
- const hero=hub.querySelector('.aceIntlHubHero');if(hero)hero.after(node);else hub.prepend(node);
+ const w=currentWindow(c),sig=[c.season,c.international_caps||0,(c.international_achievements||[]).length,s.status,s.role,w?.stage||'NONE',w?.match_index||0,w?.wins||0,w?.losses||0,w?.readiness||0,w?.outcome||'',w?.award||''].join('|');
+ const old=hub.querySelector('.aceIntlWindow');if(old?.dataset?.ace307Sig===sig)return;
+ const box=document.createElement('div');box.innerHTML=html(c,s,w);const node=box.firstElementChild;if(!node)return;node.dataset.ace307Sig=sig;
+ old?.remove();const hero=hub.querySelector('.aceIntlHubHero');if(hero)hero.after(node);else hub.prepend(node);
 }
 function schedule(){if(!raf)raf=requestAnimationFrame(decorate)}
 async function sync(data){
@@ -50071,25 +50056,6 @@ window.ACE_PROJECT_BUILD='B21.36.307';
 @media(max-width:520px){.ace307TR{grid-template-columns:24px 1fr 26px 26px 32px 32px;padding:0 5px}.ace307Knockout{align-items:stretch}.ace307KOArrow{display:flex;align-items:center}.ace307Path span{font-size:5.5px}}
 </style>
 
-
-<script id="ace-google-auth-v308-recovery">
-(()=>{
-  const recover=()=>{
-    try{
-      if(!window.vdsAccountSession){
-        window.vdsAccountAuthBusy=false;
-        const b=document.getElementById("vdsGoogleSignIn");
-        if(b)b.disabled=false;
-      }
-    }catch(_){}
-  };
-  window.addEventListener("pageshow",recover);
-  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")recover()});
-  window.addEventListener("online",recover);
-  window.ACE_GOOGLE_AUTH_HOTFIX_BUILD="B21.36.308";
-  window.ACE_PROJECT_BUILD="B21.36.308";
-})();
-</script>
-
+<script id="ace-build-marker-v311">window.ACE_PROJECT_BUILD="B21.36.311";</script>
 </body>
 </html>
