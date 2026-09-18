@@ -39278,6 +39278,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const unread=rta257UnreadInbox(c),sp=Math.max(0,Number(c?.skill_points||0)),agentUnread=rta257AgentUnread(c);
     const opponent=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||"your opponent");
     if(S.activeKey)return {kicker:"YOUR NEXT MOVE",icon:"▶",title:"RESUME YOUR MATCH",meta:"Your next playable moment is waiting.",type:"view",target:"match",cta:"RESUME MATCH"};
+    let intlSel=null;try{intlSel=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}
+    const intlStage=String(c?.international_window?.stage||"");
+    if(c?.season_complete&&intlSel?.status==="SELECTED"&&intlStage!=="COMPLETE")return {kicker:"INTERNATIONAL DUTY",icon:"◎",title:"REPORT TO YOUR NATIONAL TEAM",meta:intlStage?`${intlStage} · your club Career is paused.`:"You were called up. International duty comes before the next club season.",type:"intl",target:"international",cta:"CONTINUE INTERNATIONAL"};
     if(c?.season_complete)return {kicker:"YOUR NEXT MOVE",icon:"◎",title:"REVIEW YOUR SEASON",meta:"Your next career chapter is ready.",type:"view",target:"career",cta:"SEASON REVIEW"};
     if(played===0&&used===0&&unread.some(m=>m?.action==="TUTORIAL_TRAIN"))return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"✉",title:"OPEN YOUR COACH MESSAGE",meta:"Your first instruction has arrived.",type:"panel",target:"inbox",cta:"OPEN INBOX"};
     if(played===0&&used===0)return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"△",title:"REPORT TO TRAINING",meta:"Complete one drill before your debut.",type:"view",target:"train",cta:"GO TO TRAINING"};
@@ -39293,7 +39296,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function rta257CareerNextHTML(c,desktop=false){
     const n=rta257CareerNext(c);
-    const attr=n.type==="panel"?`data-rta257-next-panel="${esc(n.target)}"`:`data-rta257-next-view="${esc(n.target)}"`;
+    const attr=n.type==="panel"?`data-rta257-next-panel="${esc(n.target)}"`:n.type==="intl"?`data-rta257-next-intl="1"`:`data-rta257-next-view="${esc(n.target)}"`;
     return `<section class="ace257CareerNext ${desktop?"desktop":""}">
       <div class="ace257NextIcon">${n.icon}</div>
       <div class="ace257NextCopy"><small>${esc(n.kicker)}</small><h2>${esc(n.title)}</h2><p>${esc(n.meta)}</p></div>
@@ -41156,6 +41159,15 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     }
   }
   async function nextSeason(club){
+    /* B21.36.314B — international duty is a hard career gate. A selected player
+       must finish the national-team window before any legacy next-season path. */
+    let intlSel=null;try{intlSel=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}
+    const intlStage=String(S.career?.international_window?.stage||"");
+    if(S.career?.season_complete&&intlSel?.status==="SELECTED"&&intlStage!=="COMPLETE"){
+      S.view="career";S.careerPanel="international";render();
+      setTimeout(()=>{try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}},60);
+      return;
+    }
     if(S.busy)return;S.busy=true;
     try{
       await rpc("vds_rta_start_next_season",{p_club:club});
@@ -44630,6 +44642,7 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta85-more-saves]")){closeOverlay();showSaveManager();return}
     if(e.target.closest?.("[data-rta85-more]")){showRtaMobileMore();return}
     const careerNextPanel=e.target.closest?.("[data-rta257-next-panel]");if(careerNextPanel){S.homePanel=careerNextPanel.dataset.rta257NextPanel||"week";if(S.homePanel==="inbox")rta257MarkInboxRead(S.career);S.view="home";render();return}
+    if(e.target.closest?.("[data-rta257-next-intl]")){S.view="career";S.careerPanel="international";render();setTimeout(()=>{try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}},50);return}
     const careerNextView=e.target.closest?.("[data-rta257-next-view]");if(careerNextView){const v=careerNextView.dataset.rta257NextView||"home";S.view=v;if(v==="agent")rta257MarkAgentRead(S.career);if(v==="train"){S.overlay=null;S.feedback=null;}render();return}
     const homePanel=e.target.closest?.("[data-rta77-homepanel]");if(homePanel){S.homePanel=homePanel.dataset.rta77Homepanel||"week";if(S.homePanel==="inbox")rta257MarkInboxRead(S.career);render();return}
     if(e.target.closest?.("[data-rta76-save-manager]")){showSaveManager();return}
@@ -49894,8 +49907,13 @@ window.ACE_OFFSEASON_TRANSFER_V311={open:openChooser,refresh:refreshMarket,pendi
      try{
        const c=career(),sel=selection();
        if(c?.season_complete&&sel?.status==='SELECTED'&&typeof window.ACE_RTA_RPC==='function'){
-         const w=await window.ACE_RTA_RPC('vds_rta_start_international_window',{p_role:sel.role||'ROTATION'});
-         if(c&&w)c.international_window=w;
+         const stage=String(c?.international_window?.stage||'');
+         /* 314B can pre-open CAMP at the season handoff so it survives reloads.
+            Do not try to start the same international window twice. */
+         if(!stage){
+           const w=await window.ACE_RTA_RPC('vds_rta_start_international_window',{p_role:sel.role||'ROTATION'});
+           if(c&&w)c.international_window=w;
+         }
        }
        close();openHub();
      }catch(err){
@@ -50074,7 +50092,19 @@ document.addEventListener('click',e=>{
  let sel=null;try{sel=window.ACE_INTL_SELECTION_V1?.get?.()}catch(_){}
  if(!sel?.eligible||sel.status!=='SELECTED')return;
  handoff=true;
- setTimeout(()=>{try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}},260);
+ /* 314B: persist the international window as soon as the season handoff confirms
+    a call-up. Previously the UI only showed the call-up, while international_window
+    could remain {}, leaving later season/transfer handlers free to advance the club. */
+ setTimeout(async()=>{
+   try{
+     const cc=window.__ACE_RTA_STATE?.career;
+     if(cc&&String(cc.international_window?.stage||'')===''&&typeof window.ACE_RTA_RPC==='function'){
+       const w=await window.ACE_RTA_RPC('vds_rta_start_international_window',{p_role:sel.role||'ROTATION'});
+       if(w)cc.international_window=w;
+     }
+   }catch(err){console.warn('ACE 314B international handoff persistence failed',err)}
+   try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}
+ },180);
 },true);
 window.ACE_PROJECT_BUILD='B21.36.307';
 })();
@@ -50190,7 +50220,21 @@ async function acceptClub(club){if(busy)return;busy=true;document.querySelectorA
 async function complete(){if(busy||!focus)return;busy=true;render();try{const d=await rpc('vds_rta_complete_preseason_v312',{p_focus:focus});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=4;render();try{window.__ACE_RTA_RENDER?.()}catch(_){}}catch(err){console.error('ACE 312 preseason failed',err);alert(String(err?.message||err||'Could not complete pre-season.'))}finally{busy=false;render()}}
 function homeCard(){raf=0;const c=C(),p=ps(),mount=document.querySelector('#roadtoace #rta62Mount');if(!c||!mount)return;mount.querySelectorAll('.ace312HomeCard').forEach(x=>x.remove());if(p?.status!=='COMPLETE'||Number(c.season_match||0)>2)return;const card=document.createElement('section');card.className='ace312HomeCard';card.innerHTML=`<small>NEW CLUB · PRE-SEASON COMPLETE</small><b>#${Number(c.shirt_number||p.shirt_number||0)} · ${esc(c.squad_role||p.final_role)} · ${esc(p.focus||'')}</b><p>${esc(p.coach_name||'Coach')} expects you to establish yourself quickly at ${esc(c.club_name||'your new club')}.</p><div class="ace312HomeObjs">${(Array.isArray(p.objectives)?p.objectives:[]).map(o=>`<span>${esc(o.label||o.id)}</span>`).join('')}</div>`;const a=mount.querySelector('.rta93HomeHero,.rta227HomeHero,.aceV74Calendar,.rta92CareerBody');if(a)a.insertAdjacentElement(a.classList.contains('rta92CareerBody')?'beforebegin':'afterend',card);else mount.prepend(card)}
 function queue(){if(!raf)raf=requestAnimationFrame(homeCard);const p=ps(),key=p?.status==='ARRIVAL'?`${C()?.season}|${p.new_club}`:'';if(key&&key!==autoOpened&&!document.querySelector('.ace312Backdrop')){autoOpened=key;setTimeout(()=>open(0),80)}}
-document.addEventListener('click',e=>{const sign=e.target.closest?.('[data-rta62-next-season]');if(sign&&sign.closest('.ace311Backdrop,.rta92OffersBlock')){e.preventDefault();e.stopImmediatePropagation();const club=sign.dataset.rta62NextSeason||'';document.querySelector('.ace311Backdrop')?.remove();document.body.style.overflow='';acceptClub(club);return}},true);
+document.addEventListener('click',e=>{const sign=e.target.closest?.('[data-rta62-next-season]');if(sign&&sign.closest('.ace311Backdrop,.rta92OffersBlock')){
+ e.preventDefault();e.stopImmediatePropagation();
+ /* 314B: the 312 arrival interceptor used to bypass the 311 international gate
+    because it runs in capture phase. That could start a new club season even
+    after the player had been called up. */
+ const c=C();let sel=null;try{sel=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}
+ const stage=String(c?.international_window?.stage||'');
+ if(c?.season_complete&&sel?.status==='SELECTED'&&stage!=='COMPLETE'){
+   document.querySelector('.ace311Backdrop')?.remove();document.body.style.overflow='';
+   const st=S();if(st){st.view='career';st.careerPanel='international'}
+   try{window.__ACE_RTA_RENDER?.()}catch(_){}
+   setTimeout(()=>{try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}},60);
+   return;
+ }
+ const club=sign.dataset.rta62NextSeason||'';document.querySelector('.ace311Backdrop')?.remove();document.body.style.overflow='';acceptClub(club);return}},true);
 document.addEventListener('click',e=>{if(!e.target.closest?.('.ace312Backdrop'))return;if(e.target.closest('.ace312Close')){close();return}if(e.target.closest('[data-ace312-next]')){step=Math.min(3,step+1);render();return}if(e.target.closest('[data-ace312-back]')){step=Math.max(0,step-1);render();return}const f=e.target.closest('[data-ace312-focus]');if(f){focus=String(f.dataset.ace312Focus||'').toUpperCase();render();return}if(e.target.closest('[data-ace312-complete]')){complete();return}if(e.target.closest('[data-ace312-enter]')){close();const s=S();if(s){s.view='home';s.homePanel='week'}try{window.__ACE_RTA_RENDER?.()}catch(_){}return}},true);
 const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});window.addEventListener('pageshow',queue);setTimeout(queue,300);
 window.ACE_NEW_CLUB_ARRIVAL_V312={open,decorate:queue};window.ACE_PROJECT_BUILD='B21.36.312';
@@ -50515,5 +50559,106 @@ queue();window.ACE_PROJECT_BUILD='B21.36.314';
 })();
 </script>
 <script id="ace-build-marker-v314">window.ACE_PROJECT_BUILD='B21.36.314';</script>
+
+
+<!-- PROJECT ACE B21.36.314A · iOS SINGLE-SCROLLER / FAST-SWIPE FIX -->
+<style id="ace314a-ios-single-scroller">
+@media (max-width:760px){
+  /* Safari is much more reliable when Career has ONE vertical scroller. Older
+     patches made both html and body independently scrollable. */
+  html.aceRtaActive:not(.aceHomeActive){
+    height:auto!important;min-height:100%!important;max-height:none!important;
+    overflow-x:hidden!important;overflow-y:auto!important;
+    overscroll-behavior-y:none!important;scroll-behavior:auto!important;
+  }
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen){
+    height:auto!important;min-height:100dvh!important;max-height:none!important;
+    overflow-x:clip!important;overflow-y:visible!important;
+    overscroll-behavior-y:none!important;touch-action:auto!important;
+    -webkit-overflow-scrolling:auto!important;scroll-behavior:auto!important;
+  }
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen) #roadtoace.page.active,
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen) #roadtoace #rta62Mount,
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen) #roadtoace .rta62Shell,
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen) #roadtoace .rta93Shell,
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen) #roadtoace .rta78Mode,
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen) #roadtoace .rta227CareerHome,
+  body.aceRtaActive:not(.rta62Immersive):not(.ace314PopupOpen):not(.ace314GameplayOpen) #roadtoace .rta229CareerPulseHome{
+    height:auto!important;min-height:0!important;max-height:none!important;
+    overflow-y:visible!important;overscroll-behavior-y:auto!important;
+  }
+  body.aceRtaActive #roadtoace.page.active{overflow-anchor:none!important;}
+
+  /* Popup/gameplay locks are explicit exceptions to the single document scroller. */
+  body.aceRtaActive.ace314PopupOpen,body.aceRtaActive.ace314GameplayOpen,
+  body.aceRtaActive.rta62Immersive{overflow:hidden!important;}
+}
+</style>
+<script id="ace314a-ios-single-scroller-js">
+(()=>{
+ 'use strict';
+ if(window.ACE_IOS_SINGLE_SCROLL_314A)return;window.ACE_IOS_SINGLE_SCROLL_314A=true;
+ const mobile=()=>window.matchMedia?.('(max-width:760px)')?.matches;
+ const roadActive=()=>document.getElementById('roadtoace')?.classList.contains('active');
+ const blocked=()=>document.body?.classList.contains('rta62Immersive')||document.body?.classList.contains('ace314PopupOpen')||document.body?.classList.contains('ace314GameplayOpen')||document.querySelector('#rta62Overlay.show,.ace311Backdrop,.ace312Backdrop,#aceIntlCallup.show,#aceIntlMatchResult.show,.rta125TrainingGuide.show,.rta175EntryModal.show,#aceLegacySetup[open]');
+ let touchStartY=0,touchStartScroll=0,touchMoved=false,repairRaf=0;
+ function maxScroll(){return Math.max(0,document.documentElement.scrollHeight-window.innerHeight)}
+ function normalize(){
+   repairRaf=0;if(!mobile()||!roadActive()||blocked())return;
+   const html=document.documentElement,body=document.body;if(!html||!body)return;
+   /* Clear only orphaned inline locks. CSS handles the normal Career state. */
+   if(body.style.overflow==='hidden')body.style.removeProperty('overflow');
+   if(html.style.overflow==='hidden')html.style.removeProperty('overflow');
+   const max=maxScroll(),y=Math.max(0,Math.min(window.scrollY||html.scrollTop||0,max));
+   /* Re-assigning the root scroll position forces WebKit to reconnect the
+      visual viewport to the document after an interrupted momentum gesture. */
+   html.scrollTop=y;
+   if(Math.abs((window.scrollY||0)-y)>1)window.scrollTo(0,y);
+ }
+ function queue(){if(repairRaf)return;repairRaf=requestAnimationFrame(()=>requestAnimationFrame(normalize))}
+ function topAfterTab(){
+   if(!mobile()||!roadActive()||blocked())return;
+   /* A Career tab is a new screen on phone. Stop old momentum and start it at
+      the real top instead of preserving a stale Safari scroll offset. */
+   window.scrollTo({top:0,left:0,behavior:'auto'});
+   document.documentElement.scrollTop=0;document.body.scrollTop=0;
+   requestAnimationFrame(()=>window.scrollTo(0,0));
+   setTimeout(()=>window.scrollTo(0,0),70);
+ }
+ document.addEventListener('click',e=>{
+   if(!mobile()||!roadActive())return;
+   if(e.target.closest?.('body > .ace211CareerBottomNav [data-rta62-view],#roadtoace [data-rta62-career-tab],#roadtoace [data-rta92-career-tab],#roadtoace [data-rta92-career-panel]'))topAfterTab();
+ },true);
+ document.addEventListener('touchstart',e=>{
+   if(!mobile()||!roadActive()||blocked()||!e.touches?.length)return;
+   touchStartY=e.touches[0].clientY;touchStartScroll=window.scrollY||0;touchMoved=false;
+ },{passive:true});
+ document.addEventListener('touchmove',e=>{
+   if(!e.touches?.length)return;if(Math.abs(e.touches[0].clientY-touchStartY)>28)touchMoved=true;
+ },{passive:true});
+ document.addEventListener('touchend',()=>{
+   if(!touchMoved||!mobile()||!roadActive()||blocked())return;
+   const before=touchStartScroll;
+   setTimeout(()=>{
+     if(!roadActive()||blocked())return;
+     const now=window.scrollY||0,max=maxScroll();
+     /* If a real swipe ended with WebKit reporting the same offset away from a
+        boundary, give the root scroller a one-pixel compositor nudge. */
+     if(Math.abs(now-before)<1 && now>1 && now<max-1){
+       const dir=touchStartY<window.innerHeight/2?1:-1;
+       window.scrollTo(0,Math.max(0,Math.min(max,now+dir)));
+     }
+     queue();
+   },48);
+ },{passive:true});
+ window.addEventListener('pageshow',queue,{passive:true});
+ window.addEventListener('orientationchange',()=>setTimeout(queue,120),{passive:true});
+ if(window.visualViewport){window.visualViewport.addEventListener('resize',queue,{passive:true});}
+ window.ACE_PROJECT_BUILD='B21.36.314A';queue();
+})();
+</script>
+<script id="ace-build-marker-v314a">window.ACE_PROJECT_BUILD='B21.36.314A';</script>
+
+<script id="ace-build-marker-v314b">window.ACE_PROJECT_BUILD='B21.36.314B';window.ACE_INTERNATIONAL_HANDOFF_FIX_314B=true;</script>
 </body>
 </html>
