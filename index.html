@@ -41144,7 +41144,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     if(btn){btn.disabled=true;btn.textContent="SIMULATING…"}
     try{
       const d=await rpc("vds_rta_play_match");
-      if(d?.selection_state)S.selection=d.selection_state;
+      if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
       showMatchResult(d);
       await loadState({silent:true});
     }catch(e){
@@ -41848,8 +41848,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const r=rta242Result(),m=S.key?.moment,choice=rta242BackendChoice(m,r);rta242Ball(r);
     S.busy=true;
     try{
-      const d=await rpc("vds_rta_resolve_key_moment",{p_choice:choice});
-      if(d?.selection_state)S.selection=d.selection_state;
+      const intl=!!S.key?.international;
+      const d=await rpc(intl?"vds_rta_resolve_international_key_moment":"vds_rta_resolve_key_moment_v313",{p_choice:choice});
+      if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
       vibrate(d.success?25:[20,35,20]);
       const out=String(d.outcome||d.final_outcome||(d.success?"KILL":"DEFENCE WINS")).replace(/\s*[—-].*$/,"");
       rta242Feedback(r,out||"RESULT");
@@ -41905,7 +41906,7 @@ function renderAttackKeyOverlay(){
 
   async function resolveKeyTimeout(){
     if(S.busy||S.overlay!=="key")return;S.busy=true;keyAttackTimer=0;
-    try{const d=await rpc("vds_rta_resolve_key_timeout");if(d?.selection_state)S.selection=d.selection_state;vibrate([20,35,20]);if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}else{S.key=d;S.feedback={good:false,text:`LATE READ · ${d.outcome||"The defence wins the moment."}`};renderKeyOverlay()}}catch(e){toast(errText(e),"error")}finally{S.busy=false}
+    try{const d=await rpc("vds_rta_resolve_key_timeout");if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;vibrate([20,35,20]);if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}else{S.key=d;S.feedback={good:false,text:`LATE READ · ${d.outcome||"The defence wins the moment."}`};renderKeyOverlay()}}catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
 
 
@@ -44153,12 +44154,20 @@ function renderAttackKeyOverlay(){
     if(S.busy)return;S.busy=true;
     try{
       const d=await rpc("vds_rta_start_key_match");
-      S.key=d;if(d?.selection_state)S.selection=d.selection_state;S.overlay="key";S.feedback=null;
+      S.key=d;if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;S.overlay="key";S.feedback=null;
       try{window.ace264CareerFlowStarted?.("match",S)}catch(_){}
       renderKeyOverlay();
     }
     catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
+  async function startInternationalKeyMatch(){
+    if(S.busy)return;S.busy=true;
+    try{
+      const d=await rpc("vds_rta_start_international_key_match");
+      S.key=d;S.overlay="key";S.feedback=null;renderKeyOverlay();
+    }catch(e){toast(errText(e),"error")}finally{S.busy=false}
+  }
+  window.ACE_RTA_START_INTL_MATCH=startInternationalKeyMatch;
   function choicePositions(type,count){
     const common=[[.22,.59],[.78,.59],[.35,.79],[.65,.79]];
     if(type==="SET_DECISION"||type==="EMERGENCY_SET")return[[.22,.40],[.50,.37],[.78,.40],[.50,.72]].slice(0,count);
@@ -44178,7 +44187,7 @@ function renderAttackKeyOverlay(){
     if(String(m.type||"").toUpperCase()==="RECEIVE")return renderLiberoKeyOverlay("RECEIVE");
     if(String(m.type||"").toUpperCase()==="EMERGENCY_SET")return renderEmergencySetOverlay();
     const opts=Array.isArray(m.options)?m.options:[],pos=choicePositions(String(m.type||""),opts.length);
-    setOverlay(`<div class="rta62OverlayShell">${overlayTop(`KEY MOMENTS · ${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)}`)}
+    setOverlay(`<div class="rta62OverlayShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)}`)}
       <div class="rta62OverlayBody">
         <div class="rta62CourtWrap"><div class="rta62Court"><div class="rta62ChoiceGrid">${opts.map((o,i)=>`<button class="rta62Choice" data-rta62-choice="${esc(o.id)}" style="left:${(pos[i]?.[0]||.5)*100}%;top:${(pos[i]?.[1]||.65)*100}%"><b>${esc(o.label)}</b><small>${esc(o.desc||"")}</small></button>`).join("")}</div></div></div>
         <aside class="rta62Side"><small class="rta62Eyebrow">${esc(m.context||m.type||"KEY MOMENT")}</small><h2>${esc(m.title||"YOUR BALL")}</h2><p>${esc(m.prompt||"Make the read.")}</p><p style="color:#6f6577">${esc(m.cue||"")}</p>
@@ -44191,7 +44200,8 @@ function renderAttackKeyOverlay(){
   async function resolveKey(choice){
     if(S.busy||S.overlay!=="key")return;S.busy=true;if(keyAttackTimer)clearTimeout(keyAttackTimer);keyAttackTimer=0;
     try{
-      const d=await rpc("vds_rta_resolve_key_moment",{p_choice:choice});if(d?.selection_state)S.selection=d.selection_state;vibrate(d.success?25:[20,35,20]);
+      const intl=!!S.key?.international;
+      const d=await rpc(intl?"vds_rta_resolve_international_key_moment":"vds_rta_resolve_key_moment_v313",{p_choice:choice});if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;vibrate(d.success?25:[20,35,20]);
       if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}
       else{S.key=d;S.feedback={good:!!d.success,text:d.outcome||""};renderKeyOverlay()}
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
@@ -44537,7 +44547,7 @@ function renderAttackKeyOverlay(){
   }
 
   function showMatchResult(data){
-    const m=data?.match||{},stats=m.stats||{},won=!!m.won,km=m.key_moments,cardCareer=data?.career||S.career;
+    const m=data?.match||{},stats=m.stats||{},won=!!m.won,km=m.key_moments,cardCareer=data?.career||S.career,intl=!!data?.international;
     const sel=data?.selection||stats?.selection||{},playedRole=String(sel.selection_status||"");
     const perf=data?.performance_breakdown||stats?.performance_breakdown||{},ctx=data?.match_context||stats?.match_context||{};
     const fatigue=Number(stats.fatigue_end??ctx.fatigue??0),compliance=ctx.instruction_compliance;
@@ -44550,7 +44560,7 @@ function renderAttackKeyOverlay(){
       <div class="rta102Confetti" id="rta102Confetti"></div>
       <section class="rta102ResultHero" data-rta102-settle>
         <div class="rta102ResultGlow"></div>
-        <small>MATCH COMPLETE · ${esc(m.opponent||"OPPONENT")}</small>
+        <small>${intl?"INTERNATIONAL · ":"MATCH COMPLETE · "}${esc(m.opponent||"OPPONENT")}</small>
         <h1>${won?"VICTORY":"FULL TIME"}</h1>
         <div class="rta102Score">${Number(m.sets_for||0)}<i>–</i>${Number(m.sets_against||0)}</div>
         <div class="rta102RatingOrb"><span>MATCH RATING</span><b id="rta102RatingNumber">5.0</b><small>${esc(perf.label||"PERFORMANCE")}</small></div>
@@ -44559,9 +44569,7 @@ function renderAttackKeyOverlay(){
       </section>
       <section class="rta102ResultDetails">
         <div class="rta102RewardBurst">
-          <article><small>XP</small><b>+${Number(m.xp_earned||0)}</b></article>
-          <article><small>COACH TRUST</small><b>${Number(m.coach_trust_change||0)>=0?"+":""}${Number(m.coach_trust_change||0)}</b></article>
-          <article><small>REPUTATION</small><b>+${Number(m.reputation_change||0)}</b></article>
+          ${intl?`<article><small>CAP</small><b>+1</b></article><article><small>NATIONAL TEAM</small><b>${esc(data?.selection?.selection_status||"PLAYER")}</b></article><article><small>REPUTATION</small><b>+${Number(m.reputation_change||0)}</b></article>`:`<article><small>XP</small><b>+${Number(m.xp_earned||0)}</b></article><article><small>COACH TRUST</small><b>${Number(m.coach_trust_change||0)>=0?"+":""}${Number(m.coach_trust_change||0)}</b></article><article><small>REPUTATION</small><b>+${Number(m.reputation_change||0)}</b></article>`}
         </div>
         ${rta99GradeBars(perf)}
         <div class="rta102ResultGrid">
@@ -44575,7 +44583,7 @@ function renderAttackKeyOverlay(){
         </div>
         <div class="rta102ResultBottom">
           <div class="rta102ResultCard">${cardCareer?careerCardHTML(cardCareer,{mini:true,result:true}):""}</div>
-          <button class="rta62Btn primary" data-rta62-result-done>${data.season_complete?"FINISH CLUB SEASON →":"CONTINUE CAREER →"}</button>
+          <button class="rta62Btn primary" ${intl?'data-rta-intl-result-done':'data-rta62-result-done'}>${intl?"CONTINUE INTERNATIONAL CAREER →":data.season_complete?"FINISH CLUB SEASON →":"CONTINUE CAREER →"}</button>
         </div>
       </section>
     </div>`,"result");
@@ -44680,6 +44688,7 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta83-reset-placement]")){rta83ResetPlacement();return}
     if(e.target.closest?.("[data-rta62-close]")){closeOverlay();return}
     if(e.target.closest?.("[data-rta62-training-done]")){closeOverlay();S.view="train";render();return}
+    if(e.target.closest?.("[data-rta-intl-result-done]")){closeOverlay();S.view="career";S.careerPanel="international";render();return}
     if(e.target.closest?.("[data-rta62-result-done]")){
       closeOverlay();
       try{await rta105RefreshWorld()}catch(_){}
@@ -49940,6 +49949,14 @@ window.ACE_OFFSEASON_TRANSFER_V311={open:openChooser,refresh:refreshMarket,pendi
 #aceIntlMatchResult{position:fixed;inset:0;z-index:100030;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(1,7,12,.9);backdrop-filter:blur(12px)}#aceIntlMatchResult.show{display:flex}.aceIntlResultStage{width:min(430px,100%);padding:25px;border-radius:16px;border:1px solid rgba(99,184,255,.22);background:linear-gradient(145deg,#0a2032,#06131f);text-align:center}.aceIntlResultStage small{color:#69baff;font-size:7px;font-weight:1000;letter-spacing:.14em}.aceIntlResultStage h2{margin:7px 0 0;font-size:31px}.aceIntlResultStage h2.win{color:#83e3ae}.aceIntlResultStage h2.loss{color:#ff9999}.aceIntlResultScore{margin:15px 0;font-size:42px;font-weight:1000}.aceIntlResultStage p{color:#8398aa;font-size:9px}.aceIntlResultStage button{margin-top:12px}
 @media(max-width:600px){.aceIntlFixtureList,.aceIntlCampGrid,.aceIntlApproachGrid{grid-template-columns:1fr}.aceIntlChoice{min-height:64px}.aceIntlWindowStats{grid-template-columns:1fr 1fr}.aceIntlWindowStats div:last-child{grid-column:1/-1}}
 </style>
+<style id="ace-intl-playable-v311c-css">
+#roadtoace .ace311cMatchActions{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:10px;margin-top:14px}
+#roadtoace .ace311cMatchActions button{min-height:66px;border-radius:12px;text-align:left;padding:12px 14px}
+#roadtoace .ace311cPlay{display:flex!important;flex-direction:column;align-items:flex-start!important;justify-content:center}
+#roadtoace .ace311cPlay b{font-size:13px;letter-spacing:.06em}#roadtoace .ace311cPlay span,#roadtoace .ace311cSim span{display:block;margin-top:4px;font-size:8px;line-height:1.35;opacity:.72}
+#roadtoace .ace311cSim{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);color:#dce8ef}#roadtoace .ace311cSim b{font-size:10px;letter-spacing:.08em}
+@media(max-width:760px){#roadtoace .ace311cMatchActions{grid-template-columns:1fr}.ace311cSim{min-height:52px!important}#roadtoace .ace311cPlay b{font-size:14px}#roadtoace .ace311cPlay span,#roadtoace .ace311cSim span{font-size:9px}}
+</style>
 <script id="ace-intl-tournament-v307-script">
 (()=>{
 'use strict';
@@ -49963,7 +49980,7 @@ function results(w){
  return a.map(r=>`<div class="aceIntlResultRow ${r.won?'':'loss'}"><strong>${r.won?'W':'L'}</strong><div><small>${esc(r.stage||'GROUP')} · ${esc(r.approach)}</small><b>${esc(r.opponent)}</b></div><span>${Number(r.sets_for)}–${Number(r.sets_against)}</span></div>`).join('');
 }
 function approachButtons(stage){
- return `<div class="aceIntlApproachGrid"><button class="aceIntlChoice" data-intl-match="CONTROLLED"><b>CONTROLLED</b><span>Trust structure and reduce cheap errors.</span></button><button class="aceIntlChoice" data-intl-match="AGGRESSIVE"><b>AGGRESSIVE</b><span>Push serve and attack pressure from the first whistle.</span></button><button class="aceIntlChoice" data-intl-match="TACTICAL"><b>TACTICAL</b><span>Target match-ups and adapt to the opponent.</span></button></div><div class="aceIntlStatus">${stage==='FINAL'?'One match for the trophy. Choose how you want to play it.':'Choose your match approach.'}</div>`;
+ return `<div class="ace311cMatchActions"><button class="aceIntlPrimary ace311cPlay" data-intl-play><b>▶ PLAY MATCH</b><span>Take your Career player onto court. Your performance affects the result.</span></button><button class="ace311cSim" data-intl-match="TACTICAL"><b>SIM MATCH</b><span>Let the national team handle it.</span></button></div><div class="aceIntlStatus">${stage==='FINAL'?'Play for the trophy — every key moment matters.':'Play the match or simulate it.'}</div>`;
 }
 function path(stage){
  const order=['CAMP','GROUP','SEMIFINAL','FINAL','COMPLETE'],i=Math.max(0,order.indexOf(stage));
@@ -50007,9 +50024,10 @@ function resultPopup(r,w){
  resultModal.innerHTML=`<section class="aceIntlResultStage ${champ?'ace307ResultChampion':''}"><small>${final?'CHAMPIONSHIP FINAL':semi?'KNOCKOUT STAGE':'GROUP STAGE'} · FULL TIME</small><h2 class="${r.won?'win':'loss'}">${champ?'🏆 CHAMPIONS':r.won?(semi?'FINAL BOUND':'VICTORY'):(final?'RUNNERS-UP':semi?'ELIMINATED':'DEFEAT')}</h2><div class="aceIntlResultScore">${Number(r.sets_for)}–${Number(r.sets_against)}</div><p>vs ${esc(r.opponent)} · ${esc(r.approach)} approach</p>${champ?'<div class="ace307MiniTrophy">THE TITLE IS YOURS.</div>':''}<button type="button" class="aceIntlPrimary" data-intl-result-close>${w?.stage==='COMPLETE'?'VIEW TOURNAMENT REVIEW':'CONTINUE →'}</button></section>`;resultModal.classList.add('show');
 }
 document.addEventListener('click',async e=>{
- const start=e.target.closest?.('[data-intl-start-window]'),camp=e.target.closest?.('[data-intl-camp]'),match=e.target.closest?.('[data-intl-match]'),back=e.target.closest?.('[data-intl-back-career]');
+ const start=e.target.closest?.('[data-intl-start-window]'),camp=e.target.closest?.('[data-intl-camp]'),play=e.target.closest?.('[data-intl-play]'),match=e.target.closest?.('[data-intl-match]'),back=e.target.closest?.('[data-intl-back-career]');
  if(back){const st=S();if(st){st.careerPanel='overview';window.__ACE_RTA_RENDER?.()}return}
- if(!start&&!camp&&!match)return;
+ if(!start&&!camp&&!play&&!match)return;
+ if(play){e.preventDefault();try{await window.ACE_RTA_START_INTL_MATCH?.()}catch(err){setStatus(String(err?.message||err||'Could not start international match.'),true)}return}
  e.preventDefault();if(busy)return;busy=true;road()?.querySelectorAll('.aceIntlWindow button').forEach(b=>b.disabled=true);
  try{
    if(start){setStatus('Opening national-team camp…');await sync(await rpc('vds_rta_start_international_window',{p_role:selection()?.role||'ROTATION'}));}
@@ -50115,7 +50133,201 @@ function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
 document.addEventListener('click',e=>{if(e.target.closest?.('.ace311aIntlPulse')){e.preventDefault();openInternational()}},true);
 const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});
 window.addEventListener('pageshow',queue);window.addEventListener('ace:career-nationality-ready',queue);setTimeout(queue,250);
-window.ACE_INTL_VISIBILITY_V311A={decorate:queue,open:openInternational};window.ACE_PROJECT_BUILD='B21.36.311B';
+window.ACE_INTL_VISIBILITY_V311A={decorate:queue,open:openInternational};window.ACE_PROJECT_BUILD='B21.36.311C';
+})();
+</script>
+
+<script id="ace-playable-international-v311c-marker">window.ACE_PROJECT_BUILD="B21.36.311C";window.ACE_PLAYABLE_INTERNATIONAL_V311C=true;</script>
+
+
+<!-- PROJECT ACE B21.36.312 · NEW CLUB ARRIVAL + PRE-SEASON -->
+<style id="ace-v312-arrival-style">
+.ace312Backdrop{position:fixed;inset:0;z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,11,.90);backdrop-filter:blur(14px);color:#edf6fb}.ace312Shell{width:min(880px,96vw);max-height:92vh;overflow:auto;border:1px solid rgba(118,105,238,.25);border-radius:22px;background:radial-gradient(circle at 88% 0,rgba(121,91,232,.18),transparent 34%),linear-gradient(145deg,#0a1d2b,#07131e 58%,#091523);box-shadow:0 30px 90px rgba(0,0,0,.55)}.ace312Top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 10px}.ace312Top small,.ace312Eyebrow{display:block;color:#9d89f2;font-size:7px;font-weight:1000;letter-spacing:.15em}.ace312Top h2{margin:5px 0 0;font-size:26px;line-height:1}.ace312Close{width:38px;height:38px;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:rgba(255,255,255,.035);color:#9aabba;font-size:20px;cursor:pointer}.ace312Progress{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 22px 14px}.ace312Progress span{height:4px;border-radius:999px;background:rgba(255,255,255,.06)}.ace312Progress span.on{background:linear-gradient(90deg,#7763ea,#aa91ff)}.ace312Body{padding:10px 22px 22px}.ace312Hero{padding:28px 18px;text-align:center;border:1px solid rgba(255,255,255,.06);border-radius:18px;background:radial-gradient(circle at 50% 15%,rgba(123,99,240,.16),transparent 45%),rgba(255,255,255,.02)}.ace312Crest{display:grid;place-items:center;width:78px;height:78px;margin:0 auto 13px;border-radius:22px;border:1px solid rgba(169,146,255,.28);background:linear-gradient(145deg,rgba(128,101,242,.25),rgba(65,129,205,.12));color:#d7cbff;font-size:23px;font-weight:1000;letter-spacing:.05em}.ace312Hero h1{margin:4px 0;font-size:31px;line-height:1.05}.ace312Hero p{margin:7px auto 0;max-width:600px;color:#7f95a4;font-size:10px;line-height:1.5}.ace312Stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:15px}.ace312Stats article,.ace312CoachGrid article{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:rgba(255,255,255,.025)}.ace312Stats span,.ace312CoachGrid span{display:block;color:#647b8d;font-size:6px;font-weight:1000;letter-spacing:.08em}.ace312Stats b,.ace312CoachGrid b{display:block;margin-top:5px;font-size:11px}.ace312Coach{display:grid;grid-template-columns:82px 1fr;gap:15px;align-items:center;padding:18px;border:1px solid rgba(255,255,255,.06);border-radius:16px;background:rgba(255,255,255,.025)}.ace312CoachIcon{display:grid;place-items:center;width:82px;height:82px;border-radius:20px;background:linear-gradient(145deg,rgba(119,99,234,.18),rgba(255,255,255,.025));font-size:30px}.ace312Coach h2{margin:4px 0;font-size:22px}.ace312Coach p{margin:6px 0;color:#8297a6;font-size:9px;line-height:1.5}.ace312Quote{margin-top:12px;padding:12px 14px;border-left:3px solid #8d77ee;border-radius:0 10px 10px 0;background:rgba(126,102,238,.07);color:#c9d6df;font-size:9px;line-height:1.5}.ace312CoachGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.ace312Rivals{display:grid;gap:8px;margin-top:12px}.ace312Rival{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.025)}.ace312Rival.you{border-color:rgba(130,108,241,.3);background:rgba(130,108,241,.075)}.ace312RivalNum{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.04);font-size:13px;font-weight:1000}.ace312Rival small{display:block;color:#687f90;font-size:6px;font-weight:1000}.ace312Rival b{display:block;margin-top:3px;font-size:11px}.ace312Rival em{color:#9c8af0;font-size:7px;font-style:normal;font-weight:1000}.ace312FocusGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.ace312Focus{min-height:92px;padding:13px;text-align:left;border:1px solid rgba(255,255,255,.07);border-radius:13px;background:rgba(255,255,255,.025);color:#e7f0f5;cursor:pointer}.ace312Focus.selected{border-color:rgba(155,132,255,.55);background:linear-gradient(145deg,rgba(126,102,238,.17),rgba(255,255,255,.025));box-shadow:inset 0 0 0 1px rgba(154,132,255,.1)}.ace312Focus small{display:block;color:#806fd0;font-size:6px;font-weight:1000}.ace312Focus b{display:block;margin-top:6px;font-size:12px}.ace312Focus span{display:block;margin-top:5px;color:#718797;font-size:7px;line-height:1.4}.ace312Objectives{display:grid;gap:6px;margin-top:12px}.ace312Obj{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.025);color:#9fb0bb;font-size:8px}.ace312Obj i{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:rgba(115,93,229,.12);color:#a995ff;font-style:normal;font-weight:1000}.ace312Result{text-align:center;padding:18px}.ace312Role{display:inline-block;margin:13px 0;padding:10px 18px;border:1px solid rgba(124,225,170,.22);border-radius:999px;background:rgba(82,211,143,.08);color:#8be0b1;font-size:14px;font-weight:1000}.ace312Actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.ace312Btn{min-height:44px;padding:0 17px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.035);color:#aab9c3;font-size:8px;font-weight:1000;letter-spacing:.05em;cursor:pointer}.ace312Btn.primary{border-color:rgba(142,120,247,.34);background:linear-gradient(135deg,#7764e9,#967eea);color:#fff}.ace312Btn:disabled{opacity:.4;cursor:not-allowed}.ace312HomeCard{margin:10px 14px 12px;padding:13px;border:1px solid rgba(126,104,239,.18);border-radius:13px;background:linear-gradient(135deg,rgba(126,104,239,.07),rgba(255,255,255,.018));color:#eaf3f8}.ace312HomeCard small{display:block;color:#9380e6;font-size:6px;font-weight:1000;letter-spacing:.11em}.ace312HomeCard b{display:block;margin-top:4px;font-size:12px}.ace312HomeCard p{margin:5px 0 0;color:#748b9a;font-size:7px;line-height:1.45}.ace312HomeObjs{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.ace312HomeObjs span{padding:5px 7px;border-radius:7px;background:rgba(255,255,255,.03);color:#8498a5;font-size:6px;font-weight:900}
+@media(max-width:760px){.ace312Backdrop{align-items:flex-end;padding:0}.ace312Shell{width:100%;max-height:94dvh;border-radius:21px 21px 0 0}.ace312Top{padding:15px 15px 9px}.ace312Top h2{font-size:21px}.ace312Progress{padding:0 15px 10px}.ace312Body{padding:8px 15px 18px}.ace312Hero{padding:20px 12px}.ace312Crest{width:62px;height:62px;border-radius:17px;font-size:18px}.ace312Hero h1{font-size:24px}.ace312Stats{grid-template-columns:repeat(2,1fr)}.ace312Coach{grid-template-columns:56px 1fr;padding:13px}.ace312CoachIcon{width:56px;height:56px;border-radius:15px;font-size:22px}.ace312Coach h2{font-size:17px}.ace312CoachGrid{grid-template-columns:1fr}.ace312FocusGrid{grid-template-columns:1fr}.ace312Focus{min-height:70px}.ace312Actions{position:sticky;bottom:-18px;margin:14px -15px -18px;padding:10px 15px 14px;background:linear-gradient(transparent,#07131e 24%)}.ace312Btn{flex:1}.ace312HomeCard{margin:7px 8px 9px}}
+</style>
+<script id="ace-v312-arrival-script">
+(()=>{
+'use strict';
+let step=0,focus='',busy=false,raf=0,autoOpened='';
+const S=()=>window.__ACE_RTA_STATE||null, C=()=>S()?.career||null;
+const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+const rpc=async(name,args={})=>{if(typeof window.ACE_RTA_RPC!=='function')throw new Error('Career connection unavailable.');return window.ACE_RTA_RPC(name,args)};
+function ps(){return C()?.preseason_state||{}}
+function close(){document.querySelector('.ace312Backdrop')?.remove();document.body.style.overflow=''}
+function initials(v){return String(v||'ACE').split(/\s+/).map(x=>x[0]).join('').slice(0,3).toUpperCase()}
+function focusOptions(p){const pos=String(C()?.position||'OH').toUpperCase(),a=String(p.primary_focus||'ATTACK').toUpperCase(),b=String(p.secondary_focus||'PHYSICAL').toUpperCase(),posf=pos==='S'?'SETTING':pos==='L'?'RECEIVE':pos==='M'?'DEFENCE':pos==='OH'?'RECEIVE':'ATTACK';return [...new Set([a,b,posf,'MENTAL'])].slice(0,3)}
+function progress(){return `<div class="ace312Progress">${[0,1,2,3].map(i=>`<span class="${i<=Math.min(step,3)?'on':''}"></span>`).join('')}</div>`}
+function shell(body,title='NEW CLUB ARRIVAL'){
+ return `<section class="ace312Shell" role="dialog" aria-modal="true" aria-label="New club arrival"><header class="ace312Top"><div><small>ROAD TO ACE · SEASON ${Number(C()?.season||1)}</small><h2>${esc(title)}</h2></div><button type="button" class="ace312Close" aria-label="Close">×</button></header>${progress()}<div class="ace312Body">${body}</div></section>`
+}
+function render(){
+ const p=ps(),c=C();if(!c||!p||!p.status)return;let body='';
+ if(step===0){body=`<div class="ace312Hero"><div class="ace312Crest">${esc(initials(p.new_club||c.club_name))}</div><span class="ace312Eyebrow">${String(p.offer_type||'TRANSFER')==='STAY'?'CONTRACT RENEWED':'SIGNING COMPLETE'}</span><h1>${esc(p.new_club||c.club_name)}</h1><p>Your next chapter starts now. The contract expectation gets you through the door — your place in the six still has to be earned.</p><div class="ace312Stats"><article><span>LEAGUE</span><b>${esc(p.league_name||c.league_code||'—')}</b></article><article><span>SHIRT</span><b>#${Number(p.shirt_number||c.shirt_number||0)}</b></article><article><span>CONTRACT ROLE</span><b>${esc(p.expected_role||'ROTATION')}</b></article><article><span>PLAYER OVR</span><b>${Number(c.overall||0)}</b></article></div></div><div class="ace312Actions"><button class="ace312Btn primary" data-ace312-next>MEET THE COACH →</button></div>`}
+ else if(step===1){body=`<div class="ace312Coach"><div class="ace312CoachIcon">⌁</div><div><span class="ace312Eyebrow">HEAD COACH</span><h2>${esc(p.coach_name||'Head Coach')}</h2><p>${esc(p.new_club||c.club_name)} · ${esc(p.league_name||'')}</p></div></div><div class="ace312Quote">“My philosophy is <b>${esc(p.philosophy||'balanced volleyball')}</b>. You were signed with a ${esc(p.expected_role||'rotation').toLowerCase()} expectation, but pre-season decides where you actually begin.”</div><div class="ace312CoachGrid"><article><span>PRIMARY PRIORITY</span><b>${esc(p.primary_focus||'ATTACK')}</b></article><article><span>SECONDARY PRIORITY</span><b>${esc(p.secondary_focus||'PHYSICAL')}</b></article><article><span>COACH TRUST</span><b>${Number(c.coach_trust||0)}</b></article></div><div class="ace312Actions"><button class="ace312Btn" data-ace312-back>← BACK</button><button class="ace312Btn primary" data-ace312-next>SEE SQUAD COMPETITION →</button></div>`}
+ else if(step===2){const rivals=Array.isArray(p.rivals)?p.rivals:[];const all=[{name:c.player_name,ovr:c.overall,role:'YOU',you:true},...rivals].sort((a,b)=>Number(b.ovr||0)-Number(a.ovr||0));body=`<span class="ace312Eyebrow">YOUR POSITION · ${esc(c.position||'')}</span><h2 style="margin:5px 0 4px">Nothing is guaranteed.</h2><p style="margin:0;color:#7c92a1;font-size:9px">This is the depth chart you walk into. Your OVR matters, but coach trust and pre-season fit decide your opening role.</p><div class="ace312Rivals">${all.map((r,i)=>`<article class="ace312Rival ${r.you?'you':''}"><div class="ace312RivalNum">#${i+1}</div><div><small>${esc(r.role||'SQUAD')}</small><b>${esc(r.you?c.player_name:r.name)}</b></div><em>${Number(r.ovr||0)} OVR</em></article>`).join('')}</div><div class="ace312Actions"><button class="ace312Btn" data-ace312-back>← BACK</button><button class="ace312Btn primary" data-ace312-next>START PRE-SEASON →</button></div>`}
+ else if(step===3){const opts=focusOptions(p),objs=Array.isArray(p.objectives)?p.objectives:[];body=`<span class="ace312Eyebrow">PRE-SEASON EVALUATION</span><h2 style="margin:5px 0 4px">Choose what you want to prove.</h2><p style="margin:0;color:#7c92a1;font-size:9px">Matching the coach's priorities earns more trust. Your resulting trust + ability determines whether you open the season as Bench, Rotation, Starter or Key Player.</p><div class="ace312FocusGrid">${opts.map((x,i)=>`<button type="button" class="ace312Focus ${focus===x?'selected':''}" data-ace312-focus="${esc(x)}"><small>${i===0?'COACH PRIORITY':i===1?'SECONDARY PLAN':'YOUR POSITION'}</small><b>${esc(x)}</b><span>${x===String(p.primary_focus||'').toUpperCase()?'Strongest coach-trust boost.':x===String(p.secondary_focus||'').toUpperCase()?'Good fit with the coach plan.':'Back yourself and sharpen your own game.'}</span></button>`).join('')}</div><span class="ace312Eyebrow">FIRST-MONTH OBJECTIVES</span><div class="ace312Objectives">${objs.map((o,i)=>`<div class="ace312Obj"><i>${i+1}</i><span>${esc(o.label||o.id)}</span></div>`).join('')}</div><div class="ace312Actions"><button class="ace312Btn" data-ace312-back>← BACK</button><button class="ace312Btn primary" data-ace312-complete ${focus?'':'disabled'}>${busy?'EVALUATING…':'COMPLETE PRE-SEASON →'}</button></div>`}
+ else {const role=p.final_role||c.squad_role;body=`<div class="ace312Result"><span class="ace312Eyebrow">PRE-SEASON COMPLETE</span><h1 style="margin:7px 0 0">Your place is set.</h1><div class="ace312Role">${esc(role)}</div><p style="margin:0 auto;max-width:520px;color:#7e94a3;font-size:9px;line-height:1.55">${esc(p.coach_name||'The coach')} gives you a ${Number(p.trust_boost||0)>=7?'strong':'positive'} opening evaluation. You gained +${Number(p.trust_boost||0)} coach trust and begin Season ${Number(c.season||1)} as <b>${esc(role)}</b>.</p><div class="ace312Stats"><article><span>SHIRT</span><b>#${Number(p.shirt_number||c.shirt_number||0)}</b></article><article><span>FOCUS</span><b>${esc(p.focus||'—')}</b></article><article><span>COACH TRUST</span><b>${Number(c.coach_trust||0)}</b></article><article><span>OPENING ROLE</span><b>${esc(role)}</b></article></div></div><div class="ace312Actions"><button class="ace312Btn primary" data-ace312-enter>ENTER SEASON ${Number(c.season||1)} →</button></div>`}
+ const wrap=document.querySelector('.ace312Backdrop');if(wrap)wrap.innerHTML=shell(body,step>=4?'PRE-SEASON VERDICT':'NEW CLUB ARRIVAL');
+}
+function open(startStep=0){const p=ps();if(!p?.status)return;close();step=p.status==='COMPLETE'?4:startStep;focus=String(p.focus||'');const wrap=document.createElement('div');wrap.className='ace312Backdrop';document.body.appendChild(wrap);document.body.style.overflow='hidden';render()}
+async function acceptClub(club){if(busy)return;busy=true;document.querySelectorAll('[data-rta62-next-season]').forEach(b=>b.disabled=true);try{const d=await rpc('vds_rta_start_next_season_v312',{p_club:club});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=0;focus='';open(0)}catch(err){console.error('ACE 312 arrival failed',err);alert(String(err?.message||err||'Could not start the next season.'))}finally{busy=false}}
+async function complete(){if(busy||!focus)return;busy=true;render();try{const d=await rpc('vds_rta_complete_preseason_v312',{p_focus:focus});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=4;render();try{window.__ACE_RTA_RENDER?.()}catch(_){}}catch(err){console.error('ACE 312 preseason failed',err);alert(String(err?.message||err||'Could not complete pre-season.'))}finally{busy=false;render()}}
+function homeCard(){raf=0;const c=C(),p=ps(),mount=document.querySelector('#roadtoace #rta62Mount');if(!c||!mount)return;mount.querySelectorAll('.ace312HomeCard').forEach(x=>x.remove());if(p?.status!=='COMPLETE'||Number(c.season_match||0)>2)return;const card=document.createElement('section');card.className='ace312HomeCard';card.innerHTML=`<small>NEW CLUB · PRE-SEASON COMPLETE</small><b>#${Number(c.shirt_number||p.shirt_number||0)} · ${esc(c.squad_role||p.final_role)} · ${esc(p.focus||'')}</b><p>${esc(p.coach_name||'Coach')} expects you to establish yourself quickly at ${esc(c.club_name||'your new club')}.</p><div class="ace312HomeObjs">${(Array.isArray(p.objectives)?p.objectives:[]).map(o=>`<span>${esc(o.label||o.id)}</span>`).join('')}</div>`;const a=mount.querySelector('.rta93HomeHero,.rta227HomeHero,.aceV74Calendar,.rta92CareerBody');if(a)a.insertAdjacentElement(a.classList.contains('rta92CareerBody')?'beforebegin':'afterend',card);else mount.prepend(card)}
+function queue(){if(!raf)raf=requestAnimationFrame(homeCard);const p=ps(),key=p?.status==='ARRIVAL'?`${C()?.season}|${p.new_club}`:'';if(key&&key!==autoOpened&&!document.querySelector('.ace312Backdrop')){autoOpened=key;setTimeout(()=>open(0),80)}}
+document.addEventListener('click',e=>{const sign=e.target.closest?.('[data-rta62-next-season]');if(sign&&sign.closest('.ace311Backdrop,.rta92OffersBlock')){e.preventDefault();e.stopImmediatePropagation();const club=sign.dataset.rta62NextSeason||'';document.querySelector('.ace311Backdrop')?.remove();document.body.style.overflow='';acceptClub(club);return}},true);
+document.addEventListener('click',e=>{if(!e.target.closest?.('.ace312Backdrop'))return;if(e.target.closest('.ace312Close')){close();return}if(e.target.closest('[data-ace312-next]')){step=Math.min(3,step+1);render();return}if(e.target.closest('[data-ace312-back]')){step=Math.max(0,step-1);render();return}const f=e.target.closest('[data-ace312-focus]');if(f){focus=String(f.dataset.ace312Focus||'').toUpperCase();render();return}if(e.target.closest('[data-ace312-complete]')){complete();return}if(e.target.closest('[data-ace312-enter]')){close();const s=S();if(s){s.view='home';s.homePanel='week'}try{window.__ACE_RTA_RENDER?.()}catch(_){}return}},true);
+const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});window.addEventListener('pageshow',queue);setTimeout(queue,300);
+window.ACE_NEW_CLUB_ARRIVAL_V312={open,decorate:queue};window.ACE_PROJECT_BUILD='B21.36.312';
+})();
+</script>
+<script id="ace-build-marker-v312">window.ACE_PROJECT_BUILD="B21.36.312";</script>
+
+
+<!-- PROJECT ACE B21.36.313 · SQUAD COMPETITION + SELECTION BATTLES -->
+<style id="ace-v313-squad-battle-style">
+.ace313Battle{margin:10px 14px 12px;padding:14px;border:1px solid rgba(90,190,238,.16);border-radius:14px;background:radial-gradient(circle at 92% 0,rgba(92,180,236,.10),transparent 35%),linear-gradient(145deg,rgba(8,26,39,.96),rgba(5,17,27,.98));color:#edf8fc}.ace313BattleHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.ace313BattleHead small{display:block;color:#68bde9;font-size:6px;font-weight:1000;letter-spacing:.13em}.ace313BattleHead h3{margin:4px 0 0;font-size:17px;line-height:1.05}.ace313Status{padding:7px 10px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:rgba(255,255,255,.035);font-size:8px;font-weight:1000;white-space:nowrap}.ace313Status.starting{color:#82e2b1;border-color:rgba(91,218,153,.2);background:rgba(65,194,131,.07)}.ace313Status.rotation{color:#ffd889;border-color:rgba(239,187,83,.2);background:rgba(229,169,57,.07)}.ace313Status.bench{color:#ff9e9e;border-color:rgba(239,103,103,.2);background:rgba(224,75,75,.07)}.ace313BattleCopy{margin:8px 0 0;color:#8098a8;font-size:8px;line-height:1.45}.ace313Duel{display:grid;grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr);gap:8px;align-items:stretch;margin-top:12px}.ace313Player{padding:11px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:rgba(255,255,255,.025)}.ace313Player.me{border-color:rgba(91,190,239,.18);background:rgba(70,165,218,.055)}.ace313Player small{display:block;color:#647f91;font-size:5.5px;font-weight:1000}.ace313Player b{display:block;margin-top:4px;font-size:11px}.ace313Player span{display:block;margin-top:4px;color:#8298a7;font-size:6.5px}.ace313Vs{display:grid;place-items:center;color:#4e7186;font-size:8px;font-weight:1000}.ace313Metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}.ace313Metrics div{padding:8px;border-radius:9px;background:rgba(255,255,255,.022);text-align:center}.ace313Metrics span{display:block;color:#5f7b8e;font-size:5px;font-weight:1000}.ace313Metrics b{display:block;margin-top:3px;font-size:9px}.ace313Pressure{height:4px;margin-top:10px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.05)}.ace313Pressure i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#56b8eb,#a57ff0)}.ace313Action{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}.ace313Action span{color:#6e8798;font-size:6.5px}.ace313Action button{min-height:34px;padding:0 11px;border:1px solid rgba(94,190,238,.2);border-radius:9px;background:rgba(67,160,214,.08);color:#bfe9ff;font-size:7px;font-weight:1000;cursor:pointer}.ace313ResultImpact{margin:10px 0 13px;padding:12px;border:1px solid rgba(100,193,239,.15);border-radius:12px;background:rgba(62,157,211,.055)}.ace313ResultImpact.changed{border-color:rgba(154,126,242,.3);background:linear-gradient(135deg,rgba(128,101,234,.12),rgba(62,157,211,.05))}.ace313ResultImpact small{display:block;color:#72c2eb;font-size:6px;font-weight:1000;letter-spacing:.11em}.ace313ResultImpact h3{margin:5px 0 3px;font-size:14px}.ace313ResultImpact p{margin:0;color:#7d95a5;font-size:7px;line-height:1.4}.ace313ResultImpact strong{display:inline-block;margin-top:7px;color:#d9eff9;font-size:8px}.rta92OverviewPanel>.ace313Battle{margin:12px 0 0}
+@media(max-width:760px){.ace313Battle{margin:7px 8px 9px;padding:11px}.ace313BattleHead h3{font-size:14px}.ace313Duel{grid-template-columns:1fr 35px 1fr;gap:5px}.ace313Player{padding:8px}.ace313Metrics{grid-template-columns:repeat(2,1fr)}.ace313Action{align-items:flex-end}.ace313Action span{max-width:65%}}
+</style>
+<script id="ace-v313-squad-battle-script">
+(()=>{
+'use strict';
+let battle=null,busy=false,lastFetch='',raf=0;
+const S=()=>window.__ACE_RTA_STATE||null,C=()=>S()?.career||null;
+const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+const rpc=async(name,args={})=>{if(typeof window.ACE_RTA_RPC!=='function')throw new Error('Career connection unavailable.');return window.ACE_RTA_RPC(name,args)};
+function sig(){const c=C();return c?`${c.season}|${c.season_match}|${c.training_used}|${c.coach_trust}|${c.overall}|${S()?.selection?.user?.selection_status||''}|${S()?.selection?.user?.rank||''}`:''}
+function tone(v){return String(v||'BENCH').toLowerCase()}
+function rivalName(r){return String(r?.player_name||r?.name||'No direct rival')}
+function cardHTML(b){
+ const c=C(),r=b?.rival||{},status=String(b?.status||c?.squad_role||'BENCH').toUpperCase(),movement=String(b?.movement||'SAME').toUpperCase();
+ const move=movement==='UP'?'▲ MOVING UP':movement==='DOWN'?'▼ UNDER PRESSURE':'— HOLDING';
+ return `<section class="ace313Battle" data-ace313-battle><div class="ace313BattleHead"><div><small>SQUAD COMPETITION · MATCHDAY ${Number(b?.match_no||Number(c?.season_match||0)+1)}</small><h3>${esc(b?.headline||'Your place is being contested.')}</h3></div><span class="ace313Status ${tone(status)}">${esc(status)}</span></div><p class="ace313BattleCopy">${esc(b?.detail||'Training, form and match performance decide the depth chart.')}</p><div class="ace313Duel"><article class="ace313Player me"><small>YOU · #${Number(b?.rank||1)} DEPTH</small><b>${esc(c?.player_name||'YOU')}</b><span>${Number(c?.overall||0)} OVR · ${Number(b?.score||0).toFixed(1)} SELECT</span></article><div class="ace313Vs">VS</div><article class="ace313Player"><small>${r?.player_name?'DIRECT RIVAL':'SQUAD'}</small><b>${esc(rivalName(r))}</b><span>${r?.player_name?`${Number(r.overall||0)} OVR · ${Number(r.form||0)} FORM`:'You are clear at this position.'}</span></article></div><div class="ace313Metrics"><div><span>DEPTH</span><b>#${Number(b?.rank||1)}</b></div><div><span>GAP</span><b>${Number(b?.gap||0).toFixed(1)}</b></div><div><span>PRESSURE</span><b>${Number(b?.pressure||0)}%</b></div><div><span>TREND</span><b>${esc(move)}</b></div></div><div class="ace313Pressure"><i style="width:${Math.max(0,Math.min(100,Number(b?.pressure||0)))}%"></i></div><div class="ace313Action"><span>${esc(b?.coach_name||'Coach')} · ${esc(b?.coach_primary||'SYSTEM')} / ${esc(b?.coach_secondary||'FORM')}</span><button type="button" data-ace313-open-match>VIEW MATCH SELECTION →</button></div></section>`
+}
+async function refresh(force=false){const k=sig();if(!k||busy||(!force&&k===lastFetch&&battle))return;busy=true;try{battle=await rpc('vds_rta_get_squad_battle_v313');lastFetch=k;decorate()}catch(e){console.warn('ACE 313 squad battle unavailable',e)}finally{busy=false}}
+function decorateResult(){const shell=document.querySelector('.rta102ResultShell'),d=S()?.key,b=d?.squad_battle;if(!shell||!b||shell.querySelector('.ace313ResultImpact'))return;const host=shell.querySelector('.rta102ResultDetails'),anchor=host?.querySelector('.rta102RewardBurst');if(!host)return;const changed=!!b.status_changed||!!b.rank_changed;const el=document.createElement('section');el.className=`ace313ResultImpact ${changed?'changed':''}`;el.innerHTML=`<small>SELECTION IMPACT</small><h3>${changed?`${esc(b.before_status||'ROLE')} → ${esc(b.after_status||b.status||'ROLE')}`:`${esc(b.after_status||b.status||'ROLE')} · #${Number(b.after_rank||b.rank||1)} DEPTH`}</h3><p>${esc(b.detail||'The coach has updated the depth chart after your performance.')}</p>${b.rival?.player_name?`<strong>Direct rival: ${esc(b.rival.player_name)} · ${Number(b.rival.overall||0)} OVR</strong>`:''}`;if(anchor)anchor.insertAdjacentElement('afterend',el);else host.prepend(el)}
+function decorate(){raf=0;const mount=document.querySelector('#roadtoace #rta62Mount');if(!mount||!C())return;decorateResult();if(!battle){refresh();return}const existing=mount.querySelector('[data-ace313-battle]');const home=mount.querySelector('.rta93HomeHero,.rta227HomeHero,.rta229CareerPulseHome .ace229PulseHero');const overview=mount.querySelector('.rta92OverviewPanel');if(existing)return;if(home){home.insertAdjacentHTML('afterend',cardHTML(battle));return}if(overview){const hero=overview.querySelector('.rta92HeroSummary,.rta92PanelIntro');if(hero)hero.insertAdjacentHTML('afterend',cardHTML(battle));else overview.insertAdjacentHTML('afterbegin',cardHTML(battle))}}
+function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
+document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace313-open-match]')){const s=S();if(!s)return;s.view='match';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(()=>document.querySelector('#roadtoace')?.scrollIntoView({behavior:'smooth',block:'start'}),30)}});
+const road=document.getElementById('roadtoace');if(road)new MutationObserver(queue).observe(road,{childList:true,subtree:true});
+window.addEventListener('pageshow',()=>refresh(true));window.addEventListener('online',()=>refresh(true));
+setInterval(()=>{if(document.visibilityState==='visible'&&C()&&sig()!==lastFetch)refresh()},5000);
+window.ACE_SQUAD_BATTLE_V313={refresh:()=>refresh(true),get:()=>battle};window.ACE_PROJECT_BUILD='B21.36.313';queue();setTimeout(()=>refresh(true),900);
+})();
+</script>
+<script id="ace-build-marker-v313">window.ACE_PROJECT_BUILD="B21.36.313A";window.ACE_SQUAD_COMPETITION_V313=true;window.ACE_QA_HOTFIX_V313A=true;</script>
+
+
+<style id="ace313b-ios-scroll-lock-fix">
+/* B21.36.313B — iOS scroll-lock recovery.
+   Older Career viewport layers intentionally froze body/rta containers. On iOS,
+   stale state classes + rubber-band scrolling could leave the page pinned at top. */
+@media (max-width:760px){
+  html.aceRtaActive:not(.aceHomeActive){
+    height:auto!important;min-height:100%!important;max-height:none!important;
+    overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  body.aceRtaActive:not(.rta62Immersive){
+    height:auto!important;min-height:100dvh!important;max-height:none!important;
+    overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:auto!important;
+    touch-action:pan-y!important;-webkit-overflow-scrolling:touch!important;
+  }
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace.page.active,
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta62Shell,
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta93Shell,
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace #rta62Mount,
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta78Mode,
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta78Mode-home,
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta227CareerHome{
+    height:auto!important;min-height:0!important;max-height:none!important;
+    overflow:visible!important;overscroll-behavior-y:auto!important;
+  }
+  body.aceRtaActive:not(.rta62Immersive) #roadtoace.page.active{
+    min-height:100dvh!important;padding-bottom:calc(94px + env(safe-area-inset-bottom))!important;
+  }
+}
+</style>
+<script id="ace313b-ios-scroll-lock-fix-js">
+(function(){
+  'use strict';
+  if(window.ACE_IOS_SCROLL_LOCK_FIX_313B)return;
+  window.ACE_IOS_SCROLL_LOCK_FIX_313B=true;
+
+  const mobile=()=>window.matchMedia?.('(max-width:760px)')?.matches;
+  const pageActive=id=>document.getElementById(id)?.classList.contains('active');
+  let raf=0,timer=0;
+
+  function realBlockingOverlay(){
+    if(document.body?.classList.contains('rta62Immersive'))return true;
+    const selectors=[
+      '#rta62Overlay.show',
+      '#aceCinemaOverlay.show','#ace244BatchOverlay.show',
+      '#aceConditionModal.show','#aceManagerModal.show','#acePreMatchModal.show',
+      '#rta125TrainingGuide.show'
+    ];
+    return selectors.some(sel=>document.querySelector(sel));
+  }
+
+  function recover(){
+    raf=0;
+    if(!mobile()||!document.body)return;
+    try{ window.ace259SyncPageState?.(); }catch(_){}
+
+    /* Inline overflow locks are used by several modals. If no blocking modal is
+       actually open, an old "hidden" value is an orphaned lock. */
+    if(!realBlockingOverlay() && document.body.style.overflow==='hidden'){
+      document.body.style.overflow='';
+    }
+
+    /* A stale immersive class is especially nasty on Safari: remove it only
+       when the Road to Ace overlay itself is no longer visible. */
+    const rtaOverlay=document.getElementById('rta62Overlay');
+    if(document.body.classList.contains('rta62Immersive') &&
+       !(rtaOverlay?.classList.contains('show'))){
+      document.body.classList.remove('rta62Immersive');
+    }
+
+    /* If we left Road to Ace, don't allow its old viewport state to keep the
+       next page frozen while the mutation observer catches up. */
+    if(!pageActive('roadtoace')){
+      ['aceRtaActive','aceRtaCareerHome','aceRtaModeHome','aceRtaHomeGuide','aceRtaHomeAlerts','aceRtaHomeNext']
+        .forEach(c=>document.body.classList.remove(c));
+      document.documentElement.classList.remove('aceRtaActive');
+    }
+  }
+
+  function queue(delay=0){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      if(raf)cancelAnimationFrame(raf);
+      raf=requestAnimationFrame(()=>requestAnimationFrame(recover));
+    },delay);
+  }
+
+  /* The older state observer only watched page.class changes. Career tabs
+     replace descendants without changing #roadtoace.class, so aceRtaModeHome
+     could remain stale. Watch those descendant changes too. */
+  const road=document.getElementById('roadtoace');
+  if(road){
+    new MutationObserver(()=>queue(0)).observe(road,{childList:true,subtree:true});
+  }
+
+  document.addEventListener('click',e=>{
+    if(e.target.closest?.('[data-page],[data-ace-mobile-page],[data-rta62-view],[data-rta62-career-tab],[data-rta92-career-tab]')){
+      queue(20);queue(180);
+    }
+  },true);
+
+  /* iOS can finish a fast rubber-band gesture while layout is being replaced.
+     Re-assert the scrollable state after the gesture, without changing scrollY. */
+  document.addEventListener('touchend',()=>queue(24),{passive:true});
+  window.addEventListener('pageshow',()=>queue(0),{passive:true});
+  window.addEventListener('orientationchange',()=>queue(120),{passive:true});
+  window.addEventListener('resize',()=>queue(80),{passive:true});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)queue(0)},{passive:true});
+
+  queue(0);
+  window.ACE_PROJECT_BUILD='B21.36.313B';
 })();
 </script>
 </body>
