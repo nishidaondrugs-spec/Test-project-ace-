@@ -50057,5 +50057,66 @@ window.ACE_PROJECT_BUILD='B21.36.307';
 </style>
 
 <script id="ace-build-marker-v311">window.ACE_PROJECT_BUILD="B21.36.311";</script>
+
+
+<!-- PROJECT ACE B21.36.311B · INTERNATIONAL CAREER VISIBILITY · MOBILE + DESKTOP -->
+<style id="ace311a-intl-visibility-style">
+#roadtoace .ace311aIntlPulse{position:relative;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;margin:10px 0 12px;padding:11px 13px;border:1px solid rgba(129,105,238,.24);border-radius:14px;background:radial-gradient(circle at 86% 12%,rgba(116,89,232,.18),transparent 35%),linear-gradient(135deg,#0a1b29,#0b1727);color:#eef7fb;box-sizing:border-box;overflow:hidden;z-index:2;cursor:pointer;text-align:left;box-shadow:0 12px 32px rgba(0,0,0,.14);transition:border-color .16s ease,transform .16s ease,background .16s ease}
+#roadtoace .ace311aIntlPulse:hover{border-color:rgba(158,135,255,.42);background:radial-gradient(circle at 86% 12%,rgba(116,89,232,.24),transparent 38%),linear-gradient(135deg,#0b1d2c,#0d192a);transform:translateY(-1px)}
+#roadtoace .ace311aIntlPulse:focus-visible{outline:2px solid rgba(185,168,255,.78);outline-offset:2px}
+#roadtoace .ace311aIntlBadge{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;border:1px solid rgba(158,135,255,.27);background:linear-gradient(145deg,rgba(116,89,232,.20),rgba(68,126,211,.11));color:#c4b6ff;font-size:11px;font-weight:1000;letter-spacing:.06em;box-shadow:inset 0 0 20px rgba(139,111,244,.05)}
+#roadtoace .ace311aIntlCopy{min-width:0;text-align:left}
+#roadtoace .ace311aIntlCopy small{display:block;color:#9785ec;font-size:6px;font-weight:1000;letter-spacing:.14em}
+#roadtoace .ace311aIntlCopy b{display:block;margin-top:3px;color:#f0f4ff;font-size:12px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .ace311aIntlCopy span{display:block;margin-top:3px;color:#7891a5;font-size:7px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .ace311aIntlGo{align-self:stretch;display:flex;align-items:center;min-width:74px;padding:0 12px;border:0;border-left:1px solid rgba(255,255,255,.07);background:transparent;color:#c0b2ff;font-size:7px;font-style:normal;font-weight:1000;letter-spacing:.07em;white-space:nowrap}
+@media(min-width:761px){
+  #roadtoace .rta229CareerPulseHome>.ace311aIntlPulse{width:min(1120px,calc(100% - 24px));margin:10px auto 12px}
+}
+@media(max-width:760px){
+  #roadtoace .ace311aIntlPulse{grid-template-columns:38px minmax(0,1fr) auto;gap:9px;width:calc(100% - 12px);margin:0 6px 7px;padding:9px 10px;border-radius:13px;box-shadow:none}
+  #roadtoace .ace311aIntlPulse:hover{transform:none}
+  #roadtoace .ace311aIntlBadge{width:38px;height:38px;border-radius:11px;font-size:10px}
+  #roadtoace .ace311aIntlCopy small{font-size:5.2px}
+  #roadtoace .ace311aIntlCopy b{margin-top:2px;font-size:8.2px}
+  #roadtoace .ace311aIntlCopy span{margin-top:2px;font-size:5.7px}
+  #roadtoace .ace311aIntlGo{min-width:48px;padding:0 8px;font-size:6px}
+}
+</style>
+<script id="ace311a-intl-visibility-script">
+(()=>{
+'use strict';
+let raf=0;
+const state=()=>window.__ACE_RTA_STATE||null;
+const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
+function selection(){try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}}
+function openInternational(){
+ const s=state();if(!s)return;
+ s.view='career';s.careerPanel='international';
+ try{window.__ACE_RTA_RENDER?.()}catch(_){}
+ setTimeout(()=>document.querySelector('#roadtoace .aceV77Intl')?.scrollIntoView?.({block:'start',behavior:'smooth'}),80);
+}
+function decorate(){
+ raf=0;const s=state(),c=s?.career,home=document.querySelector('#roadtoace .rta229CareerPulseHome');
+ if(!c||!home){document.querySelectorAll('#roadtoace .ace311aIntlPulse').forEach(x=>x.remove());return}
+ const sel=selection(),eligible=!!sel?.eligible,complete=!!c.season_complete,stage=String(c.international_window?.stage||'');
+ let title,meta,code=String(sel?.code||String(c.nationality||'INT').slice(0,3).toUpperCase());
+ if(!eligible){title='International Career setup';meta=sel?.reason||'Choose a supported nationality.'}
+ else if(complete&&sel.status==='SELECTED'&&stage!=='COMPLETE'){title=`${sel.status} · ${sel.role}`;meta=stage?`${stage} · international duty active`:'Call-up ready · report to national team camp'}
+ else if(complete){title=`${sel.status} · ${sel.role}`;meta=stage==='COMPLETE'?`${c.international_caps||0} caps · tournament complete`:`Season decision · depth #${sel.rank}`}
+ else {title=`${c.nationality} · selection outlook`;meta=`Depth #${sel.rank} · ${sel.role} projection · June window`}
+ const sig=[c.season,c.season_match,c.nationality,c.international_caps||0,sel?.status,sel?.role,sel?.rank,stage].join('|');
+ let card=home.querySelector('.ace311aIntlPulse');if(card?.dataset.sig===sig)return;card?.remove();
+ card=document.createElement('button');card.type='button';card.className='ace311aIntlPulse';card.dataset.sig=sig;card.setAttribute('aria-label','Open International Career');
+ card.innerHTML=`<i class="ace311aIntlBadge">${esc(code)}</i><span class="ace311aIntlCopy"><small>INTERNATIONAL CAREER · SEASON ${Number(c.season||1)}</small><b>${esc(title)}</b><span>${esc(meta)}</span></span><em class="ace311aIntlGo">VIEW →</em>`;
+ const tabs=home.querySelector('.ace246HomeTabsZone');if(tabs)tabs.before(card);else home.appendChild(card);
+}
+function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
+document.addEventListener('click',e=>{if(e.target.closest?.('.ace311aIntlPulse')){e.preventDefault();openInternational()}},true);
+const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});
+window.addEventListener('pageshow',queue);window.addEventListener('ace:career-nationality-ready',queue);setTimeout(queue,250);
+window.ACE_INTL_VISIBILITY_V311A={decorate:queue,open:openInternational};window.ACE_PROJECT_BUILD='B21.36.311B';
+})();
+</script>
 </body>
 </html>
