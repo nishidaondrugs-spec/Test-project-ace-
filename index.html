@@ -38898,7 +38898,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     </div>`;
   }
   function rta77ObjectivesPanel(c,focus){
-    const rp=roleProgress(c);
+    const rp=roleProgress(c),pre=c?.preseason_state&&typeof c.preseason_state==="object"?c.preseason_state:{},opening=Array.isArray(pre.objectives)?pre.objectives:[];
     return `<div class="rta77ObjectivesPane">
       <div class="rta77PaneIntro"><div><small>MANAGER OBJECTIVES</small><h2>Earn your next step.</h2><p>Three priorities. Everything else can wait.</p></div><span>${Number(c.coach_trust||0)} TRUST</span></div>
       <div class="rta77ObjectiveRows">
@@ -38906,6 +38906,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <article><i>02</i><div><small>PLAYER DEVELOPMENT</small><h3>Improve ${esc(focus[0])}</h3><p>${Number(focus[1])} current rating · use training and your skill tree.</p></div><button data-rta62-view="player">DEVELOP →</button></article>
         <article><i>03</i><div><small>SQUAD ROLE</small><h3>${esc(c.squad_role)} → ${esc(rp.next||c.squad_role)}</h3><p>${rp.remaining?`${rp.remaining} Coach Trust needed for the next role.`:"You are at the top of the squad-role ladder."}</p></div><span>${rp.pct}%</span></article>
       </div>
+      ${Number(c.season_match||0)>=1&&(opening.length||window.ACE_INTL_SELECTION_V1?.get?.()?.eligible)?`<section class="ace314dOpeningObjectives"><small>CAREER OBJECTIVES · FROM THIS WEEK</small>${opening.slice(0,3).map((o,i)=>`<div><i>${String(i+1).padStart(2,"0")}</i><b>${esc(o.label||o.id||"Career objective")}</b><span>ACTIVE</span></div>`).join("")}${(()=>{try{const x=window.ACE_INTL_SELECTION_V1?.get?.();return x?.eligible?`<div><i>INT</i><b>${esc(String(c.nationality||"National team"))} selection · ${esc(x.status||"OUTLOOK")}${x.rank?` · depth #${Number(x.rank)}`:""}</b><span>TRACKING</span></div>`:""}catch(_){return ""}})()}</section>`:""}
       <div class="rta77RoleProgress"><span>ROLE PROGRESS</span><b>${esc(rp.label||c.squad_role)}</b><i><em style="width:${rp.pct}%"></em></i></div>
     </div>`;
   }
@@ -39223,14 +39224,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return `${slot}:${String(c?.player_name||"career").slice(0,48)}`;
   }
   function rta257MessageKey(m,i=0){
-    return [
-      String(m?.id||m?.message_id||m?.approach_id||""),
-      String(m?.source||"CAREER"),
-      String(m?.sender||""),
-      String(m?.title||""),
-      String(m?.body||"").slice(0,120),
-      String(i)
-    ].join("|");
+    const id=String(m?.id||m?.message_id||m?.approach_id||"").trim();
+    if(id)return `${id}|${String(m?.source||"CAREER")}`;
+    return [String(m?.source||"CAREER"),String(m?.sender||""),String(m?.title||""),String(m?.body||"").slice(0,120),String(i)].join("|");
   }
   function rta257ReadKey(c){return `ace_rta_read_inbox_v1:${rta257CareerScope(c)}`}
   function rta257ReadSet(c){
@@ -39282,9 +39278,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const intlStage=String(c?.international_window?.stage||"");
     if(c?.season_complete&&intlSel?.status==="SELECTED"&&intlStage!=="COMPLETE")return {kicker:"INTERNATIONAL DUTY",icon:"◎",title:"REPORT TO YOUR NATIONAL TEAM",meta:intlStage?`${intlStage} · your club Career is paused.`:"You were called up. International duty comes before the next club season.",type:"intl",target:"international",cta:"CONTINUE INTERNATIONAL"};
     if(c?.season_complete)return {kicker:"YOUR NEXT MOVE",icon:"◎",title:"REVIEW YOUR SEASON",meta:"Your next career chapter is ready.",type:"view",target:"career",cta:"SEASON REVIEW"};
-    if(played===0&&used===0&&unread.some(m=>m?.action==="TUTORIAL_TRAIN"))return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"✉",title:"OPEN YOUR COACH MESSAGE",meta:"Your first instruction has arrived.",type:"panel",target:"inbox",cta:"OPEN INBOX"};
-    if(played===0&&used===0)return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"△",title:"REPORT TO TRAINING",meta:"Complete one drill before your debut.",type:"view",target:"train",cta:"GO TO TRAINING"};
-    if(played===0&&used>=1)return {kicker:"CAREER TUTORIAL · 2 OF 3",icon:"▶",title:"PLAY YOUR DEBUT",meta:`Next: ${opponent}`,type:"view",target:"match",cta:"GO TO MATCH"};
+    if(Number(c?.season||1)===1&&played===0&&used===0&&unread.some(m=>m?.action==="TUTORIAL_TRAIN"))return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"✉",title:"OPEN YOUR COACH MESSAGE",meta:"Your first instruction has arrived.",type:"panel",target:"inbox",cta:"OPEN INBOX"};
+    if(Number(c?.season||1)===1&&played===0&&used===0)return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"△",title:"REPORT TO TRAINING",meta:"Complete one drill before your debut.",type:"view",target:"train",cta:"GO TO TRAINING"};
+    if(Number(c?.season||1)===1&&played===0&&used>=1)return {kicker:"CAREER TUTORIAL · 2 OF 3",icon:"▶",title:"PLAY YOUR DEBUT",meta:`Next: ${opponent}`,type:"view",target:"match",cta:"GO TO MATCH"};
     if(unread.length)return {kicker:"YOUR NEXT MOVE",icon:"✉",title:"READ YOUR NEW MESSAGE",meta:`${unread.length} unread Career update${unread.length===1?"":"s"}.`,type:"panel",target:"inbox",cta:"OPEN INBOX"};
     if(agentUnread){
       const a=rta108AgentAttention?.()||{};
@@ -39307,8 +39303,30 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function rta255CareerInbox(c){
     const real=Array.isArray(S.office?.inbox)?S.office.inbox.slice():[];
     if(!c)return real;
-    const firstMatch=Number(c.season_match||0)===0;
+    const firstMatch=Number(c.season||1)===1&&Number(c.season_match||0)===0;
     const used=Number(c.training_used||0);
+    const pre=c?.preseason_state&&typeof c.preseason_state==="object"?c.preseason_state:{};
+    if(String(pre.status||"").toUpperCase()==="COMPLETE"&&Number(c.season_match||0)===0){
+      const role=String(pre.final_role||c.squad_role||"SQUAD").toUpperCase();
+      real.unshift({
+        id:`ace_preseason_complete_s${Number(c.season||1)}`,source:"COACH",sender:String(pre.coach_name||S.clubWorld?.club?.coach_name||"Head Coach"),
+        title:`${role} · Pre-season complete`,
+        body:`Your opening role is ${role}. ${pre.focus?`Your pre-season focus was ${String(pre.focus).replaceAll("_"," ")}. `:""}Your first-month objectives are now tracked under Objectives.`,
+        action:"PRESEASON_COMPLETE"
+      });
+    }
+    try{
+      const intl=window.ACE_INTL_SELECTION_V1?.get?.()||null;
+      if(intl?.eligible&&!c.season_complete&&Number(c.season_match||0)===0){
+        const nation=String(c.nationality||intl.code||"National team");
+        real.unshift({
+          id:`ace_intl_outlook_s${Number(c.season||1)}`,source:"NATIONAL TEAM",sender:nation,
+          title:`${nation} selection outlook`,
+          body:`${intl.status||"OUTLOOK"} · ${intl.role||"squad role"}${intl.rank?` · depth #${intl.rank}`:""}. Keep building form, role and coach trust before the international window.`,
+          action:"INTERNATIONAL_OUTLOOK"
+        });
+      }
+    }catch(_){}
     if(firstMatch&&used===0){
       const coach=String(S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach");
       const club=String(c.club_name||"the club");
@@ -39335,7 +39353,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const alerts=[];
     const agent=rta108AgentAttention?.()||{active:false};
     const inbox=rta255CareerInbox(c),unread=rta257UnreadInbox(c),agentUnread=rta257AgentUnread(c);
-    const firstMatch=Number(c.season_match||0)===0;
+    const firstMatch=Number(c.season||1)===1&&Number(c.season_match||0)===0;
     const used=Number(c.training_used||0);
     const sp=Math.max(0,Number(c.skill_points||0));
 
@@ -39379,7 +39397,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const nextOpp=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||"Opponent");
     const position=({OH:"OUTSIDE HITTER",OP:"OPPOSITE",M:"MIDDLE BLOCKER",S:"SETTER",L:"LIBERO"}[String(c.position||"OH").toUpperCase()]||posLabel(c.position)||"PLAYER");
     const role=String(c.squad_role||S.selection?.user?.selection_status||"BENCH").toUpperCase();
-    const played=Number(c.season_match||0),firstMatch=played===0,needsFirstTraining=firstMatch&&used===0,firstTrainingDone=firstMatch&&used>=1,seasonPct=Math.max(0,Math.min(100,Math.round((played/14)*100)));
+    const played=Number(c.season_match||0),firstMatch=Number(c.season||1)===1&&played===0,needsFirstTraining=firstMatch&&used===0,firstTrainingDone=firstMatch&&used>=1,seasonPct=Math.max(0,Math.min(100,Math.round((played/14)*100)));
     const rp=roleProgress(c),unreadInbox=rta257UnreadInbox(c),inboxBadge=unreadInbox.length?String(unreadInbox.length):"";
     const last=h?`${h.won?"WIN":"LOSS"} · ${Number(h.sets_for||0)}–${Number(h.sets_against||0)} vs ${esc(h.opponent||"Opponent")}`:"No match played yet";
     const trust=Math.max(0,Math.round(Number(c.coach_trust||0)));
@@ -39428,6 +39446,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
           <article><i>02</i><div><small>DEVELOPMENT</small><b>Improve ${esc(focusName)}</b></div><span>${focusRating}</span></article>
           <article><i>03</i><div><small>SQUAD ROLE</small><b>${esc(role)} → ${esc(rp.next||role)}</b></div><span>${rp.pct}%</span></article>
         </div>
+        ${(()=>{const p=c?.preseason_state&&typeof c.preseason_state==="object"?c.preseason_state:{},a=Array.isArray(p.objectives)?p.objectives:[];let x=null;try{x=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}if(Number(c.season_match||0)<1||(!a.length&&!x?.eligible))return "";return `<section class="ace314dOpeningObjectives"><small>CAREER OBJECTIVES · FROM THIS WEEK</small>${a.slice(0,3).map((o,i)=>`<div><i>${String(i+1).padStart(2,"0")}</i><b>${esc(o.label||o.id||"Career objective")}</b><span>ACTIVE</span></div>`).join("")}${x?.eligible?`<div><i>INT</i><b>${esc(String(c.nationality||"National team"))} selection · ${esc(x.status||"OUTLOOK")}${x.rank?` · depth #${Number(x.rank)}`:""}</b><span>TRACKING</span></div>`:""}</section>`})()}
         <div class="ace227Progress"><div><span>ROLE PROGRESS</span><b>${rp.remaining?`${rp.remaining} trust to next role`:"Top role reached"}</b></div><i><em style="width:${rp.pct}%"></em></i></div>
       </div>`;
     }else if(panel==="season"){
@@ -39615,7 +39634,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const h=latestMatch(),used=Number(c.training_used||0),rank=leagueRank(),next=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||"Opponent"),ready=readiness(c),played=Number(c.season_match||0),focus=developmentFocus(c);
     const inbox=rta255CareerInbox(c),unreadInbox=rta257UnreadInbox(c),agent=rta108AgentAttention(),agentUnread=rta257AgentUnread(c);
     const firstCareerMessage=inbox[0]||null;
-    const firstWeek=played===0,needsFirstTraining=firstWeek&&used===0,firstTrainingDone=firstWeek&&used>=1;
+    const firstWeek=Number(c.season||1)===1&&played===0,needsFirstTraining=firstWeek&&used===0,firstTrainingDone=firstWeek&&used>=1;
     let kicker="THIS WEEK",headline=`Prepare for ${next}`,copy=`${Math.max(0,2-used)} training session${Math.max(0,2-used)===1?"":"s"} available before Matchday.`;
     let action="GO TO TRAINING",view="train",secondary="VIEW MATCH",secondaryView="match";
 
@@ -39741,7 +39760,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function matchView(c){
     if(c.season_complete)return `<main class="rta93Match"><section class="rta78SeasonDone"><small>SEASON COMPLETE</small><h1>The season is over.</h1><p>Review the year before deciding what comes next.</p><button class="rta62Btn primary" data-rta62-view="career">OPEN CAREER →</button></section></main>`;
-    const h=latestMatch(),ready=readiness(c),oppFallback=nextOpponent(),rank=leagueRank(),selState=S.selection||{},sel=selState.user||{},status=String(sel.selection_status||c.squad_role||"BENCH"),opp=String(selState.opponent||sel.opponent||oppFallback),rival=sel.direct_rival||null,coach=String(sel.coach_name||S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach"),leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League"),training=Number(c.training_used||0),firstMatch=Number(c.season_match||0)===0,needsFirstTraining=Number(c.season_match||0)===0&&training===0,firstTrainingDone=Number(c.season_match||0)===0&&training>=1,playerTarget=posLabel(c.position)==="S"?"CONTROL THE OFFENCE":posLabel(c.position)==="L"?"OWN FIRST CONTACT":posLabel(c.position)==="M"?"WIN THE NET":"WIN YOUR ATTACKING MOMENTS",actionLabel=S.activeKey?"RESUME MATCH":rta88SelectionAction(status),rivalName=String(rival?.player_name||rival?.name||"").trim(),selectionNote=status==="BENCH"?(rivalName?`${rivalName} is currently ahead.`:"Stay ready."):(status==="ROTATION"?"Rotation role confirmed.":"You're in the starting six."),coachNote=status==="BENCH"?"Stay ready. Your chance may come.":status==="ROTATION"?"Make every touch count.":"Set the tone early.",matchday=Math.min(14,Number(c.season_match||0)+1);
+    const h=latestMatch(),ready=readiness(c),oppFallback=nextOpponent(),rank=leagueRank(),selState=S.selection||{},sel=selState.user||{},status=String(sel.selection_status||c.squad_role||"BENCH"),opp=String(selState.opponent||sel.opponent||oppFallback),rival=sel.direct_rival||null,coach=String(sel.coach_name||S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach"),leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League"),training=Number(c.training_used||0),firstMatch=Number(c.season||1)===1&&Number(c.season_match||0)===0,needsFirstTraining=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training===0,firstTrainingDone=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training>=1,playerTarget=posLabel(c.position)==="S"?"CONTROL THE OFFENCE":posLabel(c.position)==="L"?"OWN FIRST CONTACT":posLabel(c.position)==="M"?"WIN THE NET":"WIN YOUR ATTACKING MOMENTS",actionLabel=S.activeKey?"RESUME MATCH":rta88SelectionAction(status),rivalName=String(rival?.player_name||rival?.name||"").trim(),selectionNote=status==="BENCH"?(rivalName?`${rivalName} is currently ahead.`:"Stay ready."):(status==="ROTATION"?"Rotation role confirmed.":"You're in the starting six."),coachNote=status==="BENCH"?"Stay ready. Your chance may come.":status==="ROTATION"?"Make every touch count.":"Set the tone early.",matchday=Math.min(14,Number(c.season_match||0)+1);
     return `<main class="rta93Match ace245MatchPage ${firstMatch?"ace252FirstMatchMatch":""} ${needsFirstTraining?"ace253MatchNeedsTraining":firstTrainingDone?"ace253MatchReady":""}">
       <section class="rta93MatchHero ace245FixtureHero">
         <div class="ace245FixtureAtmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -39887,7 +39906,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return keys.slice().sort((a,b)=>score(a)-score(b))[0]||"RECEIVE";
   }
   function trainView(c){
-    const used=Number(c.training_used||0),sessionActive=!!S.activeTraining,locked=used>=2,firstCareerWeek=Number(c.season_match||0)===0,firstTutorialTraining=firstCareerWeek&&used===0,firstTutorialTrainingDone=firstCareerWeek&&used>=1,focus=developmentFocus(c),coach=S.clubWorld?.club||{};
+    const used=Number(c.training_used||0),sessionActive=!!S.activeTraining,locked=used>=2,firstCareerWeek=Number(c.season||1)===1&&Number(c.season_match||0)===0,firstTutorialTraining=firstCareerWeek&&used===0,firstTutorialTrainingDone=firstCareerWeek&&used>=1,focus=developmentFocus(c),coach=S.clubWorld?.club||{};
     const coachName=String(coach.coach_name||coach.coach||"Coach Morgan");
     const coachPrimary=String(coach.primary_focus||focus[0]||"CREATIVITY").toUpperCase();
     const coachSecondary=String(coach.secondary_focus||"PHYSICAL").toUpperCase();
@@ -39997,7 +40016,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function skillNodeState(n,c){
     const unlocked=skillUnlockedSet(),owned=unlocked.has(n.id);
-    const prereqOk=!n.prereq||unlocked.has(n.prereq);
+    const prereqs=Array.isArray(n.prereq_nodes)&&n.prereq_nodes.length?n.prereq_nodes:(n.prereq?[n.prereq]:[]);
+    const prereqOk=prereqs.every(id=>unlocked.has(id));
     const roleOk=!n.role_gate||skillRoleRank(c.squad_role)>=skillRoleRank(n.role_gate);
     const currentMilestone=skillMilestoneNow(n.milestone_type,c);
     const milestoneOk=!n.milestone_type||currentMilestone>=Number(n.milestone_value||0);
@@ -40011,7 +40031,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function skillGateLabel(n,c,state){
     if(state.owned)return "UNLOCKED";
-    if(!state.prereqOk)return "PREVIOUS NODE REQUIRED";
+    if(!state.prereqOk)return n.branch==="HYBRID"?"TWO PATH TRAITS REQUIRED":"PREVIOUS NODE REQUIRED";
     if(!state.roleOk)return `${n.role_gate} REQUIRED`;
     if(!state.milestoneOk)return `${Number(state.currentMilestone)}/${Number(n.milestone_value||0)} ${String(n.milestone_type||"").replace("RATINGS_8","8.0+ RATINGS")}`;
     if(!state.spOk)return `${Number(n.cost||0)} SP REQUIRED`;
@@ -40028,42 +40048,72 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     ${ms.length?`<div class="rta71MilestoneRail">${ms.map(m=>`<article class="${m.claimed?"claimed":m.done?"ready":"locked"}"><i>${m.claimed?"✓":"+1"}</i><div><span>${m.claimed?"SP AWARDED":"BONUS SP"}</span><b>${esc(m.label)}</b></div></article>`).join("")}</div>`:""}`;
   }
 
-  const ACE_ST2_NODES=[{"id":"ST2_OH_TERMINATOR_01","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":1,"name":"+1 Accuracy","description":"Develop your Terminator build.","cost":1,"prereq":null,"effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_TERMINATOR_02","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":2,"name":"+1 Power","description":"Develop your Terminator build.","cost":1,"prereq":"ST2_OH_TERMINATOR_01","effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_TERMINATOR_03","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":3,"name":"+1 Vertical","description":"Develop your Terminator build.","cost":1,"prereq":"ST2_OH_TERMINATOR_02","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_TERMINATOR_04","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":4,"name":"+1 Accuracy","description":"Develop your Terminator build.","cost":1,"prereq":"ST2_OH_TERMINATOR_03","effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_TERMINATOR_05","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":5,"name":"HEAVY ARM","description":"Hard swings are easier to control.","cost":3,"prereq":"ST2_OH_TERMINATOR_04","effects":{},"special":"TRAIT_OH_TERMINATOR_1","type":"MEDIUM"},{"id":"ST2_OH_TERMINATOR_06","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":6,"name":"+1 Accuracy","description":"Deepen your Terminator specialisation.","cost":2,"prereq":"ST2_OH_TERMINATOR_05","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_TERMINATOR_07","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":7,"name":"HIGH BALL SPECIALIST","description":"More reliable on high and out-of-system balls.","cost":3,"prereq":"ST2_OH_TERMINATOR_06","effects":{},"special":"TRAIT_OH_TERMINATOR_2","type":"MEDIUM"},{"id":"ST2_OH_TERMINATOR_08","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":8,"name":"+1 Accuracy","description":"Final preparation for Terminator mastery.","cost":2,"prereq":"ST2_OH_TERMINATOR_07","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_TERMINATOR_09","position":"OH","branch":"TERMINATOR","path_name":"Terminator","tier":9,"name":"TERMINATOR","description":"Become the primary point-scoring weapon.","cost":5,"prereq":"ST2_OH_TERMINATOR_08","effects":{},"special":"PLAYSTYLE_OH_TERMINATOR","type":"PLAYSTYLE"},{"id":"ST2_OH_GENIUS_01","position":"OH","branch":"GENIUS","path_name":"Genius","tier":1,"name":"+1 Creativity","description":"Develop your Genius build.","cost":1,"prereq":null,"effects":{"creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_GENIUS_02","position":"OH","branch":"GENIUS","path_name":"Genius","tier":2,"name":"+1 Accuracy","description":"Develop your Genius build.","cost":1,"prereq":"ST2_OH_GENIUS_01","effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_GENIUS_03","position":"OH","branch":"GENIUS","path_name":"Genius","tier":3,"name":"+1 Set Technique","description":"Develop your Genius build.","cost":1,"prereq":"ST2_OH_GENIUS_02","effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_GENIUS_04","position":"OH","branch":"GENIUS","path_name":"Genius","tier":4,"name":"+1 Creativity","description":"Develop your Genius build.","cost":1,"prereq":"ST2_OH_GENIUS_03","effects":{"creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_GENIUS_05","position":"OH","branch":"GENIUS","path_name":"Genius","tier":5,"name":"SOFT HANDS","description":"Better control on tips and redirects.","cost":3,"prereq":"ST2_OH_GENIUS_04","effects":{},"special":"TRAIT_OH_GENIUS_1","type":"MEDIUM"},{"id":"ST2_OH_GENIUS_06","position":"OH","branch":"GENIUS","path_name":"Genius","tier":6,"name":"+1 Creativity","description":"Deepen your Genius specialisation.","cost":2,"prereq":"ST2_OH_GENIUS_05","effects":{"creativity":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_GENIUS_07","position":"OH","branch":"GENIUS","path_name":"Genius","tier":7,"name":"DECEPTION","description":"Sell the attack and disguise your solution.","cost":3,"prereq":"ST2_OH_GENIUS_06","effects":{},"special":"TRAIT_OH_GENIUS_2","type":"MEDIUM"},{"id":"ST2_OH_GENIUS_08","position":"OH","branch":"GENIUS","path_name":"Genius","tier":8,"name":"+1 Creativity","description":"Final preparation for Genius mastery.","cost":2,"prereq":"ST2_OH_GENIUS_07","effects":{"creativity":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_GENIUS_09","position":"OH","branch":"GENIUS","path_name":"Genius","tier":9,"name":"FAKE SET","description":"Unlock the Fake Set option in eligible attack situations.","cost":5,"prereq":"ST2_OH_GENIUS_08","effects":{},"special":"PLAYSTYLE_OH_GENIUS","type":"PLAYSTYLE"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_01","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":1,"name":"+1 Receive","description":"Develop your Deep Court Guardian build.","cost":1,"prereq":null,"effects":{"serve_receive":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_02","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":2,"name":"+1 Positioning","description":"Develop your Deep Court Guardian build.","cost":1,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_01","effects":{"positioning":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_03","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":3,"name":"+1 Reaction","description":"Develop your Deep Court Guardian build.","cost":1,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_02","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_04","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":4,"name":"+1 Covering","description":"Develop your Deep Court Guardian build.","cost":1,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_03","effects":{"covering":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_05","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":5,"name":"STABLE PLATFORM","description":"More stable difficult first contacts.","cost":3,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_04","effects":{},"special":"TRAIT_OH_DEEP_COURT_GUARDIAN_1","type":"MEDIUM"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_06","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":6,"name":"+1 Receive","description":"Deepen your Deep Court Guardian specialisation.","cost":2,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_05","effects":{"serve_receive":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_07","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":7,"name":"COURT COVERAGE","description":"Better control when covering deep court.","cost":3,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_06","effects":{},"special":"TRAIT_OH_DEEP_COURT_GUARDIAN_2","type":"MEDIUM"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_08","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":8,"name":"+1 Receive","description":"Final preparation for Deep Court Guardian mastery.","cost":2,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_07","effects":{"serve_receive":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_DEEP_COURT_GUARDIAN_09","position":"OH","branch":"DEEP_COURT_GUARDIAN","path_name":"Deep Court Guardian","tier":9,"name":"DEEP COURT GUARDIAN","description":"Turn difficult defensive contacts into controlled balls.","cost":5,"prereq":"ST2_OH_DEEP_COURT_GUARDIAN_08","effects":{},"special":"PLAYSTYLE_OH_DEEP_COURT_GUARDIAN","type":"PLAYSTYLE"},{"id":"ST2_OH_LITTLE_GIANT_01","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":1,"name":"+1 Speed","description":"Develop your Little Giant build.","cost":1,"prereq":null,"effects":{"speed":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_LITTLE_GIANT_02","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":2,"name":"+1 Vertical","description":"Develop your Little Giant build.","cost":1,"prereq":"ST2_OH_LITTLE_GIANT_01","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_LITTLE_GIANT_03","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":3,"name":"+1 Power","description":"Develop your Little Giant build.","cost":1,"prereq":"ST2_OH_LITTLE_GIANT_02","effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_LITTLE_GIANT_04","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":4,"name":"+1 Vertical","description":"Develop your Little Giant build.","cost":1,"prereq":"ST2_OH_LITTLE_GIANT_03","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_OH_LITTLE_GIANT_05","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":5,"name":"QUICK STEP","description":"Explode into the approach faster.","cost":3,"prereq":"ST2_OH_LITTLE_GIANT_04","effects":{},"special":"TRAIT_OH_LITTLE_GIANT_1","type":"MEDIUM"},{"id":"ST2_OH_LITTLE_GIANT_06","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":6,"name":"+1 Speed","description":"Deepen your Little Giant specialisation.","cost":2,"prereq":"ST2_OH_LITTLE_GIANT_05","effects":{"speed":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_LITTLE_GIANT_07","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":7,"name":"EXPLOSIVE APPROACH","description":"Reward clean approach and take-off execution.","cost":3,"prereq":"ST2_OH_LITTLE_GIANT_06","effects":{},"special":"TRAIT_OH_LITTLE_GIANT_2","type":"MEDIUM"},{"id":"ST2_OH_LITTLE_GIANT_08","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":8,"name":"+1 Speed","description":"Final preparation for Little Giant mastery.","cost":2,"prereq":"ST2_OH_LITTLE_GIANT_07","effects":{"speed":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OH_LITTLE_GIANT_09","position":"OH","branch":"LITTLE_GIANT","path_name":"Little Giant","tier":9,"name":"BLACK FLASH","description":"Perfect physical execution can trigger an enhanced attacking state.","cost":5,"prereq":"ST2_OH_LITTLE_GIANT_08","effects":{},"special":"PLAYSTYLE_OH_LITTLE_GIANT","type":"PLAYSTYLE"},{"id":"ST2_OP_JUGGERNAUT_01","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":1,"name":"+1 Power","description":"Develop your Juggernaut build.","cost":1,"prereq":null,"effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_JUGGERNAUT_02","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":2,"name":"+1 Accuracy","description":"Develop your Juggernaut build.","cost":1,"prereq":"ST2_OP_JUGGERNAUT_01","effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_JUGGERNAUT_03","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":3,"name":"+1 Mindset","description":"Develop your Juggernaut build.","cost":1,"prereq":"ST2_OP_JUGGERNAUT_02","effects":{"mindset":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_JUGGERNAUT_04","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":4,"name":"+1 Power","description":"Develop your Juggernaut build.","cost":1,"prereq":"ST2_OP_JUGGERNAUT_03","effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_JUGGERNAUT_05","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":5,"name":"HEAVY ARM","description":"Control maximum-power swings.","cost":3,"prereq":"ST2_OP_JUGGERNAUT_04","effects":{},"special":"TRAIT_OP_JUGGERNAUT_1","type":"MEDIUM"},{"id":"ST2_OP_JUGGERNAUT_06","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":6,"name":"+1 Power","description":"Deepen your Juggernaut specialisation.","cost":2,"prereq":"ST2_OP_JUGGERNAUT_05","effects":{"hitting_power":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_JUGGERNAUT_07","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":7,"name":"HIGH BALL SPECIALIST","description":"Thrive on ugly high-ball situations.","cost":3,"prereq":"ST2_OP_JUGGERNAUT_06","effects":{},"special":"TRAIT_OP_JUGGERNAUT_2","type":"MEDIUM"},{"id":"ST2_OP_JUGGERNAUT_08","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":8,"name":"+1 Power","description":"Final preparation for Juggernaut mastery.","cost":2,"prereq":"ST2_OP_JUGGERNAUT_07","effects":{"hitting_power":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_JUGGERNAUT_09","position":"OP","branch":"JUGGERNAUT","path_name":"Juggernaut","tier":9,"name":"JUGGERNAUT","description":"Relentless high-ball scoring identity.","cost":5,"prereq":"ST2_OP_JUGGERNAUT_08","effects":{},"special":"PLAYSTYLE_OP_JUGGERNAUT","type":"PLAYSTYLE"},{"id":"ST2_OP_BLOCK_HUNTER_01","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":1,"name":"+1 Accuracy","description":"Develop your Block Hunter build.","cost":1,"prereq":null,"effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_BLOCK_HUNTER_02","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":2,"name":"+1 Creativity","description":"Develop your Block Hunter build.","cost":1,"prereq":"ST2_OP_BLOCK_HUNTER_01","effects":{"creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_BLOCK_HUNTER_03","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":3,"name":"+1 Power","description":"Develop your Block Hunter build.","cost":1,"prereq":"ST2_OP_BLOCK_HUNTER_02","effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_BLOCK_HUNTER_04","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":4,"name":"+1 Accuracy","description":"Develop your Block Hunter build.","cost":1,"prereq":"ST2_OP_BLOCK_HUNTER_03","effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_BLOCK_HUNTER_05","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":5,"name":"SMART HANDS","description":"Better controlled touches off the block.","cost":3,"prereq":"ST2_OP_BLOCK_HUNTER_04","effects":{},"special":"TRAIT_OP_BLOCK_HUNTER_1","type":"MEDIUM"},{"id":"ST2_OP_BLOCK_HUNTER_06","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":6,"name":"+1 Accuracy","description":"Deepen your Block Hunter specialisation.","cost":2,"prereq":"ST2_OP_BLOCK_HUNTER_05","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_BLOCK_HUNTER_07","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":7,"name":"SEAM HUNTER","description":"Reward correct reads of block seams.","cost":3,"prereq":"ST2_OP_BLOCK_HUNTER_06","effects":{},"special":"TRAIT_OP_BLOCK_HUNTER_2","type":"MEDIUM"},{"id":"ST2_OP_BLOCK_HUNTER_08","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":8,"name":"+1 Accuracy","description":"Final preparation for Block Hunter mastery.","cost":2,"prereq":"ST2_OP_BLOCK_HUNTER_07","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_BLOCK_HUNTER_09","position":"OP","branch":"BLOCK_HUNTER","path_name":"Block Hunter","tier":9,"name":"BLOCK HUNTER","description":"Exploit hands, seams and block geometry.","cost":5,"prereq":"ST2_OP_BLOCK_HUNTER_08","effects":{},"special":"PLAYSTYLE_OP_BLOCK_HUNTER","type":"PLAYSTYLE"},{"id":"ST2_OP_GREAT_WALL_01","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":1,"name":"+1 Positioning","description":"Develop your The Great Wall build.","cost":1,"prereq":null,"effects":{"positioning":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_GREAT_WALL_02","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":2,"name":"+1 Reaction","description":"Develop your The Great Wall build.","cost":1,"prereq":"ST2_OP_GREAT_WALL_01","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_GREAT_WALL_03","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":3,"name":"+1 Vertical","description":"Develop your The Great Wall build.","cost":1,"prereq":"ST2_OP_GREAT_WALL_02","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_GREAT_WALL_04","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":4,"name":"+1 Blocking","description":"Develop your The Great Wall build.","cost":1,"prereq":"ST2_OP_GREAT_WALL_03","effects":{"blocking":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_GREAT_WALL_05","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":5,"name":"READ BLOCKER","description":"Improve positioning after a correct read.","cost":3,"prereq":"ST2_OP_GREAT_WALL_04","effects":{},"special":"TRAIT_OP_GREAT_WALL_1","type":"MEDIUM"},{"id":"ST2_OP_GREAT_WALL_06","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":6,"name":"+1 Positioning","description":"Deepen your The Great Wall specialisation.","cost":2,"prereq":"ST2_OP_GREAT_WALL_05","effects":{"positioning":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_GREAT_WALL_07","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":7,"name":"LINE SEAL","description":"Become stronger at closing the line.","cost":3,"prereq":"ST2_OP_GREAT_WALL_06","effects":{},"special":"TRAIT_OP_GREAT_WALL_2","type":"MEDIUM"},{"id":"ST2_OP_GREAT_WALL_08","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":8,"name":"+1 Positioning","description":"Final preparation for The Great Wall mastery.","cost":2,"prereq":"ST2_OP_GREAT_WALL_07","effects":{"positioning":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_GREAT_WALL_09","position":"OP","branch":"GREAT_WALL","path_name":"The Great Wall","tier":9,"name":"THE GREAT WALL","description":"Elite right-side blocking identity.","cost":5,"prereq":"ST2_OP_GREAT_WALL_08","effects":{},"special":"PLAYSTYLE_OP_GREAT_WALL","type":"PLAYSTYLE"},{"id":"ST2_OP_RISING_DRAGON_01","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":1,"name":"+1 Speed","description":"Develop your Rising Dragon build.","cost":1,"prereq":null,"effects":{"speed":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_RISING_DRAGON_02","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":2,"name":"+1 Vertical","description":"Develop your Rising Dragon build.","cost":1,"prereq":"ST2_OP_RISING_DRAGON_01","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_RISING_DRAGON_03","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":3,"name":"+1 Power","description":"Develop your Rising Dragon build.","cost":1,"prereq":"ST2_OP_RISING_DRAGON_02","effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_RISING_DRAGON_04","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":4,"name":"+1 Speed","description":"Develop your Rising Dragon build.","cost":1,"prereq":"ST2_OP_RISING_DRAGON_03","effects":{"speed":1},"special":null,"type":"SMALL"},{"id":"ST2_OP_RISING_DRAGON_05","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":5,"name":"EXPLOSIVE STEP","description":"Faster transition movement.","cost":3,"prereq":"ST2_OP_RISING_DRAGON_04","effects":{},"special":"TRAIT_OP_RISING_DRAGON_1","type":"MEDIUM"},{"id":"ST2_OP_RISING_DRAGON_06","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":6,"name":"+1 Speed","description":"Deepen your Rising Dragon specialisation.","cost":2,"prereq":"ST2_OP_RISING_DRAGON_05","effects":{"speed":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_RISING_DRAGON_07","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":7,"name":"FAST TRANSITION","description":"Reward rapid defence-to-attack transitions.","cost":3,"prereq":"ST2_OP_RISING_DRAGON_06","effects":{},"special":"TRAIT_OP_RISING_DRAGON_2","type":"MEDIUM"},{"id":"ST2_OP_RISING_DRAGON_08","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":8,"name":"+1 Speed","description":"Final preparation for Rising Dragon mastery.","cost":2,"prereq":"ST2_OP_RISING_DRAGON_07","effects":{"speed":1},"special":null,"type":"ADVANCED"},{"id":"ST2_OP_RISING_DRAGON_09","position":"OP","branch":"RISING_DRAGON","path_name":"Rising Dragon","tier":9,"name":"RISING DRAGON","description":"Explosive transition attacking identity.","cost":5,"prereq":"ST2_OP_RISING_DRAGON_08","effects":{},"special":"PLAYSTYLE_OP_RISING_DRAGON","type":"PLAYSTYLE"},{"id":"ST2_S_MAESTRO_01","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":1,"name":"+1 Set Technique","description":"Develop your Maestro build.","cost":1,"prereq":null,"effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_S_MAESTRO_02","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":2,"name":"+1 Accuracy","description":"Develop your Maestro build.","cost":1,"prereq":"ST2_S_MAESTRO_01","effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_S_MAESTRO_03","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":3,"name":"+1 Reaction","description":"Develop your Maestro build.","cost":1,"prereq":"ST2_S_MAESTRO_02","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_S_MAESTRO_04","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":4,"name":"+1 Set Technique","description":"Develop your Maestro build.","cost":1,"prereq":"ST2_S_MAESTRO_03","effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_S_MAESTRO_05","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":5,"name":"SOFT HANDS","description":"More forgiving execution on difficult sets.","cost":3,"prereq":"ST2_S_MAESTRO_04","effects":{},"special":"TRAIT_S_MAESTRO_1","type":"MEDIUM"},{"id":"ST2_S_MAESTRO_06","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":6,"name":"+1 Set Technique","description":"Deepen your Maestro specialisation.","cost":2,"prereq":"ST2_S_MAESTRO_05","effects":{"set_technique":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_MAESTRO_07","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":7,"name":"PERFECT RELEASE","description":"Improve consistency from balanced positions.","cost":3,"prereq":"ST2_S_MAESTRO_06","effects":{},"special":"TRAIT_S_MAESTRO_2","type":"MEDIUM"},{"id":"ST2_S_MAESTRO_08","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":8,"name":"+1 Set Technique","description":"Final preparation for Maestro mastery.","cost":2,"prereq":"ST2_S_MAESTRO_07","effects":{"set_technique":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_MAESTRO_09","position":"S","branch":"MAESTRO","path_name":"Maestro","tier":9,"name":"MAESTRO","description":"Elite technical setting control.","cost":5,"prereq":"ST2_S_MAESTRO_08","effects":{},"special":"PLAYSTYLE_S_MAESTRO","type":"PLAYSTYLE"},{"id":"ST2_S_KYOKA_SUIGETSU_01","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":1,"name":"+1 Creativity","description":"Develop your Kyōka Suigetsu build.","cost":1,"prereq":null,"effects":{"set_creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KYOKA_SUIGETSU_02","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":2,"name":"+1 Mindset","description":"Develop your Kyōka Suigetsu build.","cost":1,"prereq":"ST2_S_KYOKA_SUIGETSU_01","effects":{"mindset":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KYOKA_SUIGETSU_03","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":3,"name":"+1 Set Technique","description":"Develop your Kyōka Suigetsu build.","cost":1,"prereq":"ST2_S_KYOKA_SUIGETSU_02","effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KYOKA_SUIGETSU_04","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":4,"name":"+1 Creativity","description":"Develop your Kyōka Suigetsu build.","cost":1,"prereq":"ST2_S_KYOKA_SUIGETSU_03","effects":{"set_creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KYOKA_SUIGETSU_05","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":5,"name":"DISGUISE","description":"Hide setting intentions for longer.","cost":3,"prereq":"ST2_S_KYOKA_SUIGETSU_04","effects":{},"special":"TRAIT_S_KYOKA_SUIGETSU_1","type":"MEDIUM"},{"id":"ST2_S_KYOKA_SUIGETSU_06","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":6,"name":"+1 Creativity","description":"Deepen your Kyōka Suigetsu specialisation.","cost":2,"prereq":"ST2_S_KYOKA_SUIGETSU_05","effects":{"set_creativity":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_KYOKA_SUIGETSU_07","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":7,"name":"HOLD THE MIDDLE","description":"Make middle blockers commit later.","cost":3,"prereq":"ST2_S_KYOKA_SUIGETSU_06","effects":{},"special":"TRAIT_S_KYOKA_SUIGETSU_2","type":"MEDIUM"},{"id":"ST2_S_KYOKA_SUIGETSU_08","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":8,"name":"+1 Creativity","description":"Final preparation for Kyōka Suigetsu mastery.","cost":2,"prereq":"ST2_S_KYOKA_SUIGETSU_07","effects":{"set_creativity":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_KYOKA_SUIGETSU_09","position":"S","branch":"KYOKA_SUIGETSU","path_name":"Kyōka Suigetsu","tier":9,"name":"KYŌKA SUIGETSU","description":"Successful disguise delays opponent reads.","cost":5,"prereq":"ST2_S_KYOKA_SUIGETSU_08","effects":{},"special":"PLAYSTYLE_S_KYOKA_SUIGETSU","type":"PLAYSTYLE"},{"id":"ST2_S_KINGS_GAMBIT_01","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":1,"name":"+1 Accuracy","description":"Develop your King's Gambit build.","cost":1,"prereq":null,"effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KINGS_GAMBIT_02","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":2,"name":"+1 Vertical","description":"Develop your King's Gambit build.","cost":1,"prereq":"ST2_S_KINGS_GAMBIT_01","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KINGS_GAMBIT_03","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":3,"name":"+1 Creativity","description":"Develop your King's Gambit build.","cost":1,"prereq":"ST2_S_KINGS_GAMBIT_02","effects":{"creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KINGS_GAMBIT_04","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":4,"name":"+1 Power","description":"Develop your King's Gambit build.","cost":1,"prereq":"ST2_S_KINGS_GAMBIT_03","effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_S_KINGS_GAMBIT_05","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":5,"name":"SETTER DUMP","description":"Improve second-contact attacking execution.","cost":3,"prereq":"ST2_S_KINGS_GAMBIT_04","effects":{},"special":"TRAIT_S_KINGS_GAMBIT_1","type":"MEDIUM"},{"id":"ST2_S_KINGS_GAMBIT_06","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":6,"name":"+1 Accuracy","description":"Deepen your King's Gambit specialisation.","cost":2,"prereq":"ST2_S_KINGS_GAMBIT_05","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_KINGS_GAMBIT_07","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":7,"name":"SECOND-BALL THREAT","description":"Punish defenders who ignore the setter.","cost":3,"prereq":"ST2_S_KINGS_GAMBIT_06","effects":{},"special":"TRAIT_S_KINGS_GAMBIT_2","type":"MEDIUM"},{"id":"ST2_S_KINGS_GAMBIT_08","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":8,"name":"+1 Accuracy","description":"Final preparation for King's Gambit mastery.","cost":2,"prereq":"ST2_S_KINGS_GAMBIT_07","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_KINGS_GAMBIT_09","position":"S","branch":"KINGS_GAMBIT","path_name":"King's Gambit","tier":9,"name":"KING'S GAMBIT","description":"Unlock more aggressive setter scoring decisions.","cost":5,"prereq":"ST2_S_KINGS_GAMBIT_08","effects":{},"special":"PLAYSTYLE_S_KINGS_GAMBIT","type":"PLAYSTYLE"},{"id":"ST2_S_LIMITLESS_01","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":1,"name":"+1 Set Technique","description":"Develop your Limitless build.","cost":1,"prereq":null,"effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_S_LIMITLESS_02","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":2,"name":"+1 Reaction","description":"Develop your Limitless build.","cost":1,"prereq":"ST2_S_LIMITLESS_01","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_S_LIMITLESS_03","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":3,"name":"+1 Creativity","description":"Develop your Limitless build.","cost":1,"prereq":"ST2_S_LIMITLESS_02","effects":{"set_creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_S_LIMITLESS_04","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":4,"name":"+1 Set Technique","description":"Develop your Limitless build.","cost":1,"prereq":"ST2_S_LIMITLESS_03","effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_S_LIMITLESS_05","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":5,"name":"QUICK CONNECTION","description":"Improve fast-tempo connections.","cost":3,"prereq":"ST2_S_LIMITLESS_04","effects":{},"special":"TRAIT_S_LIMITLESS_1","type":"MEDIUM"},{"id":"ST2_S_LIMITLESS_06","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":6,"name":"+1 Set Technique","description":"Deepen your Limitless specialisation.","cost":2,"prereq":"ST2_S_LIMITLESS_05","effects":{"set_technique":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_LIMITLESS_07","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":7,"name":"EMERGENCY RANGE","description":"Expand options from difficult court positions.","cost":3,"prereq":"ST2_S_LIMITLESS_06","effects":{},"special":"TRAIT_S_LIMITLESS_2","type":"MEDIUM"},{"id":"ST2_S_LIMITLESS_08","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":8,"name":"+1 Set Technique","description":"Final preparation for Limitless mastery.","cost":2,"prereq":"ST2_S_LIMITLESS_07","effects":{"set_technique":1},"special":null,"type":"ADVANCED"},{"id":"ST2_S_LIMITLESS_09","position":"S","branch":"LIMITLESS","path_name":"Limitless","tier":9,"name":"LIMITLESS","description":"Expand the range of viable setting solutions.","cost":5,"prereq":"ST2_S_LIMITLESS_08","effects":{},"special":"PLAYSTYLE_S_LIMITLESS","type":"PLAYSTYLE"},{"id":"ST2_M_ORACLE_01","position":"M","branch":"ORACLE","path_name":"Oracle","tier":1,"name":"+1 Positioning","description":"Develop your Oracle build.","cost":1,"prereq":null,"effects":{"positioning":1},"special":null,"type":"SMALL"},{"id":"ST2_M_ORACLE_02","position":"M","branch":"ORACLE","path_name":"Oracle","tier":2,"name":"+1 Reaction","description":"Develop your Oracle build.","cost":1,"prereq":"ST2_M_ORACLE_01","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_M_ORACLE_03","position":"M","branch":"ORACLE","path_name":"Oracle","tier":3,"name":"+1 Mindset","description":"Develop your Oracle build.","cost":1,"prereq":"ST2_M_ORACLE_02","effects":{"mindset":1},"special":null,"type":"SMALL"},{"id":"ST2_M_ORACLE_04","position":"M","branch":"ORACLE","path_name":"Oracle","tier":4,"name":"+1 Positioning","description":"Develop your Oracle build.","cost":1,"prereq":"ST2_M_ORACLE_03","effects":{"positioning":1},"special":null,"type":"SMALL"},{"id":"ST2_M_ORACLE_05","position":"M","branch":"ORACLE","path_name":"Oracle","tier":5,"name":"HITTER READ","description":"Recognise attacking cues earlier.","cost":3,"prereq":"ST2_M_ORACLE_04","effects":{},"special":"TRAIT_M_ORACLE_1","type":"MEDIUM"},{"id":"ST2_M_ORACLE_06","position":"M","branch":"ORACLE","path_name":"Oracle","tier":6,"name":"+1 Positioning","description":"Deepen your Oracle specialisation.","cost":2,"prereq":"ST2_M_ORACLE_05","effects":{"positioning":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_ORACLE_07","position":"M","branch":"ORACLE","path_name":"Oracle","tier":7,"name":"SETTER READ","description":"Improve reads from setter body position.","cost":3,"prereq":"ST2_M_ORACLE_06","effects":{},"special":"TRAIT_M_ORACLE_2","type":"MEDIUM"},{"id":"ST2_M_ORACLE_08","position":"M","branch":"ORACLE","path_name":"Oracle","tier":8,"name":"+1 Positioning","description":"Final preparation for Oracle mastery.","cost":2,"prereq":"ST2_M_ORACLE_07","effects":{"positioning":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_ORACLE_09","position":"M","branch":"ORACLE","path_name":"Oracle","tier":9,"name":"ORACLE","description":"Correct reads create earlier blocking movement.","cost":5,"prereq":"ST2_M_ORACLE_08","effects":{},"special":"PLAYSTYLE_M_ORACLE","type":"PLAYSTYLE"},{"id":"ST2_M_TITAN_01","position":"M","branch":"TITAN","path_name":"Titan","tier":1,"name":"+1 Vertical","description":"Develop your Titan build.","cost":1,"prereq":null,"effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_M_TITAN_02","position":"M","branch":"TITAN","path_name":"Titan","tier":2,"name":"+1 Reaction","description":"Develop your Titan build.","cost":1,"prereq":"ST2_M_TITAN_01","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_M_TITAN_03","position":"M","branch":"TITAN","path_name":"Titan","tier":3,"name":"+1 Blocking","description":"Develop your Titan build.","cost":1,"prereq":"ST2_M_TITAN_02","effects":{"blocking":1},"special":null,"type":"SMALL"},{"id":"ST2_M_TITAN_04","position":"M","branch":"TITAN","path_name":"Titan","tier":4,"name":"+1 Vertical","description":"Develop your Titan build.","cost":1,"prereq":"ST2_M_TITAN_03","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_M_TITAN_05","position":"M","branch":"TITAN","path_name":"Titan","tier":5,"name":"STRONG HANDS","description":"Improve block control and penetration.","cost":3,"prereq":"ST2_M_TITAN_04","effects":{},"special":"TRAIT_M_TITAN_1","type":"MEDIUM"},{"id":"ST2_M_TITAN_06","position":"M","branch":"TITAN","path_name":"Titan","tier":6,"name":"+1 Vertical","description":"Deepen your Titan specialisation.","cost":2,"prereq":"ST2_M_TITAN_05","effects":{"vertical":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_TITAN_07","position":"M","branch":"TITAN","path_name":"Titan","tier":7,"name":"STUFF BLOCK","description":"Reward clean physical blocking execution.","cost":3,"prereq":"ST2_M_TITAN_06","effects":{},"special":"TRAIT_M_TITAN_2","type":"MEDIUM"},{"id":"ST2_M_TITAN_08","position":"M","branch":"TITAN","path_name":"Titan","tier":8,"name":"+1 Vertical","description":"Final preparation for Titan mastery.","cost":2,"prereq":"ST2_M_TITAN_07","effects":{"vertical":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_TITAN_09","position":"M","branch":"TITAN","path_name":"Titan","tier":9,"name":"TITAN","description":"Dominant physical blocking identity.","cost":5,"prereq":"ST2_M_TITAN_08","effects":{},"special":"PLAYSTYLE_M_TITAN","type":"PLAYSTYLE"},{"id":"ST2_M_FIRST_TEMPO_01","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":1,"name":"+1 Accuracy","description":"Develop your First Tempo build.","cost":1,"prereq":null,"effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_M_FIRST_TEMPO_02","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":2,"name":"+1 Vertical","description":"Develop your First Tempo build.","cost":1,"prereq":"ST2_M_FIRST_TEMPO_01","effects":{"vertical":1},"special":null,"type":"SMALL"},{"id":"ST2_M_FIRST_TEMPO_03","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":3,"name":"+1 Power","description":"Develop your First Tempo build.","cost":1,"prereq":"ST2_M_FIRST_TEMPO_02","effects":{"hitting_power":1},"special":null,"type":"SMALL"},{"id":"ST2_M_FIRST_TEMPO_04","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":4,"name":"+1 Accuracy","description":"Develop your First Tempo build.","cost":1,"prereq":"ST2_M_FIRST_TEMPO_03","effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_M_FIRST_TEMPO_05","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":5,"name":"QUICK CONNECTION","description":"Improve first-tempo connection.","cost":3,"prereq":"ST2_M_FIRST_TEMPO_04","effects":{},"special":"TRAIT_M_FIRST_TEMPO_1","type":"MEDIUM"},{"id":"ST2_M_FIRST_TEMPO_06","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":6,"name":"+1 Accuracy","description":"Deepen your First Tempo specialisation.","cost":2,"prereq":"ST2_M_FIRST_TEMPO_05","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_FIRST_TEMPO_07","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":7,"name":"FAST ARM","description":"Increase threat on fast middle attacks.","cost":3,"prereq":"ST2_M_FIRST_TEMPO_06","effects":{},"special":"TRAIT_M_FIRST_TEMPO_2","type":"MEDIUM"},{"id":"ST2_M_FIRST_TEMPO_08","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":8,"name":"+1 Accuracy","description":"Final preparation for First Tempo mastery.","cost":2,"prereq":"ST2_M_FIRST_TEMPO_07","effects":{"accuracy":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_FIRST_TEMPO_09","position":"M","branch":"FIRST_TEMPO","path_name":"First Tempo","tier":9,"name":"FIRST TEMPO","description":"Become a dedicated first-tempo scoring threat.","cost":5,"prereq":"ST2_M_FIRST_TEMPO_08","effects":{},"special":"PLAYSTYLE_M_FIRST_TEMPO","type":"PLAYSTYLE"},{"id":"ST2_M_PHANTOM_01","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":1,"name":"+1 Speed","description":"Develop your Phantom build.","cost":1,"prereq":null,"effects":{"speed":1},"special":null,"type":"SMALL"},{"id":"ST2_M_PHANTOM_02","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":2,"name":"+1 Creativity","description":"Develop your Phantom build.","cost":1,"prereq":"ST2_M_PHANTOM_01","effects":{"creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_M_PHANTOM_03","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":3,"name":"+1 Accuracy","description":"Develop your Phantom build.","cost":1,"prereq":"ST2_M_PHANTOM_02","effects":{"accuracy":1},"special":null,"type":"SMALL"},{"id":"ST2_M_PHANTOM_04","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":4,"name":"+1 Speed","description":"Develop your Phantom build.","cost":1,"prereq":"ST2_M_PHANTOM_03","effects":{"speed":1},"special":null,"type":"SMALL"},{"id":"ST2_M_PHANTOM_05","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":5,"name":"SLIDE","description":"Improve mobile attack routes.","cost":3,"prereq":"ST2_M_PHANTOM_04","effects":{},"special":"TRAIT_M_PHANTOM_1","type":"MEDIUM"},{"id":"ST2_M_PHANTOM_06","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":6,"name":"+1 Speed","description":"Deepen your Phantom specialisation.","cost":2,"prereq":"ST2_M_PHANTOM_05","effects":{"speed":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_PHANTOM_07","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":7,"name":"ROUTE CHANGE","description":"Reward delayed and altered approach routes.","cost":3,"prereq":"ST2_M_PHANTOM_06","effects":{},"special":"TRAIT_M_PHANTOM_2","type":"MEDIUM"},{"id":"ST2_M_PHANTOM_08","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":8,"name":"+1 Speed","description":"Final preparation for Phantom mastery.","cost":2,"prereq":"ST2_M_PHANTOM_07","effects":{"speed":1},"special":null,"type":"ADVANCED"},{"id":"ST2_M_PHANTOM_09","position":"M","branch":"PHANTOM","path_name":"Phantom","tier":9,"name":"PHANTOM","description":"Unlock a wider range of deceptive middle routes.","cost":5,"prereq":"ST2_M_PHANTOM_08","effects":{},"special":"PLAYSTYLE_M_PHANTOM","type":"PLAYSTYLE"},{"id":"ST2_L_ANCHOR_01","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":1,"name":"+1 Receive","description":"Develop your Anchor build.","cost":1,"prereq":null,"effects":{"serve_receive":1},"special":null,"type":"SMALL"},{"id":"ST2_L_ANCHOR_02","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":2,"name":"+1 Positioning","description":"Develop your Anchor build.","cost":1,"prereq":"ST2_L_ANCHOR_01","effects":{"positioning":1},"special":null,"type":"SMALL"},{"id":"ST2_L_ANCHOR_03","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":3,"name":"+1 Mindset","description":"Develop your Anchor build.","cost":1,"prereq":"ST2_L_ANCHOR_02","effects":{"mindset":1},"special":null,"type":"SMALL"},{"id":"ST2_L_ANCHOR_04","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":4,"name":"+1 Receive","description":"Develop your Anchor build.","cost":1,"prereq":"ST2_L_ANCHOR_03","effects":{"serve_receive":1},"special":null,"type":"SMALL"},{"id":"ST2_L_ANCHOR_05","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":5,"name":"STABLE PLATFORM","description":"Improve control against difficult serves.","cost":3,"prereq":"ST2_L_ANCHOR_04","effects":{},"special":"TRAIT_L_ANCHOR_1","type":"MEDIUM"},{"id":"ST2_L_ANCHOR_06","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":6,"name":"+1 Receive","description":"Deepen your Anchor specialisation.","cost":2,"prereq":"ST2_L_ANCHOR_05","effects":{"serve_receive":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_ANCHOR_07","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":7,"name":"TOUGH SERVE SPECIALIST","description":"Stay composed against high-pressure serving.","cost":3,"prereq":"ST2_L_ANCHOR_06","effects":{},"special":"TRAIT_L_ANCHOR_2","type":"MEDIUM"},{"id":"ST2_L_ANCHOR_08","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":8,"name":"+1 Receive","description":"Final preparation for Anchor mastery.","cost":2,"prereq":"ST2_L_ANCHOR_07","effects":{"serve_receive":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_ANCHOR_09","position":"L","branch":"ANCHOR","path_name":"Anchor","tier":9,"name":"ANCHOR","description":"Elite serve-receive reliability.","cost":5,"prereq":"ST2_L_ANCHOR_08","effects":{},"special":"PLAYSTYLE_L_ANCHOR","type":"PLAYSTYLE"},{"id":"ST2_L_FLOOR_HOUND_01","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":1,"name":"+1 Covering","description":"Develop your Floor Hound build.","cost":1,"prereq":null,"effects":{"covering":1},"special":null,"type":"SMALL"},{"id":"ST2_L_FLOOR_HOUND_02","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":2,"name":"+1 Reaction","description":"Develop your Floor Hound build.","cost":1,"prereq":"ST2_L_FLOOR_HOUND_01","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_L_FLOOR_HOUND_03","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":3,"name":"+1 Speed","description":"Develop your Floor Hound build.","cost":1,"prereq":"ST2_L_FLOOR_HOUND_02","effects":{"speed":1},"special":null,"type":"SMALL"},{"id":"ST2_L_FLOOR_HOUND_04","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":4,"name":"+1 Covering","description":"Develop your Floor Hound build.","cost":1,"prereq":"ST2_L_FLOOR_HOUND_03","effects":{"covering":1},"special":null,"type":"SMALL"},{"id":"ST2_L_FLOOR_HOUND_05","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":5,"name":"QUICK FIRST STEP","description":"Reach developing attacks faster.","cost":3,"prereq":"ST2_L_FLOOR_HOUND_04","effects":{},"special":"TRAIT_L_FLOOR_HOUND_1","type":"MEDIUM"},{"id":"ST2_L_FLOOR_HOUND_06","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":6,"name":"+1 Covering","description":"Deepen your Floor Hound specialisation.","cost":2,"prereq":"ST2_L_FLOOR_HOUND_05","effects":{"covering":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_FLOOR_HOUND_07","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":7,"name":"EMERGENCY REACH","description":"Increase control on difficult reachable digs.","cost":3,"prereq":"ST2_L_FLOOR_HOUND_06","effects":{},"special":"TRAIT_L_FLOOR_HOUND_2","type":"MEDIUM"},{"id":"ST2_L_FLOOR_HOUND_08","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":8,"name":"+1 Covering","description":"Final preparation for Floor Hound mastery.","cost":2,"prereq":"ST2_L_FLOOR_HOUND_07","effects":{"covering":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_FLOOR_HOUND_09","position":"L","branch":"FLOOR_HOUND","path_name":"Floor Hound","tier":9,"name":"FLOOR HOUND","description":"Specialise in MOVE → REACH → DIG defence.","cost":5,"prereq":"ST2_L_FLOOR_HOUND_08","effects":{},"special":"PLAYSTYLE_L_FLOOR_HOUND","type":"PLAYSTYLE"},{"id":"ST2_L_SHARINGAN_01","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":1,"name":"+1 Positioning","description":"Develop your Sharingan build.","cost":1,"prereq":null,"effects":{"positioning":1},"special":null,"type":"SMALL"},{"id":"ST2_L_SHARINGAN_02","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":2,"name":"+1 Reaction","description":"Develop your Sharingan build.","cost":1,"prereq":"ST2_L_SHARINGAN_01","effects":{"reaction_time":1},"special":null,"type":"SMALL"},{"id":"ST2_L_SHARINGAN_03","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":3,"name":"+1 Mindset","description":"Develop your Sharingan build.","cost":1,"prereq":"ST2_L_SHARINGAN_02","effects":{"mindset":1},"special":null,"type":"SMALL"},{"id":"ST2_L_SHARINGAN_04","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":4,"name":"+1 Positioning","description":"Develop your Sharingan build.","cost":1,"prereq":"ST2_L_SHARINGAN_03","effects":{"positioning":1},"special":null,"type":"SMALL"},{"id":"ST2_L_SHARINGAN_05","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":5,"name":"HITTER READ","description":"Recognise hitter cues earlier.","cost":3,"prereq":"ST2_L_SHARINGAN_04","effects":{},"special":"TRAIT_L_SHARINGAN_1","type":"MEDIUM"},{"id":"ST2_L_SHARINGAN_06","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":6,"name":"+1 Positioning","description":"Deepen your Sharingan specialisation.","cost":2,"prereq":"ST2_L_SHARINGAN_05","effects":{"positioning":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_SHARINGAN_07","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":7,"name":"EARLY RECOGNITION","description":"Reveal developing attack information sooner.","cost":3,"prereq":"ST2_L_SHARINGAN_06","effects":{},"special":"TRAIT_L_SHARINGAN_2","type":"MEDIUM"},{"id":"ST2_L_SHARINGAN_08","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":8,"name":"+1 Positioning","description":"Final preparation for Sharingan mastery.","cost":2,"prereq":"ST2_L_SHARINGAN_07","effects":{"positioning":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_SHARINGAN_09","position":"L","branch":"SHARINGAN","path_name":"Sharingan","tier":9,"name":"SHARINGAN","description":"Gain earlier visual information about developing attacks.","cost":5,"prereq":"ST2_L_SHARINGAN_08","effects":{},"special":"PLAYSTYLE_L_SHARINGAN","type":"PLAYSTYLE"},{"id":"ST2_L_PLAYMAKER_01","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":1,"name":"+1 Set Technique","description":"Develop your Playmaker build.","cost":1,"prereq":null,"effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_L_PLAYMAKER_02","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":2,"name":"+1 Creativity","description":"Develop your Playmaker build.","cost":1,"prereq":"ST2_L_PLAYMAKER_01","effects":{"creativity":1},"special":null,"type":"SMALL"},{"id":"ST2_L_PLAYMAKER_03","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":3,"name":"+1 Speed","description":"Develop your Playmaker build.","cost":1,"prereq":"ST2_L_PLAYMAKER_02","effects":{"speed":1},"special":null,"type":"SMALL"},{"id":"ST2_L_PLAYMAKER_04","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":4,"name":"+1 Set Technique","description":"Develop your Playmaker build.","cost":1,"prereq":"ST2_L_PLAYMAKER_03","effects":{"set_technique":1},"special":null,"type":"SMALL"},{"id":"ST2_L_PLAYMAKER_05","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":5,"name":"EMERGENCY HANDS","description":"Improve emergency second contacts.","cost":3,"prereq":"ST2_L_PLAYMAKER_04","effects":{},"special":"TRAIT_L_PLAYMAKER_1","type":"MEDIUM"},{"id":"ST2_L_PLAYMAKER_06","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":6,"name":"+1 Set Technique","description":"Deepen your Playmaker specialisation.","cost":2,"prereq":"ST2_L_PLAYMAKER_05","effects":{"set_technique":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_PLAYMAKER_07","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":7,"name":"SECOND CONTACT","description":"Create cleaner transition sets.","cost":3,"prereq":"ST2_L_PLAYMAKER_06","effects":{},"special":"TRAIT_L_PLAYMAKER_2","type":"MEDIUM"},{"id":"ST2_L_PLAYMAKER_08","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":8,"name":"+1 Set Technique","description":"Final preparation for Playmaker mastery.","cost":2,"prereq":"ST2_L_PLAYMAKER_07","effects":{"set_technique":1},"special":null,"type":"ADVANCED"},{"id":"ST2_L_PLAYMAKER_09","position":"L","branch":"PLAYMAKER","path_name":"Playmaker","tier":9,"name":"PLAYMAKER","description":"Unlock stronger offensive solutions on second contact.","cost":5,"prereq":"ST2_L_PLAYMAKER_08","effects":{},"special":"PLAYSTYLE_L_PLAYMAKER","type":"PLAYSTYLE"}];
+  /* B21.36.315: Skill catalogue is backend-driven. No duplicate 180-node frontend catalogue. */
   const ACE_ST2_PATH_META={
-    OH:{TERMINATOR:["Terminator","🔨"],GENIUS:["Genius","🧠"],DEEP_COURT_GUARDIAN:["Deep Court Guardian","🛡"],LITTLE_GIANT:["Little Giant","⚡"]},
-    OP:{JUGGERNAUT:["Juggernaut","👑"],BLOCK_HUNTER:["Block Hunter","🎯"],GREAT_WALL:["The Great Wall","🧱"],RISING_DRAGON:["Rising Dragon","🐉"]},
-    S:{MAESTRO:["Maestro","🎼"],KYOKA_SUIGETSU:["Kyōka Suigetsu","👁"],KINGS_GAMBIT:["King's Gambit","♟"],LIMITLESS:["Limitless","∞"]},
-    M:{ORACLE:["Oracle","👁"],TITAN:["Titan","🗿"],FIRST_TEMPO:["First Tempo","⚡"],PHANTOM:["Phantom","👻"]},
-    L:{ANCHOR:["Anchor","⚓"],FLOOR_HOUND:["Floor Hound","🐺"],SHARINGAN:["Sharingan","👁"],PLAYMAKER:["Playmaker","🎨"]}
+    OH:{TERMINATOR:["Terminator","🔨"],GENIUS:["Genius","🧠"],DEEP_COURT_GUARDIAN:["Deep Court Guardian","🛡"],LITTLE_GIANT:["Little Giant","⚡"],HYBRID:["Hybrid Builds","✦"]},
+    OP:{JUGGERNAUT:["Juggernaut","👑"],BLOCK_HUNTER:["Block Hunter","🎯"],GREAT_WALL:["The Great Wall","🧱"],RISING_DRAGON:["Rising Dragon","🐉"],HYBRID:["Hybrid Builds","✦"]},
+    S:{MAESTRO:["Maestro","🎼"],KYOKA_SUIGETSU:["Kyōka Suigetsu","👁"],KINGS_GAMBIT:["King's Gambit","♟"],LIMITLESS:["Limitless","∞"],HYBRID:["Hybrid Builds","✦"]},
+    M:{ORACLE:["Oracle","👁"],TITAN:["Titan","🗿"],FIRST_TEMPO:["First Tempo","⚡"],PHANTOM:["Phantom","👻"],HYBRID:["Hybrid Builds","✦"]},
+    L:{ANCHOR:["Anchor","⚓"],FLOOR_HOUND:["Floor Hound","🐺"],SHARINGAN:["Sharingan","👁"],PLAYMAKER:["Playmaker","🎨"],HYBRID:["Hybrid Builds","✦"]}
   };
-  window.ACE_ST2_NODES=ACE_ST2_NODES; window.ACE_ST2_PATH_META=ACE_ST2_PATH_META;
+  window.ACE_ST2_PATH_META=ACE_ST2_PATH_META;
   let ACE_ST2_ACTIVE_PATH="";
   function aceSt2PathProgress(pathNodes,owned){
     const got=pathNodes.filter(n=>owned.has(n.id)).length;
     return {got,total:pathNodes.length,pct:Math.round(got/Math.max(1,pathNodes.length)*100)};
   }
+  function aceSt3NodeType(n){
+    return String(n?.type||n?.node_type||(n?.special_key?.startsWith("PLAYSTYLE_")?"PLAYSTYLE":n?.special_key?.startsWith("TRAIT_")?"TRAIT":Number(n?.tier)>=6?"ADVANCED":"SMALL")).toUpperCase();
+  }
+  function aceSt3NodeById(id){
+    return (Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(n=>n.id===id)||null;
+  }
+  function aceSt3LoadoutHTML(){
+    const all=Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[],owned=skillUnlockedSet();
+    const traits=Array.isArray(S.skillTree?.equipped_traits)?S.skillTree.equipped_traits:[];
+    const signature=String(S.skillTree?.equipped_playstyle||"");
+    const ownedSpecial=all.filter(n=>owned.has(n.id)&&["TRAIT","PLAYSTYLE","HYBRID"].includes(aceSt3NodeType(n)));
+    const name=id=>aceSt3NodeById(id)?.name||"EMPTY";
+    const traitCards=ownedSpecial.filter(n=>aceSt3NodeType(n)==="TRAIT").map(n=>{
+      const on=traits.includes(n.id),meta=n.effect_meta||{},pct=Math.round(Number(meta.match_bonus||0)*1000)/10;
+      return `<button type="button" class="${on?"active":""}" data-ace-st3-equip-trait="${esc(n.id)}"><span>${on?"✓ EQUIPPED":"EQUIP TRAIT"}</span><b>${esc(n.name)}</b><small>${esc(n.path_name||pretty(n.branch))}${pct?` · +${pct}% situational edge`:""}</small></button>`;
+    }).join("");
+    const sigCards=ownedSpecial.filter(n=>["PLAYSTYLE","HYBRID"].includes(aceSt3NodeType(n))).map(n=>{
+      const on=signature===n.id,meta=n.effect_meta||{},pct=Math.round(Number(meta.match_bonus||0)*1000)/10;
+      return `<button type="button" class="${on?"active":""}" data-ace-st3-equip-signature="${esc(n.id)}"><span>${on?"★ ACTIVE":"SET SIGNATURE"}</span><b>${esc(n.name)}</b><small>${aceSt3NodeType(n)==="HYBRID"?"HYBRID BUILD":esc(n.path_name||pretty(n.branch))}${pct?` · +${pct}% situational edge`:""}</small></button>`;
+    }).join("");
+    return `<section class="aceSt3Loadout">
+      <div class="aceSt3LoadoutHead"><div><small>ACTIVE MATCH LOADOUT</small><h3>Build identity</h3><p>Own as many skills as you earn. Equip <b>2 Traits + 1 Signature</b> to decide what actually affects matches and training.</p></div><span>SKILL TREE 3.0</span></div>
+      <div class="aceSt3Slots"><article><small>TRAIT 1</small><b>${esc(name(traits[0]))}</b></article><article><small>TRAIT 2</small><b>${esc(name(traits[1]))}</b></article><article class="signature"><small>SIGNATURE</small><b>${esc(name(signature))}</b></article></div>
+      ${ownedSpecial.length?`<details class="aceSt3Locker"><summary>CHANGE LOADOUT <span>${ownedSpecial.length} UNLOCKED SPECIALS</span></summary><div class="aceSt3LockerGrid">${traitCards}${sigCards}</div></details>`:`<div class="aceSt3Empty">Unlock a ◆ Trait or ★ Playstyle to start building your match loadout.</div>`}
+    </section>`;
+  }
   function skillTreeHTML(c){
     const pos=String(c.position||"OH").toUpperCase();
     const paths=ACE_ST2_PATH_META[pos]||ACE_ST2_PATH_META.OH;
-    const keys=Object.keys(paths);
-    if(!ACE_ST2_ACTIVE_PATH||!paths[ACE_ST2_ACTIVE_PATH])ACE_ST2_ACTIVE_PATH=keys[0];
-    const owned=skillUnlockedSet(),sp=Math.max(0,Number(c.skill_points||0));
-    const all=ACE_ST2_NODES.filter(n=>n.position===pos);
-    const pathNodes=all.filter(n=>n.branch===ACE_ST2_ACTIVE_PATH).sort((a,b)=>a.tier-b.tier);
+    const all=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).filter(n=>String(n.position||"").toUpperCase()===pos);
+    if(!all.length)return `<section class="aceSt2Shell"><header class="aceSt2Header"><div><small>SKILL TREE 3.0</small><h2>Loading development...</h2><p>The server is loading your position-specific build.</p></div></header><button class="rta62Btn" data-rta67-tree-retry>RETRY</button></section>`;
+    const keys=Object.keys(paths).filter(k=>all.some(n=>n.branch===k));
+    if(!ACE_ST2_ACTIVE_PATH||!paths[ACE_ST2_ACTIVE_PATH]||!keys.includes(ACE_ST2_ACTIVE_PATH))ACE_ST2_ACTIVE_PATH=keys[0];
+    const owned=skillUnlockedSet(),sp=Math.max(0,Number(S.skillTree?.skill_points??c.skill_points??0));
+    const pathNodes=all.filter(n=>n.branch===ACE_ST2_ACTIVE_PATH).sort((a,b)=>a.tier-b.tier||String(a.id).localeCompare(String(b.id)));
     const pm=paths[ACE_ST2_ACTIVE_PATH],prog=aceSt2PathProgress(pathNodes,owned);
-    const primary=keys.map(k=>[k,aceSt2PathProgress(all.filter(n=>n.branch===k),owned)]).sort((a,b)=>b[1].got-a[1].got)[0];
+    const coreKeys=keys.filter(k=>k!=="HYBRID");
+    const primary=coreKeys.map(k=>[k,aceSt2PathProgress(all.filter(n=>n.branch===k),owned)]).sort((a,b)=>b[1].got-a[1].got)[0];
     const nodeHtml=pathNodes.map((n,i)=>{
-      const st=skillNodeState(n,c),cls=st.owned?"owned":st.available?"available":"locked";
-      const kind=n.type==="PLAYSTYLE"?"★":n.type==="MEDIUM"?"◆":"●";
-      const effects=skillEffectsLabel(n.effects);
-      return `<div class="aceSt2Step ${cls} ${String(n.type).toLowerCase()}">${i?'<i class="aceSt2Line"></i>':""}<button type="button" class="aceSt2Node" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="aceSt2Kind">${kind}</span><div><small>${esc(n.type==="PLAYSTYLE"?"MAJOR PLAYSTYLE":n.type==="MEDIUM"?"TRAIT":`TIER ${n.tier}`)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${effects!=="Special skill"?`<strong>${esc(effects)}</strong>`:""}</div><mark>${st.owned?"✓ OWNED":st.available?`${n.cost} SP · UNLOCK`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
+      const st=skillNodeState(n,c),cls=st.owned?"owned":st.available?"available":"locked",type=aceSt3NodeType(n);
+      const kind=type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="TRAIT"?"◆":"●";
+      const effects=skillEffectsLabel(n.effects),meta=n.effect_meta||{},matchPct=Math.round(Number(meta.match_bonus||0)*1000)/10,trainPct=Math.round(Number(meta.training_bonus||0)*1000)/10;
+      const mechanic=(type==="TRAIT"||type==="PLAYSTYLE"||type==="HYBRID")?`<strong class="aceSt3Mechanic">${matchPct?`MATCH +${matchPct}%`:""}${matchPct&&trainPct?" · ":""}${trainPct?`TRAINING +${trainPct}%`:""}</strong>`:(effects!=="Special skill"?`<strong>${esc(effects)}</strong>`:"");
+      return `<div class="aceSt2Step ${cls} ${type.toLowerCase()}">${i?'<i class="aceSt2Line"></i>':""}<button type="button" class="aceSt2Node" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="aceSt2Kind">${kind}</span><div><small>${esc(type==="HYBRID"?"HYBRID SIGNATURE":type==="PLAYSTYLE"?"MAJOR PLAYSTYLE":type==="TRAIT"?"TRAIT":`TIER ${n.tier}`)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${mechanic}</div><mark>${st.owned?"✓ OWNED":st.available?`${n.cost} SP · UNLOCK`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
     }).join("");
     return `<section class="aceSt2Shell">
-      <header class="aceSt2Header"><div><small>SKILL TREE 2.0 · ${esc(posLabel(pos))}</small><h2>${esc(pm[0])}</h2><p>${primary?.[1]?.got?`PRIMARY BUILD · ${esc(paths[primary[0]][0])}`:"CHOOSE THE PLAYER YOU WANT TO BECOME"}</p></div><div class="aceSt2Sp"><b>${sp}</b><span>SP</span></div></header>
+      <header class="aceSt2Header"><div><small>SKILL TREE 3.0 · ${esc(posLabel(pos))}</small><h2>${esc(pm[0])}</h2><p>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"COMBINE TWO DEVELOPED ARCHETYPES":primary?.[1]?.got?`PRIMARY BUILD · ${esc(paths[primary[0]][0])}`:"CHOOSE THE PLAYER YOU WANT TO BECOME"}</p></div><div class="aceSt2Sp"><b>${sp}</b><span>SP</span></div></header>
+      ${aceSt3LoadoutHTML()}
       <nav class="aceSt2Tabs">${keys.map(k=>{const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);return `<button type="button" data-ace-st2-path="${k}" class="${k===ACE_ST2_ACTIVE_PATH?"active":""}"><i>${paths[k][1]}</i><span>${esc(paths[k][0])}</span><small>${pr.pct}%</small></button>`}).join("")}</nav>
-      <div class="aceSt2PathHero"><div class="aceSt2HeroIcon">${pm[1]}</div><div><small>ARCHETYPE PATH</small><h3>${esc(pm[0])}</h3><p>${prog.got}/${prog.total} nodes · ${prog.pct}% developed</p></div><div class="aceSt2Meter"><i style="width:${prog.pct}%"></i></div></div>
-      <div class="aceSt2Map">${nodeHtml}<div class="aceSt2Phase2"><span>🔒</span><div><small>PHASE 2</small><b>ELITE MASTERY</b><em>Over-cap development unlocks later.</em></div></div></div>
-      <footer class="aceSt2Footer"><span>● SMALL · 1–2 SP</span><span>◆ TRAIT · 3 SP</span><span>★ PLAYSTYLE · 5 SP</span></footer>
+      <div class="aceSt2PathHero"><div class="aceSt2HeroIcon">${pm[1]}</div><div><small>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"CROSS-PATH MASTERY":"ARCHETYPE PATH"}</small><h3>${esc(pm[0])}</h3><p>${prog.got}/${prog.total} nodes · ${prog.pct}% developed</p></div><div class="aceSt2Meter"><i style="width:${prog.pct}%"></i></div></div>
+      <div class="aceSt2Map">${nodeHtml}</div>
+      <footer class="aceSt2Footer"><span>● ATTRIBUTE · 1–2 SP</span><span>◆ TRAIT · 3 SP</span><span>★ SIGNATURE / HYBRID · 4–5 SP</span></footer>
     </section>`;
   }
 
@@ -40086,6 +40136,32 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       vibrate([18,30,28]);
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
+
+  async function aceSt3SaveLoadout(nextTraits,nextSignature){
+    if(S.busy)return;S.busy=true;
+    try{
+      const d=await rpc("vds_rta_set_skill_loadout",{p_traits:nextTraits,p_playstyle:nextSignature||null});
+      if(d?.career)S.career=d.career;
+      S.skillTree=await rpc("vds_rta_get_skill_tree");
+      render();toast("Match loadout updated.");vibrate(18);
+    }catch(err){toast(errText(err),"error")}finally{S.busy=false}
+  }
+  document.addEventListener("click",function(e){
+    const trait=e.target?.closest?.("[data-ace-st3-equip-trait]");
+    if(trait){
+      e.preventDefault();e.stopPropagation();
+      const id=trait.getAttribute("data-ace-st3-equip-trait"),cur=[...(Array.isArray(S.skillTree?.equipped_traits)?S.skillTree.equipped_traits:[])];
+      const at=cur.indexOf(id);
+      if(at>=0)cur.splice(at,1);else{if(cur.length>=2)cur.shift();cur.push(id)}
+      aceSt3SaveLoadout(cur,String(S.skillTree?.equipped_playstyle||""));return;
+    }
+    const sig=e.target?.closest?.("[data-ace-st3-equip-signature]");
+    if(sig){
+      e.preventDefault();e.stopPropagation();
+      const id=sig.getAttribute("data-ace-st3-equip-signature"),cur=String(S.skillTree?.equipped_playstyle||"");
+      aceSt3SaveLoadout(Array.isArray(S.skillTree?.equipped_traits)?S.skillTree.equipped_traits:[],cur===id?"":id);
+    }
+  },true);
 
   window.ACE_RTA_PLAYER_PANEL=function(event,id){
     try{event?.preventDefault?.();event?.stopPropagation?.()}catch(_){}
@@ -41861,7 +41937,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     S.busy=true;
     try{
       const intl=!!S.key?.international;
-      const d=await rpc(intl?"vds_rta_resolve_international_key_moment":"vds_rta_resolve_key_moment_v313",{p_choice:choice});
+      const d=await rpc(intl?"vds_rta_resolve_international_key_moment_v315":"vds_rta_resolve_key_moment_v315",{p_choice:choice});
       if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
       vibrate(d.success?25:[20,35,20]);
       const out=String(d.outcome||d.final_outcome||(d.success?"KILL":"DEFENCE WINS")).replace(/\s*[—-].*$/,"");
@@ -44213,7 +44289,7 @@ function renderAttackKeyOverlay(){
     if(S.busy||S.overlay!=="key")return;S.busy=true;if(keyAttackTimer)clearTimeout(keyAttackTimer);keyAttackTimer=0;
     try{
       const intl=!!S.key?.international;
-      const d=await rpc(intl?"vds_rta_resolve_international_key_moment":"vds_rta_resolve_key_moment_v313",{p_choice:choice});if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;vibrate(d.success?25:[20,35,20]);
+      const d=await rpc(intl?"vds_rta_resolve_international_key_moment_v315":"vds_rta_resolve_key_moment_v315",{p_choice:choice});if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;vibrate(d.success?25:[20,35,20]);
       if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}
       else{S.key=d;S.feedback={good:!!d.success,text:d.outcome||""};renderKeyOverlay()}
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
@@ -45477,6 +45553,10 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   function show(){
     if(seen)return;
+    try{
+      const c=window.__ACE_RTA_STATE?.career,h=window.__ACE_RTA_STATE?.history;
+      if(c&&(Number(c.season||1)>1||Number(c.season_match||0)>0||Number(c.training_used||0)>0||(Array.isArray(h)&&h.length))){markSeen();return;}
+    }catch(_){ }
     const el=modal();
     el.classList.add('show');
     el.setAttribute('aria-hidden','false');
@@ -46512,7 +46592,7 @@ height:18px!important;}} @media(max-width:760px) and (max-height:680px){#roadtoa
     const h=latestMatch(),used=Number(c.training_used||0),rank=leagueRank(),next=nextOpponent(),ready=readiness(c),played=Number(c.season_match||0),focus=developmentFocus(c);
     const inbox=Array.isArray(S.office?.inbox)?S.office.inbox:[],agent=rta108AgentAttention();
     const firstCareerMessage=inbox[0]||null;
-    const firstWeek=played===0;
+    const firstWeek=Number(c.season||1)===1&&played===0;
     let kicker='THIS WEEK',headline=`Prepare for ${next}`,copy=`${Math.max(0,2-used)} training session${Math.max(0,2-used)===1?'':'s'} available before Matchday.`;
     let action='GO TO TRAINING',view='train',secondary='VIEW MATCH',secondaryView='match';
 
@@ -49293,210 +49373,6 @@ body.ace152-theme.aceHomeActive #home.page.active .gameHome,body.ace152-theme.ac
 <script>window.ACE_RECOVERY_BUILD='B21.36.293';</script>
 
 
-<script id="ace-v53-force-skilltree2-live-route">
-(function(){
-  let busy=false;
-  function mountSkillTree2(){
-    try{
-      if(busy)return;
-      const page=document.getElementById("roadtoace");
-      if(!page||!page.classList.contains("active"))return;
-      const activeTab=page.querySelector('[data-rta93-player-panel="tree"].active,[data-rta93-player-panel="tree"][aria-selected="true"]');
-      const anyTreeTab=page.querySelector('[data-rta93-player-panel="tree"]');
-      if(!anyTreeTab)return;
-      /* Prefer actual state when accessible; active class is fallback for late UI patches. */
-      const z=window.__ACE_RTA_STATE; const stateTree=!!(z&&z.playerPanel==="tree");
-      if(!stateTree&&!activeTab)return;
-      const c=z?.career||null;
-      if(!c||typeof skillTreeHTML!=="function")return;
-      const tabs=page.querySelector(".rta93PlayerTabs");
-      if(!tabs)return;
-      const player=tabs.closest(".rta93Player")||page.querySelector(".rta93Player");
-      if(!player)return;
-      const children=[...player.children];
-      const tabIndex=children.indexOf(tabs);
-      if(tabIndex<0)return;
-      let panel=children[tabIndex+1];
-      if(panel&&panel.classList.contains("aceSt2Shell"))return;
-      busy=true;
-      const holder=document.createElement("div");
-      holder.innerHTML=skillTreeHTML(c);
-      const fresh=holder.firstElementChild;
-      if(panel&&panel!==tabs)panel.replaceWith(fresh);
-      else tabs.insertAdjacentElement("afterend",fresh);
-      busy=false;
-    }catch(e){busy=false;console.error("ACE V53 Skill Tree mount",e)}
-  }
-  document.addEventListener("click",function(e){
-    if(e.target?.closest?.('[data-rta93-player-panel="tree"]'))setTimeout(mountSkillTree2,0);
-    if(e.target?.closest?.("[data-ace-st2-path]"))setTimeout(mountSkillTree2,0);
-  },true);
-  const page=document.getElementById("roadtoace");
-  if(page)new MutationObserver(()=>requestAnimationFrame(mountSkillTree2)).observe(page,{childList:true,subtree:true,attributes:true,attributeFilter:["class","aria-selected"]});
-  window.addEventListener("pageshow",()=>setTimeout(mountSkillTree2,50));
-  setTimeout(mountSkillTree2,100);
-  window.ACE_SKILL_TREE_2_FORCE_LIVE_BUILD="B21.36.293";
-})();
-</script>
-<style id="ace-v54-elite-ui">
-#roadtoace .aceV54EliteStrip{margin:10px 0 2px;padding:10px;border:1px solid rgba(255,197,84,.18);
-border-radius:12px;background:linear-gradient(135deg,rgba(255,190,69,.07),rgba(124,85,255,.06));}
-#roadtoace .aceV54EliteStrip small{display:block;color:#e8bd68;font-size:8px;font-weight:1000;letter-spacing:.12em}
-#roadtoace .aceV54EliteStrip b{display:block;margin-top:3px;color:#fff;font-size:12px}
-#roadtoace .aceV54EliteSteps{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
-#roadtoace .aceV54EliteSteps span{padding:7px 4px;border:1px solid rgba(255,255,255,.07);border-radius:8px;
-text-align:center;color:#8999aa;font-size:8px;font-weight:900}
-#roadtoace .aceV54EliteSteps span strong{display:block;color:#f5c96f;font-size:12px}
-</style>
-<script id="ace-v54-elite-overcap-engine">
-(function(){
-"use strict";
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
-
-/* Phase 2 specialist cap map. Only attributes that fit a path can exceed 99. */
-const PATHS={
- OH:{
-  TERMINATOR:{stats:["hitting_power"],label:"Terminator"},
-  GENIUS:{stats:["creativity","accuracy"],label:"Genius"},
-  DEEP_COURT_GUARDIAN:{stats:["serve_receive","positioning"],label:"Deep Court Guardian"},
-  LITTLE_GIANT:{stats:["vertical","speed"],label:"Little Giant"}
- },
- OP:{
-  JUGGERNAUT:{stats:["hitting_power"],label:"Juggernaut"},
-  BLOCK_HUNTER:{stats:["blocking","accuracy"],label:"Block Hunter"},
-  GREAT_WALL:{stats:["blocking","positioning"],label:"The Great Wall"},
-  RISING_DRAGON:{stats:["vertical","speed"],label:"Rising Dragon"}
- },
- S:{
-  MAESTRO:{stats:["set_technique","accuracy"],label:"Maestro"},
-  KYOKA_SUIGETSU:{stats:["set_creativity","creativity"],label:"Kyōka Suigetsu"},
-  KINGS_GAMBIT:{stats:["hitting_power","vertical"],label:"King's Gambit"},
-  LIMITLESS:{stats:["set_technique","reaction_time"],label:"Limitless"}
- },
- M:{
-  ORACLE:{stats:["reaction_time","positioning"],label:"Oracle"},
-  TITAN:{stats:["blocking","vertical"],label:"Titan"},
-  FIRST_TEMPO:{stats:["hitting_power","vertical"],label:"First Tempo"},
-  PHANTOM:{stats:["speed","creativity"],label:"Phantom"}
- },
- L:{
-  ANCHOR:{stats:["serve_receive","positioning"],label:"Anchor"},
-  FLOOR_HOUND:{stats:["reaction_time","speed"],label:"Floor Hound"},
-  SHARINGAN:{stats:["reaction_time","positioning"],label:"Sharingan"},
-  PLAYMAKER:{stats:["set_technique","creativity"],label:"Playmaker"}
- }
-};
-
-function career(){try{return (typeof S!=="undefined"&&S&&S.career)||null}catch(_){return null}}
-function owned(){
- try{
-  if(typeof skillUnlockedSet==="function")return skillUnlockedSet();
-  return new Set(Array.isArray(career()?.skill_nodes)?career().skill_nodes:[]);
- }catch(_){return new Set()}
-}
-function pos(){
- const p=String(career()?.position||"OH").toUpperCase();
- return p==="MB"?"M":p;
-}
-function eliteRank(path){
- const o=owned(),p=pos();
- /* Future backend nodes use these stable IDs. Rank 1/2/3 => cap 101/103/105. */
- let r=0;
- for(let i=1;i<=3;i++)if(o.has(`ST2_${p}_${path}_ELITE_${String(i).padStart(2,"0")}`))r=i;
- return r;
-}
-function capFor(stat){
- let cap=99,bestPath=null,rank=0;
- const cfg=PATHS[pos()]||{};
- Object.entries(cfg).forEach(([path,data])=>{
-  if(!data.stats.includes(stat))return;
-  const r=eliteRank(path);
-  if(r>rank){rank=r;bestPath=path}
- });
- if(rank===1)cap=101;if(rank===2)cap=103;if(rank>=3)cap=105;
- return {cap,path:bestPath,rank};
-}
-function raw(stat){
- const c=career()||{};
- const aliases={
-  accuracy:["accuracy"],hitting_power:["hitting_power"],vertical:["vertical"],speed:["speed"],
-  reaction_time:["reaction_time"],positioning:["positioning"],blocking:["blocking"],
-  set_technique:["set_technique"],set_creativity:["set_creativity"],creativity:["creativity"],
-  service:["service"],serve_receive:["serve_receive"],mindset:["mindset"]
- };
- for(const k of (aliases[stat]||[stat]))if(Number.isFinite(Number(c[k])))return Number(c[k]);
- return 0;
-}
-/* Optional elite bonus points can arrive from backend later. Until then this never invents stats. */
-function bonus(stat){
- const c=career()||{};
- const b=c.elite_stat_bonus||c.elite_stat_bonuses||{};
- return Number(b?.[stat]||0);
-}
-function effective(stat){
- const cc=capFor(stat);
- return clamp(raw(stat)+bonus(stat),0,cc.cap);
-}
-function tier(stat){
- const v=effective(stat);
- return v>=105?3:v>=103?2:v>=101?1:0;
-}
-function threshold(stat){
- const v=effective(stat),t=tier(stat);
- return {stat,value:v,tier:t,cap:capFor(stat).cap,
-   elite:t===1?"ELITE":t===2?"WORLD CLASS":t===3?"ACE":""};
-}
-
-/* Threshold effects: restrained, deterministic modifiers to existing mechanics. */
-function mods(){
- const hp=effective("hitting_power"),acc=effective("accuracy"),vert=effective("vertical"),
-       spd=effective("speed"),react=effective("reaction_time"),posi=effective("positioning"),
-       block=effective("blocking"),recv=effective("serve_receive"),
-       sett=effective("set_technique"),setc=Math.max(effective("set_creativity"),effective("creativity")),
-       serv=effective("service"),mind=effective("mindset");
- const over=v=>Math.max(0,v-99);
- return {
-  attack:{
-   ballSpeed:1+over(hp)*.018,          // 105 => +10.8%
-   aimSpread:Math.max(.78,1-over(acc)*.035), // 105 => 21% tighter
-   contactHeight:over(vert)*.012,      // normalized visual/geometry lift
-   blockClearance:over(vert)*.018
-  },
-  defence:{
-   moveSpeed:1+over(spd)*.018,
-   reactionWindow:1+over(react)*.035,  // 105 => +21% response window
-   perfectWindow:1+over(posi)*.028,
-   receiveControl:1+over(recv)*.025
-  },
-  block:{
-   reach:1+over(block)*.022,
-   penetration:over(block)*.018,
-   lateralSpeed:1+over(spd)*.012
-  },
-  set:{
-   accuracy:1+over(sett)*.025,
-   emergencyTolerance:1+over(sett)*.03,
-   deception:over(setc)*.025
-  },
-  serve:{
-   velocity:1+over(serv)*.018,
-   control:1+over(acc)*.025
-  },
-  pressure:{stability:1+over(mind)*.02}
- };
-}
-window.ACE_ELITE={
- version:"V54",PATHS,raw,effective,capFor,tier,threshold,mods,
- getSnapshot(){
-  const names=["hitting_power","accuracy","vertical","speed","reaction_time","positioning","blocking",
-   "serve_receive","set_technique","set_creativity","creativity","service","mindset"];
-  return Object.fromEntries(names.map(n=>[n,threshold(n)]));
- }
-};
-window.ACE_PROJECT_BUILD="B21.36.275";
-window.ACE_ELITE_OVERCAP_ENGINE_BUILD="B21.36.275";
-})();
-</script>
 <style id="ace-v55-elite-nodes-style">
 #roadtoace .aceV55EliteTree{margin:12px 0 4px;padding:11px;border:1px solid rgba(236,188,82,.18);border-radius:14px;background:linear-gradient(180deg,rgba(23,20,28,.97),rgba(10,16,24,.98))}
 #roadtoace .aceV55EliteHead{padding:2px 2px 9px}
@@ -50120,76 +49996,14 @@ window.ACE_PROJECT_BUILD='B21.36.307';
 @media(max-width:520px){.ace307TR{grid-template-columns:24px 1fr 26px 26px 32px 32px;padding:0 5px}.ace307Knockout{align-items:stretch}.ace307KOArrow{display:flex;align-items:center}.ace307Path span{font-size:5.5px}}
 </style>
 
-<script id="ace-build-marker-v311">window.ACE_PROJECT_BUILD="B21.36.311";</script>
-
 
 <!-- PROJECT ACE B21.36.311B · INTERNATIONAL CAREER VISIBILITY · MOBILE + DESKTOP -->
-<style id="ace311a-intl-visibility-style">
-#roadtoace .ace311aIntlPulse{position:relative;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;margin:10px 0 12px;padding:11px 13px;border:1px solid rgba(129,105,238,.24);border-radius:14px;background:radial-gradient(circle at 86% 12%,rgba(116,89,232,.18),transparent 35%),linear-gradient(135deg,#0a1b29,#0b1727);color:#eef7fb;box-sizing:border-box;overflow:hidden;z-index:2;cursor:pointer;text-align:left;box-shadow:0 12px 32px rgba(0,0,0,.14);transition:border-color .16s ease,transform .16s ease,background .16s ease}
-#roadtoace .ace311aIntlPulse:hover{border-color:rgba(158,135,255,.42);background:radial-gradient(circle at 86% 12%,rgba(116,89,232,.24),transparent 38%),linear-gradient(135deg,#0b1d2c,#0d192a);transform:translateY(-1px)}
-#roadtoace .ace311aIntlPulse:focus-visible{outline:2px solid rgba(185,168,255,.78);outline-offset:2px}
-#roadtoace .ace311aIntlBadge{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;border:1px solid rgba(158,135,255,.27);background:linear-gradient(145deg,rgba(116,89,232,.20),rgba(68,126,211,.11));color:#c4b6ff;font-size:11px;font-weight:1000;letter-spacing:.06em;box-shadow:inset 0 0 20px rgba(139,111,244,.05)}
-#roadtoace .ace311aIntlCopy{min-width:0;text-align:left}
-#roadtoace .ace311aIntlCopy small{display:block;color:#9785ec;font-size:6px;font-weight:1000;letter-spacing:.14em}
-#roadtoace .ace311aIntlCopy b{display:block;margin-top:3px;color:#f0f4ff;font-size:12px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#roadtoace .ace311aIntlCopy span{display:block;margin-top:3px;color:#7891a5;font-size:7px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#roadtoace .ace311aIntlGo{align-self:stretch;display:flex;align-items:center;min-width:74px;padding:0 12px;border:0;border-left:1px solid rgba(255,255,255,.07);background:transparent;color:#c0b2ff;font-size:7px;font-style:normal;font-weight:1000;letter-spacing:.07em;white-space:nowrap}
-@media(min-width:761px){
-  #roadtoace .rta229CareerPulseHome>.ace311aIntlPulse{width:min(1120px,calc(100% - 24px));margin:10px auto 12px}
-}
-@media(max-width:760px){
-  #roadtoace .ace311aIntlPulse{grid-template-columns:38px minmax(0,1fr) auto;gap:9px;width:calc(100% - 12px);margin:0 6px 7px;padding:9px 10px;border-radius:13px;box-shadow:none}
-  #roadtoace .ace311aIntlPulse:hover{transform:none}
-  #roadtoace .ace311aIntlBadge{width:38px;height:38px;border-radius:11px;font-size:10px}
-  #roadtoace .ace311aIntlCopy small{font-size:5.2px}
-  #roadtoace .ace311aIntlCopy b{margin-top:2px;font-size:8.2px}
-  #roadtoace .ace311aIntlCopy span{margin-top:2px;font-size:5.7px}
-  #roadtoace .ace311aIntlGo{min-width:48px;padding:0 8px;font-size:6px}
-}
-</style>
-<script id="ace311a-intl-visibility-script">
-(()=>{
-'use strict';
-let raf=0;
-const state=()=>window.__ACE_RTA_STATE||null;
-const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
-function selection(){try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}}
-function openInternational(){
- const s=state();if(!s)return;
- s.view='career';s.careerPanel='international';
- try{window.__ACE_RTA_RENDER?.()}catch(_){}
- setTimeout(()=>document.querySelector('#roadtoace .aceV77Intl')?.scrollIntoView?.({block:'start',behavior:'smooth'}),80);
-}
-function decorate(){
- raf=0;const s=state(),c=s?.career,home=document.querySelector('#roadtoace .rta229CareerPulseHome');
- if(!c||!home){document.querySelectorAll('#roadtoace .ace311aIntlPulse').forEach(x=>x.remove());return}
- const sel=selection(),eligible=!!sel?.eligible,complete=!!c.season_complete,stage=String(c.international_window?.stage||'');
- let title,meta,code=String(sel?.code||String(c.nationality||'INT').slice(0,3).toUpperCase());
- if(!eligible){title='International Career setup';meta=sel?.reason||'Choose a supported nationality.'}
- else if(complete&&sel.status==='SELECTED'&&stage!=='COMPLETE'){title=`${sel.status} · ${sel.role}`;meta=stage?`${stage} · international duty active`:'Call-up ready · report to national team camp'}
- else if(complete){title=`${sel.status} · ${sel.role}`;meta=stage==='COMPLETE'?`${c.international_caps||0} caps · tournament complete`:`Season decision · depth #${sel.rank}`}
- else {title=`${c.nationality} · selection outlook`;meta=`Depth #${sel.rank} · ${sel.role} projection · June window`}
- const sig=[c.season,c.season_match,c.nationality,c.international_caps||0,sel?.status,sel?.role,sel?.rank,stage].join('|');
- let card=home.querySelector('.ace311aIntlPulse');if(card?.dataset.sig===sig)return;card?.remove();
- card=document.createElement('button');card.type='button';card.className='ace311aIntlPulse';card.dataset.sig=sig;card.setAttribute('aria-label','Open International Career');
- card.innerHTML=`<i class="ace311aIntlBadge">${esc(code)}</i><span class="ace311aIntlCopy"><small>INTERNATIONAL CAREER · SEASON ${Number(c.season||1)}</small><b>${esc(title)}</b><span>${esc(meta)}</span></span><em class="ace311aIntlGo">VIEW →</em>`;
- const tabs=home.querySelector('.ace246HomeTabsZone');if(tabs)tabs.before(card);else home.appendChild(card);
-}
-function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
-document.addEventListener('click',e=>{if(e.target.closest?.('.ace311aIntlPulse')){e.preventDefault();openInternational()}},true);
-const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});
-window.addEventListener('pageshow',queue);window.addEventListener('ace:career-nationality-ready',queue);setTimeout(queue,250);
-window.ACE_INTL_VISIBILITY_V311A={decorate:queue,open:openInternational};window.ACE_PROJECT_BUILD='B21.36.311C';
-})();
-</script>
-
-<script id="ace-playable-international-v311c-marker">window.ACE_PROJECT_BUILD="B21.36.311C";window.ACE_PLAYABLE_INTERNATIONAL_V311C=true;</script>
 
 
 <!-- PROJECT ACE B21.36.312 · NEW CLUB ARRIVAL + PRE-SEASON -->
 <style id="ace-v312-arrival-style">
-.ace312Backdrop{position:fixed;inset:0;z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,11,.90);backdrop-filter:blur(14px);color:#edf6fb}.ace312Shell{width:min(880px,96vw);max-height:92vh;overflow:auto;border:1px solid rgba(118,105,238,.25);border-radius:22px;background:radial-gradient(circle at 88% 0,rgba(121,91,232,.18),transparent 34%),linear-gradient(145deg,#0a1d2b,#07131e 58%,#091523);box-shadow:0 30px 90px rgba(0,0,0,.55)}.ace312Top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 10px}.ace312Top small,.ace312Eyebrow{display:block;color:#9d89f2;font-size:7px;font-weight:1000;letter-spacing:.15em}.ace312Top h2{margin:5px 0 0;font-size:26px;line-height:1}.ace312Close{width:38px;height:38px;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:rgba(255,255,255,.035);color:#9aabba;font-size:20px;cursor:pointer}.ace312Progress{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 22px 14px}.ace312Progress span{height:4px;border-radius:999px;background:rgba(255,255,255,.06)}.ace312Progress span.on{background:linear-gradient(90deg,#7763ea,#aa91ff)}.ace312Body{padding:10px 22px 22px}.ace312Hero{padding:28px 18px;text-align:center;border:1px solid rgba(255,255,255,.06);border-radius:18px;background:radial-gradient(circle at 50% 15%,rgba(123,99,240,.16),transparent 45%),rgba(255,255,255,.02)}.ace312Crest{display:grid;place-items:center;width:78px;height:78px;margin:0 auto 13px;border-radius:22px;border:1px solid rgba(169,146,255,.28);background:linear-gradient(145deg,rgba(128,101,242,.25),rgba(65,129,205,.12));color:#d7cbff;font-size:23px;font-weight:1000;letter-spacing:.05em}.ace312Hero h1{margin:4px 0;font-size:31px;line-height:1.05}.ace312Hero p{margin:7px auto 0;max-width:600px;color:#7f95a4;font-size:10px;line-height:1.5}.ace312Stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:15px}.ace312Stats article,.ace312CoachGrid article{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:rgba(255,255,255,.025)}.ace312Stats span,.ace312CoachGrid span{display:block;color:#647b8d;font-size:6px;font-weight:1000;letter-spacing:.08em}.ace312Stats b,.ace312CoachGrid b{display:block;margin-top:5px;font-size:11px}.ace312Coach{display:grid;grid-template-columns:82px 1fr;gap:15px;align-items:center;padding:18px;border:1px solid rgba(255,255,255,.06);border-radius:16px;background:rgba(255,255,255,.025)}.ace312CoachIcon{display:grid;place-items:center;width:82px;height:82px;border-radius:20px;background:linear-gradient(145deg,rgba(119,99,234,.18),rgba(255,255,255,.025));font-size:30px}.ace312Coach h2{margin:4px 0;font-size:22px}.ace312Coach p{margin:6px 0;color:#8297a6;font-size:9px;line-height:1.5}.ace312Quote{margin-top:12px;padding:12px 14px;border-left:3px solid #8d77ee;border-radius:0 10px 10px 0;background:rgba(126,102,238,.07);color:#c9d6df;font-size:9px;line-height:1.5}.ace312CoachGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.ace312Rivals{display:grid;gap:8px;margin-top:12px}.ace312Rival{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.025)}.ace312Rival.you{border-color:rgba(130,108,241,.3);background:rgba(130,108,241,.075)}.ace312RivalNum{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.04);font-size:13px;font-weight:1000}.ace312Rival small{display:block;color:#687f90;font-size:6px;font-weight:1000}.ace312Rival b{display:block;margin-top:3px;font-size:11px}.ace312Rival em{color:#9c8af0;font-size:7px;font-style:normal;font-weight:1000}.ace312FocusGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.ace312Focus{min-height:92px;padding:13px;text-align:left;border:1px solid rgba(255,255,255,.07);border-radius:13px;background:rgba(255,255,255,.025);color:#e7f0f5;cursor:pointer}.ace312Focus.selected{border-color:rgba(155,132,255,.55);background:linear-gradient(145deg,rgba(126,102,238,.17),rgba(255,255,255,.025));box-shadow:inset 0 0 0 1px rgba(154,132,255,.1)}.ace312Focus small{display:block;color:#806fd0;font-size:6px;font-weight:1000}.ace312Focus b{display:block;margin-top:6px;font-size:12px}.ace312Focus span{display:block;margin-top:5px;color:#718797;font-size:7px;line-height:1.4}.ace312Objectives{display:grid;gap:6px;margin-top:12px}.ace312Obj{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.025);color:#9fb0bb;font-size:8px}.ace312Obj i{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:rgba(115,93,229,.12);color:#a995ff;font-style:normal;font-weight:1000}.ace312Result{text-align:center;padding:18px}.ace312Role{display:inline-block;margin:13px 0;padding:10px 18px;border:1px solid rgba(124,225,170,.22);border-radius:999px;background:rgba(82,211,143,.08);color:#8be0b1;font-size:14px;font-weight:1000}.ace312Actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.ace312Btn{min-height:44px;padding:0 17px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.035);color:#aab9c3;font-size:8px;font-weight:1000;letter-spacing:.05em;cursor:pointer}.ace312Btn.primary{border-color:rgba(142,120,247,.34);background:linear-gradient(135deg,#7764e9,#967eea);color:#fff}.ace312Btn:disabled{opacity:.4;cursor:not-allowed}.ace312HomeCard{margin:10px 14px 12px;padding:13px;border:1px solid rgba(126,104,239,.18);border-radius:13px;background:linear-gradient(135deg,rgba(126,104,239,.07),rgba(255,255,255,.018));color:#eaf3f8}.ace312HomeCard small{display:block;color:#9380e6;font-size:6px;font-weight:1000;letter-spacing:.11em}.ace312HomeCard b{display:block;margin-top:4px;font-size:12px}.ace312HomeCard p{margin:5px 0 0;color:#748b9a;font-size:7px;line-height:1.45}.ace312HomeObjs{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.ace312HomeObjs span{padding:5px 7px;border-radius:7px;background:rgba(255,255,255,.03);color:#8498a5;font-size:6px;font-weight:900}
-@media(max-width:760px){.ace312Backdrop{align-items:flex-end;padding:0}.ace312Shell{width:100%;max-height:94dvh;border-radius:21px 21px 0 0}.ace312Top{padding:15px 15px 9px}.ace312Top h2{font-size:21px}.ace312Progress{padding:0 15px 10px}.ace312Body{padding:8px 15px 18px}.ace312Hero{padding:20px 12px}.ace312Crest{width:62px;height:62px;border-radius:17px;font-size:18px}.ace312Hero h1{font-size:24px}.ace312Stats{grid-template-columns:repeat(2,1fr)}.ace312Coach{grid-template-columns:56px 1fr;padding:13px}.ace312CoachIcon{width:56px;height:56px;border-radius:15px;font-size:22px}.ace312Coach h2{font-size:17px}.ace312CoachGrid{grid-template-columns:1fr}.ace312FocusGrid{grid-template-columns:1fr}.ace312Focus{min-height:70px}.ace312Actions{position:sticky;bottom:-18px;margin:14px -15px -18px;padding:10px 15px 14px;background:linear-gradient(transparent,#07131e 24%)}.ace312Btn{flex:1}.ace312HomeCard{margin:7px 8px 9px}}
+.ace312Backdrop{position:fixed;inset:0;z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,11,.90);backdrop-filter:blur(14px);color:#edf6fb}.ace312Shell{width:min(880px,96vw);max-height:92vh;overflow:auto;border:1px solid rgba(118,105,238,.25);border-radius:22px;background:radial-gradient(circle at 88% 0,rgba(121,91,232,.18),transparent 34%),linear-gradient(145deg,#0a1d2b,#07131e 58%,#091523);box-shadow:0 30px 90px rgba(0,0,0,.55)}.ace312Top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 10px}.ace312Top small,.ace312Eyebrow{display:block;color:#9d89f2;font-size:7px;font-weight:1000;letter-spacing:.15em}.ace312Top h2{margin:5px 0 0;font-size:26px;line-height:1}.ace312Close{width:38px;height:38px;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:rgba(255,255,255,.035);color:#9aabba;font-size:20px;cursor:pointer}.ace312Progress{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 22px 14px}.ace312Progress span{height:4px;border-radius:999px;background:rgba(255,255,255,.06)}.ace312Progress span.on{background:linear-gradient(90deg,#7763ea,#aa91ff)}.ace312Body{padding:10px 22px 22px}.ace312Hero{padding:28px 18px;text-align:center;border:1px solid rgba(255,255,255,.06);border-radius:18px;background:radial-gradient(circle at 50% 15%,rgba(123,99,240,.16),transparent 45%),rgba(255,255,255,.02)}.ace312Crest{display:grid;place-items:center;width:78px;height:78px;margin:0 auto 13px;border-radius:22px;border:1px solid rgba(169,146,255,.28);background:linear-gradient(145deg,rgba(128,101,242,.25),rgba(65,129,205,.12));color:#d7cbff;font-size:23px;font-weight:1000;letter-spacing:.05em}.ace312Hero h1{margin:4px 0;font-size:31px;line-height:1.05}.ace312Hero p{margin:7px auto 0;max-width:600px;color:#7f95a4;font-size:10px;line-height:1.5}.ace312Stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:15px}.ace312Stats article,.ace312CoachGrid article{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:rgba(255,255,255,.025)}.ace312Stats span,.ace312CoachGrid span{display:block;color:#647b8d;font-size:6px;font-weight:1000;letter-spacing:.08em}.ace312Stats b,.ace312CoachGrid b{display:block;margin-top:5px;font-size:11px}.ace312Coach{display:grid;grid-template-columns:82px 1fr;gap:15px;align-items:center;padding:18px;border:1px solid rgba(255,255,255,.06);border-radius:16px;background:rgba(255,255,255,.025)}.ace312CoachIcon{display:grid;place-items:center;width:82px;height:82px;border-radius:20px;background:linear-gradient(145deg,rgba(119,99,234,.18),rgba(255,255,255,.025));font-size:30px}.ace312Coach h2{margin:4px 0;font-size:22px}.ace312Coach p{margin:6px 0;color:#8297a6;font-size:9px;line-height:1.5}.ace312Quote{margin-top:12px;padding:12px 14px;border-left:3px solid #8d77ee;border-radius:0 10px 10px 0;background:rgba(126,102,238,.07);color:#c9d6df;font-size:9px;line-height:1.5}.ace312CoachGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.ace312Rivals{display:grid;gap:8px;margin-top:12px}.ace312Rival{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.025)}.ace312Rival.you{border-color:rgba(130,108,241,.3);background:rgba(130,108,241,.075)}.ace312RivalNum{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.04);font-size:13px;font-weight:1000}.ace312Rival small{display:block;color:#687f90;font-size:6px;font-weight:1000}.ace312Rival b{display:block;margin-top:3px;font-size:11px}.ace312Rival em{color:#9c8af0;font-size:7px;font-style:normal;font-weight:1000}.ace312FocusGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.ace312Focus{min-height:92px;padding:13px;text-align:left;border:1px solid rgba(255,255,255,.07);border-radius:13px;background:rgba(255,255,255,.025);color:#e7f0f5;cursor:pointer}.ace312Focus.selected{border-color:rgba(155,132,255,.55);background:linear-gradient(145deg,rgba(126,102,238,.17),rgba(255,255,255,.025));box-shadow:inset 0 0 0 1px rgba(154,132,255,.1)}.ace312Focus small{display:block;color:#806fd0;font-size:6px;font-weight:1000}.ace312Focus b{display:block;margin-top:6px;font-size:12px}.ace312Focus span{display:block;margin-top:5px;color:#718797;font-size:7px;line-height:1.4}.ace312Objectives{display:grid;gap:6px;margin-top:12px}.ace312Obj{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.025);color:#9fb0bb;font-size:8px}.ace312Obj i{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:rgba(115,93,229,.12);color:#a995ff;font-style:normal;font-weight:1000}.ace312Result{text-align:center;padding:18px}.ace312Role{display:inline-block;margin:13px 0;padding:10px 18px;border:1px solid rgba(124,225,170,.22);border-radius:999px;background:rgba(82,211,143,.08);color:#8be0b1;font-size:14px;font-weight:1000}.ace312Actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.ace312Btn{min-height:44px;padding:0 17px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.035);color:#aab9c3;font-size:8px;font-weight:1000;letter-spacing:.05em;cursor:pointer}.ace312Btn.primary{border-color:rgba(142,120,247,.34);background:linear-gradient(135deg,#7764e9,#967eea);color:#fff}.ace312Btn:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:760px){.ace312Backdrop{align-items:flex-end;padding:0}.ace312Shell{width:100%;max-height:94dvh;border-radius:21px 21px 0 0}.ace312Top{padding:15px 15px 9px}.ace312Top h2{font-size:21px}.ace312Progress{padding:0 15px 10px}.ace312Body{padding:8px 15px 18px}.ace312Hero{padding:20px 12px}.ace312Crest{width:62px;height:62px;border-radius:17px;font-size:18px}.ace312Hero h1{font-size:24px}.ace312Stats{grid-template-columns:repeat(2,1fr)}.ace312Coach{grid-template-columns:56px 1fr;padding:13px}.ace312CoachIcon{width:56px;height:56px;border-radius:15px;font-size:22px}.ace312Coach h2{font-size:17px}.ace312CoachGrid{grid-template-columns:1fr}.ace312FocusGrid{grid-template-columns:1fr}.ace312Focus{min-height:70px}.ace312Actions{position:sticky;bottom:-18px;margin:14px -15px -18px;padding:10px 15px 14px;background:linear-gradient(transparent,#07131e 24%)}.ace312Btn{flex:1}}
 </style>
 <script id="ace-v312-arrival-script">
 (()=>{
@@ -50218,8 +50032,7 @@ function render(){
 function open(startStep=0){const p=ps();if(!p?.status)return;close();step=p.status==='COMPLETE'?4:startStep;focus=String(p.focus||'');const wrap=document.createElement('div');wrap.className='ace312Backdrop';document.body.appendChild(wrap);document.body.style.overflow='hidden';render()}
 async function acceptClub(club){if(busy)return;busy=true;document.querySelectorAll('[data-rta62-next-season]').forEach(b=>b.disabled=true);try{const d=await rpc('vds_rta_start_next_season_v312',{p_club:club});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=0;focus='';open(0)}catch(err){console.error('ACE 312 arrival failed',err);alert(String(err?.message||err||'Could not start the next season.'))}finally{busy=false}}
 async function complete(){if(busy||!focus)return;busy=true;render();try{const d=await rpc('vds_rta_complete_preseason_v312',{p_focus:focus});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=4;render();try{window.__ACE_RTA_RENDER?.()}catch(_){}}catch(err){console.error('ACE 312 preseason failed',err);alert(String(err?.message||err||'Could not complete pre-season.'))}finally{busy=false;render()}}
-function homeCard(){raf=0;const c=C(),p=ps(),mount=document.querySelector('#roadtoace #rta62Mount');if(!c||!mount)return;mount.querySelectorAll('.ace312HomeCard').forEach(x=>x.remove());if(p?.status!=='COMPLETE'||Number(c.season_match||0)>2)return;const card=document.createElement('section');card.className='ace312HomeCard';card.innerHTML=`<small>NEW CLUB · PRE-SEASON COMPLETE</small><b>#${Number(c.shirt_number||p.shirt_number||0)} · ${esc(c.squad_role||p.final_role)} · ${esc(p.focus||'')}</b><p>${esc(p.coach_name||'Coach')} expects you to establish yourself quickly at ${esc(c.club_name||'your new club')}.</p><div class="ace312HomeObjs">${(Array.isArray(p.objectives)?p.objectives:[]).map(o=>`<span>${esc(o.label||o.id)}</span>`).join('')}</div>`;const a=mount.querySelector('.rta93HomeHero,.rta227HomeHero,.aceV74Calendar,.rta92CareerBody');if(a)a.insertAdjacentElement(a.classList.contains('rta92CareerBody')?'beforebegin':'afterend',card);else mount.prepend(card)}
-function queue(){if(!raf)raf=requestAnimationFrame(homeCard);const p=ps(),key=p?.status==='ARRIVAL'?`${C()?.season}|${p.new_club}`:'';if(key&&key!==autoOpened&&!document.querySelector('.ace312Backdrop')){autoOpened=key;setTimeout(()=>open(0),80)}}
+function queue(){const p=ps(),key=p?.status==='ARRIVAL'?`${C()?.season}|${p.new_club}`:'';if(key&&key!==autoOpened&&!document.querySelector('.ace312Backdrop')){autoOpened=key;setTimeout(()=>open(0),80)}}
 document.addEventListener('click',e=>{const sign=e.target.closest?.('[data-rta62-next-season]');if(sign&&sign.closest('.ace311Backdrop,.rta92OffersBlock')){
  e.preventDefault();e.stopImmediatePropagation();
  /* 314B: the 312 arrival interceptor used to bypass the 311 international gate
@@ -50240,7 +50053,6 @@ const page=document.getElementById('roadtoace');if(page)new MutationObserver(que
 window.ACE_NEW_CLUB_ARRIVAL_V312={open,decorate:queue};window.ACE_PROJECT_BUILD='B21.36.312';
 })();
 </script>
-<script id="ace-build-marker-v312">window.ACE_PROJECT_BUILD="B21.36.312";</script>
 
 
 <!-- PROJECT ACE B21.36.313 · SQUAD COMPETITION + SELECTION BATTLES -->
@@ -50265,129 +50077,13 @@ function cardHTML(b){
 }
 async function refresh(force=false){const k=sig();if(!k||busy||(!force&&k===lastFetch&&battle))return;busy=true;try{battle=await rpc('vds_rta_get_squad_battle_v313');lastFetch=k;decorate()}catch(e){console.warn('ACE 313 squad battle unavailable',e)}finally{busy=false}}
 function decorateResult(){const shell=document.querySelector('.rta102ResultShell'),d=S()?.key,b=d?.squad_battle;if(!shell||!b||shell.querySelector('.ace313ResultImpact'))return;const host=shell.querySelector('.rta102ResultDetails'),anchor=host?.querySelector('.rta102RewardBurst');if(!host)return;const changed=!!b.status_changed||!!b.rank_changed;const el=document.createElement('section');el.className=`ace313ResultImpact ${changed?'changed':''}`;el.innerHTML=`<small>SELECTION IMPACT</small><h3>${changed?`${esc(b.before_status||'ROLE')} → ${esc(b.after_status||b.status||'ROLE')}`:`${esc(b.after_status||b.status||'ROLE')} · #${Number(b.after_rank||b.rank||1)} DEPTH`}</h3><p>${esc(b.detail||'The coach has updated the depth chart after your performance.')}</p>${b.rival?.player_name?`<strong>Direct rival: ${esc(b.rival.player_name)} · ${Number(b.rival.overall||0)} OVR</strong>`:''}`;if(anchor)anchor.insertAdjacentElement('afterend',el);else host.prepend(el)}
-function decorate(){raf=0;const mount=document.querySelector('#roadtoace #rta62Mount');if(!mount||!C())return;decorateResult();if(!battle){refresh();return}const existing=mount.querySelector('[data-ace313-battle]');const home=mount.querySelector('.rta93HomeHero,.rta227HomeHero,.rta229CareerPulseHome .ace229PulseHero');const overview=mount.querySelector('.rta92OverviewPanel');if(existing)return;if(home){home.insertAdjacentHTML('afterend',cardHTML(battle));return}if(overview){const hero=overview.querySelector('.rta92HeroSummary,.rta92PanelIntro');if(hero)hero.insertAdjacentHTML('afterend',cardHTML(battle));else overview.insertAdjacentHTML('afterbegin',cardHTML(battle))}}
+function decorate(){raf=0;const mount=document.querySelector('#roadtoace #rta62Mount');if(!mount||!C())return;decorateResult();if(!battle){refresh();return}const existing=mount.querySelector('[data-ace313-battle]');const home=null;const overview=mount.querySelector('.rta92OverviewPanel');if(existing)return;if(home){home.insertAdjacentHTML('afterend',cardHTML(battle));return}if(overview){const hero=overview.querySelector('.rta92HeroSummary,.rta92PanelIntro');if(hero)hero.insertAdjacentHTML('afterend',cardHTML(battle));else overview.insertAdjacentHTML('afterbegin',cardHTML(battle))}}
 function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
 document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace313-open-match]')){const s=S();if(!s)return;s.view='match';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(()=>document.querySelector('#roadtoace')?.scrollIntoView({behavior:'smooth',block:'start'}),30)}});
 const road=document.getElementById('roadtoace');if(road)new MutationObserver(queue).observe(road,{childList:true,subtree:true});
 window.addEventListener('pageshow',()=>refresh(true));window.addEventListener('online',()=>refresh(true));
 setInterval(()=>{if(document.visibilityState==='visible'&&C()&&sig()!==lastFetch)refresh()},5000);
 window.ACE_SQUAD_BATTLE_V313={refresh:()=>refresh(true),get:()=>battle};window.ACE_PROJECT_BUILD='B21.36.313';queue();setTimeout(()=>refresh(true),900);
-})();
-</script>
-<script id="ace-build-marker-v313">window.ACE_PROJECT_BUILD="B21.36.313A";window.ACE_SQUAD_COMPETITION_V313=true;window.ACE_QA_HOTFIX_V313A=true;</script>
-
-
-<style id="ace313b-ios-scroll-lock-fix">
-/* B21.36.313B — iOS scroll-lock recovery.
-   Older Career viewport layers intentionally froze body/rta containers. On iOS,
-   stale state classes + rubber-band scrolling could leave the page pinned at top. */
-@media (max-width:760px){
-  html.aceRtaActive:not(.aceHomeActive){
-    height:auto!important;min-height:100%!important;max-height:none!important;
-    overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:auto!important;
-    -webkit-overflow-scrolling:touch!important;
-  }
-  body.aceRtaActive:not(.rta62Immersive){
-    height:auto!important;min-height:100dvh!important;max-height:none!important;
-    overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:auto!important;
-    touch-action:pan-y!important;-webkit-overflow-scrolling:touch!important;
-  }
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace.page.active,
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta62Shell,
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta93Shell,
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace #rta62Mount,
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta78Mode,
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta78Mode-home,
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace .rta227CareerHome{
-    height:auto!important;min-height:0!important;max-height:none!important;
-    overflow:visible!important;overscroll-behavior-y:auto!important;
-  }
-  body.aceRtaActive:not(.rta62Immersive) #roadtoace.page.active{
-    min-height:100dvh!important;padding-bottom:calc(94px + env(safe-area-inset-bottom))!important;
-  }
-}
-</style>
-<script id="ace313b-ios-scroll-lock-fix-js">
-(function(){
-  'use strict';
-  if(window.ACE_IOS_SCROLL_LOCK_FIX_313B)return;
-  window.ACE_IOS_SCROLL_LOCK_FIX_313B=true;
-
-  const mobile=()=>window.matchMedia?.('(max-width:760px)')?.matches;
-  const pageActive=id=>document.getElementById(id)?.classList.contains('active');
-  let raf=0,timer=0;
-
-  function realBlockingOverlay(){
-    if(document.body?.classList.contains('rta62Immersive'))return true;
-    const selectors=[
-      '#rta62Overlay.show',
-      '#aceCinemaOverlay.show','#ace244BatchOverlay.show',
-      '#aceConditionModal.show','#aceManagerModal.show','#acePreMatchModal.show',
-      '#rta125TrainingGuide.show'
-    ];
-    return selectors.some(sel=>document.querySelector(sel));
-  }
-
-  function recover(){
-    raf=0;
-    if(!mobile()||!document.body)return;
-    try{ window.ace259SyncPageState?.(); }catch(_){}
-
-    /* Inline overflow locks are used by several modals. If no blocking modal is
-       actually open, an old "hidden" value is an orphaned lock. */
-    if(!realBlockingOverlay() && document.body.style.overflow==='hidden'){
-      document.body.style.overflow='';
-    }
-
-    /* A stale immersive class is especially nasty on Safari: remove it only
-       when the Road to Ace overlay itself is no longer visible. */
-    const rtaOverlay=document.getElementById('rta62Overlay');
-    if(document.body.classList.contains('rta62Immersive') &&
-       !(rtaOverlay?.classList.contains('show'))){
-      document.body.classList.remove('rta62Immersive');
-    }
-
-    /* If we left Road to Ace, don't allow its old viewport state to keep the
-       next page frozen while the mutation observer catches up. */
-    if(!pageActive('roadtoace')){
-      ['aceRtaActive','aceRtaCareerHome','aceRtaModeHome','aceRtaHomeGuide','aceRtaHomeAlerts','aceRtaHomeNext']
-        .forEach(c=>document.body.classList.remove(c));
-      document.documentElement.classList.remove('aceRtaActive');
-    }
-  }
-
-  function queue(delay=0){
-    clearTimeout(timer);
-    timer=setTimeout(()=>{
-      if(raf)cancelAnimationFrame(raf);
-      raf=requestAnimationFrame(()=>requestAnimationFrame(recover));
-    },delay);
-  }
-
-  /* The older state observer only watched page.class changes. Career tabs
-     replace descendants without changing #roadtoace.class, so aceRtaModeHome
-     could remain stale. Watch those descendant changes too. */
-  const road=document.getElementById('roadtoace');
-  if(road){
-    new MutationObserver(()=>queue(0)).observe(road,{childList:true,subtree:true});
-  }
-
-  document.addEventListener('click',e=>{
-    if(e.target.closest?.('[data-page],[data-ace-mobile-page],[data-rta62-view],[data-rta62-career-tab],[data-rta92-career-tab]')){
-      queue(20);queue(180);
-    }
-  },true);
-
-  /* iOS can finish a fast rubber-band gesture while layout is being replaced.
-     Re-assert the scrollable state after the gesture, without changing scrollY. */
-  document.addEventListener('touchend',()=>queue(24),{passive:true});
-  window.addEventListener('pageshow',()=>queue(0),{passive:true});
-  window.addEventListener('orientationchange',()=>queue(120),{passive:true});
-  window.addEventListener('resize',()=>queue(80),{passive:true});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)queue(0)},{passive:true});
-
-  queue(0);
-  window.ACE_PROJECT_BUILD='B21.36.313B';
 })();
 </script>
 
@@ -50457,11 +50153,6 @@ window.ACE_SQUAD_BATTLE_V313={refresh:()=>refresh(true),get:()=>battle};window.A
   #roadtoace .rta187CardCopy b{font-size:21px!important}
 }
 </style>
-<script id="ace313c-phone-drills-build">
-window.ACE_PROJECT_BUILD="B21.36.313C";
-window.ACE_PHONE_DRILL_RETURN_FIX_V313C=true;
-window.ACE_PHONE_DRILL_UI_V313C=true;
-</script>
 
 <!-- PROJECT ACE B21.36.314 · PHONE POPUP / MODAL UI PASS -->
 <style id="ace314-phone-popup-system">
@@ -50558,7 +50249,6 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)queue()});
 queue();window.ACE_PROJECT_BUILD='B21.36.314';
 })();
 </script>
-<script id="ace-build-marker-v314">window.ACE_PROJECT_BUILD='B21.36.314';</script>
 
 
 <!-- PROJECT ACE B21.36.314A · iOS SINGLE-SCROLLER / FAST-SWIPE FIX -->
@@ -50657,8 +50347,65 @@ queue();window.ACE_PROJECT_BUILD='B21.36.314';
  window.ACE_PROJECT_BUILD='B21.36.314A';queue();
 })();
 </script>
-<script id="ace-build-marker-v314a">window.ACE_PROJECT_BUILD='B21.36.314A';</script>
 
-<script id="ace-build-marker-v314b">window.ACE_PROJECT_BUILD='B21.36.314B';window.ACE_INTERNATIONAL_HANDOFF_FIX_314B=true;</script>
+<!-- PROJECT ACE B21.36.314C · CAREER HOME CLEANUP -->
+
+<!-- PROJECT ACE B21.36.314D · CAREER STABILISATION BASELINE -->
+<style id="ace314d-career-baseline">
+#roadtoace .ace314dOpeningObjectives{display:grid;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.055)}
+#roadtoace .ace314dOpeningObjectives>small{color:#7892a4;font-size:6px;font-weight:1000;letter-spacing:.10em}
+#roadtoace .ace314dOpeningObjectives>div{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:9px 10px;border:1px solid rgba(255,255,255,.05);border-radius:9px;background:rgba(255,255,255,.02)}
+#roadtoace .ace314dOpeningObjectives i{font-style:normal;color:#8d7bea;font-size:7px;font-weight:1000}
+#roadtoace .ace314dOpeningObjectives b{font-size:8px;color:#d9e7ee}
+#roadtoace .ace314dOpeningObjectives span{font-size:6px;color:#78cda1;font-weight:1000}
+</style>
+<script id="ace-build-marker-v314d">
+window.ACE_PROJECT_BUILD='B21.36.314D';
+window.ACE_PLAYABLE_INTERNATIONAL_V311C=true;
+window.ACE_SQUAD_COMPETITION_V313=true;
+window.ACE_QA_HOTFIX_V313A=true;
+window.ACE_PHONE_DRILL_RETURN_FIX_V313C=true;
+window.ACE_PHONE_DRILL_UI_V313C=true;
+window.ACE_INTERNATIONAL_HANDOFF_FIX_314B=true;
+window.ACE_CAREER_BASELINE_CLEANUP_314D=true;
+</script>
+
+<style id="ace-b21-36-315-skill-tree-3">
+#roadtoace .aceSt3Loadout{margin:12px 0 16px;padding:14px;border:1px solid rgba(139,103,255,.24);border-radius:16px;background:linear-gradient(145deg,rgba(124,85,255,.10),rgba(7,12,24,.92))}
+#roadtoace .aceSt3LoadoutHead{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+#roadtoace .aceSt3LoadoutHead small,#roadtoace .aceSt3Slots small{display:block;color:#9e8cff;font-size:9px;font-weight:1000;letter-spacing:.13em}
+#roadtoace .aceSt3LoadoutHead h3{margin:3px 0 2px;color:#fff;font-size:17px}
+#roadtoace .aceSt3LoadoutHead p{margin:0;color:#9ca9bb;font-size:11px;line-height:1.45;max-width:560px}
+#roadtoace .aceSt3LoadoutHead>span{flex:none;padding:6px 9px;border:1px solid rgba(139,103,255,.25);border-radius:999px;color:#c9beff;font-size:9px;font-weight:1000}
+#roadtoace .aceSt3Slots{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:7px;margin-top:12px}
+#roadtoace .aceSt3Slots article{min-width:0;padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.025)}
+#roadtoace .aceSt3Slots article.signature{border-color:rgba(255,197,84,.20);background:rgba(255,197,84,.035)}
+#roadtoace .aceSt3Slots article.signature small{color:#e9bd67}
+#roadtoace .aceSt3Slots b{display:block;margin-top:4px;color:#fff;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .aceSt3Locker{margin-top:9px}
+#roadtoace .aceSt3Locker summary{cursor:pointer;list-style:none;padding:9px 10px;border-radius:10px;background:rgba(255,255,255,.035);color:#dce3ed;font-size:10px;font-weight:1000}
+#roadtoace .aceSt3Locker summary::-webkit-details-marker{display:none}
+#roadtoace .aceSt3Locker summary span{float:right;color:#7f8b9d;font-size:8px}
+#roadtoace .aceSt3LockerGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px}
+#roadtoace .aceSt3LockerGrid button{min-width:0;padding:10px;text-align:left;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:#0a1020;color:#fff}
+#roadtoace .aceSt3LockerGrid button.active{border-color:rgba(139,103,255,.55);background:rgba(124,85,255,.12)}
+#roadtoace .aceSt3LockerGrid button span{display:block;color:#9e8cff;font-size:8px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .aceSt3LockerGrid button b{display:block;margin:3px 0;color:#fff;font-size:11px}
+#roadtoace .aceSt3LockerGrid button small{display:block;color:#8190a3;font-size:8px}
+#roadtoace .aceSt3Mechanic{color:#8ee0b3!important}
+#roadtoace .aceSt3Empty{margin-top:9px;padding:10px;border-radius:10px;background:rgba(255,255,255,.025);color:#8290a2;font-size:10px}
+#roadtoace .aceSt2Step.hybrid .aceSt2Node{border-color:rgba(255,197,84,.24);background:linear-gradient(135deg,rgba(255,197,84,.055),rgba(124,85,255,.055))}
+#roadtoace .aceSt2Step.hybrid .aceSt2Kind{color:#f1c66e}
+@media(max-width:700px){
+ #roadtoace .aceSt3Loadout{padding:11px;margin-top:8px}
+ #roadtoace .aceSt3LoadoutHead{display:block}
+ #roadtoace .aceSt3LoadoutHead>span{display:inline-block;margin-top:8px}
+ #roadtoace .aceSt3Slots{grid-template-columns:1fr 1fr}
+ #roadtoace .aceSt3Slots article.signature{grid-column:1/-1}
+ #roadtoace .aceSt3LockerGrid{grid-template-columns:1fr}
+}
+</style>
+<script id="ace-b21-36-315-build">window.ACE_PROJECT_BUILD="B21.36.315";window.ACE_SKILL_TREE_3=true;</script>
+
 </body>
 </html>
