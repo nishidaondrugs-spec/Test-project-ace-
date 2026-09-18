@@ -1966,11 +1966,27 @@ async function loadPlayersFromCloud(){
   if(!cloudDb)return false;
   await detectCloudColumns();
 
-  const {data,error}=await cloudDb.from("players").select(CLOUD_PLAYER_SELECT).order("id");
+  let data=null,error=null;
+  try{
+    const result=await Promise.race([
+      cloudDb.from("players").select(CLOUD_PLAYER_SELECT).order("id"),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error("PLAYER_DATABASE_TIMEOUT")),6500))
+    ]);
+    data=result?.data||null;
+    error=result?.error||null;
+  }catch(loadError){
+    error=loadError;
+  }
   if(error){
     console.error("Cloud player load failed:",error);
+    /* The player-card carousel is decoration, not an app bootstrap dependency.
+       Mark it settled and keep any safe cached roster already available. */
+    if(Array.isArray(storedPlayers)&&storedPlayers.length)players=storedPlayers.map(migratePlayer);
+    cloudLoaded=true;
+    vdsRenderSignInSupabaseCards();
     const status=document.getElementById("cloudPlayerStatus");
-    if(status)status.textContent="Could not load shared player database; using local roster.";
+    if(status)status.textContent="Shared player database is taking longer than usual; using cached roster.";
+    updateCloudAdminUI();
     return false;
   }
 
@@ -13037,23 +13053,48 @@ async function vdsApplySignedInSession(session,{resumeRoom=true}={}){
     return false;
   }
 
+  /* B21.36.315C — AUTH IS THE GATE; CLOUD HYDRATION IS NOT.
+     Once Supabase gives us a permanent session, let the player into Project ACE
+     immediately. Profile, Ultimate Team, wallet and progression data hydrate in
+     the background. A slow database request must never strand a signed-in player
+     on the login screen. */
   vdsAccountSession=session;
   mpIdentityUserId=session.user.id;
   mpPlayerId=session.user.id;
   try{ensureMultiplayerClient()?.realtime.setAuth(session.access_token);}catch(e){}
 
-  await vdsEnsureProfile(session.user);
-  vdsUpdateAccountUI();
-  try{
-    if(typeof vdsSyncUltimateTeamCloud==="function")await vdsSyncUltimateTeamCloud({allowLegacyImport:true});
-  }catch(error){console.warn("Ultimate Team account sync on sign-in failed",error);}
-  setTimeout(()=>vdsRefreshAccountProgression({loadPanels:true}),60);
-  setTimeout(()=>vdsForceWalletSyncFromServer({rerender:true,quiet:false}),240);
   vdsHideAccountGate();
-  vdsSetAuthStatus("Signed in.","ok");
-  aceMaybeShowFirstLoginOnboarding();
+  vdsSetAuthStatus("Signed in — loading your ACE account…","ok");
+  try{vdsUpdateAccountUI();}catch(e){}
 
-  if(resumeRoom && !mpChannel && mpResumeRecord()?.code)setTimeout(()=>mpTryAutoResume(),180);
+  setTimeout(async()=>{
+    let profileReady=false;
+    try{
+      await Promise.race([
+        vdsEnsureProfile(session.user),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error("PROFILE_HYDRATION_TIMEOUT")),6000))
+      ]);
+      profileReady=true;
+      vdsUpdateAccountUI();
+    }catch(error){
+      console.warn("ACE profile hydration deferred",error);
+    }
+
+    /* Ultimate Team is deliberately fire-and-forget. Even if the inventory RPC
+       is slow, Home/Career/Training remain usable. */
+    if(typeof vdsSyncUltimateTeamCloud==="function"){
+      Promise.race([
+        vdsSyncUltimateTeamCloud({allowLegacyImport:true}),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error("UT_HYDRATION_TIMEOUT")),8000))
+      ]).catch(error=>console.warn("Ultimate Team account sync deferred",error));
+    }
+
+    if(profileReady)try{aceMaybeShowFirstLoginOnboarding();}catch(e){}
+  },0);
+
+  setTimeout(()=>{try{vdsRefreshAccountProgression({loadPanels:false})}catch(e){}},900);
+  setTimeout(()=>{try{vdsForceWalletSyncFromServer({rerender:true,quiet:false})}catch(e){}},1500);
+  if(resumeRoom && !mpChannel && mpResumeRecord()?.code)setTimeout(()=>mpTryAutoResume(),500);
   return true;
 }
 
@@ -47906,6 +47947,7 @@ window.ACE_REMOVE_DUPLICATE_CAREER_WEEK_BUILD='B21.36.293';
   }
 
   window.ACE_RESUME_RECOVERY_BUILD="B21.36.293";
+window.ACE_AUTH_RECOVERY_BUILD="B21.36.315C";
 })();
 </script>
 
