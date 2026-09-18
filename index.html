@@ -13096,7 +13096,7 @@ async function vdsSignInWithGoogle(){
     // Use Supabase's normal browser OAuth redirect.
     // This is the supported browser flow and is more reliable on iOS/in-app browsers
     // than manually requesting the URL and navigating after the async call.
-    const {error}=await client.auth.signInWithOAuth({
+    const oauthStart=client.auth.signInWithOAuth({
       provider:"google",
       options:{
         redirectTo,
@@ -13104,6 +13104,8 @@ async function vdsSignInWithGoogle(){
         queryParams:{prompt:"select_account"}
       }
     });
+    const oauthTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("GOOGLE_OAUTH_START_TIMEOUT")),10000));
+    const {error}=await Promise.race([oauthStart,oauthTimeout]);
     if(error)throw error;
   }catch(error){
     console.error("VDS Google sign-in failed",error);
@@ -13112,6 +13114,8 @@ async function vdsSignInWithGoogle(){
       vdsSetAuthStatus("Google sign-in is not enabled in Supabase yet. Add the Google Client ID and Secret, then try again.","error");
     }else if(/redirect/i.test(message)){
       vdsSetAuthStatus("This website URL is not yet allowed in the Supabase / Google OAuth redirect settings.","error");
+    }else if(/GOOGLE_OAUTH_START_TIMEOUT/i.test(message)){
+      vdsSetAuthStatus("Google sign-in took too long to open. Check your connection, then tap Google again.","error");
     }else{
       vdsSetAuthStatus(message||"Google sign-in could not start.","error");
     }
@@ -13600,34 +13604,24 @@ function vdsHydrateSignInArtwork(){
 }
 
 async function vdsInitAccountGate(){
-  /* Surface OAuth callback failures instead of leaving users wondering
-     why Google returned them without opening the game. */
-  try{
-    const aceAuthUrl=new URL(location.href);
-    const oauthError=aceAuthUrl.searchParams.get("error_description")
-      || aceAuthUrl.searchParams.get("error");
-    if(oauthError){
-      console.warn("ACE OAuth callback error:",oauthError);
-    }
-  }catch(e){}
-
-  /* B21.36.3: wire the visible sign-in control first.
-     Fresh devices should never be able to see a dead Google button while
-     player artwork or account hydration is still loading. */
   const btn=document.getElementById("vdsGoogleSignIn");
-  if(btn)btn.onclick=vdsSignInWithGoogle;
-
+  if(btn){
+    btn.onclick=vdsSignInWithGoogle;
+    btn.disabled=false;
+  }
   vdsHydrateSignInArtwork();
 
   const client=ensureMultiplayerClient();
-  if(!client){vdsShowAccountGate("Supabase did not load. Refresh the page to sign in.","error");return;}
-
+  if(!client){
+    vdsShowAccountGate("Supabase did not load. Refresh the page to sign in.","error");
+    return;
+  }
   if(location.protocol==="file:")document.getElementById("vdsFileAuthWarning")?.classList.remove("hidden");
 
   document.getElementById("vdsAccountOpenBtn")?.addEventListener("click",()=>{
     vdsUpdateAccountUI();
     document.getElementById("vdsAccountModal")?.classList.add("show");
-    vdsRefreshAccountProgression({loadPanels:true});
+    try{vdsRefreshAccountProgression({loadPanels:true})}catch(e){}
   });
   document.getElementById("vdsAccountCloseBtn")?.addEventListener("click",()=>{
     document.getElementById("vdsAccountModal")?.classList.remove("show");
@@ -13635,33 +13629,97 @@ async function vdsInitAccountGate(){
   document.getElementById("vdsSaveProfileBtn")?.addEventListener("click",vdsSaveProfile);
   document.getElementById("vdsSignOutBtn")?.addEventListener("click",vdsSignOut);
 
-  let {data,error}=await client.auth.getSession();
-  if(error)console.warn("VDS account session check failed",error);
-
-  let session=data?.session||null;
-
-  // OAuth callback fallback: if Google returned a PKCE code but the automatic
-  // URL detection has not completed yet, exchange it here once.
-  if(!session){
-    try{
-      const callbackUrl=new URL(location.href);
-      const code=callbackUrl.searchParams.get("code");
-      if(code){
-        const exchanged=await client.auth.exchangeCodeForSession(code);
-        if(exchanged?.error)throw exchanged.error;
-        session=exchanged?.data?.session||null;
-        if(session){
-          callbackUrl.searchParams.delete("code");
-          callbackUrl.searchParams.delete("error");
-          callbackUrl.searchParams.delete("error_code");
-          callbackUrl.searchParams.delete("error_description");
-          history.replaceState({},document.title,callbackUrl.pathname+callbackUrl.search+callbackUrl.hash);
-        }
+  /* B21.36.310 — subscribe BEFORE reading/exchanging the callback.
+     Older builds subscribed at the end. On a slow phone the OAuth session
+     could become valid between the initial getSession timeout and the late
+     subscription, leaving a signed-in community player behind the gate. */
+  if(!vdsAccountAuthSubscription){
+    const {data:sub}=client.auth.onAuthStateChange((event,nextSession)=>{
+      if(event==="SIGNED_OUT"){
+        try{if(typeof vdsClearUltimateTeamForSignOut==="function")vdsClearUltimateTeamForSignOut();}catch(e){}
+        vdsAccountSession=null;
+        vdsAccountProfile=null;
+        vdsAccountAuthBusy=false;
+        vdsShowAccountGate("Signed out. Sign in with Google to play THE ACE PROJECT.");
+        const b=document.getElementById("vdsGoogleSignIn");if(b)b.disabled=false;
+        return;
       }
+      if(nextSession?.user?.id && !vdsUserIsAnonymous(nextSession.user)){
+        vdsAccountAuthBusy=false;
+        const b=document.getElementById("vdsGoogleSignIn");if(b)b.disabled=false;
+        /* Do not await profile/UT hydration inside the auth callback. */
+        setTimeout(()=>vdsApplySignedInSession(nextSession,{resumeRoom:true}).catch(err=>{
+          console.warn("ACE signed-in hydration warning",err);
+        }),0);
+      }
+    });
+    vdsAccountAuthSubscription=sub?.subscription||null;
+  }
+
+  let callbackUrl=null,callbackCode="",callbackError="";
+  try{
+    callbackUrl=new URL(location.href);
+    callbackCode=callbackUrl.searchParams.get("code")||"";
+    callbackError=callbackUrl.searchParams.get("error_description")||callbackUrl.searchParams.get("error")||"";
+  }catch(_){}
+
+  if(callbackError){
+    vdsAccountAuthBusy=false;
+    if(btn)btn.disabled=false;
+    vdsShowAccountGate("Google sign-in returned an error. Tap Google to try again.","error");
+    vdsSetAuthStatus(callbackError,"error");
+  }
+
+  let session=null;
+
+  /* If Supabase returned a PKCE code, exchange it first. This removes the
+     getSession-vs-callback race that was affecting some mobile browsers. */
+  if(callbackCode){
+    vdsSetAuthStatus("Finishing Google sign-in…");
+    try{
+      const exchanged=await Promise.race([
+        client.auth.exchangeCodeForSession(callbackCode),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error("OAUTH_CALLBACK_TIMEOUT")),12000))
+      ]);
+      if(exchanged?.error)throw exchanged.error;
+      session=exchanged?.data?.session||null;
     }catch(e){
-      console.warn("ACE OAuth callback exchange fallback failed",e);
+      /* The SDK may already have consumed the code. Re-read the persisted
+         session before treating the callback as failed. */
+      console.warn("ACE callback exchange did not complete directly",e);
+      try{
+        const reread=await Promise.race([
+          client.auth.getSession(),
+          new Promise((_,reject)=>setTimeout(()=>reject(new Error("SESSION_REREAD_TIMEOUT")),4000))
+        ]);
+        session=reread?.data?.session||null;
+      }catch(_){}
+    }
+
+    if(session){
+      try{
+        callbackUrl.searchParams.delete("code");
+        callbackUrl.searchParams.delete("error");
+        callbackUrl.searchParams.delete("error_code");
+        callbackUrl.searchParams.delete("error_description");
+        history.replaceState({},document.title,callbackUrl.pathname+callbackUrl.search+callbackUrl.hash);
+      }catch(_){}
     }
   }
+
+  if(!session){
+    try{
+      const checked=await Promise.race([
+        client.auth.getSession(),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error("SESSION_CHECK_TIMEOUT")),5000))
+      ]);
+      session=checked?.data?.session||null;
+      if(checked?.error)console.warn("VDS account session check failed",checked.error);
+    }catch(e){
+      console.warn("VDS account session check timed out; login remains usable",e);
+    }
+  }
+
   if(session?.user && vdsUserIsAnonymous(session.user)){
     try{await client.auth.signOut({scope:"local"});}catch(e){}
     session=null;
@@ -13669,27 +13727,51 @@ async function vdsInitAccountGate(){
   }
 
   if(session?.user?.id){
-    await vdsApplySignedInSession(session,{resumeRoom:true});
-  }else{
+    /* Gate removal occurs synchronously at the top of this function;
+       secondary cloud hydration may finish later. */
+    vdsApplySignedInSession(session,{resumeRoom:true}).catch(error=>{
+      console.warn("ACE post-login hydration warning",error);
+    });
+  }else if(!callbackError){
+    vdsAccountAuthBusy=false;
+    if(btn)btn.disabled=false;
     vdsShowAccountGate(location.protocol==="file:"
       ?"Run THE ACE PROJECT from localhost or HTTPS, then sign in with Google."
-      :"Sign in with Google to play THE ACE PROJECT.");
+      :callbackCode
+        ?"Google returned to Project ACE, but the session is still connecting. Retrying…"
+        :"Sign in with Google to play THE ACE PROJECT.");
   }
 
-  if(!vdsAccountAuthSubscription){
-    const {data:sub}=client.auth.onAuthStateChange((event,nextSession)=>{
-      if(event==="SIGNED_OUT"){
-        try{if(typeof vdsClearUltimateTeamForSignOut==="function")vdsClearUltimateTeamForSignOut();}catch(e){}
-        vdsAccountSession=null;
-        vdsAccountProfile=null;
-        vdsShowAccountGate("Signed out. Sign in with Google to play THE ACE PROJECT.");
-        return;
+  /* Callback watchdog: on iOS/in-app browsers session persistence can land
+     just after the callback work above. Poll briefly instead of stranding
+     the player behind the gate. */
+  if(!vdsAccountSession && (callbackCode || /[?#].*(access_token|refresh_token|code)=/i.test(location.href))){
+    let tries=0;
+    const watchdog=setInterval(async()=>{
+      tries++;
+      try{
+        const {data}=await client.auth.getSession();
+        const late=data?.session||null;
+        if(late?.user?.id&&!vdsUserIsAnonymous(late.user)){
+          clearInterval(watchdog);
+          vdsAccountAuthBusy=false;
+          if(btn)btn.disabled=false;
+          vdsApplySignedInSession(late,{resumeRoom:true}).catch(()=>{});
+          try{
+            const u=new URL(location.href);
+            for(const k of ["code","error","error_code","error_description"])u.searchParams.delete(k);
+            history.replaceState({},document.title,u.pathname+u.search+u.hash);
+          }catch(_){}
+        }else if(tries>=10){
+          clearInterval(watchdog);
+          vdsAccountAuthBusy=false;
+          if(btn)btn.disabled=false;
+          vdsSetAuthStatus("Sign-in did not finish. Tap Google to retry.","error");
+        }
+      }catch(_){
+        if(tries>=10){clearInterval(watchdog);vdsAccountAuthBusy=false;if(btn)btn.disabled=false;}
       }
-      if(nextSession?.user?.id && !vdsUserIsAnonymous(nextSession.user)){
-        setTimeout(()=>vdsApplySignedInSession(nextSession,{resumeRoom:true}),0);
-      }
-    });
-    vdsAccountAuthSubscription=sub?.subscription||null;
+    },1000);
   }
 }
 
@@ -40022,7 +40104,13 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const currentMilestone=skillMilestoneNow(n.milestone_type,c);
     const milestoneOk=!n.milestone_type||currentMilestone>=Number(n.milestone_value||0);
     const spOk=Number(c.skill_points||0)>=Number(n.cost||0);
-    return {owned,prereqOk,roleOk,milestoneOk,spOk,currentMilestone,available:!owned&&prereqOk&&roleOk&&milestoneOk&&spOk};
+    const primary=ace315aPrimary(),secondary=ace315aSecondary(),type=aceSt3NodeType(n),tier=Number(n.tier||0);
+    let identityOk=true,identityReason="";
+    if(n.branch!=="HYBRID"&&type.startsWith("ACE_PLUS")){const rw=Number(n.effect_meta?.international_wins_required||0),ro=Number(n.effect_meta?.overall_required||100);identityOk=!!primary&&n.branch===primary&&Number(c.overall||0)>=ro&&Number(S.skillTree?.international_wins||0)>=rw;identityReason=!primary?"COMMIT PRIMARY":n.branch!==primary?"PRIMARY ONLY":Number(c.overall||0)<ro?"100 OVR REQUIRED":`${Number(S.skillTree?.international_wins||0)}/${rw} INT'L WINS`;}
+    else if(n.branch==="HYBRID"){identityOk=!!primary&&!!secondary;identityReason="PRIMARY + SECONDARY REQUIRED";}
+    else if(!primary&&tier>4){identityOk=false;identityReason="COMMIT PRIMARY";}
+    else if(primary&&n.branch!==primary){if(secondary===n.branch){if(tier>7){identityOk=false;identityReason="SECONDARY LIMIT · TIER 7"}}else if(tier>3){identityOk=false;identityReason=secondary?"FOUNDATION LIMIT · TIER 3":"CHOOSE AS SECONDARY"}}
+    return {owned,prereqOk,roleOk,milestoneOk,spOk,identityOk,identityReason,currentMilestone,available:!owned&&prereqOk&&roleOk&&milestoneOk&&spOk&&identityOk};
   }
   function skillEffectsLabel(effects){
     const labels={creativity:"Creativity",accuracy:"Accuracy",hitting_power:"Power",serve_receive:"Receive",positioning:"Positioning",covering:"Covering",work_rate:"Work Rate",vertical:"Vertical",speed:"Speed",reaction_time:"Reaction",service:"Serving",blocking:"Blocking",set_technique:"Set Tech",set_creativity:"Set Creativity",mindset:"Mindset"};
@@ -40031,6 +40119,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function skillGateLabel(n,c,state){
     if(state.owned)return "UNLOCKED";
+    if(!state.identityOk)return state.identityReason||"PATH LOCKED";
     if(!state.prereqOk)return n.branch==="HYBRID"?"TWO PATH TRAITS REQUIRED":"PREVIOUS NODE REQUIRED";
     if(!state.roleOk)return `${n.role_gate} REQUIRED`;
     if(!state.milestoneOk)return `${Number(state.currentMilestone)}/${Number(n.milestone_value||0)} ${String(n.milestone_type||"").replace("RATINGS_8","8.0+ RATINGS")}`;
@@ -40063,29 +40152,42 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return {got,total:pathNodes.length,pct:Math.round(got/Math.max(1,pathNodes.length)*100)};
   }
   function aceSt3NodeType(n){
-    return String(n?.type||n?.node_type||(n?.special_key?.startsWith("PLAYSTYLE_")?"PLAYSTYLE":n?.special_key?.startsWith("TRAIT_")?"TRAIT":Number(n?.tier)>=6?"ADVANCED":"SMALL")).toUpperCase();
+    return String(n?.type||n?.node_type||(n?.special_key?.startsWith("ACEPLUS_")?"ACE_PLUS":n?.special_key?.startsWith("PLAYSTYLE_")?"PLAYSTYLE":n?.special_key?.startsWith("TRAIT_")?"TRAIT":Number(n?.tier)>=6?"ADVANCED":"SMALL")).toUpperCase();
   }
   function aceSt3NodeById(id){
     return (Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(n=>n.id===id)||null;
   }
-  function aceSt3LoadoutHTML(){
-    const all=Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[],owned=skillUnlockedSet();
-    const traits=Array.isArray(S.skillTree?.equipped_traits)?S.skillTree.equipped_traits:[];
-    const signature=String(S.skillTree?.equipped_playstyle||"");
-    const ownedSpecial=all.filter(n=>owned.has(n.id)&&["TRAIT","PLAYSTYLE","HYBRID"].includes(aceSt3NodeType(n)));
-    const name=id=>aceSt3NodeById(id)?.name||"EMPTY";
-    const traitCards=ownedSpecial.filter(n=>aceSt3NodeType(n)==="TRAIT").map(n=>{
-      const on=traits.includes(n.id),meta=n.effect_meta||{},pct=Math.round(Number(meta.match_bonus||0)*1000)/10;
-      return `<button type="button" class="${on?"active":""}" data-ace-st3-equip-trait="${esc(n.id)}"><span>${on?"✓ EQUIPPED":"EQUIP TRAIT"}</span><b>${esc(n.name)}</b><small>${esc(n.path_name||pretty(n.branch))}${pct?` · +${pct}% situational edge`:""}</small></button>`;
-    }).join("");
-    const sigCards=ownedSpecial.filter(n=>["PLAYSTYLE","HYBRID"].includes(aceSt3NodeType(n))).map(n=>{
-      const on=signature===n.id,meta=n.effect_meta||{},pct=Math.round(Number(meta.match_bonus||0)*1000)/10;
-      return `<button type="button" class="${on?"active":""}" data-ace-st3-equip-signature="${esc(n.id)}"><span>${on?"★ ACTIVE":"SET SIGNATURE"}</span><b>${esc(n.name)}</b><small>${aceSt3NodeType(n)==="HYBRID"?"HYBRID BUILD":esc(n.path_name||pretty(n.branch))}${pct?` · +${pct}% situational edge`:""}</small></button>`;
-    }).join("");
-    return `<section class="aceSt3Loadout">
-      <div class="aceSt3LoadoutHead"><div><small>ACTIVE MATCH LOADOUT</small><h3>Build identity</h3><p>Own as many skills as you earn. Equip <b>2 Traits + 1 Signature</b> to decide what actually affects matches and training.</p></div><span>SKILL TREE 3.0</span></div>
-      <div class="aceSt3Slots"><article><small>TRAIT 1</small><b>${esc(name(traits[0]))}</b></article><article><small>TRAIT 2</small><b>${esc(name(traits[1]))}</b></article><article class="signature"><small>SIGNATURE</small><b>${esc(name(signature))}</b></article></div>
-      ${ownedSpecial.length?`<details class="aceSt3Locker"><summary>CHANGE LOADOUT <span>${ownedSpecial.length} UNLOCKED SPECIALS</span></summary><div class="aceSt3LockerGrid">${traitCards}${sigCards}</div></details>`:`<div class="aceSt3Empty">Unlock a ◆ Trait or ★ Playstyle to start building your match loadout.</div>`}
+  function ace315aRoman(n){return ["","I","II","III"][Number(n)||0]||String(n||"")}
+  function ace315aPrimary(){return String(S.skillTree?.primary_archetype||S.career?.primary_archetype||"").toUpperCase()}
+  function ace315aSecondary(){return String(S.skillTree?.secondary_archetype||S.career?.secondary_archetype||"").toUpperCase()}
+  function ace315aPower(){return S.skillTree?.ace_plus?.power||S.skillTree?.active_effects?.ace_plus_power||null}
+  function ace315aPowerRank(name=""){
+    const p=ace315aPower();return p&&(!name||String(p.name||"").toUpperCase()===String(name).toUpperCase())?Number(p.rank||0):0;
+  }
+  function ace315aIdentityHTML(c){
+    const pos=String(c.position||"OH").toUpperCase(),paths=ACE_ST2_PATH_META[pos]||{},primary=ace315aPrimary(),secondary=ace315aSecondary();
+    const active=String(ACE_ST2_ACTIVE_PATH||"");
+    const pName=primary?(paths[primary]?.[0]||pretty(primary)):"NOT COMMITTED";
+    const sName=secondary?(paths[secondary]?.[0]||pretty(secondary)):"NOT CHOSEN";
+    const canPrimary=!primary&&active&&active!=="HYBRID";
+    const canSecondary=!!primary&&!secondary&&active&&active!=="HYBRID"&&active!==primary;
+    const ace=S.skillTree?.ace_plus||{},rank=Number(ace.rank||0),wins=Number(ace.wins||0),next=ace.next_wins==null?null:Number(ace.next_wins),power=ace.power;
+    const rank1=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(n=>n.branch===primary&&String(n.type||"")==="ACE_PLUS_1");
+    const powerName=power?.name||rank1?.effect_meta?.power_name||"ACE+ POWER";
+    const overall=Number(c.overall||0),winPct=next?Math.min(100,Math.round(wins/next*100)):100,ovrPct=Math.min(100,overall);
+    return `<section class="ace315aIdentity">
+      <div class="ace315aIdentityHead"><div><small>PLAYER IDENTITY</small><h3>${primary?esc(pName):"Choose who you become."}</h3><p>${primary?`Your <b>${esc(pName)}</b> path is permanent. ${secondary?`<b>${esc(sName)}</b> is your secondary development line.`:"Choose one secondary line for deeper cross-training."}`:"Explore the foundation of every path, then commit before the first major Trait."}</p></div><span>SKILL TREE 3.1</span></div>
+      <div class="ace315aIdentityGrid">
+        <article class="primary"><small>★ PRIMARY ARCHETYPE</small><b>${esc(pName)}</b><em>${primary?"FULL PATH · SIGNATURE · ACE+":"COMMIT AT MAJOR DEVELOPMENT"}</em></article>
+        <article><small>◇ SECONDARY PATH</small><b>${esc(sName)}</b><em>${secondary?"DEVELOP TO TIER 7 · NO FINAL PLAYSTYLE":"ONE PATH · UP TO TIER 7"}</em></article>
+        <article><small>OTHER PATHS</small><b>FOUNDATIONS</b><em>DEVELOP TO TIER 3 ONLY</em></article>
+      </div>
+      ${canPrimary?`<button class="ace315aCommit primary" type="button" data-ace315a-commit-primary="${esc(active)}">COMMIT TO ${esc(paths[active]?.[0]||pretty(active))} →</button>`:""}
+      ${canSecondary?`<button class="ace315aCommit" type="button" data-ace315a-commit-secondary="${esc(active)}">MAKE ${esc(paths[active]?.[0]||pretty(active))} MY SECONDARY →</button>`:""}
+      ${primary?`<div class="ace315aAcePlus ${rank?"unlocked":"locked"}">
+        <div class="ace315aAceMark">♠</div><div class="ace315aAceCopy"><small>${rank?`ACE+ ${ace315aRoman(rank)} ACTIVE`:"ACE+ · INTERNATIONAL MASTERY"}</small><h3>${esc(powerName)}</h3><p>${rank?`Mastery Rank ${rank}. Specialist attribute ceiling: <b>${Number(power?.attribute_cap||[99,101,103,105][rank])}</b>.`:"Reach 100 OVR, master your primary archetype and win internationally to unlock your endgame power."}</p></div>
+        <div class="ace315aAceReq"><div><span>OVR</span><b>${overall}/100</b><i><em style="width:${ovrPct}%"></em></i></div><div><span>INT'L WINS</span><b>${wins}${next?`/${next}`:" · MASTERED"}</b><i><em style="width:${winPct}%"></em></i></div></div>
+      </div>`:""}
     </section>`;
   }
   function skillTreeHTML(c){
@@ -40102,18 +40204,18 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const primary=coreKeys.map(k=>[k,aceSt2PathProgress(all.filter(n=>n.branch===k),owned)]).sort((a,b)=>b[1].got-a[1].got)[0];
     const nodeHtml=pathNodes.map((n,i)=>{
       const st=skillNodeState(n,c),cls=st.owned?"owned":st.available?"available":"locked",type=aceSt3NodeType(n);
-      const kind=type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="TRAIT"?"◆":"●";
+      const kind=type.startsWith("ACE_PLUS")?"♠":type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="TRAIT"?"◆":"●";
       const effects=skillEffectsLabel(n.effects),meta=n.effect_meta||{},matchPct=Math.round(Number(meta.match_bonus||0)*1000)/10,trainPct=Math.round(Number(meta.training_bonus||0)*1000)/10;
-      const mechanic=(type==="TRAIT"||type==="PLAYSTYLE"||type==="HYBRID")?`<strong class="aceSt3Mechanic">${matchPct?`MATCH +${matchPct}%`:""}${matchPct&&trainPct?" · ":""}${trainPct?`TRAINING +${trainPct}%`:""}</strong>`:(effects!=="Special skill"?`<strong>${esc(effects)}</strong>`:"");
-      return `<div class="aceSt2Step ${cls} ${type.toLowerCase()}">${i?'<i class="aceSt2Line"></i>':""}<button type="button" class="aceSt2Node" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="aceSt2Kind">${kind}</span><div><small>${esc(type==="HYBRID"?"HYBRID SIGNATURE":type==="PLAYSTYLE"?"MAJOR PLAYSTYLE":type==="TRAIT"?"TRAIT":`TIER ${n.tier}`)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${mechanic}</div><mark>${st.owned?"✓ OWNED":st.available?`${n.cost} SP · UNLOCK`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
+      const mechanic=(type==="TRAIT"||type==="PLAYSTYLE"||type==="HYBRID"||type.startsWith("ACE_PLUS"))?`<strong class="aceSt3Mechanic">${matchPct?`MATCH +${matchPct}%`:""}${matchPct&&trainPct?" · ":""}${trainPct?`TRAINING +${trainPct}%`:""}</strong>`:(effects!=="Special skill"?`<strong>${esc(effects)}</strong>`:"");
+      return `<div class="aceSt2Step ${cls} ${type.toLowerCase()}">${i?'<i class="aceSt2Line"></i>':""}<button type="button" class="aceSt2Node" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="aceSt2Kind">${kind}</span><div><small>${esc(type.startsWith("ACE_PLUS")?`ACE+ ${ace315aRoman(n.effect_meta?.power_rank)}`:type==="HYBRID"?"HYBRID SIGNATURE":type==="PLAYSTYLE"?"MAJOR PLAYSTYLE":type==="TRAIT"?"TRAIT":`TIER ${n.tier}`)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${mechanic}</div><mark>${st.owned?"✓ OWNED":st.available?`${n.cost} SP · UNLOCK`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
     }).join("");
     return `<section class="aceSt2Shell">
       <header class="aceSt2Header"><div><small>SKILL TREE 3.0 · ${esc(posLabel(pos))}</small><h2>${esc(pm[0])}</h2><p>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"COMBINE TWO DEVELOPED ARCHETYPES":primary?.[1]?.got?`PRIMARY BUILD · ${esc(paths[primary[0]][0])}`:"CHOOSE THE PLAYER YOU WANT TO BECOME"}</p></div><div class="aceSt2Sp"><b>${sp}</b><span>SP</span></div></header>
-      ${aceSt3LoadoutHTML()}
+      ${ace315aIdentityHTML(c)}
       <nav class="aceSt2Tabs">${keys.map(k=>{const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);return `<button type="button" data-ace-st2-path="${k}" class="${k===ACE_ST2_ACTIVE_PATH?"active":""}"><i>${paths[k][1]}</i><span>${esc(paths[k][0])}</span><small>${pr.pct}%</small></button>`}).join("")}</nav>
       <div class="aceSt2PathHero"><div class="aceSt2HeroIcon">${pm[1]}</div><div><small>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"CROSS-PATH MASTERY":"ARCHETYPE PATH"}</small><h3>${esc(pm[0])}</h3><p>${prog.got}/${prog.total} nodes · ${prog.pct}% developed</p></div><div class="aceSt2Meter"><i style="width:${prog.pct}%"></i></div></div>
       <div class="aceSt2Map">${nodeHtml}</div>
-      <footer class="aceSt2Footer"><span>● ATTRIBUTE · 1–2 SP</span><span>◆ TRAIT · 3 SP</span><span>★ SIGNATURE / HYBRID · 4–5 SP</span></footer>
+      <footer class="aceSt2Footer"><span>● ATTRIBUTE · 1–2 SP</span><span>◆ TRAIT · 3 SP</span><span>★ SIGNATURE / HYBRID · 4–5 SP</span><span>♠ ACE+ · INTERNATIONAL MASTERY</span></footer>
     </section>`;
   }
 
@@ -40137,30 +40239,18 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
 
-  async function aceSt3SaveLoadout(nextTraits,nextSignature){
+  async function ace315aCommit(kind,branch){
     if(S.busy)return;S.busy=true;
     try{
-      const d=await rpc("vds_rta_set_skill_loadout",{p_traits:nextTraits,p_playstyle:nextSignature||null});
-      if(d?.career)S.career=d.career;
-      S.skillTree=await rpc("vds_rta_get_skill_tree");
-      render();toast("Match loadout updated.");vibrate(18);
+      const fn=kind==="primary"?"vds_rta_commit_archetype":"vds_rta_set_secondary_archetype";
+      const d=await rpc(fn,{p_branch:branch});if(d?.career)S.career=d.career;
+      S.skillTree=await rpc("vds_rta_get_skill_tree");render();
+      toast(kind==="primary"?`${pretty(branch)} is now your primary archetype.`:`${pretty(branch)} is now your secondary path.`);vibrate([20,30,35]);
     }catch(err){toast(errText(err),"error")}finally{S.busy=false}
   }
   document.addEventListener("click",function(e){
-    const trait=e.target?.closest?.("[data-ace-st3-equip-trait]");
-    if(trait){
-      e.preventDefault();e.stopPropagation();
-      const id=trait.getAttribute("data-ace-st3-equip-trait"),cur=[...(Array.isArray(S.skillTree?.equipped_traits)?S.skillTree.equipped_traits:[])];
-      const at=cur.indexOf(id);
-      if(at>=0)cur.splice(at,1);else{if(cur.length>=2)cur.shift();cur.push(id)}
-      aceSt3SaveLoadout(cur,String(S.skillTree?.equipped_playstyle||""));return;
-    }
-    const sig=e.target?.closest?.("[data-ace-st3-equip-signature]");
-    if(sig){
-      e.preventDefault();e.stopPropagation();
-      const id=sig.getAttribute("data-ace-st3-equip-signature"),cur=String(S.skillTree?.equipped_playstyle||"");
-      aceSt3SaveLoadout(Array.isArray(S.skillTree?.equipped_traits)?S.skillTree.equipped_traits:[],cur===id?"":id);
-    }
+    const p=e.target?.closest?.("[data-ace315a-commit-primary]");if(p){e.preventDefault();e.stopPropagation();ace315aCommit("primary",p.dataset.ace315aCommitPrimary);return}
+    const q=e.target?.closest?.("[data-ace315a-commit-secondary]");if(q){e.preventDefault();e.stopPropagation();ace315aCommit("secondary",q.dataset.ace315aCommitSecondary)}
   },true);
 
   window.ACE_RTA_PLAYER_PANEL=function(event,id){
@@ -41466,7 +41556,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
 
   function overlayTop(kicker,title){
     const help=S.overlay==="training"&&S.training?`<button type="button" class="rta125GuideReplay" data-rta125-guide-open>? <span>HOW TO PLAY</span></button>`:"";
-    return `<div class="rta62OverlayTop"><div><small>${esc(kicker)}</small><b>${esc(title)}</b></div><div class="rta125OverlayActions">${help}<button class="rta62Close" data-rta62-close>×</button></div></div>`;
+    const ap=(S.overlay==="key")?ace315aPower():null,aceBadge=ap?`<span class="ace315aPowerBadge">♠ ACE+ ${ace315aRoman(ap.rank)} · ${esc(ap.name)}</span>`:"";
+    return `<div class="rta62OverlayTop"><div><small>${esc(kicker)}</small><b>${esc(title)}</b>${aceBadge}</div><div class="rta125OverlayActions">${help}<button class="rta62Close" data-rta62-close>×</button></div></div>`;
   }
 
 
@@ -41830,7 +41921,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     rta242Stop();
     const tick=()=>{
       if(rta242Hit.phase!=="contact"||rta242Hit.busy)return;
-      rta242Hit.contact+=.018*rta242Hit.contactDir;
+      const airRank=Math.max(ace315aPowerRank("AIR TIME"),ace315aPowerRank("SKY BREAK"),ace315aPowerRank("ZERO TEMPO"));
+      rta242Hit.contact+=(.018*(1-airRank*.10))*rta242Hit.contactDir;
       if(rta242Hit.contact>=.94){rta242Hit.contact=.94;rta242Hit.contactDir=-1}
       if(rta242Hit.contact<=.06){rta242Hit.contact=.06;rta242Hit.contactDir=1}
       const n=q("#aceHitContactNeedle"),c=q("#aceHitContactCursor");
@@ -41842,8 +41934,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function rta242Eval(effectiveAim,power){
     let best=null;
     for(const sol of rta242Hit.scenario.solutions){
-      const aimFit=clamp(1-Math.abs(effectiveAim-sol.aim)/.27);
-      const powerFit=clamp(1-Math.abs(power-sol.p)/.30);
+      const killRank=Math.max(ace315aPowerRank("KILL ZONE"),ace315aPowerRank("UNSTOPPABLE"));
+      const aimTol=.27+killRank*.025,powerTol=.30+killRank*.025;
+      const aimFit=clamp(1-Math.abs(effectiveAim-sol.aim)/aimTol);
+      const powerFit=clamp(1-Math.abs(power-sol.p)/powerTol);
       const executionFit=aimFit*.58+powerFit*.42,tactical=sol.value*executionFit;
       if(!best||tactical>best.tactical)best={...sol,aimFit,powerFit,executionFit,tactical};
     }
@@ -44234,8 +44328,8 @@ function renderAttackKeyOverlay(){
   }
   function showTrainingResult(d){
     const cardCareer=d?.career||S.career,coach=d?.coach_profile||S.clubWorld?.club||{},bonus=Number(d?.coach_bonus||0);
-    const resultFocus=String(d?.physical_stat||"").toUpperCase()?rta113PhysicalStatMeta(d.physical_stat).label:pretty(d.focus);
-    setOverlay(`<div class="rta62OverlayShell">${overlayTop("TRAINING COMPLETE",resultFocus)}<div class="rta62OverlayBody rta66RewardOverlay"><div class="rta66RewardCard">${cardCareer?careerCardHTML(cardCareer,{mini:true,result:true}):""}</div><div class="rta62Result"><strong>${esc(d.grade||"—")}</strong><h2>${Number(d.successful_reps||0)} / ${Number(d.total_reps||8)} good reps</h2><p class="rta62Sub">Average quality · ${Math.round(Number(d.average_quality||0)*100)}%</p><div class="rta62Reward"><div><span>XP</span><b>+${Number(d.xp_earned||0)}</b></div><div><span>COACH TRUST</span><b>${Number(d.coach_trust_change||0)>=0?"+":""}${Number(d.coach_trust_change||0)}</b></div><div><span>MENTAL FORM</span><b>${Number(d.mental_form_change||0)>=0?"+":""}${Number(d.mental_form_change||0)}</b></div></div>${bonus>0?`<div class="rta87CoachBonus"><i>↑</i><div><small>${esc(coach.coach_name||coach.coach||"COACH")} · SPECIALIST DEVELOPMENT</small><b>+${bonus} EXTRA ${esc(pretty(d.focus))} GAIN</b><span>${esc(coach.philosophy||"Club coaching expertise")} rewarded this session.</span></div></div>`:`<div class="rta87CoachBonus quiet"><i>◇</i><div><small>COACH DEVELOPMENT</small><b>${esc(pretty(coach.primary_focus||"OPEN"))} PRIMARY · ${esc(pretty(coach.secondary_focus||"OPEN"))} SECONDARY</b><span>Higher training grades in specialist areas unlock extra development.</span></div></div>`}<div class="rta66CardChange"><span>CAREER CARD</span><b>${Number(cardCareer?.overall||S.career?.overall||0)} OVR · ${careerCardTier(cardCareer||S.career).label}</b></div><button class="rta62Btn primary" data-rta62-training-done>${Number(cardCareer?.training_used||0)<2?"CHOOSE NEXT DRILL →":"BACK TO TRAINING →"}</button></div></div></div>`,"training-result");
+    const resultFocus=String(d?.physical_stat||"").toUpperCase()?rta113PhysicalStatMeta(d.physical_stat).label:pretty(d.focus),mastery=d?.ace_plus_mastery_gain;
+    setOverlay(`<div class="rta62OverlayShell">${overlayTop("TRAINING COMPLETE",resultFocus)}<div class="rta62OverlayBody rta66RewardOverlay"><div class="rta66RewardCard">${cardCareer?careerCardHTML(cardCareer,{mini:true,result:true}):""}</div><div class="rta62Result"><strong>${esc(d.grade||"—")}</strong><h2>${Number(d.successful_reps||0)} / ${Number(d.total_reps||8)} good reps</h2><p class="rta62Sub">Average quality · ${Math.round(Number(d.average_quality||0)*100)}%</p><div class="rta62Reward"><div><span>XP</span><b>+${Number(d.xp_earned||0)}</b></div><div><span>COACH TRUST</span><b>${Number(d.coach_trust_change||0)>=0?"+":""}${Number(d.coach_trust_change||0)}</b></div><div><span>MENTAL FORM</span><b>${Number(d.mental_form_change||0)>=0?"+":""}${Number(d.mental_form_change||0)}</b></div></div>${mastery?`<div class="ace315aMasteryGain"><i>♠</i><div><small>ACE+ MASTERY</small><b>${esc(pretty(mastery.attribute))} ${Number(mastery.before)} → ${Number(mastery.after)}</b><span>Specialist ceiling ${Number(mastery.cap)} · ${esc(mastery.power?.name||"ACE+")}</span></div></div>`:""}${bonus>0?`<div class="rta87CoachBonus"><i>↑</i><div><small>${esc(coach.coach_name||coach.coach||"COACH")} · SPECIALIST DEVELOPMENT</small><b>+${bonus} EXTRA ${esc(pretty(d.focus))} GAIN</b><span>${esc(coach.philosophy||"Club coaching expertise")} rewarded this session.</span></div></div>`:`<div class="rta87CoachBonus quiet"><i>◇</i><div><small>COACH DEVELOPMENT</small><b>${esc(pretty(coach.primary_focus||"OPEN"))} PRIMARY · ${esc(pretty(coach.secondary_focus||"OPEN"))} SECONDARY</b><span>Higher training grades in specialist areas unlock extra development.</span></div></div>`}<div class="rta66CardChange"><span>CAREER CARD</span><b>${Number(cardCareer?.overall||S.career?.overall||0)} OVR · ${careerCardTier(cardCareer||S.career).label}</b></div><button class="rta62Btn primary" data-rta62-training-done>${Number(cardCareer?.training_used||0)<2?"CHOOSE NEXT DRILL →":"BACK TO TRAINING →"}</button></div></div></div>`,"training-result");
   }
 
   async function startKeyMatch(){
@@ -50370,42 +50464,27 @@ window.ACE_INTERNATIONAL_HANDOFF_FIX_314B=true;
 window.ACE_CAREER_BASELINE_CLEANUP_314D=true;
 </script>
 
-<style id="ace-b21-36-315-skill-tree-3">
-#roadtoace .aceSt3Loadout{margin:12px 0 16px;padding:14px;border:1px solid rgba(139,103,255,.24);border-radius:16px;background:linear-gradient(145deg,rgba(124,85,255,.10),rgba(7,12,24,.92))}
-#roadtoace .aceSt3LoadoutHead{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
-#roadtoace .aceSt3LoadoutHead small,#roadtoace .aceSt3Slots small{display:block;color:#9e8cff;font-size:9px;font-weight:1000;letter-spacing:.13em}
-#roadtoace .aceSt3LoadoutHead h3{margin:3px 0 2px;color:#fff;font-size:17px}
-#roadtoace .aceSt3LoadoutHead p{margin:0;color:#9ca9bb;font-size:11px;line-height:1.45;max-width:560px}
-#roadtoace .aceSt3LoadoutHead>span{flex:none;padding:6px 9px;border:1px solid rgba(139,103,255,.25);border-radius:999px;color:#c9beff;font-size:9px;font-weight:1000}
-#roadtoace .aceSt3Slots{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:7px;margin-top:12px}
-#roadtoace .aceSt3Slots article{min-width:0;padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.025)}
-#roadtoace .aceSt3Slots article.signature{border-color:rgba(255,197,84,.20);background:rgba(255,197,84,.035)}
-#roadtoace .aceSt3Slots article.signature small{color:#e9bd67}
-#roadtoace .aceSt3Slots b{display:block;margin-top:4px;color:#fff;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#roadtoace .aceSt3Locker{margin-top:9px}
-#roadtoace .aceSt3Locker summary{cursor:pointer;list-style:none;padding:9px 10px;border-radius:10px;background:rgba(255,255,255,.035);color:#dce3ed;font-size:10px;font-weight:1000}
-#roadtoace .aceSt3Locker summary::-webkit-details-marker{display:none}
-#roadtoace .aceSt3Locker summary span{float:right;color:#7f8b9d;font-size:8px}
-#roadtoace .aceSt3LockerGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px}
-#roadtoace .aceSt3LockerGrid button{min-width:0;padding:10px;text-align:left;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:#0a1020;color:#fff}
-#roadtoace .aceSt3LockerGrid button.active{border-color:rgba(139,103,255,.55);background:rgba(124,85,255,.12)}
-#roadtoace .aceSt3LockerGrid button span{display:block;color:#9e8cff;font-size:8px;font-weight:1000;letter-spacing:.08em}
-#roadtoace .aceSt3LockerGrid button b{display:block;margin:3px 0;color:#fff;font-size:11px}
-#roadtoace .aceSt3LockerGrid button small{display:block;color:#8190a3;font-size:8px}
+<style id="ace-b21-36-315-skill-tree-3-core">
 #roadtoace .aceSt3Mechanic{color:#8ee0b3!important}
-#roadtoace .aceSt3Empty{margin-top:9px;padding:10px;border-radius:10px;background:rgba(255,255,255,.025);color:#8290a2;font-size:10px}
 #roadtoace .aceSt2Step.hybrid .aceSt2Node{border-color:rgba(255,197,84,.24);background:linear-gradient(135deg,rgba(255,197,84,.055),rgba(124,85,255,.055))}
 #roadtoace .aceSt2Step.hybrid .aceSt2Kind{color:#f1c66e}
-@media(max-width:700px){
- #roadtoace .aceSt3Loadout{padding:11px;margin-top:8px}
- #roadtoace .aceSt3LoadoutHead{display:block}
- #roadtoace .aceSt3LoadoutHead>span{display:inline-block;margin-top:8px}
- #roadtoace .aceSt3Slots{grid-template-columns:1fr 1fr}
- #roadtoace .aceSt3Slots article.signature{grid-column:1/-1}
- #roadtoace .aceSt3LockerGrid{grid-template-columns:1fr}
-}
 </style>
-<script id="ace-b21-36-315-build">window.ACE_PROJECT_BUILD="B21.36.315";window.ACE_SKILL_TREE_3=true;</script>
+
+
+
+<style id="ace-b21-36-315a-identity-aceplus">
+#roadtoace .ace315aIdentity{margin:12px 0 16px;padding:15px;border:1px solid rgba(140,103,255,.22);border-radius:17px;background:linear-gradient(145deg,rgba(124,85,255,.085),rgba(7,12,24,.94))}
+#roadtoace .ace315aIdentityHead{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}#roadtoace .ace315aIdentityHead small{color:#a58cff;font-size:8px;font-weight:1000;letter-spacing:.15em}#roadtoace .ace315aIdentityHead h3{margin:4px 0 3px;color:#fff;font-size:18px}#roadtoace .ace315aIdentityHead p{margin:0;max-width:650px;color:#8f9caf;font-size:10px;line-height:1.5}#roadtoace .ace315aIdentityHead>span{padding:6px 9px;border:1px solid rgba(165,140,255,.22);border-radius:999px;color:#c8bbff;font-size:8px;font-weight:1000;white-space:nowrap}
+#roadtoace .ace315aIdentityGrid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:7px;margin-top:12px}#roadtoace .ace315aIdentityGrid article{padding:11px;border:1px solid rgba(255,255,255,.065);border-radius:11px;background:rgba(255,255,255,.024)}#roadtoace .ace315aIdentityGrid article.primary{border-color:rgba(157,121,255,.28);background:rgba(132,86,255,.06)}#roadtoace .ace315aIdentityGrid small{display:block;color:#718197;font-size:7px;font-weight:1000;letter-spacing:.1em}#roadtoace .ace315aIdentityGrid b{display:block;margin:4px 0;color:#fff;font-size:12px}#roadtoace .ace315aIdentityGrid em{display:block;color:#7e8b9c;font-style:normal;font-size:7px;font-weight:900}
+#roadtoace .ace315aCommit{width:100%;margin-top:8px;min-height:42px;border:1px solid rgba(116,202,255,.25);border-radius:10px;background:rgba(71,151,214,.08);color:#dff4ff;font-size:9px;font-weight:1000;letter-spacing:.07em}#roadtoace .ace315aCommit.primary{border-color:rgba(158,115,255,.42);background:linear-gradient(90deg,rgba(126,74,231,.17),rgba(76,133,231,.11));color:#fff}
+#roadtoace .ace315aAcePlus{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(210px,.8fr);gap:12px;align-items:center;margin-top:11px;padding:13px;border-radius:13px;border:1px solid rgba(198,135,255,.20);background:radial-gradient(circle at 0 50%,rgba(183,100,255,.12),transparent 32%),rgba(4,8,18,.62)}#roadtoace .ace315aAcePlus.unlocked{border-color:rgba(217,169,255,.40);box-shadow:inset 0 0 30px rgba(149,82,255,.05)}#roadtoace .ace315aAceMark{display:grid;place-items:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(145deg,#7041ad,#32205d);color:#f2dcff;font-size:24px;box-shadow:0 0 22px rgba(181,103,255,.16)}#roadtoace .ace315aAceCopy small{color:#c68cff;font-size:7px;font-weight:1000;letter-spacing:.14em}#roadtoace .ace315aAceCopy h3{margin:3px 0;color:#fff;font-size:15px}#roadtoace .ace315aAceCopy p{margin:0;color:#8290a3;font-size:9px;line-height:1.45}#roadtoace .ace315aAceReq{display:grid;gap:7px}#roadtoace .ace315aAceReq>div{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:7px}#roadtoace .ace315aAceReq span{color:#708097;font-size:7px;font-weight:1000}#roadtoace .ace315aAceReq b{justify-self:end;color:#dfe8f5;font-size:9px}#roadtoace .ace315aAceReq i{grid-column:1/-1;height:4px;border-radius:999px;background:rgba(255,255,255,.055);overflow:hidden}#roadtoace .ace315aAceReq em{display:block;height:100%;background:linear-gradient(90deg,#8d5cff,#d58aff)}
+#roadtoace .aceSt2Step.ace_plus_1 .aceSt2Node,#roadtoace .aceSt2Step.ace_plus_2 .aceSt2Node,#roadtoace .aceSt2Step.ace_plus_3 .aceSt2Node{border-color:rgba(197,126,255,.27);background:radial-gradient(circle at 0 50%,rgba(166,86,255,.08),transparent 32%),rgba(8,12,24,.94)}#roadtoace .aceSt2Step.ace_plus_1 .aceSt2Kind,#roadtoace .aceSt2Step.ace_plus_2 .aceSt2Kind,#roadtoace .aceSt2Step.ace_plus_3 .aceSt2Kind{color:#d7a6ff}
+#roadtoace .ace315aPowerBadge{display:inline-block;margin-top:5px;padding:4px 7px;border:1px solid rgba(211,151,255,.28);border-radius:999px;background:rgba(143,78,226,.11);color:#e2bfff;font-size:7px;font-weight:1000;letter-spacing:.08em}
+@media(max-width:700px){#roadtoace .ace315aIdentity{padding:11px}#roadtoace .ace315aIdentityHead{display:block}#roadtoace .ace315aIdentityHead>span{display:inline-block;margin-top:8px}#roadtoace .ace315aIdentityGrid{grid-template-columns:1fr}#roadtoace .ace315aAcePlus{grid-template-columns:auto 1fr}#roadtoace .ace315aAceReq{grid-column:1/-1}}
+
+#roadtoace .ace315aMasteryGain{display:flex;gap:10px;align-items:center;margin:10px 0;padding:11px;border:1px solid rgba(206,144,255,.30);border-radius:11px;background:rgba(141,77,225,.08)}#roadtoace .ace315aMasteryGain>i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#402363;color:#e4bfff;font-style:normal;font-size:18px}#roadtoace .ace315aMasteryGain small{display:block;color:#bd82ef;font-size:7px;font-weight:1000;letter-spacing:.12em}#roadtoace .ace315aMasteryGain b{display:block;margin:2px 0;color:#fff;font-size:12px}#roadtoace .ace315aMasteryGain span{color:#8290a3;font-size:8px}
+</style>
+<script id="ace-b21-36-315a-build">window.ACE_PROJECT_BUILD="B21.36.315B";window.ACE_SKILL_TREE_IDENTITY_LOCK=true;window.ACE_PLUS_MASTERY=true;</script>
 
 </body>
 </html>
