@@ -44575,7 +44575,7 @@ function renderAttackKeyOverlay(){
         </div>
         <div class="rta102ResultBottom">
           <div class="rta102ResultCard">${cardCareer?careerCardHTML(cardCareer,{mini:true,result:true}):""}</div>
-          <button class="rta62Btn primary" data-rta62-result-done>${data.season_complete?"SEASON REVIEW →":"CONTINUE CAREER →"}</button>
+          <button class="rta62Btn primary" data-rta62-result-done>${data.season_complete?"FINISH CLUB SEASON →":"CONTINUE CAREER →"}</button>
         </div>
       </section>
     </div>`,"result");
@@ -49842,7 +49842,24 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
  function ensureModal(){
    if(modal)return modal;
    modal=document.createElement('div');modal.id='aceIntlCallup';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-hidden','true');document.body.appendChild(modal);
-   modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest?.('[data-intl-later]'))close();const go=e.target.closest?.('[data-intl-enter]');if(go){close();openHub();}});
+   modal.addEventListener('click',async e=>{
+     if(e.target===modal||e.target.closest?.('[data-intl-later]')){close();return}
+     const go=e.target.closest?.('[data-intl-enter]');if(!go)return;
+     e.preventDefault();if(go.disabled)return;go.disabled=true;const original=go.textContent;go.textContent='REPORTING TO CAMP…';
+     try{
+       const c=career(),sel=selection();
+       if(c?.season_complete&&sel?.status==='SELECTED'&&typeof window.ACE_RTA_RPC==='function'){
+         const w=await window.ACE_RTA_RPC('vds_rta_start_international_window',{p_role:sel.role||'ROTATION'});
+         if(c&&w)c.international_window=w;
+       }
+       close();openHub();
+     }catch(err){
+       go.disabled=false;go.textContent=original;
+       let p=modal.querySelector('.aceIntlCallupError');
+       if(!p){p=document.createElement('p');p.className='aceIntlCallupError';modal.querySelector('.aceIntlCallupActions')?.before(p)}
+       p.textContent=String(err?.message||err||'Could not report to camp. Try again.');
+     }
+   });
    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal?.classList.contains('show'))close()});
    return modal;
  }
@@ -49860,7 +49877,7 @@ window.ACE_OFFSEASON_TRANSFER_V78={open:openChooser,goToOffers:goStory};window.A
    const c=career(),s=selection();if(!c||!s?.eligible||s.status!=='SELECTED'||!c.season_complete)return false;
    const k=revealKey(c,s);if(!force&&hasSeen(k))return false;markSeen(k);lastKey=k;
    const m=ensureModal(),txt=copy(c,s),caps=Number(c.international_caps||0),ach=Array.isArray(c.international_achievements)?c.international_achievements.length:0;
-   m.innerHTML=`<section class="aceIntlCallupStage"><div class="aceIntlCallupGlow"></div><div class="aceIntlCallupCode">${esc(s.code)}</div><span class="aceIntlKicker">PROJECT ACE · INTERNATIONAL CAREER</span><h1>${esc(txt.title)}<em>${esc(txt.sub)}</em></h1><div class="aceIntlNation"><div class="aceIntlNationBadge">${esc(s.code)}</div><div class="aceIntlNationText"><b>${esc(c.nationality)}</b><span>SENIOR NATIONAL TEAM · SEASON ${Number(c.season||1)}</span></div></div><div class="aceIntlCallupMetrics"><div><span>SQUAD ROLE</span><b>${esc(s.role)}</b></div><div><span>POSITION DEPTH</span><b>#${Number(s.rank||0)}</b></div><div><span>CAPS</span><b>${caps}${caps===0?' · DEBUT AWAITS':''}</b></div></div><p class="aceIntlCallupMessage"><strong>${esc(c.player_name||'Your player')}</strong>, ${esc(txt.note)} Your club Career is paused only for the international window — nothing is reset.</p><div class="aceIntlCallupPath"><span class="done">CLUB SEASON ✓</span><span class="done">SELECTION ✓</span><span class="now">NATIONAL CAMP</span><span>${esc(competition(c))}</span><span>FINALS</span></div><div class="aceIntlCallupActions"><button type="button" class="aceIntlCallupEnter" data-intl-enter>ENTER NATIONAL TEAM →</button><button type="button" class="aceIntlCallupLater" data-intl-later>CONTINUE CAREER</button></div></section>`;
+   m.innerHTML=`<section class="aceIntlCallupStage"><div class="aceIntlCallupGlow"></div><div class="aceIntlCallupCode">${esc(s.code)}</div><span class="aceIntlKicker">✈ INTERNATIONAL DUTY · SENIOR NATIONAL TEAM</span><h1>${esc(txt.title)}<em>${esc(txt.sub)}</em></h1><div class="aceIntlNation"><div class="aceIntlNationBadge">${esc(s.code)}</div><div class="aceIntlNationText"><b>${esc(c.nationality)}</b><span>SENIOR NATIONAL TEAM · SEASON ${Number(c.season||1)}</span></div></div><div class="aceIntlCallupMetrics"><div><span>SQUAD ROLE</span><b>${esc(s.role)}</b></div><div><span>POSITION DEPTH</span><b>#${Number(s.rank||0)}</b></div><div><span>CAPS</span><b>${caps}${caps===0?' · DEBUT AWAITS':''}</b></div></div><p class="aceIntlCallupMessage"><strong>${esc(c.player_name||'Your player')}</strong>, ${esc(txt.note)} Your club Career is paused only for the international window — nothing is reset.</p><div class="aceIntlCallupPath"><span class="done">CLUB SEASON ✓</span><span class="done">SELECTION ✓</span><span class="now">NATIONAL CAMP</span><span>${esc(competition(c))}</span><span>FINALS</span></div><div class="aceIntlCallupActions"><button type="button" class="aceIntlCallupEnter" data-intl-enter>REPORT TO NATIONAL TEAM CAMP →</button><button type="button" class="aceIntlCallupLater" data-intl-later>LATER</button></div></section>`;
    m.classList.add('show');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
    try{navigator.vibrate?.([28,45,28])}catch(_){}
    requestAnimationFrame(()=>m.querySelector('[data-intl-enter]')?.focus({preventScroll:true}));return true;
@@ -49970,6 +49987,27 @@ const r=road();if(r)new MutationObserver(schedule).observe(r,{childList:true,sub
 window.addEventListener('ace:career-nationality-ready',schedule);window.addEventListener('pageshow',schedule);setTimeout(schedule,300);
 window.ACE_INTL_WINDOW_V305={decorate:schedule};
 window.ACE_PROJECT_BUILD='B21.36.305';
+})();
+</script>
+
+
+<style id="ace-intl-duty-v306-css">
+.aceIntlCallupError{position:relative;z-index:2;margin:14px 0 0;padding:10px 12px;border-radius:9px;border:1px solid rgba(255,110,110,.22);background:rgba(255,80,80,.07);color:#ffaaaa;font-size:8px;font-weight:800}
+</style>
+<script id="ace-intl-duty-v306-script">
+(()=>{
+'use strict';
+let handoff=false;
+document.addEventListener('click',e=>{
+ const done=e.target.closest?.('[data-rta105-world-done]');
+ const c=window.__ACE_RTA_STATE?.career;
+ if(!done||!c?.season_complete||handoff)return;
+ let sel=null;try{sel=window.ACE_INTL_SELECTION_V1?.get?.()}catch(_){}
+ if(!sel?.eligible||sel.status!=='SELECTED')return;
+ handoff=true;
+ setTimeout(()=>{try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}},260);
+},true);
+window.ACE_PROJECT_BUILD='B21.36.306';
 })();
 </script>
 
