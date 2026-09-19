@@ -395,6 +395,99 @@ button{font:inherit}.app{min-height:100dvh;background:radial-gradient(circle at 
 #roadtoace .ace315eInternationalMatchHead>span{flex:0 0 auto;padding:7px 10px;border-radius:999px;border:1px solid rgba(99,184,255,.2);background:rgba(99,184,255,.08);color:#b8ddf8;font-size:7px;font-weight:1000}
 @media(max-width:760px){#roadtoace .ace315eInternationalMatchHead{align-items:flex-start;flex-direction:column;padding:14px 12px}#roadtoace .ace315eInternationalMatchHead h1{font-size:23px}}
 </style>
+
+<style id="ace330-career-notification-glows">
+/* B21.36.330 — Career notification language: glow, not badge clutter.
+   Red = urgent action · Gold = progression/reward · Blue = new info · Purple = special/rare. */
+:root{--ace330-red:239,77,86;--ace330-gold:239,196,92;--ace330-blue:88,189,244;--ace330-purple:166,107,242;}
+@keyframes ace330GlowBreathe{0%,100%{opacity:.62;transform:scale(.985)}50%{opacity:1;transform:scale(1)}}
+
+/* Main Career panels: remove the old badge language here only. Counts remain inside the destination page. */
+#roadtoace .rta175BoardTabs .ace257UnreadDot,
+#roadtoace .rta175BoardTabs .ace257NumberBadge,
+#roadtoace .ace227CareerTabs .ace257UnreadDot,
+#roadtoace .ace227CareerTabs .ace257NumberBadge{display:none!important;}
+
+/* Shared semantic glow tokens. */
+#roadtoace .ace330NoticeRed{--ace330-rgb:var(--ace330-red);}
+#roadtoace .ace330NoticeGold{--ace330-rgb:var(--ace330-gold);}
+#roadtoace .ace330NoticeBlue{--ace330-rgb:var(--ace330-blue);}
+#roadtoace .ace330NoticePurple{--ace330-rgb:var(--ace330-purple);}
+
+/* Career board tabs — whole destination glows instead of a dot/number. */
+#roadtoace .rta175BoardTabs button.ace330NoticeRed,
+#roadtoace .rta175BoardTabs button.ace330NoticeGold,
+#roadtoace .rta175BoardTabs button.ace330NoticeBlue,
+#roadtoace .rta175BoardTabs button.ace330NoticePurple{
+  border-color:rgba(var(--ace330-rgb),.34)!important;
+  background:linear-gradient(180deg,rgba(var(--ace330-rgb),.075),rgba(var(--ace330-rgb),.025))!important;
+  box-shadow:inset 0 0 0 1px rgba(var(--ace330-rgb),.10),0 0 15px rgba(var(--ace330-rgb),.18)!important;
+}
+#roadtoace .rta175BoardTabs button.ace330NoticeRed:not(.active),
+#roadtoace .rta175BoardTabs button.ace330NoticeGold:not(.active),
+#roadtoace .rta175BoardTabs button.ace330NoticeBlue:not(.active),
+#roadtoace .rta175BoardTabs button.ace330NoticePurple:not(.active){animation:ace330GlowBreathe 3.2s ease-in-out infinite;}
+
+/* Important Career cards/panels use a restrained halo, never a badge. */
+#roadtoace .ace258DesktopFixtureStrip.ace330NoticeRed,
+#roadtoace .ace234MobileFixtureStrip.ace330NoticeRed,
+#roadtoace .rta175CareerRibbon>div.ace330NoticeGold,
+#roadtoace .ace254AlertRail button.ace330NoticeRed,
+#roadtoace .ace254AlertRail button.ace330NoticeGold,
+#roadtoace .ace254AlertRail button.ace330NoticeBlue,
+#roadtoace .ace254AlertRail button.ace330NoticePurple{
+  border-color:rgba(var(--ace330-rgb),.35)!important;
+  box-shadow:inset 0 0 0 1px rgba(var(--ace330-rgb),.08),0 0 18px rgba(var(--ace330-rgb),.19)!important;
+}
+#roadtoace .rta175CareerRibbon>div.ace330NoticeGold{background:linear-gradient(180deg,rgba(var(--ace330-rgb),.07),rgba(var(--ace330-rgb),.018))!important;}
+
+/* MOBILE BOTTOM NAV — this is the primary notification surface. */
+@media(max-width:760px){
+  body > .ace211CareerBottomNav .ace257UnreadDot,
+  body > .ace211CareerBottomNav .ace257NumberBadge,
+  body > .ace211CareerBottomNav .ace254NavNotice{display:none!important;}
+
+  body > .ace211CareerBottomNav button.ace330NoticeRed{--ace330-rgb:var(--ace330-red);}
+  body > .ace211CareerBottomNav button.ace330NoticeGold{--ace330-rgb:var(--ace330-gold);}
+  body > .ace211CareerBottomNav button.ace330NoticeBlue{--ace330-rgb:var(--ace330-blue);}
+  body > .ace211CareerBottomNav button.ace330NoticePurple{--ace330-rgb:var(--ace330-purple);}
+
+  body > .ace211CareerBottomNav button.ace330NoticeRed::before,
+  body > .ace211CareerBottomNav button.ace330NoticeGold::before,
+  body > .ace211CareerBottomNav button.ace330NoticeBlue::before,
+  body > .ace211CareerBottomNav button.ace330NoticePurple::before{
+    content:"";position:absolute;inset:3px;z-index:-1;pointer-events:none;border-radius:12px;
+    border:1px solid rgba(var(--ace330-rgb),.38);
+    background:radial-gradient(circle at 50% 55%,rgba(var(--ace330-rgb),.105),rgba(var(--ace330-rgb),.018) 62%,transparent 76%);
+    box-shadow:0 0 17px rgba(var(--ace330-rgb),.26),inset 0 0 13px rgba(var(--ace330-rgb),.06);
+    animation:ace330GlowBreathe 3.2s ease-in-out infinite;
+  }
+  body > .ace211CareerBottomNav button.ace330NoticeRed i,
+  body > .ace211CareerBottomNav button.ace330NoticeGold i,
+  body > .ace211CareerBottomNav button.ace330NoticeBlue i,
+  body > .ace211CareerBottomNav button.ace330NoticePurple i{
+    color:rgb(var(--ace330-rgb))!important;
+    text-shadow:0 0 12px rgba(var(--ace330-rgb),.58)!important;
+  }
+  body > .ace211CareerBottomNav button.ace330NoticeRed span,
+  body > .ace211CareerBottomNav button.ace330NoticeGold span,
+  body > .ace211CareerBottomNav button.ace330NoticeBlue span,
+  body > .ace211CareerBottomNav button.ace330NoticePurple span{color:#edf6ff!important;}
+
+  /* Active destination stops pulsing but keeps a subtle semantic edge. */
+  body > .ace211CareerBottomNav button.active.ace330NoticeRed::before,
+  body > .ace211CareerBottomNav button.active.ace330NoticeGold::before,
+  body > .ace211CareerBottomNav button.active.ace330NoticeBlue::before,
+  body > .ace211CareerBottomNav button.active.ace330NoticePurple::before{animation:none;opacity:.48;}
+}
+@media(prefers-reduced-motion:reduce){
+  #roadtoace .ace330NoticeRed,#roadtoace .ace330NoticeGold,#roadtoace .ace330NoticeBlue,#roadtoace .ace330NoticePurple,
+  body > .ace211CareerBottomNav button.ace330NoticeRed::before,
+  body > .ace211CareerBottomNav button.ace330NoticeGold::before,
+  body > .ace211CareerBottomNav button.ace330NoticeBlue::before,
+  body > .ace211CareerBottomNav button.ace330NoticePurple::before{animation:none!important;}
+}
+</style>
 </head>
 <body class="vdsAuthLocked ace152-theme ace153-home-theme">
 <div aria-live="polite" class="vdsAccountGate" id="vdsAccountGate">
@@ -32991,7 +33084,7 @@ justify-content:space-between;gap:10px;padding:5px 8px;border-top:1px solid rgba
   setTimeout(ace35StartAfterLogin,300);
 
   window.ace35RefreshHome=()=>{rookieCache=null;scheduleRefresh()};
-  window.ACE_PROJECT_BUILD="B21.35";
+  window.ACE_PROJECT_BUILD="B21.36.330";
   window.ACE_HOME_UT_NEXT_MOVE_OVERHAUL=true;
 })();
 </script>
@@ -38920,7 +39013,14 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function topbar(c){
     const moreActive=["club","agent","career","rankings"].includes(S.view),league=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League");
     const careerInbox=rta255CareerInbox(c),careerUnread=rta257UnreadInbox(c),agentUnread=rta257AgentUnread(c),sp=Math.max(0,Number(c?.skill_points||0));
-    const navButton=(v,l,i)=>`<button type="button" data-rta62-view="${v}" onclick="return window.ACE_RTA_NAV(event,'${v}')" class="${S.view===v?"active":""}"><i>${i}</i><span>${l}</span>${v==="agent"&&agentUnread?'<em class="ace257UnreadDot" aria-label="New agent update"></em>':v==="player"&&sp>0?`<em class="ace257NumberBadge">${sp}</em>`:""}</button>`;
+    const navGlow=(v)=>{
+      if(v==="match"&&S.activeKey)return "ace330NoticeRed";
+      if(v==="train"&&!c.season_complete&&Number(c.training_used||0)<2&&!S.activeKey)return "ace330NoticeGold";
+      if(v==="player"&&sp>0)return "ace330NoticeGold";
+      if(v==="agent"&&agentUnread)return "ace330NoticePurple";
+      return "";
+    };
+    const navButton=(v,l,i)=>`<button type="button" data-rta62-view="${v}" onclick="return window.ACE_RTA_NAV(event,'${v}')" class="${S.view===v?"active":""} ${navGlow(v)}"${v==="player"&&sp>0?` aria-label="${l}: skill points available"`:v==="agent"&&agentUnread?` aria-label="${l}: new update"`:v==="match"&&S.activeKey?` aria-label="${l}: action required"`:""}><i>${i}</i><span>${l}</span></button>`;
     return `<aside class="rta62Topbar rta76ProTopbar rta85CareerTopbar rta93CareerRail">
       <div class="rta62Brand rta93RailBrand"><i>♠</i><div><b>ROAD TO ACE</b><span>${esc(c.player_name)} · S${Number(c.season||1)}</span></div></div>
       <div class="rta85DesktopTabs rta93DesktopRail">
@@ -38931,7 +39031,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       </div>
       <nav class="rta85MobileTabs" aria-label="Road to Ace mobile navigation">
         ${[["home","HOME","⌂"],["match","MATCH","▶"],["train","TRAIN","△"],["player","PLAYER","★"]].map(([v,l,i])=>navButton(v,l,i)).join("")}
-        <button type="button" data-rta85-more class="${moreActive?"active":""}"><i>•••</i><span>MORE</span>${agentUnread||careerUnread.length?'<em class="ace257UnreadDot" aria-label="New Career update"></em>':""}</button>
+        <button type="button" data-rta85-more class="${moreActive?"active":""} ${agentUnread?"ace330NoticePurple":careerUnread.length?"ace330NoticeBlue":""}"${agentUnread?' aria-label="More: special career update"':careerUnread.length?' aria-label="More: new career information"':""}><i>•••</i><span>MORE</span></button>
       </nav>
       <div class="rta93RailBottom">
         <div class="rta93RailLeague"><small>CURRENT LEAGUE</small><b>${esc(league)}</b><span>${esc(c.club_name)}</span></div>
@@ -39081,7 +39181,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function rta77HomePanelButton(id,label,badge=""){
     const icon={week:"◫",inbox:"✉",objectives:"◎",season:"▥"}[id]||"•";
-    return `<button type="button" data-rta77-homepanel="${id}" class="${S.homePanel===id?"active":""} ${id}"><i>${icon}</i><span>${label}</span>${id==="inbox"&&badge?'<em class="ace257UnreadDot tab"></em>':""}${badge?`<b>${badge}</b>`:""}</button>`;
+    const notice=id==="inbox"&&badge?" ace330NoticeBlue":"";
+    return `<button type="button" data-rta77-homepanel="${id}" class="${S.homePanel===id?"active":""} ${id}${notice}"${id==="inbox"&&badge?' aria-label="Inbox: new career information"':""}><i>${icon}</i><span>${label}</span></button>`;
   }
   function rta77WeekPanel(c,used,next,focus,action,view){
     const stage=Number(c.season_complete?3:used<2?used:2);
@@ -39565,28 +39666,28 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const sp=Math.max(0,Number(c.skill_points||0));
 
     if(firstMatch&&used===0&&unread.length){
-      alerts.push(`<button type="button" class="inbox tutorial" data-rta77-homepanel="inbox">
+      alerts.push(`<button type="button" class="inbox tutorial ace330NoticeBlue" data-rta77-homepanel="inbox">
         <i>✉</i><div><small>INBOX · NEW MESSAGE</small><b>${esc(unread[0]?.sender||"Head Coach")}: ${esc(unread[0]?.title||"Report to training")}</b></div><em>OPEN →</em>
       </button>`);
     }else{
       if(agent.active&&agentUnread){
-        alerts.push(`<button type="button" class="agent" data-rta62-view="agent">
+        alerts.push(`<button type="button" class="agent ace330NoticePurple" data-rta62-view="agent">
           <i>◇</i><div><small>AGENT · NEW</small><b>${esc(agent.title||"Your agent wants to talk")}</b></div><em>→</em>
         </button>`);
       }
       if(sp>0){
-        alerts.push(`<button type="button" class="player" data-rta62-view="player">
+        alerts.push(`<button type="button" class="player ace330NoticeGold" data-rta62-view="player">
           <i>★</i><div><small>PLAYER · ${sp} SP</small><b>Upgrade your player</b></div><em>→</em>
         </button>`);
       }
       if(unread.length){
-        alerts.push(`<button type="button" class="inbox" data-rta77-homepanel="inbox">
+        alerts.push(`<button type="button" class="inbox ace330NoticeBlue" data-rta77-homepanel="inbox">
           <i>▤</i><div><small>INBOX · ${unread.length} NEW</small><b>${esc(unread[0]?.title||"Career update")}</b></div><em>→</em>
         </button>`);
       }
     }
     if(c.season_complete){
-      alerts.unshift(`<button type="button" class="world" data-rta62-view="career">
+      alerts.unshift(`<button type="button" class="world ace330NoticePurple" data-rta62-view="career">
         <i>◎</i><div><small>WORLD · SEASON REVIEW</small><b>Your next chapter is ready</b></div><em>→</em>
       </button>`);
     }
@@ -39693,7 +39794,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <small>${esc(clubName)} · ${esc(role)} · SEASON ${Number(c.season||1)}</small>
       </header>
       <section class="ace246HomeFixtureZone">
-        <button type="button" class="ace234MobileFixtureStrip" data-rta62-view="match" onclick="return window.ACE_RTA_NAV(event,'match')">
+        <button type="button" class="ace234MobileFixtureStrip ${S.activeKey?"ace330NoticeRed":""}" data-rta62-view="match" onclick="return window.ACE_RTA_NAV(event,'match')">
           <div class="team home">${rta77ClubLogo(clubName,"sm")}<b>${esc(clubName)}</b></div>
           <div class="center"><small>NEXT MATCH</small><strong>VS</strong></div>
           <div class="team away">${rta77ClubLogo(nextOpp,"sm")}<b>${esc(nextOpp)}</b></div>
@@ -39704,7 +39805,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       <section class="ace246HomeTabsZone">
         <nav class="rta175BoardTabs ace227CareerTabs">
           <button type="button" data-rta77-homepanel="week" class="${panel==="week"?"active":""}"><span>THIS WEEK</span></button>
-          <button type="button" data-rta77-homepanel="inbox" class="${panel==="inbox"?"active":""}"><span>INBOX</span>${inboxBadge?`<i class="ace257UnreadDot tab"></i><b>${inboxBadge}</b>`:""}</button>
+          <button type="button" data-rta77-homepanel="inbox" class="${panel==="inbox"?"active":""} ${inboxBadge?"ace330NoticeBlue":""}"${inboxBadge?' aria-label="Inbox: new career information"':""}><span>INBOX</span></button>
           <button type="button" data-rta77-homepanel="objectives" class="${panel==="objectives"?"active":""}"><span>OBJECTIVES</span></button>
           <button type="button" data-rta77-homepanel="season" class="${panel==="season"?"active":""}"><span>SEASON</span></button>
         </nav>
@@ -39914,7 +40015,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
 
 
       <section class="rta175PrimaryGrid ace258PrimaryGrid">
-        <button type="button" class="ace258DesktopFixtureStrip" data-rta62-view="match">
+        <button type="button" class="ace258DesktopFixtureStrip ${S.activeKey?"ace330NoticeRed":""}" data-rta62-view="match">
           <div class="ace258StripTeam home">${rta77ClubLogo(clubName,"sm")}<span><small>YOUR CLUB</small><b>${esc(clubName)}</b></span></div>
           <div class="ace258StripCenter"><small>NEXT MATCH · MATCHDAY ${Math.min(14,played+1)}</small><strong>VS</strong><span>${used>=2?"READY":"PREPARING"}</span></div>
           <div class="ace258StripTeam away"><span><small>OPPONENT</small><b>${esc(oppName)}</b></span>${rta77ClubLogo(oppName,"sm")}</div>
@@ -39928,7 +40029,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       <section class="rta175CareerRibbon">
         <div><span>READINESS</span><b>${readinessPct}%</b><small>match preparation</small></div>
         <div><span>TRUST</span><b>${Number(c.coach_trust||0)}</b><small>${esc(c.squad_role||status)}</small></div>
-        <div><span>SKILL POINTS</span><b>${Number(c.skill_points||0)}</b><small>upgrade your player</small></div>
+        <div class="${Number(c.skill_points||0)>0?"ace330NoticeGold":""}"><span>SKILL POINTS</span><b>${Number(c.skill_points||0)}</b><small>upgrade your player</small></div>
       </section>
 
       
