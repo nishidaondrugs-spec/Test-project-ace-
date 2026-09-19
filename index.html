@@ -50620,139 +50620,70 @@ window.ACE_PROJECT_BUILD='B21.36.315F';
 window.ACE_OFFSEASON_ORDER_315F={selected:'INTERNATIONAL_THEN_CONTRACT_THEN_PRESEASON',notSelected:'CONTRACT_THEN_PRESEASON'};
 </script>
 
-<!-- PROJECT ACE B21.36.315G · INTERNATIONAL MATCH EXPERIENCE + HARD OFF-SEASON GATE -->
-<style id="ace315g-international-experience-css">
-/* 315G — Call-up is confirmation only; the tournament is the hero. */
-#roadtoace .aceIntlHubHero{padding:10px 12px!important;margin:0 0 8px!important;border-radius:12px!important;background:linear-gradient(145deg,rgba(9,31,48,.94),rgba(5,17,28,.96))!important}
-#roadtoace .aceIntlHubHero::after{font-size:64px!important;bottom:-14px!important;opacity:.7}
-#roadtoace .aceIntlHubHero small{font-size:6px!important}
-#roadtoace .aceIntlHubHero h3{margin:3px 0 2px!important;font-size:17px!important;line-height:1!important}
-#roadtoace .aceIntlHubHero p{font-size:7px!important;line-height:1.3!important}
-#roadtoace .aceIntlHubStrip{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;margin-top:7px!important}
-#roadtoace .aceIntlHubStrip span{padding:5px 6px!important;border-radius:7px!important}
-#roadtoace .aceIntlHubStrip small{font-size:5px!important}
-#roadtoace .aceIntlHubStrip b{margin-top:1px!important;font-size:9px!important}
-#roadtoace .aceIntlHubActions{margin-top:6px!important}
-#roadtoace .aceIntlHubActions button{min-height:28px!important;padding:0 9px!important;font-size:6px!important}
-
-/* Original persistent-squad data stays live, but moves behind one clean popup. */
-#roadtoace .aceV77Intl.ace315gCompact>header,
-#roadtoace .aceV77Intl.ace315gCompact>.aceV77Status,
-#roadtoace .aceV77Intl.ace315gCompact>.aceV77Title,
-#roadtoace .aceV77Intl.ace315gCompact>.aceV77Depth,
-#roadtoace .aceV77Intl.ace315gCompact>.aceV77Overview,
-#roadtoace .aceV77Intl.ace315gCompact>.aceV77Note{display:none!important}
-#roadtoace .ace315gCareerDrawer{order:90;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:11px 12px;border:1px solid rgba(110,183,232,.16);border-radius:11px;background:rgba(255,255,255,.022);color:#dcebf5;text-align:left;cursor:pointer}
-#roadtoace .ace315gCareerDrawer small{display:block;color:#66889e;font-size:6px;font-weight:1000;letter-spacing:.13em}
-#roadtoace .ace315gCareerDrawer b{display:block;margin-top:2px;font-size:11px}.ace315gCareerDrawer>span{color:#73c6f2;font-size:18px}
-
-/* Dedicated international match presentation. */
-#roadtoace .ace315eInternationalMatchHub{gap:8px!important}
-#roadtoace .ace315eInternationalMatchHead{position:relative;overflow:hidden;padding:12px 14px!important;border-color:rgba(83,171,232,.24)!important;background:linear-gradient(110deg,#061521,#09263a)!important}
-#roadtoace .ace315eInternationalMatchHead::after{content:"INT'L";position:absolute;right:-8px;bottom:-18px;font-size:72px;font-weight:1000;letter-spacing:-.08em;color:rgba(255,255,255,.025);pointer-events:none}
-#roadtoace .ace315eInternationalMatchHead h1{font-size:21px!important}.ace315eInternationalMatchHead p{font-size:7px!important}
-#roadtoace .aceIntlWindow.ace307Tournament{position:relative;overflow:hidden;padding:16px!important;border-radius:17px!important;border-color:rgba(86,181,240,.25)!important;background:radial-gradient(circle at 50% 0,rgba(56,153,220,.15),transparent 38%),linear-gradient(155deg,#071b2a,#04101a 70%)!important;box-shadow:0 18px 50px rgba(0,0,0,.28)!important}
-#roadtoace .aceIntlWindow.ace307Tournament>.aceIntlWindowHead{position:relative;z-index:2}
-#roadtoace .aceIntlWindow.ace307Tournament>.aceIntlWindowHead h4{font-size:clamp(24px,5vw,38px)!important;line-height:.94!important;letter-spacing:-.045em!important;max-width:620px}
-#roadtoace .aceIntlWindow.ace307Tournament>.aceIntlWindowHead small{color:#83cfff!important}
-#roadtoace .ace315gTournamentHero{position:relative;z-index:2;margin:-2px 0 14px;padding:18px 14px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:radial-gradient(circle at 50% 100%,rgba(76,172,237,.16),transparent 58%),rgba(255,255,255,.025);text-align:center;overflow:hidden}
-#roadtoace .ace315gTournamentHero::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 43%,rgba(255,255,255,.035) 44% 45%,transparent 46% 100%);pointer-events:none}
-#roadtoace .ace315gTournamentHero small{position:relative;display:block;color:#75bde8;font-size:7px;font-weight:1000;letter-spacing:.17em}
-#roadtoace .ace315gTournamentHero h2{position:relative;margin:7px auto 4px;max-width:650px;font-size:clamp(29px,7vw,50px);line-height:.88;letter-spacing:-.055em;color:#f5fbff}
-#roadtoace .ace315gTournamentHero h2 em{display:block;color:#e5c36f;font-style:normal}
-#roadtoace .ace315gTournamentHero p{position:relative;margin:8px auto 0;max-width:540px;color:#8da5b5;font-size:8px;line-height:1.45}
-#roadtoace .ace315gFixtureHero{position:relative;z-index:2;margin:0 0 13px;padding:15px 12px;border:1px solid rgba(255,255,255,.075);border-radius:14px;background:radial-gradient(circle at 50% 30%,rgba(76,174,240,.14),transparent 45%),rgba(255,255,255,.02);text-align:center}
-#roadtoace .ace315gFixtureHero>small{display:block;color:#79c8f4;font-size:7px;font-weight:1000;letter-spacing:.16em}
-#roadtoace .ace315gFixtureTeams{display:grid;grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr);align-items:center;gap:8px;margin-top:12px}
-#roadtoace .ace315gFixtureTeam{min-width:0}.ace315gFlag{width:56px;height:38px;display:grid;place-items:center;margin:0 auto 7px;border-radius:8px;border:1px solid rgba(255,255,255,.13);background:linear-gradient(145deg,#eef7fc,#c8dce9);color:#06121c;font-size:12px;font-weight:1000;box-shadow:0 8px 20px rgba(0,0,0,.18)}
-#roadtoace .ace315gFixtureTeam b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace315gFixtureTeam span{display:block;margin-top:3px;color:#70899b;font-size:6px;font-weight:900}
-#roadtoace .ace315gVs{font-size:22px;font-weight:1000;color:#e6c675}.ace315gVs small{display:block;margin-top:2px;color:#637f91;font-size:5px;letter-spacing:.12em}
-#roadtoace .ace315gMatchMeta{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:12px}.ace315gMatchMeta span{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.035);color:#7892a3;font-size:6px;font-weight:900}
-
-/* Squad / depth / national-pool modal. */
-#ace315gIntlDetails{position:fixed;inset:0;z-index:2147483350;display:none;align-items:flex-end;justify-content:center;background:rgba(1,5,9,.86);backdrop-filter:blur(12px)}
-#ace315gIntlDetails.show{display:flex}#ace315gIntlDetails *{box-sizing:border-box}
-.ace315gDetailsSheet{width:min(720px,100%);max-height:90dvh;display:flex;flex-direction:column;border:1px solid rgba(103,187,241,.22);border-radius:22px 22px 0 0;background:linear-gradient(180deg,#081722,#040d15);color:#edf7fc;box-shadow:0 -24px 70px rgba(0,0,0,.5);overflow:hidden}
-.ace315gDetailsHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:15px 16px 11px;border-bottom:1px solid rgba(255,255,255,.07)}.ace315gDetailsHead small{display:block;color:#72c6f1;font-size:7px;font-weight:1000;letter-spacing:.14em}.ace315gDetailsHead h2{margin:3px 0 0;font-size:22px}.ace315gDetailsClose{width:40px;height:40px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.03);color:#b9cbd6;font-size:19px}
-.ace315gTabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.055)}.ace315gTabs button{min-height:38px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:rgba(255,255,255,.025);color:#718a9b;font-size:6px;font-weight:1000}.ace315gTabs button.active{border-color:rgba(83,183,244,.42);background:rgba(65,159,218,.13);color:#dff5ff}
-.ace315gDetailsBody{overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 14px calc(20px + env(safe-area-inset-bottom))}.ace315gPane{display:none}.ace315gPane.active{display:block}.ace315gDetailsBody .aceV77Status{margin:0 0 10px!important}.ace315gDetailsBody .aceV77Title{margin:5px 0 7px!important}.ace315gDetailsBody .aceV77Note{font-size:9px!important;color:#7d93a2!important}.ace315gDetailsBody .aceV77Overview{grid-template-columns:repeat(5,minmax(0,1fr))!important}
-@media(max-width:760px){#roadtoace .aceIntlHubHero{padding:9px 10px!important}#roadtoace .aceIntlHubHero h3{font-size:15px!important}#roadtoace .aceIntlHubStrip{grid-template-columns:repeat(4,minmax(0,1fr))!important}#roadtoace .aceIntlHubStrip span{padding:4px!important}#roadtoace .aceIntlWindow.ace307Tournament{padding:12px 10px!important}#roadtoace .ace315gTournamentHero{padding:15px 9px}.ace315gFixtureTeams{grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr)!important}.ace315gFlag{width:48px;height:33px}.ace315gDetailsSheet{max-height:92dvh}.ace315gTabs{gap:3px;padding:8px}.ace315gTabs button{font-size:5.5px}.ace315gDetailsBody{padding:10px 10px calc(18px + env(safe-area-inset-bottom))}}
+<!-- PROJECT ACE B21.36.315H · INTERNATIONAL UI REBUILD · FLAGS + CLEAN SHEET + SINGLE RENDER HOOK -->
+<style id="ace315h-international-ui-css">
+/* 315H: one international presentation layer. No cloned legacy screens. */
+#roadtoace .aceIntlHubHero{padding:9px 11px!important;margin:0 0 8px!important;border-radius:12px!important;background:linear-gradient(145deg,rgba(9,31,48,.94),rgba(5,17,28,.96))!important}
+#roadtoace .aceIntlHubHero::after{font-size:58px!important;bottom:-15px!important;opacity:.55}
+#roadtoace .aceIntlHubHero small{font-size:6px!important}#roadtoace .aceIntlHubHero h3{margin:3px 0 2px!important;font-size:16px!important;line-height:1!important}
+#roadtoace .aceIntlHubHero p{font-size:7px!important;line-height:1.3!important}.aceIntlHubStrip{gap:4px!important;margin-top:7px!important}.aceIntlHubStrip span{padding:5px!important}
+#roadtoace .aceV77Intl.ace315hCompact>header,#roadtoace .aceV77Intl.ace315hCompact>.aceV77Status,#roadtoace .aceV77Intl.ace315hCompact>.aceV77Title,#roadtoace .aceV77Intl.ace315hCompact>.aceV77Depth,#roadtoace .aceV77Intl.ace315hCompact>.aceV77Overview,#roadtoace .aceV77Intl.ace315hCompact>.aceV77Note{display:none!important}
+#roadtoace .ace315gCareerDrawer{display:none!important}
+#roadtoace .ace315hCareerDrawer{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:11px 12px;border:1px solid rgba(92,187,245,.22);border-radius:11px;background:linear-gradient(135deg,rgba(50,142,202,.09),rgba(255,255,255,.018));color:#e5f5ff;text-align:left}
+#roadtoace .ace315hCareerDrawer small{display:block;color:#6e98b1;font-size:6px;font-weight:1000;letter-spacing:.13em}#roadtoace .ace315hCareerDrawer b{display:block;margin-top:2px;font-size:11px}.ace315hCareerDrawer>span{color:#73c6f2;font-size:18px}
+#roadtoace .aceIntlWindow.ace307Tournament{position:relative;overflow:hidden;padding:14px 12px!important;border-radius:17px!important;border-color:rgba(86,181,240,.25)!important;background:radial-gradient(circle at 50% 0,rgba(56,153,220,.15),transparent 38%),linear-gradient(155deg,#071b2a,#04101a 70%)!important;box-shadow:0 18px 50px rgba(0,0,0,.28)!important}
+#roadtoace .ace315hHero{position:relative;margin:0 0 12px;padding:15px 12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:radial-gradient(circle at 50% 28%,rgba(77,175,239,.16),transparent 48%),rgba(255,255,255,.018);text-align:center;overflow:hidden}
+#roadtoace .ace315hHero>small{display:block;color:#7bcaf5;font-size:7px;font-weight:1000;letter-spacing:.15em}#roadtoace .ace315hHero h2{margin:7px 0 3px;font-size:clamp(26px,7vw,46px);line-height:.9;letter-spacing:-.05em;color:#f4fbff}#roadtoace .ace315hHero h2 em{display:block;color:#e7c66f;font-style:normal}
+#roadtoace .ace315hFixture{display:grid;grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);align-items:center;gap:8px;margin-top:13px}.ace315hTeam{min-width:0}.ace315hTeam b{display:block;margin-top:6px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace315hTeam small{display:block;margin-top:2px;color:#718b9d;font-size:6px;font-weight:900}.ace315hVs{font-size:23px;font-weight:1000;color:#e7c66f}.ace315hVs small{display:block;color:#6f8797;font-size:5px;letter-spacing:.12em}
+.ace315hFlag{width:62px;height:40px;display:grid;place-items:center;margin:0 auto;border:1px solid rgba(255,255,255,.16);border-radius:8px;background:#edf5f8;box-shadow:0 8px 22px rgba(0,0,0,.22);font-size:30px;line-height:1;overflow:hidden}.ace315hFlag.england{position:relative;background:#fff}.ace315hFlag.england:before,.ace315hFlag.england:after{content:"";position:absolute;background:#d71f2b}.ace315hFlag.england:before{left:0;right:0;top:50%;height:9px;transform:translateY(-50%)}.ace315hFlag.england:after{top:0;bottom:0;left:50%;width:9px;transform:translateX(-50%)}
+#roadtoace .ace315hMeta{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:11px}.ace315hMeta span{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.035);color:#839aaa;font-size:6px;font-weight:900}
+#roadtoace .ace307TR:not(.ace307TH)>span:nth-child(2){display:flex;align-items:center;gap:6px;min-width:0}.ace315hMiniFlag{width:22px;min-width:22px;height:15px;display:inline-grid;place-items:center;border-radius:3px;overflow:hidden;background:#eef4f7;font-size:14px;line-height:1}.ace315hMiniFlag.england{position:relative;background:#fff}.ace315hMiniFlag.england:before,.ace315hMiniFlag.england:after{content:"";position:absolute;background:#d71f2b}.ace315hMiniFlag.england:before{left:0;right:0;top:50%;height:4px;transform:translateY(-50%)}.ace315hMiniFlag.england:after{top:0;bottom:0;left:50%;width:4px;transform:translateX(-50%)}
+/* Clean native bottom sheet: styles do not depend on #roadtoace. */
+#ace315hIntlDetails{position:fixed;inset:0;z-index:2147483600;display:none;align-items:flex-end;justify-content:center;background:rgba(0,5,9,.78);backdrop-filter:blur(10px);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}#ace315hIntlDetails.show{display:flex}#ace315hIntlDetails *{box-sizing:border-box}
+.ace315hSheet{width:min(720px,100%);height:min(78dvh,760px);display:flex;flex-direction:column;border:1px solid rgba(101,191,246,.24);border-radius:22px 22px 0 0;background:linear-gradient(180deg,#071621,#030b12);color:#edf8ff;box-shadow:0 -25px 80px rgba(0,0,0,.55);overflow:hidden}.ace315hGrab{width:44px;height:5px;border-radius:99px;background:rgba(255,255,255,.2);margin:8px auto 0}
+.ace315hHead{display:flex;align-items:center;gap:10px;padding:10px 14px 12px}.ace315hHead .ace315hFlag{width:46px;height:31px;margin:0;font-size:23px}.ace315hHeadText{min-width:0;flex:1}.ace315hHeadText small{display:block;color:#73bfe9;font-size:7px;font-weight:1000;letter-spacing:.14em}.ace315hHeadText h2{margin:2px 0 0;font-size:22px;line-height:1}.ace315hClose{width:38px;height:38px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.025);color:#c3d4df;font-size:21px}
+.ace315hTabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:0 12px 10px;border-bottom:1px solid rgba(255,255,255,.065)}.ace315hTabs button{min-width:0;min-height:40px;padding:0 4px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.02);color:#70899b;font-size:7px;font-weight:1000;letter-spacing:.03em}.ace315hTabs button.active{border-color:#3ea9e7;background:rgba(52,155,218,.15);color:#e9f8ff}
+.ace315hBody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 14px calc(18px + env(safe-area-inset-bottom))}.ace315hPane{display:none}.ace315hPane.active{display:block}.ace315hSummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ace315hSummary>div{padding:10px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:rgba(255,255,255,.022)}.ace315hSummary small{display:block;color:#698397;font-size:7px;font-weight:900}.ace315hSummary b{display:block;margin-top:3px;font-size:13px}.ace315hSectionTitle{display:flex;justify-content:space-between;align-items:end;gap:8px;margin:15px 0 7px}.ace315hSectionTitle small{color:#6e8da1;font-size:7px;font-weight:1000;letter-spacing:.1em}.ace315hSectionTitle b{font-size:13px}.ace315hSectionTitle span{color:#647d8f;font-size:7px}
+.ace315hRows{border-top:1px solid rgba(255,255,255,.07)}.ace315hRow{display:grid;grid-template-columns:24px minmax(0,1fr) 40px 50px;align-items:center;gap:7px;min-height:52px;border-bottom:1px solid rgba(255,255,255,.055)}.ace315hRow.you{background:linear-gradient(90deg,rgba(54,165,229,.12),transparent);box-shadow:inset 3px 0 #5cc4f4}.ace315hRank{color:#7890a0;text-align:center;font-size:10px}.ace315hPlayer{min-width:0}.ace315hPlayer b{display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace315hPlayer small{display:block;margin-top:2px;color:#718697;font-size:7px;line-height:1.25}.ace315hOvr{text-align:right;font-size:15px;font-weight:1000}.ace315hForm{text-align:right;color:#8298a7;font-size:7px;font-weight:900}.ace315hPool{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ace315hPoolCard{padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:rgba(255,255,255,.02)}.ace315hPoolCard small{display:block;color:#6c8799;font-size:7px}.ace315hPoolCard b{display:block;margin-top:3px;font-size:17px}.ace315hPoolCard span{display:block;margin-top:2px;color:#7e93a1;font-size:7px}.ace315hInfo{padding:13px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:rgba(255,255,255,.02);color:#8ca1af;font-size:10px;line-height:1.6}.ace315hInfo b{color:#eaf7fd}
+@media(max-width:760px){.ace315hSheet{height:min(76dvh,680px)}.ace315hTabs{gap:4px;padding-left:9px;padding-right:9px}.ace315hTabs button{font-size:6.5px}.ace315hBody{padding:10px}.ace315hRow{grid-template-columns:21px minmax(0,1fr) 34px 43px;gap:5px}.ace315hFlag{width:54px;height:36px}.ace315hFixture{grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr)}}
 </style>
-<script id="ace315g-international-experience-js">
+<script id="ace315h-international-ui-js">
 (()=>{
 'use strict';
 const road=()=>document.getElementById('roadtoace');
-const S=()=>window.__ACE_RTA_STATE||null;
-const C=()=>S()?.career||null;
-const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
-let raf=0,detailsModal=null;
+const state=()=>window.__ACE_RTA_STATE||null;
+const career=()=>state()?.career||null;
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const ISO={
+ 'Poland':'PL','Italy':'IT','United States':'US','Japan':'JP','Brazil':'BR','France':'FR','Slovenia':'SI','Türkiye':'TR','Turkey':'TR','Ukraine':'UA','Bulgaria':'BG','Iran':'IR','Argentina':'AR','Cuba':'CU','Canada':'CA','Serbia':'RS','Germany':'DE','Belgium':'BE','China':'CN','Qatar':'QA','Czech Republic':'CZ','Netherlands':'NL','Australia':'AU','Malaysia':'MY','South Korea':'KR','Korea':'KR','Egypt':'EG','Tunisia':'TN'
+};
+let frame=0,modal=null,lastSig='';
 function selection(){try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}}
-function activeIntl(c=C()){
- if(!c?.season_complete)return false;
- const w=c.international_window||{};
- const stage=String(w.stage||'');
- if(stage&&stage!=='COMPLETE'&&Number(w.season||c.season)===Number(c.season))return true;
- const s=selection();return s?.eligible&&s?.status==='SELECTED'&&stage!=='COMPLETE';
-}
-function killEarlyTransfer(){
- if(!activeIntl())return;
- document.querySelectorAll('.ace311Backdrop').forEach(x=>{
-   if(x.querySelector('[aria-label="Off-season transfer window"]')||/Transfer Window/i.test(x.querySelector('.ace311Head h2')?.textContent||'')){x.remove();document.body.style.overflow='';}
- });
- road()?.querySelectorAll('.ace311Decision').forEach(x=>{if(/TRANSFER WINDOW|contract is waiting|club market is ready/i.test(x.textContent||''))x.remove();});
-}
-function ensureDetails(){
- if(detailsModal)return detailsModal;
- detailsModal=document.createElement('div');detailsModal.id='ace315gIntlDetails';detailsModal.setAttribute('aria-hidden','true');document.body.appendChild(detailsModal);
- detailsModal.addEventListener('click',e=>{
-   if(e.target===detailsModal||e.target.closest?.('.ace315gDetailsClose')){closeDetails();return}
-   const tab=e.target.closest?.('[data-ace315g-tab]');if(tab){const key=tab.dataset.ace315gTab;detailsModal.querySelectorAll('[data-ace315g-tab]').forEach(b=>b.classList.toggle('active',b===tab));detailsModal.querySelectorAll('.ace315gPane').forEach(p=>p.classList.toggle('active',p.dataset.pane===key));}
- });
- return detailsModal;
-}
-function closeDetails(){if(!detailsModal)return;detailsModal.classList.remove('show');detailsModal.setAttribute('aria-hidden','true');document.body.style.overflow='';}
-function openDetails(hub){
- const m=ensureDetails();const head=hub.querySelector(':scope>header');const status=hub.querySelector(':scope>.aceV77Status');const titles=[...hub.querySelectorAll(':scope>.aceV77Title')];const depth=hub.querySelector(':scope>.aceV77Depth');const overview=hub.querySelector(':scope>.aceV77Overview');const note=hub.querySelector(':scope>.aceV77Note');
- const nation=C()?.nationality||'NATIONAL TEAM';
- const clone=x=>x?x.outerHTML:'';
- m.innerHTML=`<section class="ace315gDetailsSheet" role="dialog" aria-modal="true"><header class="ace315gDetailsHead"><div><small>INTERNATIONAL CAREER</small><h2>${esc(nation)} SQUAD</h2></div><button class="ace315gDetailsClose" type="button" aria-label="Close">×</button></header><nav class="ace315gTabs"><button class="active" data-ace315g-tab="squad">SQUAD</button><button data-ace315g-tab="depth">DEPTH CHART</button><button data-ace315g-tab="pool">NATIONAL POOL</button><button data-ace315g-tab="info">INFO</button></nav><div class="ace315gDetailsBody"><section class="ace315gPane active" data-pane="squad">${clone(head)}${clone(status)}</section><section class="ace315gPane" data-pane="depth">${clone(titles[0])}${clone(depth)}</section><section class="ace315gPane" data-pane="pool">${clone(titles[1])}${clone(overview)}</section><section class="ace315gPane" data-pane="info">${clone(note)}</section></div></section>`;
- m.classList.add('show');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
-}
-function compactCareer(hub){
- if(!hub||hub.dataset.ace315gCompact==='1')return;
- const head=hub.querySelector(':scope>header'),status=hub.querySelector(':scope>.aceV77Status'),depth=hub.querySelector(':scope>.aceV77Depth');if(!head||!status||!depth)return;
- hub.dataset.ace315gCompact='1';hub.classList.add('ace315gCompact');
- const btn=document.createElement('button');btn.type='button';btn.className='ace315gCareerDrawer';btn.innerHTML=`<div><small>SQUAD · DEPTH · NATIONAL POOL</small><b>INTERNATIONAL CAREER</b></div><span>›</span>`;btn.addEventListener('click',()=>openDetails(hub));hub.appendChild(btn);
-}
-function opponent(c,w){
- if(w.stage==='GROUP'){const a=Array.isArray(w.fixtures)?w.fixtures:[];return a[Number(w.match_index||0)]||'Opponent'}
- return w?.knockout?.opponent||'Opponent';
-}
-function codeFor(name){const map={'England':'ENG','Germany':'GER','Netherlands':'NED','France':'FRA','Malaysia':'MAS','Australia':'AUS','China':'CHN','Japan':'JPN','Iran':'IRI','South Korea':'KOR','Poland':'POL','Italy':'ITA','Brazil':'BRA','United States':'USA'};return map[String(name)]||String(name||'INT').slice(0,3).toUpperCase()}
-function enhanceTournament(hub){
- const c=C(),w=c?.international_window||{},box=hub?.querySelector('.aceIntlWindow');if(!c||!box)return;
- const stage=String(w.stage||'');const sig=[stage,w.match_index||0,w.readiness||0,w.competition||''].join('|');if(box.dataset.ace315gHero===sig)return;box.dataset.ace315gHero=sig;box.querySelectorAll('.ace315gTournamentHero,.ace315gFixtureHero').forEach(x=>x.remove());
- const head=box.querySelector('.aceIntlWindowHead');if(!head)return;
- if(stage==='CAMP'){
-   const hero=document.createElement('section');hero.className='ace315gTournamentHero';hero.innerHTML=`<small>${esc(w.code||codeFor(c.nationality))} · SENIOR NATIONAL TEAM · SEASON ${Number(c.season||1)}</small><h2>PREPARE FOR <em>${esc(w.competition||'INTERNATIONAL DUTY')}</em></h2><p>A new stage. Your club season is paused — camp, selection pressure and every international match now happen here.</p>`;head.before(hero);return;
- }
- if(stage==='GROUP'||stage==='SEMIFINAL'||stage==='FINAL'){
-   const opp=opponent(c,w),label=stage==='GROUP'?`GROUP STAGE · MATCHDAY ${Number(w.match_index||0)+1}`:stage==='SEMIFINAL'?'SEMIFINAL':'CHAMPIONSHIP FINAL';
-   const hero=document.createElement('section');hero.className='ace315gFixtureHero';hero.innerHTML=`<small>${esc(w.competition||'INTERNATIONAL')} · ${label}</small><div class="ace315gFixtureTeams"><div class="ace315gFixtureTeam"><i class="ace315gFlag">${esc(w.code||codeFor(c.nationality))}</i><b>${esc(c.nationality)}</b><span>YOUR COUNTRY</span></div><div class="ace315gVs">VS<small>${stage==='FINAL'?'TITLE':'MATCH'}</small></div><div class="ace315gFixtureTeam"><i class="ace315gFlag">${esc(codeFor(opp))}</i><b>${esc(opp)}</b><span>OPPONENT</span></div></div><div class="ace315gMatchMeta"><span>${esc(w.role||selection()?.role||'SQUAD')}</span><span>${Number(w.readiness||50)}% READINESS</span><span>${Number(w.wins||0)}–${Number(w.losses||0)} RECORD</span></div>`;head.before(hero);
- }
-}
-function decorate(){raf=0;killEarlyTransfer();road()?.querySelectorAll('.aceV77Intl').forEach(h=>{compactCareer(h);enhanceTournament(h)});}
-function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
-document.addEventListener('click',e=>{
- const transfer=e.target.closest?.('[data-ace311-open],[data-rta62-next-season]');
- if(transfer&&activeIntl()){e.preventDefault();e.stopImmediatePropagation();killEarlyTransfer();const st=S();if(st){st.view='match';try{window.__ACE_RTA_RENDER?.()}catch(_){}}return;}
-},true);
-const r=road();if(r)new MutationObserver(queue).observe(r,{childList:true,subtree:true});
-window.addEventListener('pageshow',queue);window.addEventListener('ace:career-nationality-ready',queue);setTimeout(queue,80);
-window.ACE_PROJECT_BUILD='B21.36.315G';window.ACE_INTERNATIONAL_UI_315G={activeIntl,openDetails:()=>{const h=road()?.querySelector('.aceV77Intl');if(h)openDetails(h)}};
+function emojiFromIso(code){if(!code)return '🌐';return [...code.toUpperCase()].map(ch=>String.fromCodePoint(127397+ch.charCodeAt(0))).join('')}
+function flag(name,small=false){name=String(name||'');const cls=small?'ace315hMiniFlag':'ace315hFlag';if(name==='England')return `<span class="${cls} england" aria-label="England flag"></span>`;return `<span class="${cls}" aria-label="${esc(name)} flag">${emojiFromIso(ISO[name])}</span>`}
+function opponent(c,w){if(w?.stage==='GROUP'){const a=Array.isArray(w.fixtures)?w.fixtures:[];return a[Number(w.match_index||0)]||'Opponent'}return w?.knockout?.opponent||'Opponent'}
+function activeInternational(c=career()){if(!c?.season_complete)return false;const w=c.international_window||{},st=String(w.stage||'');if(st&&st!=='COMPLETE'&&Number(w.season||c.season)===Number(c.season))return true;const s=selection();return !!(s?.eligible&&s.status==='SELECTED'&&st!=='COMPLETE')}
+function removeLegacy315G(){document.getElementById('ace315gIntlDetails')?.remove();road()?.querySelectorAll('.ace315gCareerDrawer,.ace315gTournamentHero,.ace315gFixtureHero').forEach(n=>n.remove())}
+function parseRows(hub){return [...hub.querySelectorAll(':scope>.aceV77Depth .aceV77DepthRow')].map(r=>({rank:r.querySelector('.rank')?.textContent?.trim()||'',name:r.querySelector('b')?.textContent?.trim()||'',meta:r.querySelector('small')?.textContent?.trim()||'',ovr:r.querySelector('strong')?.textContent?.trim()||'',form:(r.querySelector('em')?.textContent||'').replace(/\s*FORM\s*/i,'').trim(),you:r.classList.contains('you')}))}
+function parsePool(hub){return [...hub.querySelectorAll(':scope>.aceV77Overview>div')].map(x=>({pos:x.querySelector('span')?.textContent?.trim()||'',ovr:x.querySelector('b')?.textContent?.trim()||'—',count:x.querySelector('small')?.textContent?.trim()||''}))}
+function parseStatus(hub){const vals=[...hub.querySelectorAll(':scope>.aceV77Status>span')].map(x=>({k:x.querySelector('small')?.textContent?.trim()||'',v:x.querySelector('b')?.textContent?.trim()||''}));return Object.fromEntries(vals.map(x=>[x.k,x.v]))}
+function rowHtml(r){return `<div class="ace315hRow ${r.you?'you':''}"><span class="ace315hRank">${esc(r.rank)}</span><div class="ace315hPlayer"><b>${esc(r.name)}</b><small>${esc(r.meta)}</small></div><span class="ace315hOvr">${esc(r.ovr)}</span><span class="ace315hForm">${esc(r.form)} FORM</span></div>`}
+function ensureModal(){if(modal?.isConnected)return modal;modal=document.createElement('div');modal.id='ace315hIntlDetails';modal.setAttribute('aria-hidden','true');document.body.appendChild(modal);modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest('.ace315hClose')){closeModal();return}const t=e.target.closest('[data-ace315h-tab]');if(!t)return;const key=t.dataset.ace315hTab;modal.querySelectorAll('[data-ace315h-tab]').forEach(b=>b.classList.toggle('active',b===t));modal.querySelectorAll('.ace315hPane').forEach(p=>p.classList.toggle('active',p.dataset.pane===key));});return modal}
+function closeModal(){if(!modal)return;modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.documentElement.style.overflow='';document.body.style.overflow=''}
+function openModal(hub){if(!hub)return;const c=career(),s=selection(),rows=parseRows(hub),pool=parsePool(hub),st=parseStatus(hub),m=ensureModal(),nation=c?.nationality||'National Team',caps=Number(c?.international_caps||0),ach=Array.isArray(c?.international_achievements)?c.international_achievements.length:0;const depthRows=rows.map(rowHtml).join('')||'<div class="ace315hInfo">Depth chart data is loading.</div>';const topRows=rows.slice(0,4).map(rowHtml).join('');const poolHtml=pool.map(x=>`<div class="ace315hPoolCard"><small>${esc(x.pos)}</small><b>${esc(x.ovr)}</b><span>${esc(x.count)}</span></div>`).join('');m.innerHTML=`<section class="ace315hSheet" role="dialog" aria-modal="true" aria-label="${esc(nation)} squad"><div class="ace315hGrab"></div><header class="ace315hHead">${flag(nation)}<div class="ace315hHeadText"><small>INTERNATIONAL CAREER</small><h2>${esc(nation)} SQUAD</h2></div><button type="button" class="ace315hClose" aria-label="Close">×</button></header><nav class="ace315hTabs"><button class="active" data-ace315h-tab="squad">SQUAD</button><button data-ace315h-tab="depth">DEPTH CHART</button><button data-ace315h-tab="pool">NATIONAL POOL</button><button data-ace315h-tab="info">INFO</button></nav><div class="ace315hBody"><section class="ace315hPane active" data-pane="squad"><div class="ace315hSummary"><div><small>STATUS</small><b>${esc(s?.status||'—')}</b></div><div><small>ROLE</small><b>${esc(s?.role||st['PROJECTED ROLE']||'—')}</b></div><div><small>CAPS</small><b>${caps}</b></div><div><small>ACHIEVEMENTS</small><b>${ach}</b></div></div><div class="ace315hSectionTitle"><div><small>CURRENT SELECTION</small><b>${esc(st['POSITION']||c?.position||'')} DEPTH</b></div><span>OVR · FORM</span></div><div class="ace315hRows">${topRows}</div></section><section class="ace315hPane" data-pane="depth"><div class="ace315hSectionTitle"><div><small>YOUR POSITION</small><b>${esc(st['POSITION']||c?.position||'')} DEPTH CHART</b></div><span>OVR · FORM</span></div><div class="ace315hRows">${depthRows}</div></section><section class="ace315hPane" data-pane="pool"><div class="ace315hSectionTitle"><div><small>NATIONAL POOL</small><b>SQUAD OVERVIEW</b></div><span>${pool.length?pool.map(x=>parseInt(x.count)||0).reduce((a,b)=>a+b,0):''} PLAYERS</span></div><div class="ace315hPool">${poolHtml||'<div class="ace315hInfo">National-pool data is loading.</div>'}</div></section><section class="ace315hPane" data-pane="info"><div class="ace315hInfo"><b>Persistent international career.</b><br>This national-team pool continues across Career seasons. Players age, develop, decline and retire, while new prospects enter the pool. Selection considers club form, role fit and positional competition — not OVR alone.</div></section></div></section>`;m.classList.add('show');m.setAttribute('aria-hidden','false');document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden'}
+function compact(hub){if(!hub)return;hub.classList.add('ace315hCompact');hub.querySelectorAll(':scope>.ace315hCareerDrawer').forEach((n,i)=>{if(i)n.remove()});let btn=hub.querySelector(':scope>.ace315hCareerDrawer');if(!btn){btn=document.createElement('button');btn.type='button';btn.className='ace315hCareerDrawer';btn.innerHTML='<div><small>SQUAD · DEPTH · NATIONAL POOL</small><b>INTERNATIONAL CAREER</b></div><span>›</span>';btn.addEventListener('click',()=>openModal(hub));hub.appendChild(btn)}}
+function hero(hub){const c=career(),w=c?.international_window||{},box=hub?.querySelector('.aceIntlWindow');if(!c||!box)return;box.querySelectorAll(':scope>.ace315hHero').forEach(n=>n.remove());const stage=String(w.stage||'');if(stage==='COMPLETE'||!stage)return;const h=document.createElement('section');h.className='ace315hHero';if(stage==='CAMP'){h.innerHTML=`<small>${flag(c.nationality,true)} ${esc(c.nationality)} · SENIOR NATIONAL TEAM</small><h2>PREPARE FOR <em>${esc(w.competition||'INTERNATIONAL DUTY')}</em></h2><div class="ace315hMeta"><span>${esc(w.role||selection()?.role||'SQUAD')}</span><span>${Number(w.readiness||50)}% READINESS</span><span>${Number(c.international_caps||0)} CAPS</span></div>`}else{const opp=opponent(c,w),label=stage==='GROUP'?`GROUP STAGE · MATCHDAY ${Number(w.match_index||0)+1}`:stage==='SEMIFINAL'?'SEMIFINAL':'CHAMPIONSHIP FINAL';h.innerHTML=`<small>${esc(w.competition||'INTERNATIONAL')} · ${label}</small><div class="ace315hFixture"><div class="ace315hTeam">${flag(c.nationality)}<b>${esc(c.nationality)}</b><small>YOUR COUNTRY</small></div><div class="ace315hVs">VS<small>${stage==='FINAL'?'TITLE':'MATCH'}</small></div><div class="ace315hTeam">${flag(opp)}<b>${esc(opp)}</b><small>OPPONENT</small></div></div><div class="ace315hMeta"><span>${esc(w.role||selection()?.role||'SQUAD')}</span><span>${Number(w.readiness||50)}% READINESS</span><span>${Number(w.wins||0)}–${Number(w.losses||0)} RECORD</span></div>`}box.prepend(h)}
+function flagsInTable(){road()?.querySelectorAll('.ace307TR:not(.ace307TH)>span:nth-child(2)').forEach(cell=>{if(cell.querySelector('.ace315hMiniFlag'))return;const raw=(cell.childNodes[0]?.textContent||cell.textContent||'').trim();const team=raw.replace(/\s*YOU\s*$/i,'').trim();cell.insertAdjacentHTML('afterbegin',flag(team,true))})}
+function dedupe(){removeLegacy315G();const r=road();if(!r)return;r.querySelectorAll('.ace315hCareerDrawer').forEach((n,i)=>{if(i)n.remove()});document.querySelectorAll('#ace315hIntlDetails').forEach((n,i)=>{if(i)n.remove()})}
+function decorate(){frame=0;dedupe();const hub=road()?.querySelector('.aceV77Intl');if(!hub)return;compact(hub);hero(hub);flagsInTable();lastSig=[career()?.season,career()?.international_window?.stage,career()?.international_window?.match_index,career()?.international_window?.readiness,career()?.international_window?.wins,career()?.international_window?.losses].join('|')}
+function queue(){if(frame)return;frame=requestAnimationFrame(()=>requestAnimationFrame(decorate))}
+/* Hook the existing RTA renderer instead of adding another MutationObserver. */
+const baseRender=window.__ACE_RTA_RENDER;if(typeof baseRender==='function'&&!baseRender.__ace315hWrapped){const wrapped=function(...args){const out=baseRender.apply(this,args);queue();return out};wrapped.__ace315hWrapped=true;window.__ACE_RTA_RENDER=wrapped}
+document.addEventListener('click',e=>{if(e.target.closest('#roadtoace'))setTimeout(queue,0)},true);window.addEventListener('pageshow',queue);window.addEventListener('ace:career-nationality-ready',queue);setTimeout(queue,100);
+window.ACE_PROJECT_BUILD='B21.36.315H';window.ACE_INTERNATIONAL_UI_315H={flag,open:()=>{const h=road()?.querySelector('.aceV77Intl');if(h)openModal(h)},close:closeModal,activeInternational};
 })();
 </script>
-<script id="ace315g-build-marker">window.ACE_PROJECT_BUILD='B21.36.315G';window.ACE_OFFSEASON_ORDER_315G='INTERNATIONAL_BEFORE_CONTRACT';window.ACE_INTERNATIONAL_MATCH_UI_315G=true;</script>
+<script id="ace315h-build-marker">window.ACE_PROJECT_BUILD='B21.36.315H';window.ACE_OFFSEASON_ORDER_315H='INTERNATIONAL_BEFORE_CONTRACT';window.ACE_INTERNATIONAL_MATCH_UI_315H=true;</script>
 
 </body>
 </html>
