@@ -43541,13 +43541,17 @@ function renderAttackKeyOverlay(){
     </div>`;
   }
   function rta102ReceiveScene(rep){
-    return `<div class="rta102SkillCourt receive" id="rta102SkillCourt">
+    return `<div class="rta102SkillCourt receive ace318ReceiveCourt" id="rta102SkillCourt">
+      <div class="ace318ReceiveAtmosphere"></div>
       <div class="rta102CourtFloor"></div><div class="rta102SkillNet"><i></i></div>
       <div class="rta102Server"><i></i><span></span><b>SERVER</b></div>
+      <div class="ace318ReceiveStage"><span class="active">1 · READ</span><span>2 · MOVE</span><span>3 · PLATFORM</span></div>
+      <div class="ace318ReceiveSetterTarget"><i></i><span>SETTER WINDOW</span></div>
       <div class="rta102Landing" id="rta102Landing"></div>
       <div class="rta102Trail" id="rta102Trail"></div>
       <div class="rta102SkillBall" id="rta102SkillBall"></div>
       ${rta102SkillPlayerMarkup("receive")}
+      <div class="ace318ReceiveRead" id="ace318ReceiveRead"><small>SERVER CONTACT</small><b>TRACK THE FLIGHT</b></div>
       <div class="rta102SkillPrompt" id="rta102SkillPrompt">READ THE SERVE</div>
       ${rta102IsTouch()?`<div class="rta102TouchHint">DRAG TO MOVE</div>`:rta102KeyHUD()}
     </div>`;
@@ -43623,6 +43627,22 @@ function renderAttackKeyOverlay(){
           t<ideal+.07?(posErr<.13?(skillMode==="RECEIVE"?"PLATFORM NOW!":"SET NOW!"):"GET UNDER IT"):
           "LATE";
       }
+      if(skillMode==="RECEIVE"){
+        const stage=t<.46?0:t<ideal-.10?1:2;
+        qa(".ace318ReceiveStage span").forEach((el,i)=>el.classList.toggle("active",i===stage));
+        const action=q(".ace318ReceiveContact");
+        if(action){
+          const inWindow=Math.abs(t-ideal)<.075&&posErr<.13;
+          action.classList.toggle("ready",t>=.52&&t<.96);
+          action.classList.toggle("perfect",inWindow);
+        }
+        const read=q("#ace318ReceiveRead");
+        if(read){
+          const b=read.querySelector("b"),sm=read.querySelector("small");
+          if(sm)sm.textContent=t<.46?"SERVER CONTACT":t<ideal-.10?"BALL FLIGHT":"PASS WINDOW";
+          if(b)b.textContent=t<.46?"TRACK THE FLIGHT":t<ideal-.10?(posErr<.16?"SET YOUR FEET":"MOVE INTO LINE"):(posErr<.13?"PLATFORM READY":"GET BEHIND IT");
+        }
+      }
       if(t<1)skillRaf=requestAnimationFrame(tick);
       else{
         skillRaf=0;
@@ -43656,7 +43676,14 @@ function renderAttackKeyOverlay(){
     const label=timedOut?"MISSED":rta102ContactQualityLabel(t,posErr,ideal);
     if(prompt){prompt.textContent=label;prompt.classList.toggle("perfect",label==="PERFECT")}
     court?.classList.add("contact");player?.classList.add("contact");
-    if(mode==="SETTING"){
+    if(mode==="RECEIVE"){
+      const ball=q("#rta102SkillBall"),read=q("#ace318ReceiveRead");
+      if(read){const b=read.querySelector("b"),sm=read.querySelector("small");if(sm)sm.textContent="PLATFORM CONTACT";if(b)b.textContent=label==="PERFECT"?"PERFECT PASS":label;}
+      if(ball){
+        ball.style.transition="left 340ms cubic-bezier(.15,.75,.25,1),top 340ms ease,transform 340ms ease";
+        requestAnimationFrame(()=>{ball.style.left="54%";ball.style.top="54%";ball.style.transform="translate(-50%,-50%) scale(.58) rotate(260deg)"});
+      }
+    }else if(mode==="SETTING"){
       const ball=q("#rta102SkillBall");
       const dest={OH:[19,28],QUICK:[50,24],OP:[81,28],PIPE:[50,44]}[skillSetCall]||[50,25];
       if(ball){
@@ -43682,18 +43709,20 @@ function renderAttackKeyOverlay(){
   function renderDynamicReceiveTrainingOverlay(){
     const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}
     cleanupRaf();
-    setOverlay(`<div class="rta62OverlayShell rta102SkillShell">${overlayTop(`RECEIVE TRAINING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,String(rep.ball_type||"SERVE RECEIVE"))}
-      <div class="rta102SkillLayout">
-        <div class="rta102SceneCol">${rta102ReceiveScene(rep)}</div>
-        <aside class="rta102SkillSide">
-          <small>${esc(rep.ball_type||"SERVE")}</small><h2>Own the pass.</h2>
-          <div class="rta102ControlLine"><b>${rta102IsTouch()?"DRAG":"WASD"}</b><span>MOVE</span><i>+</i><b>${rta102IsTouch()?"TAP":"SPACE"}</b><span>CONTACT</span></div>
-          <button type="button" class="rta102ContactBtn" data-rta102-contact>PLATFORM CONTACT</button>
+    setOverlay(`<div class="rta62OverlayShell rta102SkillShell ace318Receive2Shell">${overlayTop(`RECEIVE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,"READ · MOVE · PLATFORM")}
+      <div class="rta102SkillLayout ace318Receive2Layout">
+        <div class="rta102SceneCol ace318Receive2SceneCol">${rta102ReceiveScene(rep)}</div>
+        <aside class="rta102SkillSide ace318Receive2Side">
+          <div class="ace318ReceiveIntro"><small>FIRST CONTACT · ${esc(rep.ball_type||"SERVE")}</small><h2>Own the pass.</h2><p>${esc(rep.cue||"Read the server, beat the ball with your feet, then create a quiet platform to the setter.")}</p></div>
+          <div class="ace318ReceiveSteps"><div><small>1 · READ</small><b>TRACK THE SERVE</b></div><div><small>2 · MOVE</small><b>BEAT THE BALL</b></div><div><small>3 · PLATFORM</small><b>CONTACT IN WINDOW</b></div></div>
+          <div class="rta102ControlLine ace318ReceiveControls"><b>${rta102IsTouch()?"DRAG":"WASD"}</b><span>MOVE</span><i>+</i><b>${rta102IsTouch()?"TAP":"SPACE"}</b><span>CONTACT</span></div>
+          <button type="button" class="rta102ContactBtn ace318ReceiveContact" data-rta102-contact><span>👐</span><b>PLATFORM CONTACT</b><small>PASS TO SETTER</small></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_reps||8)},(_,i)=>`<i class="${i<Number(d.rep_no)-1?"done":""}"></i>`).join("")}</div>
-          ${S.feedback?`<div class="rta102RepFeedback ${S.feedback.good?"good":"bad"}">${esc(S.feedback.text||"")}</div>`:""}
+          <div class="rta102RepFeedback ${S.feedback?(S.feedback.good?"good":"bad"):""}">${esc(S.feedback?.text||"Read first. Move into the line of the ball. Contact when the platform window lights up.")}</div>
         </aside>
       </div></div>`,"training");
     rta102PrepareSkillRep("RECEIVE",rep);
+    requestAnimationFrame(()=>q(".rta102Server")?.classList.add("ace318Serving"));
   }
 
   function rta95TrainingSetterTarget(rep){
@@ -51770,5 +51799,78 @@ window.ACE_SAVE_SWITCH_COMPAT_BUILD="B21.36.316N";
 window.ACE_PROJECT_BUILD="B21.36.316N";
 </script>
 
+
+
+<style id="ace318-receive2-account-style">
+/* B21.36.318 — Account modal above the persistent mobile nav. */
+@media(max-width:760px){
+ #vdsAccountModal{z-index:4600!important;align-items:flex-end!important;padding:0!important;overflow:hidden!important;background:rgba(2,4,10,.86)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
+ #vdsAccountModal .profileSheet{width:100vw!important;max-width:none!important;max-height:calc(100dvh - max(8px,env(safe-area-inset-top)))!important;margin:0!important;border-radius:22px 22px 0 0!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding:18px 16px calc(28px + env(safe-area-inset-bottom))!important;scroll-padding-bottom:calc(34px + env(safe-area-inset-bottom))!important}
+ #vdsAccountModal .vdsAccountForm{padding-bottom:calc(12px + env(safe-area-inset-bottom))!important}
+ #vdsSignOutBtn{position:relative!important;z-index:2!important;min-height:48px!important;margin-bottom:0!important}
+}
+
+/* Serve Receive 2.0 — uses the live rta102 movement/timing engine, reskinned to the same immersive language as Attack/Serve/Block. */
+#rta62Overlay[data-kind="training"] .ace318Receive2Shell{background:#040812!important}
+#rta62Overlay[data-kind="training"] .ace318Receive2Layout{background:#040812}
+#rta62Overlay[data-kind="training"] .ace318Receive2SceneCol{background:radial-gradient(circle at 50% 10%,rgba(86,151,237,.12),transparent 30%),#080e18}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt{position:relative;background:linear-gradient(180deg,#111b2d 0 23%,#16243a 23% 100%)!important;box-shadow:inset 0 0 80px rgba(0,0,0,.25)!important}
+#rta62Overlay[data-kind="training"] .ace318ReceiveAtmosphere{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 12%,rgba(107,183,255,.14),transparent 25%),radial-gradient(circle at 50% 105%,rgba(147,79,225,.13),transparent 34%);z-index:0}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102CourtFloor{filter:saturate(.92) contrast(1.04)}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102SkillNet{filter:drop-shadow(0 4px 7px rgba(0,0,0,.26))}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102Server{z-index:15;transition:transform .18s ease}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102Server.ace318Serving{animation:ace318ServerContact .52s cubic-bezier(.18,.75,.22,1)}
+@keyframes ace318ServerContact{0%{transform:translateX(-50%)}42%{transform:translate(-50%,-18px) scale(1.06)}100%{transform:translateX(-50%)}}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102SkillBall{z-index:34!important;box-shadow:0 6px 14px rgba(0,0,0,.38),0 0 17px rgba(113,199,255,.16)!important}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102Landing{border-color:rgba(106,204,255,.46)!important;background:rgba(80,183,241,.055)!important;box-shadow:0 0 0 8px rgba(83,184,240,.022),0 0 24px rgba(85,183,239,.14)!important}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102Trail{opacity:.58!important;filter:drop-shadow(0 0 6px rgba(92,192,250,.20))}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102SkillPlayer{z-index:31!important;filter:drop-shadow(0 9px 14px rgba(0,0,0,.25))}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102SkillPlayer.contact{filter:drop-shadow(0 0 18px rgba(87,215,155,.30)) drop-shadow(0 9px 14px rgba(0,0,0,.25))}
+.ace318ReceiveStage{position:absolute;z-index:50;left:50%;top:3.4%;transform:translateX(-50%);display:flex;gap:5px;padding:5px;border:1px solid rgba(255,255,255,.07);border-radius:999px;background:rgba(4,8,17,.80);box-shadow:0 9px 22px rgba(0,0,0,.24)}
+.ace318ReceiveStage span{padding:5px 8px;border-radius:999px;color:#62758b;font-size:6px;font-weight:1000;letter-spacing:.09em;white-space:nowrap}
+.ace318ReceiveStage span.active{color:#f2efff;background:linear-gradient(180deg,rgba(141,86,229,.35),rgba(64,112,192,.22));box-shadow:inset 0 0 0 1px rgba(187,151,255,.12)}
+.ace318ReceiveSetterTarget{position:absolute;z-index:19;left:54%;top:54%;width:58px;height:58px;transform:translate(-50%,-50%);border:1px dashed rgba(205,178,255,.40);border-radius:50%;background:rgba(137,91,221,.045);box-shadow:0 0 19px rgba(137,91,221,.08);pointer-events:none}
+.ace318ReceiveSetterTarget i{position:absolute;inset:8px;border:1px solid rgba(205,178,255,.18);border-radius:50%}
+.ace318ReceiveSetterTarget span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:4.8px;font-weight:1000;letter-spacing:.08em;color:#bea9e9;white-space:nowrap}
+.ace318ReceiveRead{position:absolute;z-index:48;left:18px;top:18px;min-width:140px;padding:8px 10px;border-radius:10px;border:1px solid rgba(125,108,199,.12);background:rgba(5,10,19,.72);backdrop-filter:blur(8px);box-shadow:0 9px 24px rgba(0,0,0,.18);pointer-events:none}
+.ace318ReceiveRead small{display:block;color:#756894;font-size:5px;font-weight:1000;letter-spacing:.12em}
+.ace318ReceiveRead b{display:block;margin-top:3px;color:#dcecff;font-size:8px;letter-spacing:.03em}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102SkillPrompt{border-color:rgba(140,105,226,.22)!important;background:rgba(6,9,18,.84)!important;color:#e9e5f8!important;box-shadow:0 9px 24px rgba(0,0,0,.24)!important}
+#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102SkillPrompt.perfect{border-color:rgba(80,214,150,.40)!important;color:#adf0c9!important;box-shadow:0 0 24px rgba(80,214,150,.12)!important}
+#rta62Overlay[data-kind="training"] .ace318Receive2Side{padding:18px!important;gap:10px!important;background:radial-gradient(circle at 30% 0%,rgba(132,81,226,.10),transparent 29%),linear-gradient(180deg,#0a1020,#050914)!important;border-left:1px solid rgba(255,255,255,.06)!important}
+.ace318ReceiveIntro small{color:#9d84e0;font-size:6.5px;font-weight:1000;letter-spacing:.13em}
+.ace318ReceiveIntro h2{margin:4px 0 0!important;font-size:23px!important;letter-spacing:-.03em;color:#f7f5ff}
+.ace318ReceiveIntro p{margin:6px 0 0;color:#8294a8;font-size:8px;line-height:1.48}
+.ace318ReceiveSteps{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.ace318ReceiveSteps>div{min-height:55px;padding:8px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.018)}
+.ace318ReceiveSteps small{display:block;color:#735f9d;font-size:5.5px;font-weight:1000;letter-spacing:.08em}
+.ace318ReceiveSteps b{display:block;margin-top:4px;color:#cdd7e7;font-size:7px;line-height:1.2}
+.ace318ReceiveControls{margin:0!important;border-color:rgba(255,255,255,.055)!important;background:rgba(255,255,255,.018)!important}
+#rta62Overlay[data-kind="training"] .ace318ReceiveContact{align-self:center!important;width:112px!important;height:112px!important;min-height:112px!important;border-radius:50%!important;padding:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;border:1px solid rgba(146,109,233,.34)!important;background:radial-gradient(circle at 38% 27%,#32205d,#110d27 69%)!important;color:#fff!important;box-shadow:0 13px 30px rgba(0,0,0,.36),0 0 27px rgba(124,76,223,.12),inset 0 0 0 6px rgba(255,255,255,.02)!important;transition:.14s ease!important}
+#rta62Overlay[data-kind="training"] .ace318ReceiveContact>span{font-size:29px;line-height:1}
+#rta62Overlay[data-kind="training"] .ace318ReceiveContact>b{font-size:6.4px;letter-spacing:.09em}
+#rta62Overlay[data-kind="training"] .ace318ReceiveContact>small{color:#8f83aa;font-size:4.8px;font-weight:900;letter-spacing:.08em}
+#rta62Overlay[data-kind="training"] .ace318ReceiveContact.ready{border-color:rgba(96,188,245,.48)!important;box-shadow:0 13px 30px rgba(0,0,0,.36),0 0 31px rgba(92,184,240,.21),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+#rta62Overlay[data-kind="training"] .ace318ReceiveContact.perfect{border-color:rgba(82,218,153,.66)!important;box-shadow:0 13px 30px rgba(0,0,0,.36),0 0 34px rgba(82,218,153,.28),inset 0 0 0 7px rgba(82,218,153,.05)!important;transform:scale(1.035)!important}
+#rta62Overlay[data-kind="training"] .ace318Receive2Side .rta102RepFeedback{min-height:43px!important;padding:8px 9px!important;border-radius:10px!important;border:1px solid rgba(255,255,255,.055)!important;background:rgba(255,255,255,.02)!important;color:#8295a9!important;font-size:7px!important;line-height:1.4!important}
+#rta62Overlay[data-kind="training"] .ace318Receive2Side .rta102RepFeedback.good{color:#9fe0bb!important;border-color:rgba(79,206,141,.18)!important}
+#rta62Overlay[data-kind="training"] .ace318Receive2Side .rta102RepFeedback.bad{color:#e2a2aa!important;border-color:rgba(231,101,115,.17)!important}
+@media(max-width:760px){
+ #rta62Overlay[data-kind="training"] .ace318Receive2Side{position:relative!important;max-height:31dvh!important;padding:7px 8px calc(8px + env(safe-area-inset-bottom))!important;gap:5px!important}
+ .ace318ReceiveIntro,.ace318ReceiveSteps,.ace318ReceiveControls{display:none!important}
+ #rta62Overlay[data-kind="training"] .ace318ReceiveContact{position:absolute!important;right:10px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:78px!important;height:78px!important;min-height:78px!important;z-index:20!important}
+ #rta62Overlay[data-kind="training"] .ace318ReceiveContact>span{font-size:21px}
+ #rta62Overlay[data-kind="training"] .ace318ReceiveContact>b{font-size:5.3px}
+ #rta62Overlay[data-kind="training"] .ace318ReceiveContact>small{display:none}
+ #rta62Overlay[data-kind="training"] .ace318Receive2Side .rta62Progress,#rta62Overlay[data-kind="training"] .ace318Receive2Side .rta102RepFeedback{margin-right:86px!important}
+ #rta62Overlay[data-kind="training"] .ace318Receive2Side .rta102RepFeedback{min-height:33px!important;padding:5px 6px!important;font-size:6.5px!important}
+ .ace318ReceiveStage{top:2.5%;padding:4px}
+ .ace318ReceiveStage span{padding:4px 6px;font-size:5.4px}
+ .ace318ReceiveRead{left:8px;top:8px;min-width:116px;padding:6px 7px}
+ .ace318ReceiveRead small{font-size:4.6px}.ace318ReceiveRead b{font-size:6.8px}
+ .ace318ReceiveSetterTarget{width:46px;height:46px}
+}
+</style>
+<script id="ace318-build-marker">window.ACE_RECEIVE_2_BUILD="B21.36.318";window.ACE_ACCOUNT_MODAL_MOBILE_FIX="B21.36.318";window.ACE_PROJECT_BUILD="B21.36.318";</script>
 </body>
 </html>
