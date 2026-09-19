@@ -44931,6 +44931,32 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta-intl-result-done]")){closeOverlay();S.view="career";S.careerPanel="international";render();return}
     if(e.target.closest?.("[data-rta62-result-done]")){
       closeOverlay();
+      /* B21.36.315D — international duty is resolved BEFORE any off-season/world
+         transition. The old flow opened the world/transfer handoff first and only
+         created the international window later, which let selected players jump
+         directly into the next club season. */
+      if(S.career?.season_complete){
+        let intlSel=null;try{intlSel=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}
+        if(intlSel?.eligible&&intlSel.status==="SELECTED"){
+          try{
+            const currentSeason=Number(S.career.season||0);
+            const w=S.career.international_window||{};
+            const currentWindow=Number(w.season||0)===currentSeason&&String(w.stage||"")!=="";
+            if(!currentWindow){
+              const opened=await rpc("vds_rta_start_international_window",{p_role:intlSel.role||"ROTATION"});
+              if(opened)S.career.international_window=opened;
+            }
+            S.view="career";S.careerPanel="international";render();
+            setTimeout(()=>{try{window.ACE_INTL_CALLUP_V303?.show?.()}catch(_){}},40);
+            return
+          }catch(err){
+            console.warn("ACE 315D international handoff failed",err);
+            toast(`INTERNATIONAL DUTY · ${errText(err)}`,"error");
+            S.view="career";S.careerPanel="international";render();
+            return
+          }
+        }
+      }
       try{await rta105RefreshWorld()}catch(_){}
       rta105ShowWorldUpdate();
       return
@@ -50528,5 +50554,6 @@ window.ACE_CAREER_BASELINE_CLEANUP_314D=true;
 </style>
 <script id="ace-b21-36-315a-build">window.ACE_PROJECT_BUILD="B21.36.315B";window.ACE_SKILL_TREE_IDENTITY_LOCK=true;window.ACE_PLUS_MASTERY=true;</script>
 
+<!-- PROJECT ACE B21.36.315D · INTERNATIONAL HANDOFF HARD GATE -->
 </body>
 </html>
