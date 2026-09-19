@@ -38039,6 +38039,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       skillKeys={w:false,a:false,s:false,d:false}, skillLocked=false, skillSetCall="",
       blockTrainRaf=0, blockTrainStart=0, blockTrainLast=0, blockTrainT=0, blockTrainPos=.5, blockTrainY=.70,
       blockTrainKeys={w:false,a:false,s:false,d:false}, blockTrainLocked=false,
+      blockMatchRaf=0, blockMatchStart=0, blockMatchLast=0, blockMatchT=0, blockMatchPos=.5, blockMatchTarget=.5,
+      blockMatchChoice="", blockMatchLocked=false, blockMatchLive=false, blockMatchKeys={a:false,d:false},
       physicalRaf=0, physicalMode="", physicalReadyAt=0, physicalStarted=0, physicalT=0, physicalLocked=false, physicalTargetKey="";
 
   function mainClient(){
@@ -38322,6 +38324,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     skillMode="";skillFlight=0;skillLocked=false;skillKeys={w:false,a:false,s:false,d:false};
     if(blockTrainRaf)cancelAnimationFrame(blockTrainRaf);blockTrainRaf=0;
     blockTrainT=0;blockTrainLocked=false;blockTrainKeys={w:false,a:false,s:false,d:false};
+    if(blockMatchRaf)cancelAnimationFrame(blockMatchRaf);blockMatchRaf=0;
+    blockMatchT=0;blockMatchLocked=false;blockMatchLive=false;blockMatchChoice="";blockMatchKeys={a:false,d:false};
     if(physicalRaf)cancelAnimationFrame(physicalRaf);physicalRaf=0;
     physicalMode="";physicalReadyAt=0;physicalT=0;physicalLocked=false;physicalTargetKey="";
   }
@@ -43520,71 +43524,178 @@ function renderAttackKeyOverlay(){
     }[k]||[pretty(k),"Make this read","•"];
   }
 
-  function rta97MiddleScene(m){
-    const cue=String(m?.cue||"").toLowerCase();
-    let setter="neutral",quick=false,left=false,right=false,all=false;
-    if(cue.includes("middle")&&(cue.includes("airborne")||cue.includes("leaves early"))){quick=true;setter="square"}
-    else if(cue.includes("left pin")||cue.includes("outside")){left=true;setter="left"}
-    else if(cue.includes("behind the setter")||cue.includes("right pin")){right=true;setter="right"}
-    else{all=true;setter="neutral"}
-    return `<div class="rta97MiddleScene" id="rta97MiddleScene">
-      <div class="rta97Arena"></div>
-      <div class="rta97Court"></div>
-      <div class="rta97Net"><i></i></div>
-      <div class="rta97Setter ${setter}"><span></span><b>S</b><i class="l"></i><i class="r"></i></div>
-      <div class="rta97OppHitter left ${left||all?"live":""}"><b>OH</b><small>LEFT PIN</small></div>
-      <div class="rta97OppHitter mid ${quick||all?"live":""}"><b>M</b><small>QUICK</small></div>
-      <div class="rta97OppHitter right ${right||all?"live":""}"><b>OP</b><small>RIGHT PIN</small></div>
-      <div class="rta97SetBall" id="rta97SetBall"></div>
-      <div class="rta97MyBlocker" id="rta97MyBlocker"><div class="rta97MyHands"><i></i><i></i></div><div class="rta97MyHead"></div><div class="rta97MyBody">YOU</div></div>
-      <div class="rta97BlockZones"><span class="left">LEFT</span><span class="mid">QUICK</span><span class="right">RIGHT</span></div>
-      <div class="rta97ReadPrompt" id="rta97ReadPrompt">READ THE SETTER</div>
+  function ace316fBlockChoiceMeta(id){
+    const k=String(id||"").toUpperCase();
+    return {
+      COMMIT:["COMMIT","Take the quick now","QUICK"],
+      SHIFT_LEFT:["LEFT PIN","Close the outside","LEFT"],
+      SHIFT_RIGHT:["RIGHT PIN","Close the opposite","RIGHT"],
+      READ:["READ","Stay neutral, react late","READ"]
+    }[k]||[pretty(k),"Make the read","READ"];
+  }
+  function ace316fBlockReadTarget(choice,d){
+    const k=String(choice||"READ").toUpperCase();
+    if(k==="COMMIT")return .5;
+    if(k==="SHIFT_LEFT")return .27;
+    if(k==="SHIFT_RIGHT")return .73;
+    const seed=(Number(d?.moment_no||1)*7+String(d?.opponent||"").length*3+Number(d?.successes||0))%3;
+    return [.27,.5,.73][seed];
+  }
+  function ace316fBlockLane(x){
+    return x<.39?"LEFT PIN":x>.61?"RIGHT PIN":"QUICK";
+  }
+  function ace316fBlockPower(){
+    const pre=Math.max(ace315aPowerRank("PRE-READ"),ace315aPowerRank("SHUTDOWN"),ace315aPowerRank("TITAN LOCK"));
+    return pre;
+  }
+  function ace316fBlockScene(m){
+    return `<div class="aceBlockV2Scene" id="ace316fBlockScene">
+      <div class="aceBlockV2Stands"></div>
+      <div class="aceBlockV2Court"></div>
+      <div class="aceBlockV2Net"><i></i></div>
+      <div class="aceBlockV2Setter" id="ace316fSetter"><span></span><b>S</b><i></i></div>
+      <div class="aceBlockV2Hitter left" data-block-lane="left"><span></span><b>OH</b></div>
+      <div class="aceBlockV2Hitter middle" data-block-lane="middle"><span></span><b>M</b></div>
+      <div class="aceBlockV2Hitter right" data-block-lane="right"><span></span><b>OP</b></div>
+      <div class="aceBlockV2Ball" id="ace316fBlockBall"></div>
+      <div class="aceBlockV2Target" id="ace316fBlockTarget"><i></i><b>READ</b></div>
+      <div class="aceBlockV2Player" id="ace316fBlocker"><div class="hands"><i></i><i></i></div><span></span><b>YOU</b></div>
+      <div class="aceBlockV2Prompt" id="ace316fBlockPrompt">READ THE SETTER</div>
+      <div class="aceBlockV2StageHUD"><span class="active" data-block-stage="read">1 · READ</span><span data-block-stage="close">2 · CLOSE</span><span data-block-stage="press">3 · PRESS</span></div>
+      <div class="aceBlockV2Ability" id="ace316fBlockAbility"></div>
+      <div class="aceBlockV2TouchZones"><button data-ace316f-block-nudge="-1">‹</button><button data-ace316f-block-nudge="1">›</button></div>
     </div>`;
   }
-
-  function rta97BlockButtons(opts){
-    return `<div class="rta97BlockButtons">${(opts||[]).map(o=>{
-      const id=String(o.id||o),meta=rta97BlockOptionMeta(id);
-      return `<button type="button" data-rta97-block="${esc(id)}"><i>${meta[2]}</i><span><b>${esc(o.label||meta[0])}</b><small>${esc(o.desc||meta[1])}</small></span></button>`;
+  function ace316fBlockButtons(opts){
+    return `<div class="aceBlockV2Reads">${(opts||[]).map(o=>{
+      const id=String(o.id||o),meta=ace316fBlockChoiceMeta(id);
+      return `<button type="button" data-rta97-block="${esc(id)}"><i>${esc(meta[2])}</i><span><b>${esc(o.label||meta[0])}</b><small>${esc(o.desc||meta[1])}</small></span></button>`;
     }).join("")}</div>`;
   }
-
-  function rta97AnimateBlock(choice,done){
-    const blocker=q("#rta97MyBlocker"),prompt=q("#rta97ReadPrompt"),scene=q("#rta97MiddleScene");
-    if(!blocker){done?.();return}
-    scene?.classList.add("live");
-    const k=String(choice||"READ").toUpperCase();
-    blocker.className="rta97MyBlocker "+k.toLowerCase();
-    if(prompt)prompt.textContent=k==="COMMIT"?"COMMIT QUICK":k==="SHIFT_LEFT"?"CLOSE LEFT":k==="SHIFT_RIGHT"?"CLOSE RIGHT":"READ & REACT";
-    setTimeout(()=>{blocker.classList.add("jump");},90);
-    setTimeout(()=>done?.(),430);
+  function ace316fBlockSetStage(stage){
+    qa("[data-block-stage]").forEach(x=>x.classList.toggle("active",x.dataset.blockStage===stage));
   }
-
+  function ace316fMoveBlocker(x){
+    blockMatchPos=clamp(Number(x),.12,.88);
+    const p=q("#ace316fBlocker");if(p)p.style.left=(blockMatchPos*100)+"%";
+  }
+  function ace316fSetupBlockTouch(){
+    const scene=q("#ace316fBlockScene");if(!scene)return;
+    const move=e=>{
+      if(!blockMatchLive||blockMatchLocked)return;
+      const r=scene.getBoundingClientRect();
+      ace316fMoveBlocker((e.clientX-r.left)/r.width);
+    };
+    scene.addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;move(e);try{scene.setPointerCapture(e.pointerId)}catch(_){}},{passive:true});
+    scene.addEventListener("pointermove",e=>{if(!(e.buttons||e.pressure>0))return;move(e)},{passive:true});
+  }
+  function ace316fStartBlock(choice){
+    if(S.busy||S.overlay!=="key"||blockMatchLive||blockMatchLocked)return;
+    blockMatchChoice=String(choice||"READ").toUpperCase();
+    blockMatchTarget=ace316fBlockReadTarget(blockMatchChoice,S.key);
+    blockMatchPos=.5;blockMatchT=0;blockMatchLive=true;blockMatchLocked=false;blockMatchKeys={a:false,d:false};
+    qa("[data-rta97-block]").forEach(b=>{b.disabled=true;b.classList.toggle("selected",String(b.dataset.rta97Block).toUpperCase()===blockMatchChoice)});
+    const press=q("[data-ace316f-block-press]");if(press)press.disabled=false;
+    ace316fBlockSetStage("close");ace316fSetupBlockTouch();
+    const prompt=q("#ace316fBlockPrompt"),target=q("#ace316fBlockTarget"),ability=q("#ace316fBlockAbility");
+    const oracle=ace316eTier("ORACLE",5,"M")||ace316eTier("ORACLE",7,"M");
+    const sharing=ace316fBlockPower();
+    const revealAt=blockMatchChoice==="READ"?(oracle||sharing?.34:.46):.18;
+    const duration=1800/Math.max(.86,1+(Number(S.career?.reaction_time||65)-65)*.0022);
+    blockMatchStart=performance.now();blockMatchLast=blockMatchStart;
+    if(ability){
+      const labels=[];
+      if(oracle)labels.push("ORACLE · EARLY READ");
+      if(sharing)labels.push(`${ace315aPower()?.name||"ACE+"} · RANK ${sharing}`);
+      ability.textContent=labels.join("  ·  ");
+      ability.classList.toggle("show",!!labels.length);
+    }
+    const tick=now=>{
+      if(S.overlay!=="key"||blockMatchLocked||!blockMatchLive)return;
+      const dt=Math.min(34,now-blockMatchLast);blockMatchLast=now;
+      const moveSpeed=.00050*(1+Math.max(0,Number(S.career?.speed||65)-65)*.0035);
+      if(blockMatchKeys.a)ace316fMoveBlocker(blockMatchPos-moveSpeed*dt);
+      if(blockMatchKeys.d)ace316fMoveBlocker(blockMatchPos+moveSpeed*dt);
+      const t=clamp((now-blockMatchStart)/duration,0,1);blockMatchT=t;
+      const revealed=t>=revealAt;
+      const lane=blockMatchTarget<.39?"left":blockMatchTarget>.61?"right":"middle";
+      qa(".aceBlockV2Hitter").forEach(h=>h.classList.toggle("live",revealed&&h.dataset.blockLane===lane));
+      if(target){
+        target.style.left=(blockMatchTarget*100)+"%";
+        target.classList.toggle("show",revealed);
+        const b=target.querySelector("b");if(b)b.textContent=revealed?ace316fBlockLane(blockMatchTarget):"READ";
+      }
+      const setter=q("#ace316fSetter");
+      if(setter)setter.style.transform=`translateX(-50%) rotate(${revealed?(blockMatchTarget-.5)*18:Math.sin(t*18)*1.5}deg)`;
+      const ball=q("#ace316fBlockBall");
+      const arc=Math.sin(Math.PI*clamp((t-revealAt)/Math.max(.15,1-revealAt),0,1));
+      const bx=revealed?.5+(blockMatchTarget-.5)*clamp((t-revealAt)/.45,0,1):.5;
+      const by=revealed?.27+clamp((t-revealAt)/.55,0,1)*.22-arc*.07:.27;
+      if(ball){ball.style.left=(bx*100)+"%";ball.style.top=(by*100)+"%";ball.style.opacity=t>.08?"1":"0"}
+      const posErr=Math.abs(blockMatchPos-blockMatchTarget);
+      if(prompt){
+        prompt.classList.toggle("perfect",t>.66&&t<.86&&posErr<.09);
+        prompt.textContent=!revealed?"HOLD · READ":t<.62?"CLOSE THE BLOCK":t<.86?(posErr<.11?"PRESS!":"CLOSE THE SEAM"):"LATE";
+      }
+      if(t>.58)ace316fBlockSetStage("press");
+      if(t<1)blockMatchRaf=requestAnimationFrame(tick);
+      else{blockMatchRaf=0;setTimeout(()=>{if(!blockMatchLocked)ace316fBlockPress(true)},20)}
+    };
+    blockMatchRaf=requestAnimationFrame(tick);
+  }
+  async function ace316fBlockPress(timedOut=false){
+    if(S.busy||S.overlay!=="key"||!blockMatchLive||blockMatchLocked||!blockMatchChoice)return;
+    blockMatchLocked=true;if(blockMatchRaf)cancelAnimationFrame(blockMatchRaf);blockMatchRaf=0;
+    const t=timedOut?1:blockMatchT,ideal=.78;
+    const titan=ace316eTier("TITAN",5,"M")||ace316eTier("TITAN",7,"M")||ace315aPowerRank("TITAN LOCK")>0;
+    const wall=ace315aPowerRank("SHUTDOWN")>0;
+    const timingTol=(titan?.19:.155)+(wall?.018:0);
+    const posTol=.20+(Number(S.career?.blocking||65)-65)*.0009;
+    const posFit=clamp(1-Math.abs(blockMatchPos-blockMatchTarget)/Math.max(.13,posTol));
+    const timeFit=timedOut?0:clamp(1-Math.abs(t-ideal)/timingTol);
+    const quality=clamp(posFit*.56+timeFit*.44);
+    const blocker=q("#ace316fBlocker"),prompt=q("#ace316fBlockPrompt"),press=q("[data-ace316f-block-press]");
+    blocker?.classList.add("jump");if(press)press.disabled=true;
+    const grade=quality>=.9?"ROOF":quality>=.76?"SEALED":quality>=.58?"TOUCH":"OPEN SEAM";
+    if(prompt)prompt.textContent=timedOut?"MISSED":grade;
+    window.ACE316F_BLOCK_EXEC_LABEL=`${grade} · ${Math.round(quality*100)}% EXECUTION`;
+    vibrate(quality>=.76?[24,28,24]:quality>=.55?20:[16,28,16]);
+    S.busy=true;
+    try{
+      await rpc("vds_rta_apply_block_execution",{p_quality:Number(quality.toFixed(4))});
+      S.busy=false;
+      await resolveKey(blockMatchChoice);
+    }catch(e){
+      S.busy=false;blockMatchLocked=false;blockMatchLive=false;toast(errText(e),"error");renderMiddleBlockOverlay();
+    }
+  }
   function renderMiddleBlockOverlay(){
     const d=S.key,m=d?.moment;if(!d||!m){closeOverlay();return}
     cleanupRaf();
     const opts=Array.isArray(m.options)?m.options:[];
-    setOverlay(`<div class="rta62OverlayShell rta94GameplayShell">${overlayTop(`KEY MOMENTS · ${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)}`)}
-      <div class="rta94GameplayLayout middle rta97MiddleLayout">
-        <div class="rta94SceneColumn">
-          <div class="rta69HowTo rta94HowTo"><b>1</b> Watch the setter's body <i>→</i> <b>2</b> read the first tempo <i>→</i> <b>3</b> close the correct lane.</div>
-          ${rta97MiddleScene(m)}
-        </div>
-        <aside class="rta94ActionPanel rta97MiddleActions">
-          <div class="rta94ActionIntro"><small>${esc(m.context||"BLOCKING")}</small><h2>${esc(m.title||"READ THE SETTER")}</h2><p>${esc(m.cue||"Read the setter and hitters.")}</p></div>
-          ${rta97BlockButtons(opts)}
-          <div class="rta97BlockTip"><span>BLOCKING READ</span><b>${esc(rta97ReadBestFromCue("BLOCK_READ",m.cue)||"READ")}</b><small>The visual cue is in the setter/hitter movement — the label is only support.</small></div>
+    const proc=String(window.ACE316F_BLOCK_EXEC_LABEL||"");window.ACE316F_BLOCK_EXEC_LABEL="";
+    setOverlay(`<div class="rta62OverlayShell aceBlockV2Shell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)}`)}
+      <div class="aceBlockV2Body">
+        ${ace316fBlockScene(m)}
+        <aside class="aceBlockV2Panel">
+          <div class="aceBlockV2PanelTop"><small>${esc(m.context||"BLOCKING")}</small><b>${esc(m.title||"READ THE SETTER")}</b><span>${esc(m.cue||"Read the setter and close the hitter.")}</span></div>
+          <div class="aceBlockV2StageTitle">1 · MAKE THE READ</div>
+          ${ace316fBlockButtons(opts)}
+          <div class="aceBlockV2Execution">
+            <div><small>2 · CLOSE</small><b>MOVE WITH THE SET</b></div>
+            <div><small>3 · PRESS</small><b>JUMP WITH THE HITTER</b></div>
+          </div>
+          <button type="button" class="aceBlockV2Press" data-ace316f-block-press disabled><span>✋</span><b>PRESS BLOCK</b></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_moments||5)},(_,i)=>`<i class="${i<Number(d.moment_no)-1?"done":""}"></i>`).join("")}</div>
-          <div class="rta62Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${S.feedback?.text||"Commit too early and the setter can beat you. Stay neutral too long and the quick wins."}</div>
+          <div class="aceBlockV2Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${esc([proc,S.feedback?.text||"Read first. Close second. Press over the net at contact."].filter(Boolean).join(" · "))}</div>
         </aside>
       </div></div>`,"key");
+    ace316fMoveBlocker(.5);
   }
 
-  async function rta97ResolveBlock(choice){
-    if(S.busy||S.overlay!=="key"||mlLocked)return;
-    mlLocked=true;mlChoice=choice;
-    rta97AnimateBlock(choice,async()=>{await resolveKey(choice)});
-  }
+  // Legacy entry point retained for old handlers; Blocking 2.0 now starts
+  // an execution sequence instead of auto-resolving the choice.
+  function rta97ResolveBlock(choice){ace316fStartBlock(choice)}
 
   function rta107IsQuickMoment(m){
     const type=String(m?.type||"").toUpperCase();
@@ -43833,7 +43944,8 @@ function renderAttackKeyOverlay(){
     if(S.busy||S.overlay!=="training"||String(S.training?.focus||"").toUpperCase()!=="BLOCK"||blockTrainLocked)return;
     blockTrainLocked=true;if(blockTrainRaf)cancelAnimationFrame(blockTrainRaf);blockTrainRaf=0;
     const rep=S.training.rep,t=timedOut?1:blockTrainT,ideal=.79;
-    const timing=timedOut?1:clamp(.5+(t-ideal)*1.8,0,1);
+    const blockControl=(ace316eTier("TITAN",5,"M")||ace316eTier("TITAN",7,"M")||ace315aPowerRank("TITAN LOCK")>0)?.82:1;
+    const timing=timedOut?1:clamp(.5+(t-ideal)*1.8*blockControl,0,1);
     const blocker=q("#rta112TrainBlocker"),prompt=q("#rta112BlockPrompt");
     blocker?.classList.add("jump");
     if(prompt)prompt.textContent=timedOut?"MISSED":Math.abs(t-ideal)<.055?"ROOF IT!":t<ideal?"EARLY":"LATE";
@@ -43855,16 +43967,18 @@ function renderAttackKeyOverlay(){
   function renderBlockingTrainingOverlay(){
     const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}
     cleanupRaf();
-    setOverlay(`<div class="rta62OverlayShell rta112DrillShell">${overlayTop(`BLOCKING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,String(rep.ball_type||"BLOCK"))}
-      <div class="rta112DrillLayout">
-        <div class="rta112SceneCol">${rta112BlockScene(rep)}</div>
-        <aside class="rta112DrillSide">
-          <small>BLOCKING FOOTWORK</small><h2>Close with the ball.</h2>
-          <p>${esc(rep.cue||"Move along the net, then jump with the hitter.")}</p>
-          <div class="rta112ControlStrip"><b>${rta112IsTouch()?"DRAG":"WASD"}</b><span>MOVE</span><i>+</i><b>${rta112IsTouch()?"TAP":"SPACE"}</b><span>JUMP</span></div>
-          <button type="button" class="rta112BigAction block" data-rta112-block-jump>JUMP / BLOCK</button>
+    setOverlay(`<div class="rta62OverlayShell aceBlockV2Shell training">${overlayTop(`BLOCKING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,String(rep.ball_type||"BLOCK"))}
+      <div class="aceBlockV2Body training">
+        <div class="aceBlockV2TrainingScene">${rta112BlockScene(rep)}<div class="aceBlockV2StageHUD training"><span class="active">1 · READ</span><span>2 · CLOSE</span><span>3 · PRESS</span></div></div>
+        <aside class="aceBlockV2Panel training">
+          <div class="aceBlockV2PanelTop"><small>BLOCKING FOOTWORK</small><b>CLOSE WITH THE BALL</b><span>${esc(rep.cue||"Read the set, close the seam, then press over the net.")}</span></div>
+          <div class="aceBlockV2Execution">
+            <div><small>${rta112IsTouch()?"DRAG":"A / D"}</small><b>CLOSE THE LANE</b></div>
+            <div><small>${rta112IsTouch()?"TAP BUTTON":"SPACE"}</small><b>TIME THE PRESS</b></div>
+          </div>
+          <button type="button" class="aceBlockV2Press training" data-rta112-block-jump><span>✋</span><b>PRESS BLOCK</b></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_reps||8)},(_,i)=>`<i class="${i<Number(d.rep_no)-1?"done":""}"></i>`).join("")}</div>
-          ${S.feedback?`<div class="rta112RepFeedback ${S.feedback.good?"good":"bad"}">${esc(S.feedback.text||"")}</div>`:""}
+          <div class="aceBlockV2Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${esc(S.feedback?.text||"Track the set with your feet. Jump only after you have closed the hitter.")}</div>
         </aside>
       </div></div>`,"training");
     rta112StartBlockRep();
@@ -44583,7 +44697,7 @@ function renderAttackKeyOverlay(){
       const intl=!!S.key?.international;
       const d=await rpc(intl?"vds_rta_resolve_international_key_moment_v315":"vds_rta_resolve_key_moment_v315",{p_choice:choice});if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;vibrate(d.success?25:[20,35,20]);
       if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}
-      else{const proc=ace316eTriggeredText(d);S.key=d;S.feedback={good:!!d.success,text:[d.outcome||"",proc].filter(Boolean).join(" · ")};renderKeyOverlay()}
+      else{const proc=ace316eTriggeredText(d),blockExec=String(window.ACE316F_BLOCK_EXEC_LABEL||"");S.key=d;S.feedback={good:!!d.success,text:[blockExec,d.outcome||"",proc].filter(Boolean).join(" · ")};renderKeyOverlay()}
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
 
@@ -44987,6 +45101,8 @@ function renderAttackKeyOverlay(){
       q(".rta114PhysicalSection")?.scrollIntoView({behavior:"smooth",block:"center"});
       return
     }
+    if(e.target.closest?.("[data-ace316f-block-press]")){ace316fBlockPress(false);return}
+    const blockNudge=e.target.closest?.("[data-ace316f-block-nudge]");if(blockNudge){if(blockMatchLive&&!blockMatchLocked)ace316fMoveBlocker(blockMatchPos+Number(blockNudge.dataset.ace316fBlockNudge||0)*.075);return}
     if(e.target.closest?.("[data-rta112-block-jump]")){rta112BlockJump(false);return}
     if(e.target.closest?.("[data-rta112-vertical-jump]")){rta112SubmitVertical(false);return}
     const react=e.target.closest?.("[data-rta112-react]");if(react){rta112SubmitReaction(react.dataset.rta112React,false);return}
@@ -45178,6 +45294,18 @@ function renderAttackKeyOverlay(){
     if(id==="rta83Scale"||id==="rta83X"||id==="rta83Y"||id==="rta83Threshold")rta83ReadEditorInputs();
   });
   document.addEventListener("click",handleClick);
+
+  document.addEventListener("keydown",e=>{
+    if(S.overlay!=="key"||String(S.key?.moment?.type||"").toUpperCase()!=="BLOCK_READ"||!blockMatchLive)return;
+    const raw=String(e.key||"").toLowerCase(),map={arrowleft:"a",arrowright:"d"},k=map[raw]||raw;
+    if(["a","d"].includes(k)){e.preventDefault();blockMatchKeys[k]=true;return}
+    if(e.code==="Space"){e.preventDefault();if(!e.repeat)ace316fBlockPress(false);return}
+  },{passive:false});
+  document.addEventListener("keyup",e=>{
+    if(String(S.key?.moment?.type||"").toUpperCase()!=="BLOCK_READ")return;
+    const raw=String(e.key||"").toLowerCase(),map={arrowleft:"a",arrowright:"d"},k=map[raw]||raw;
+    if(["a","d"].includes(k))blockMatchKeys[k]=false;
+  });
 
   document.addEventListener("keydown",e=>{
     if(S.overlay!=="training")return;
@@ -50994,6 +51122,98 @@ window.ACE_PROJECT_BUILD="B21.36.316D";
 <script id="ace316e-skill-depth-build">
 window.ACE_SKILL_TREE_DEPTH_BUILD="B21.36.316E";
 window.ACE_PROJECT_BUILD="B21.36.316E";
+</script>
+
+
+<style id="ace316f-blocking-v2-css">
+#rta62Overlay .aceBlockV2Shell{background:#030b12}
+#rta62Overlay .aceBlockV2Body{height:calc(100% - 54px);min-height:560px;display:grid;grid-template-columns:minmax(0,1fr) clamp(350px,32vw,470px);overflow:hidden}
+#rta62Overlay .aceBlockV2Scene,#rta62Overlay .aceBlockV2TrainingScene{position:relative;min-width:0;overflow:hidden;background:linear-gradient(180deg,#071724 0 30%,#132d3b 30% 31%,#b6673d 31% 100%);touch-action:none}
+#rta62Overlay .aceBlockV2Stands{position:absolute;inset:0 0 69% 0;background:radial-gradient(circle at 50% 120%,rgba(66,148,192,.18),transparent 54%),repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 2px,transparent 2px 22px)}
+#rta62Overlay .aceBlockV2Court{position:absolute;left:7%;right:7%;top:31%;bottom:-12%;border:2px solid rgba(255,255,255,.44);background:linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.32) 49.8% 50.2%,transparent 50.3%)}
+#rta62Overlay .aceBlockV2Court:before,#rta62Overlay .aceBlockV2Court:after{content:"";position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.28)}
+#rta62Overlay .aceBlockV2Court:before{left:24%}#rta62Overlay .aceBlockV2Court:after{right:24%}
+#rta62Overlay .aceBlockV2Net{position:absolute;z-index:25;left:5%;right:5%;top:48%;height:6px;background:#edf4f6;box-shadow:0 3px 10px rgba(0,0,0,.34)}
+#rta62Overlay .aceBlockV2Net i{position:absolute;left:0;right:0;top:5px;height:58px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.54) 0 1px,transparent 1px 15px),repeating-linear-gradient(180deg,rgba(255,255,255,.42) 0 1px,transparent 1px 10px);opacity:.38}
+#rta62Overlay .aceBlockV2Setter{position:absolute;z-index:18;left:50%;top:31%;width:44px;height:74px;transform:translateX(-50%);transform-origin:50% 100%;transition:transform .12s}
+#rta62Overlay .aceBlockV2Setter span,#rta62Overlay .aceBlockV2Hitter span{display:block;width:20px;height:20px;margin:auto;border-radius:50%;background:#c98e70}
+#rta62Overlay .aceBlockV2Setter b,#rta62Overlay .aceBlockV2Hitter b{display:grid;place-items:center;width:39px;height:44px;margin:-1px auto 0;border-radius:14px 14px 5px 5px;background:#7c2531;color:#fff;font-size:8px}
+#rta62Overlay .aceBlockV2Setter i{position:absolute;left:50%;top:-15px;width:2px;height:27px;background:#d6a083;transform:translateX(-50%)}
+#rta62Overlay .aceBlockV2Hitter{position:absolute;z-index:17;top:33%;width:46px;height:70px;opacity:.34;transform:translateX(-50%);transition:.18s}
+#rta62Overlay .aceBlockV2Hitter.left{left:27%}#rta62Overlay .aceBlockV2Hitter.middle{left:50%}#rta62Overlay .aceBlockV2Hitter.right{left:73%}
+#rta62Overlay .aceBlockV2Hitter.live{opacity:1;transform:translateX(-50%) translateY(-10px) scale(1.08);filter:drop-shadow(0 0 10px rgba(255,206,98,.28))}
+#rta62Overlay .aceBlockV2Ball{position:absolute;z-index:35;left:50%;top:27%;width:27px;height:27px;border-radius:50%;opacity:0;background:radial-gradient(circle at 35% 30%,#fff 0 17%,#e7e7e7 18% 34%,#5567ba 35% 46%,#fff 47% 64%,#d0a13e 65% 75%,#f6f6f6 76%);box-shadow:0 7px 18px rgba(0,0,0,.35);transform:translate(-50%,-50%);transition:opacity .12s}
+#rta62Overlay .aceBlockV2Player{position:absolute;z-index:31;left:50%;top:67%;width:76px;height:116px;transform:translate(-50%,-50%);transition:left .06s linear}
+#rta62Overlay .aceBlockV2Player>span{display:block;width:27px;height:27px;margin:auto;border-radius:50%;background:#d29a78}
+#rta62Overlay .aceBlockV2Player>b{display:grid;place-items:center;width:66px;height:70px;margin:-2px auto 0;border-radius:23px 23px 7px 7px;background:#173d5a;color:#d8effc;font-size:7px;letter-spacing:.1em}
+#rta62Overlay .aceBlockV2Player .hands{position:absolute;left:50%;top:-49px;width:76px;height:65px;transform:translateX(-50%);opacity:.78}
+#rta62Overlay .aceBlockV2Player .hands i{position:absolute;top:14px;width:14px;height:54px;border-radius:9px;background:#d9a07d}
+#rta62Overlay .aceBlockV2Player .hands i:first-child{left:17px;transform:rotate(-8deg)}#rta62Overlay .aceBlockV2Player .hands i:last-child{right:17px;transform:rotate(8deg)}
+#rta62Overlay .aceBlockV2Player.jump{animation:ace316fBlockJump .5s cubic-bezier(.16,.8,.26,1)}
+@keyframes ace316fBlockJump{0%,100%{transform:translate(-50%,-50%)}48%{transform:translate(-50%,calc(-50% - 64px))}}
+#rta62Overlay .aceBlockV2Target{position:absolute;z-index:29;left:50%;top:47%;width:84px;height:30px;opacity:0;transform:translate(-50%,-50%);transition:opacity .14s}
+#rta62Overlay .aceBlockV2Target.show{opacity:1}
+#rta62Overlay .aceBlockV2Target i{position:absolute;left:50%;top:50%;width:72px;height:72px;border:2px solid rgba(242,200,75,.74);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 7px rgba(242,200,75,.06)}
+#rta62Overlay .aceBlockV2Target b{position:absolute;left:50%;top:-48px;transform:translateX(-50%);white-space:nowrap;font-size:7px;letter-spacing:.12em;color:#f4d975}
+#rta62Overlay .aceBlockV2Prompt{position:absolute;z-index:55;left:50%;bottom:7%;transform:translateX(-50%);min-width:180px;padding:8px 12px;border-radius:999px;background:rgba(3,11,18,.80);border:1px solid rgba(255,255,255,.09);text-align:center;color:#d8e9f3;font-size:9px;font-weight:1000;letter-spacing:.12em;backdrop-filter:blur(7px)}
+#rta62Overlay .aceBlockV2Prompt.perfect{color:#86e7ae;border-color:rgba(91,217,143,.38);box-shadow:0 0 20px rgba(91,217,143,.12)}
+#rta62Overlay .aceBlockV2StageHUD{position:absolute;z-index:58;left:50%;top:4%;transform:translateX(-50%);display:flex;gap:5px;padding:5px;border-radius:999px;background:rgba(3,11,18,.72);border:1px solid rgba(255,255,255,.07)}
+#rta62Overlay .aceBlockV2StageHUD span{padding:5px 8px;border-radius:999px;color:#617d8e;font-size:6.5px;font-weight:1000;letter-spacing:.09em}
+#rta62Overlay .aceBlockV2StageHUD span.active{background:#153a53;color:#d9f2ff}
+#rta62Overlay .aceBlockV2Ability{position:absolute;z-index:58;left:10px;top:10px;max-width:220px;padding:7px 9px;border-radius:9px;background:rgba(14,34,50,.82);border:1px solid rgba(96,190,239,.16);color:#85cef2;font-size:6.5px;font-weight:1000;letter-spacing:.08em;opacity:0;transition:.15s}
+#rta62Overlay .aceBlockV2Ability.show{opacity:1}
+#rta62Overlay .aceBlockV2TouchZones{position:absolute;z-index:60;left:12px;right:12px;bottom:13%;display:flex;justify-content:space-between;pointer-events:none}
+#rta62Overlay .aceBlockV2TouchZones button{pointer-events:auto;width:62px;height:48px;border-radius:13px;border:1px solid rgba(255,255,255,.08);background:rgba(4,18,28,.54);color:#bfe8fc;font-size:26px;font-weight:900}
+#rta62Overlay .aceBlockV2Panel{min-width:0;padding:18px;background:linear-gradient(180deg,#071724,#04101a);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:10px;overflow:auto}
+#rta62Overlay .aceBlockV2PanelTop small{color:#67b9ea;font-size:7px;font-weight:1000;letter-spacing:.12em}
+#rta62Overlay .aceBlockV2PanelTop b{display:block;margin-top:4px;color:#f1f8fc;font-size:19px}
+#rta62Overlay .aceBlockV2PanelTop span{display:block;margin-top:4px;color:#7894a8;font-size:8px;line-height:1.4}
+#rta62Overlay .aceBlockV2StageTitle{color:#718b9d;font-size:7px;font-weight:1000;letter-spacing:.13em}
+#rta62Overlay .aceBlockV2Reads{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#rta62Overlay .aceBlockV2Reads button{min-height:64px;display:grid;grid-template-columns:40px 1fr;gap:7px;align-items:center;padding:8px;border-radius:11px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.018);color:#e6f0f5;text-align:left}
+#rta62Overlay .aceBlockV2Reads button>i{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:#102d40;color:#8bd1f2;font-style:normal;font-size:7px;font-weight:1000}
+#rta62Overlay .aceBlockV2Reads button b{font-size:10px}#rta62Overlay .aceBlockV2Reads button small{display:block;margin-top:2px;color:#708897;font-size:7px}
+#rta62Overlay .aceBlockV2Reads button.selected{border-color:rgba(92,193,242,.34);background:rgba(48,133,184,.09)}
+#rta62Overlay .aceBlockV2Reads button:disabled:not(.selected){opacity:.36}
+#rta62Overlay .aceBlockV2Execution{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#rta62Overlay .aceBlockV2Execution>div{padding:8px;border-radius:9px;background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.05)}
+#rta62Overlay .aceBlockV2Execution small{display:block;color:#68879a;font-size:6px;font-weight:1000;letter-spacing:.1em}
+#rta62Overlay .aceBlockV2Execution b{display:block;margin-top:3px;color:#d6e6ef;font-size:8px}
+#rta62Overlay .aceBlockV2Press{align-self:center;width:98px;height:98px;min-height:98px;border-radius:50%;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);color:#fff;box-shadow:0 9px 24px rgba(0,0,0,.38),inset 0 0 0 6px rgba(255,255,255,.02);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+#rta62Overlay .aceBlockV2Press span{font-size:30px}#rta62Overlay .aceBlockV2Press b{font-size:7px;letter-spacing:.08em}
+#rta62Overlay .aceBlockV2Press:disabled{opacity:.35}
+#rta62Overlay .aceBlockV2Feedback{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.055);color:#829aaa;font-size:7px;line-height:1.35}
+#rta62Overlay .aceBlockV2Feedback.good{color:#a8e3c1;border-color:rgba(92,211,145,.20)}#rta62Overlay .aceBlockV2Feedback.bad{color:#e5a4a4;border-color:rgba(235,111,111,.18)}
+#rta62Overlay .aceBlockV2TrainingScene{min-height:0}#rta62Overlay .aceBlockV2TrainingScene>.rta112BlockCourt{width:100%;height:100%;min-height:0;border:0;border-radius:0}
+#rta62Overlay .aceBlockV2StageHUD.training{top:4%}
+#rta62Overlay .aceBlockV2Press.training{opacity:1}
+@media(max-width:760px){
+ #rta62Overlay .aceBlockV2Shell{width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;overflow:hidden!important}
+ #rta62Overlay .aceBlockV2Body{height:auto;min-height:0;flex:1;display:flex;flex-direction:column}
+ #rta62Overlay .aceBlockV2Scene,#rta62Overlay .aceBlockV2TrainingScene{flex:1 1 auto;min-height:0}
+ #rta62Overlay .aceBlockV2Panel{flex:0 0 auto;max-height:38dvh;padding:8px 9px calc(9px + env(safe-area-inset-bottom));border-left:0;border-top:1px solid rgba(255,255,255,.06);gap:6px;overflow:auto}
+ #rta62Overlay .aceBlockV2PanelTop{display:none}
+ #rta62Overlay .aceBlockV2Reads{gap:5px}#rta62Overlay .aceBlockV2Reads button{min-height:49px;height:49px;padding:5px;grid-template-columns:32px 1fr}
+ #rta62Overlay .aceBlockV2Reads button>i{width:31px;height:31px;font-size:6px}#rta62Overlay .aceBlockV2Reads button small{display:none}
+ #rta62Overlay .aceBlockV2Execution{display:none}
+ #rta62Overlay .aceBlockV2Press{width:78px;height:78px;min-height:78px;position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:80}
+ #rta62Overlay .aceBlockV2Press span{font-size:24px}#rta62Overlay .aceBlockV2Press b{font-size:6px}
+ #rta62Overlay .aceBlockV2Panel .rta62Progress{margin-right:90px}
+ #rta62Overlay .aceBlockV2Feedback{margin-right:90px;min-height:30px}
+ #rta62Overlay .aceBlockV2Prompt{bottom:8%;font-size:8px}
+ #rta62Overlay .aceBlockV2TouchZones{bottom:18%}
+ #rta62Overlay .aceBlockV2TouchZones button{width:54px;height:44px}
+ #rta62Overlay .aceBlockV2StageHUD{top:3%}
+ #rta62Overlay .aceBlockV2Ability{top:8px;left:8px}
+ #rta62Overlay .aceBlockV2Body.training .aceBlockV2Panel{max-height:24dvh}
+ #rta62Overlay .aceBlockV2Body.training .aceBlockV2Press{position:relative;right:auto;bottom:auto;align-self:center}
+ #rta62Overlay .aceBlockV2Body.training .aceBlockV2Panel .rta62Progress,#rta62Overlay .aceBlockV2Body.training .aceBlockV2Feedback{margin-right:0}
+}
+</style>
+
+<script id="ace316f-blocking-build">
+window.ACE_BLOCKING_2_BUILD="B21.36.316F";
+window.ACE_PROJECT_BUILD="B21.36.316F";
 </script>
 
 </body>
