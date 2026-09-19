@@ -53158,5 +53158,177 @@ window.ACE_BLOCKING_VISUAL_REBUILD="B21.36.323";
 }
 </style>
 <script id="ACE_B21_36_327_MATCH_HUB_BUILD_FLAG">window.ACE_MATCH_HUB_REDESIGN_BUILD='B21.36.327';</script>
+
+
+<!-- PROJECT ACE B21.36.328 · MOBILE TRAINING HUB REDESIGN -->
+<style id="ace328-mobile-training-hub">
+@media (max-width:760px){
+  #roadtoace .rta187TrainingCentre{
+    width:100%!important;
+    margin:0!important;
+    padding:8px 7px calc(92px + env(safe-area-inset-bottom))!important;
+    gap:8px!important;
+    background:linear-gradient(180deg,#06131f 0%,#040d16 100%)!important;
+  }
+
+  /* Phone header: status, not a giant decorative billboard. */
+  #roadtoace .rta187TrainingCentre>.rta187TrainingHero{
+    order:1!important;
+    min-height:88px!important;
+    height:88px!important;
+    margin:0!important;
+    border-radius:15px!important;
+    border:1px solid rgba(91,174,229,.16)!important;
+    background:
+      radial-gradient(circle at 84% 26%,rgba(65,177,240,.18),transparent 25%),
+      linear-gradient(135deg,#091827,#0a1d2e)!important;
+    box-shadow:none!important;
+  }
+  #roadtoace .rta187TrainingHero:after{display:none!important}
+  #roadtoace .rta187HeroVisual{display:none!important}
+  #roadtoace .rta197HeroPhoto{display:none!important}
+  #roadtoace .rta187HeroMicro{display:none!important}
+  #roadtoace .rta187HeroCopy{
+    position:absolute!important;left:0!important;top:0!important;bottom:0!important;
+    display:flex!important;flex-direction:column!important;justify-content:center!important;
+    max-width:62%!important;padding:12px 14px!important;
+  }
+  #roadtoace .rta187HeroCopy>small{
+    color:#70bde9!important;font-size:6px!important;letter-spacing:.19em!important;
+  }
+  #roadtoace .rta187HeroCopy h1{
+    margin:4px 0 0!important;font-size:22px!important;line-height:.95!important;
+    letter-spacing:-.04em!important;color:#f0f8fd!important;
+  }
+  #roadtoace .rta187HeroCopy h1 span{color:#62bdf2!important}
+  #roadtoace .rta187HeroCopy p{display:none!important}
+  #roadtoace .rta187SessionPill{
+    right:10px!important;top:50%!important;transform:translateY(-50%)!important;
+    min-width:104px!important;padding:9px 10px!important;border-radius:12px!important;
+    border:1px solid rgba(91,190,244,.20)!important;
+    background:rgba(4,16,27,.78)!important;box-shadow:none!important;backdrop-filter:none!important;
+  }
+  #roadtoace .rta187SessionPill b{font-size:10px!important;color:#64c8ff!important}
+  #roadtoace .rta187SessionPill small{margin-top:2px!important;font-size:5px!important;line-height:1.25!important;letter-spacing:.09em!important}
+
+  #roadtoace .rta187TrainingCentre>.ace252FirstMatchGuide,
+  #roadtoace .rta187TrainingCentre>.rta78TrainingResume{order:2!important;margin:0!important}
+
+  /* The tile itself already carries RECOMMENDED, so remove the duplicate phone rail. */
+  #roadtoace .rta187TrainingCentre>.rta187RecommendedRail{display:none!important}
+
+  /* Drills are the page. Never hide them behind accordions on a phone. */
+  #roadtoace .rta187TrainingCentre>.rta187TrainingSection.technical{order:3!important}
+  #roadtoace .rta187TrainingCentre>.rta187TrainingSection.physical{order:4!important}
+  #roadtoace .rta187TrainingCentre>.rta187CoachStrip{display:none!important}
+  #roadtoace .rta187TrainingSection{
+    margin:0!important;padding:9px 0 0!important;border:0!important;background:transparent!important;
+  }
+  #roadtoace .rta187TrainingSection .rta187TechnicalGrid,
+  #roadtoace .rta187TrainingSection .rta187PhysicalGrid,
+  #roadtoace .rta187TrainingSection:not(.ace227-open) .rta187TechnicalGrid,
+  #roadtoace .rta187TrainingSection:not(.ace227-open) .rta187PhysicalGrid{
+    display:grid!important;
+  }
+  #roadtoace .rta187SectionHead{
+    position:relative!important;min-height:30px!important;padding:0 3px 8px!important;
+    display:flex!important;align-items:flex-end!important;justify-content:space-between!important;
+    cursor:default!important;pointer-events:none!important;
+  }
+  #roadtoace .rta187SectionHead:after{display:none!important}
+  #roadtoace .rta187SectionHead>div{display:block!important}
+  #roadtoace .rta187SectionHead small{
+    color:#dcebf5!important;font-size:9px!important;letter-spacing:.13em!important;
+  }
+  #roadtoace .rta187SectionHead h2{display:none!important}
+  #roadtoace .rta187SectionHead>b{
+    color:#5e7f95!important;font-size:6px!important;letter-spacing:.13em!important;
+  }
+
+  #roadtoace .rta187TechnicalGrid,
+  #roadtoace .rta187PhysicalGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;padding:0!important;overflow:visible!important;
+  }
+
+  /* Compact game-mode cards. */
+  #roadtoace .rta187TrainCard,
+  #roadtoace .rta187PhysicalCard{
+    position:relative!important;width:auto!important;min-width:0!important;max-width:none!important;
+    min-height:104px!important;height:104px!important;padding:10px!important;
+    overflow:hidden!important;border-radius:13px!important;
+    border:1px solid rgba(93,163,207,.13)!important;
+    background:#091725!important;box-shadow:none!important;
+    transform:none!important;
+  }
+  #roadtoace .rta187PhysicalCard{height:92px!important;min-height:92px!important}
+  #roadtoace .rta187TrainCard:before,
+  #roadtoace .rta187PhysicalCard:before{
+    content:""!important;position:absolute!important;inset:0!important;z-index:1!important;
+    background:linear-gradient(90deg,rgba(5,14,24,.94) 0%,rgba(5,14,24,.78) 43%,rgba(5,14,24,.26) 100%)!important;
+    pointer-events:none!important;
+  }
+  #roadtoace .rta190TrainPhoto{
+    display:block!important;inset:0!important;opacity:.54!important;
+    transform:scale(1.02)!important;filter:saturate(.86) brightness(.72) contrast(1.04)!important;
+    background-position:var(--photo-pos,center)!important;
+  }
+  #roadtoace .rta190TrainPhoto:after{
+    background:linear-gradient(90deg,rgba(5,14,24,.88),rgba(5,14,24,.51) 54%,rgba(5,14,24,.12))!important;
+  }
+  #roadtoace .rta187ArtSvg{opacity:.18!important;width:58%!important;right:-7%!important}
+  #roadtoace .rta187CardIcon{
+    position:relative!important;z-index:4!important;width:29px!important;height:29px!important;
+    margin:0!important;border-radius:9px!important;background:rgba(14,46,68,.72)!important;
+    color:#68c6f7!important;
+  }
+  #roadtoace .rta187CardIcon svg{width:15px!important;height:15px!important}
+  #roadtoace .rta187CardCopy,
+  #roadtoace .rta187PhysicalCard .rta187CardCopy{
+    position:relative!important;z-index:4!important;max-width:78%!important;margin:7px 0 0!important;padding:0!important;
+  }
+  #roadtoace .rta187CardCopy small{
+    display:block!important;color:#e4f0f7!important;font-size:8px!important;line-height:1!important;
+    font-weight:1000!important;letter-spacing:.08em!important;
+  }
+  #roadtoace .rta187CardCopy b{
+    display:block!important;margin-top:5px!important;color:#7ed2ff!important;
+    font-size:20px!important;line-height:.9!important;
+  }
+  #roadtoace .rta187CardCopy p{display:none!important}
+  #roadtoace .rta187CardCopy em{
+    display:block!important;margin-top:7px!important;color:#6d91a8!important;
+    font-size:5.5px!important;font-style:normal!important;font-weight:1000!important;letter-spacing:.11em!important;
+  }
+  #roadtoace .rta187RecTag{
+    top:0!important;right:0!important;padding:4px 6px!important;border-radius:0 12px 0 8px!important;
+    max-width:82%!important;background:#56bdf3!important;color:#031524!important;
+    font-size:5px!important;letter-spacing:.08em!important;box-shadow:none!important;
+  }
+  #roadtoace .rta187TrainCard.recommended,
+  #roadtoace .rta187PhysicalCard.recommended{
+    border-color:rgba(87,198,255,.72)!important;
+    box-shadow:inset 0 0 0 1px rgba(87,198,255,.11),0 0 16px rgba(49,161,223,.10)!important;
+  }
+  #roadtoace .rta187TrainCard:active:not(:disabled),
+  #roadtoace .rta187PhysicalCard:active:not(:disabled){transform:scale(.985)!important}
+
+  /* Keep mastery as a subtle bottom accent, not another content block. */
+  #roadtoace .ace221MasteryLine{left:9px!important;right:9px!important;bottom:6px!important;width:auto!important}
+
+  /* Session resume should look like a compact game alert. */
+  #roadtoace .rta78TrainingResume{
+    min-height:58px!important;padding:8px 9px!important;border-radius:12px!important;
+  }
+  #roadtoace .rta78TrainingResume button{min-height:38px!important;padding:0 11px!important;font-size:7px!important}
+}
+@media(max-width:370px){
+  #roadtoace .rta187TrainingCentre{padding-left:5px!important;padding-right:5px!important}
+  #roadtoace .rta187TechnicalGrid,#roadtoace .rta187PhysicalGrid{gap:5px!important}
+  #roadtoace .rta187TrainCard{height:100px!important;min-height:100px!important;padding:8px!important}
+  #roadtoace .rta187PhysicalCard{height:88px!important;min-height:88px!important}
+}
+</style>
+<script id="ace328-build-tag">window.ACE_PROJECT_BUILD='B21.36.328';</script>
 </body>
 </html>
