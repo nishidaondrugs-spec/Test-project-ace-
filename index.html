@@ -40363,6 +40363,63 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function ace316gBuildCard(label,name,sub,state=""){
     return `<article class="ace316gBuildCard ${esc(state)}"><small>${esc(label)}</small><b>${esc(name)}</b><span>${esc(sub)}</span></article>`;
   }
+  function ace316jRoadNode(n,st,{compact=false}={}){
+    const type=aceSt3NodeType(n),meta=n.effect_meta||{};
+    const cls=st.owned?"owned":st.available?"available":"locked";
+    const closed=type==="SPECIALIZATION"&&String(st.identityReason||"").startsWith("SPECIALIZED");
+    const kind=type.startsWith("ACE_PLUS")?"♠":type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="SPECIALIZATION"?"◇":type==="TRAIT"?"◆":"●";
+    const mechanic=String(meta.mechanic_text||"");
+    const gate=st.owned?"OWNED":st.available?`${Number(n.cost||0)} SP`:closed?"PATH CLOSED":skillGateLabel(n,null,st);
+    return `<button type="button" class="ace316jRoadNode ${cls} ${closed?"closed":""} ${compact?"compact":""} ${type.toLowerCase()}" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}>
+      <span class="ace316jOrb">${kind}</span>
+      <small>${type.startsWith("ACE_PLUS")?`ACE+ ${ace315aRoman(meta.power_rank)}`:type==="SPECIALIZATION"?"SPECIALISATION":type==="PLAYSTYLE"?"SIGNATURE":type==="TRAIT"?"TRAIT":`TIER ${n.tier}`}</small>
+      <b>${esc(n.name)}</b>
+      ${(!compact&&mechanic)?`<em>${esc(mechanic)}</em>`:""}
+      <mark>${esc(gate)}</mark>
+    </button>`;
+  }
+  function ace316jRoadmapHTML(nodeStates,active,pm){
+    const foundation=[],core=[],forks=[],signature=[],aceplus=[],hybrid=[];
+    nodeStates.forEach(pair=>{
+      const [n]=pair,type=aceSt3NodeType(n),tier=Number(n.tier||0);
+      if(type==="SPECIALIZATION")forks.push(pair);
+      else if(type==="PLAYSTYLE")signature.push(pair);
+      else if(type==="HYBRID")hybrid.push(pair);
+      else if(type.startsWith("ACE_PLUS"))aceplus.push(pair);
+      else if(tier<=3)foundation.push(pair);
+      else core.push(pair);
+    });
+    const chapters=[];
+    const line=(pairs)=>pairs.map((pair,i)=>`${i?'<i class="ace316jLink"></i>':""}${ace316jRoadNode(pair[0],pair[1],{compact:true})}`).join("");
+    if(foundation.length)chapters.push(`<section class="ace316jChapter foundation" data-ace316j-section="foundation"><header><small>01</small><div><b>FOUNDATION</b><span>BUILD THE BASE</span></div></header><div class="ace316jLinear">${line(foundation)}</div></section>`);
+    if(core.length)chapters.push(`<section class="ace316jChapter core" data-ace316j-section="core"><header><small>02</small><div><b>CORE</b><span>SHAPE YOUR GAME</span></div></header><div class="ace316jLinear">${line(core)}</div></section>`);
+    if(forks.length){
+      const chosen=forks.find(([n,st])=>st.owned);
+      chapters.push(`<section class="ace316jChapter fork" data-ace316j-section="fork">
+        <header><small>03</small><div><b>SPECIALISATION</b><span>${chosen?`${esc(chosen[0].name)} CHOSEN`:"CHOOSE ONE ROAD"}</span></div></header>
+        <div class="ace316jForkMap">
+          <i class="ace316jForkStem in"></i><i class="ace316jForkArm top"></i><i class="ace316jForkArm bottom"></i><i class="ace316jForkStem out"></i>
+          ${forks.slice(0,2).map((pair,i)=>`<div class="ace316jForkChoice ${i?"bottom":"top"}">${ace316jRoadNode(pair[0],pair[1])}</div>`).join("")}
+          <div class="ace316jForkBadge">${chosen?"ROAD LOCKED":"CHOOSE 1"}</div>
+        </div>
+      </section>`);
+    }
+    if(signature.length)chapters.push(`<section class="ace316jChapter signature" data-ace316j-section="signature"><header><small>04</small><div><b>SIGNATURE</b><span>DEFINE THE ARCHETYPE</span></div></header><div class="ace316jFeature">${signature.map(pair=>ace316jRoadNode(pair[0],pair[1])).join("")}</div></section>`);
+    if(hybrid.length)chapters.push(`<section class="ace316jChapter hybrid" data-ace316j-section="hybrid"><header><small>05</small><div><b>HYBRID</b><span>PRIMARY × SECONDARY</span></div></header><div class="ace316jFeature">${hybrid.map(pair=>ace316jRoadNode(pair[0],pair[1])).join("")}</div></section>`);
+    if(aceplus.length)chapters.push(`<section class="ace316jChapter aceplus" data-ace316j-section="aceplus"><header><small>${hybrid.length?"06":"05"}</small><div><b>ACE+</b><span>ELITE MASTERY</span></div></header><div class="ace316jLinear ace">${line(aceplus)}</div></section>`);
+    return `<div class="ace316jRoadShell">
+      <div class="ace316jRoadTitle"><div><small>FULL PATH · VIEWING</small><b>${esc(pm[0])}</b></div><span>SWIPE THE ROAD →</span></div>
+      <nav class="ace316jChapterNav">
+        ${foundation.length?'<button data-ace316j-chapter="foundation">FOUNDATION</button>':""}
+        ${core.length?'<button data-ace316j-chapter="core">CORE</button>':""}
+        ${forks.length?'<button data-ace316j-chapter="fork">FORK</button>':""}
+        ${signature.length?'<button data-ace316j-chapter="signature">SIGNATURE</button>':""}
+        ${hybrid.length?'<button data-ace316j-chapter="hybrid">HYBRID</button>':""}
+        ${aceplus.length?'<button data-ace316j-chapter="aceplus">ACE+</button>':""}
+      </nav>
+      <div class="ace316jRoadViewport">${chapters.join('<i class="ace316jChapterBridge">→</i>')}</div>
+    </div>`;
+  }
   function skillTreeHTML(c){
     const pos=String(c.position||"OH").toUpperCase();
     const paths=ACE_ST2_PATH_META[pos]||ACE_ST2_PATH_META.OH;
@@ -40400,6 +40457,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const nextLabel=nextNode?aceSt3NodeType(nextNode):"PATH COMPLETE";
     const nextReason=nextNode?(nextState?.available?`${Number(nextNode.cost||0)} SP · READY TO UNLOCK`:skillGateLabel(nextNode,c,nextState)):"ALL CURRENT NODES OWNED";
 
+    const roadmapHtml=ace316jRoadmapHTML(nodeStates,active,pm);
     const nodeHtml=nodeStates.map(([n,st],i)=>{
       const cls=st.owned?"owned":st.available?"available":"locked",type=aceSt3NodeType(n);
       const kind=type.startsWith("ACE_PLUS")?"♠":type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="SPECIALIZATION"?"◇":type==="TRAIT"?"◆":"●";
@@ -40453,7 +40511,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <div class="ace316gSectionHead"><div><small>ARCHETYPES</small><h3>CHOOSE A PATH TO VIEW</h3></div><span>${keys.length} PATHS</span></div>
         <nav class="ace316gPathGrid">${keys.map(k=>{
           const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);
-          const state=k===primary?"PRIMARY":k===secondary?"SECONDARY":k==="HYBRID"?"HYBRID":"FOUNDATION";
+          const state=k===active?(k===primary?"VIEWING · PRIMARY":k===secondary?"VIEWING · SECONDARY":k==="HYBRID"?"VIEWING · HYBRID":"VIEWING"):k===primary?"PRIMARY":k===secondary?"SECONDARY":k==="HYBRID"?"HYBRID":"FOUNDATION";
           return `<button type="button" data-ace-st2-path="${esc(k)}" class="${k===active?"active":""} ${k===primary?"primary":""} ${k===secondary?"secondary":""}"><i>${paths[k][1]}</i><span><small>${state}</small><b>${esc(paths[k][0])}</b><em>${pr.got}/${pr.total} NODES</em></span><mark>${pr.pct}%</mark></button>`;
         }).join("")}</nav>
       </section>
@@ -40473,6 +40531,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
 
       <section class="ace316gTree">
         <div class="ace316gSectionHead"><div><small>FULL PATH</small><h3>${esc(pm[0].toUpperCase())}</h3></div><span>${prog.got}/${prog.total} OWNED</span></div>
+        ${roadmapHtml}
         <div class="ace316gMap" id="ace316gMap">${nodeHtml}</div>
       </section>
 
@@ -40486,6 +40545,14 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     e.preventDefault();e.stopPropagation();
     ACE_ST2_ACTIVE_PATH=String(b.getAttribute("data-ace-st2-path")||"");
     render();
+  });
+  document.addEventListener("click",function(e){
+    const chapter=e.target?.closest?.("[data-ace316j-chapter]");
+    if(!chapter)return;
+    e.preventDefault();e.stopPropagation();
+    const key=chapter.getAttribute("data-ace316j-chapter");
+    const target=q(`.ace316jRoadViewport [data-ace316j-section="${key}"]`);
+    target?.scrollIntoView?.({behavior:"smooth",block:"nearest",inline:"center"});
   });
   document.addEventListener("click",function(e){
     const back=e.target?.closest?.("[data-ace316g-skill-back]");
@@ -51696,6 +51763,112 @@ window.ACE_PROJECT_BUILD="B21.36.316H";
 <script id="ace316i-phone-swipe-tree-build">
 window.ACE_SKILL_TREE_PHONE_SWIPE_BUILD="B21.36.316I";
 window.ACE_PROJECT_BUILD="B21.36.316I";
+</script>
+
+
+<style id="ace316j-branching-roadmap-css">
+#roadtoace .ace316jRoadShell{display:none}
+
+@media(max-width:760px){
+  /* The old card carousel remains available for desktop, but phone gets the real roadmap. */
+  #roadtoace .ace316gTree>.ace316gMap{display:none!important}
+  #roadtoace .ace316jRoadShell{display:block!important;width:100%;overflow:hidden}
+  #roadtoace .ace316gTree{padding:9px 0 10px!important;background:
+    linear-gradient(rgba(82,151,191,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(82,151,191,.025) 1px,transparent 1px),
+    radial-gradient(circle at 45% 20%,rgba(40,132,196,.08),transparent 36%),
+    #06131f!important;background-size:22px 22px,22px 22px,auto,auto!important}
+  #roadtoace .ace316gTree>.ace316gSectionHead{display:none!important}
+
+  #roadtoace .ace316jRoadTitle{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;padding:0 10px 7px}
+  #roadtoace .ace316jRoadTitle small{display:block;color:#66879d;font-size:4.7px;font-weight:1000;letter-spacing:.13em}
+  #roadtoace .ace316jRoadTitle b{display:block;margin-top:2px;color:#edf8ff;font-size:11px}
+  #roadtoace .ace316jRoadTitle>span{color:#56829d;font-size:4.5px;font-weight:1000;letter-spacing:.08em}
+
+  #roadtoace .ace316jChapterNav{display:flex;gap:4px;padding:0 9px 7px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #roadtoace .ace316jChapterNav::-webkit-scrollbar{display:none}
+  #roadtoace .ace316jChapterNav button{flex:0 0 auto;min-height:25px;padding:0 8px;border:1px solid rgba(93,169,214,.12);border-radius:999px;background:#071925;color:#678da5;font-size:4.5px;font-weight:1000;letter-spacing:.06em}
+  #roadtoace .ace316jChapterNav button:nth-child(3){border-color:rgba(160,113,239,.25);color:#b69ce9}
+
+  #roadtoace .ace316jRoadViewport{display:flex;align-items:stretch;gap:8px;width:100%;padding:0 9px 8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-padding:9px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #roadtoace .ace316jRoadViewport::-webkit-scrollbar{display:none}
+  #roadtoace .ace316jChapter{position:relative;flex:0 0 calc(100vw - 38px);width:calc(100vw - 38px);min-height:226px;padding:10px;border:1px solid rgba(90,164,205,.11);border-radius:14px;background:linear-gradient(145deg,rgba(10,31,45,.94),rgba(5,16,26,.98));scroll-snap-align:center;overflow:hidden}
+  #roadtoace .ace316jChapter:after{content:"";position:absolute;right:-55px;bottom:-75px;width:150px;height:150px;border:1px solid rgba(91,177,229,.055);border-radius:50%;box-shadow:0 0 0 22px rgba(91,177,229,.018),0 0 0 44px rgba(91,177,229,.012);pointer-events:none}
+  #roadtoace .ace316jChapter>header{position:relative;z-index:2;display:flex;align-items:center;gap:7px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.045)}
+  #roadtoace .ace316jChapter>header>small{width:24px;height:24px;display:grid;place-items:center;border:1px solid rgba(83,176,230,.17);border-radius:7px;background:#092033;color:#5fb9ed;font-size:5px;font-weight:1000}
+  #roadtoace .ace316jChapter>header b{display:block;font-size:8px;letter-spacing:.07em}
+  #roadtoace .ace316jChapter>header span{display:block;margin-top:1px;color:#5e7e92;font-size:4.5px;font-weight:900;letter-spacing:.08em}
+  #roadtoace .ace316jChapterBridge{flex:0 0 12px;align-self:center;color:#31546a;font-size:12px;font-style:normal;text-align:center}
+
+  /* Linear road: circles are the main visual language. */
+  #roadtoace .ace316jLinear{position:relative;z-index:2;display:flex;align-items:flex-start;justify-content:center;gap:0;height:165px;padding:35px 3px 0}
+  #roadtoace .ace316jRoadNode{position:relative;width:78px;min-width:0;display:flex;flex-direction:column;align-items:center;padding:0 3px;border:0;background:transparent;color:#dcecf4;text-align:center;overflow:visible}
+  #roadtoace .ace316jRoadNode .ace316jOrb{position:relative;z-index:3;width:48px;height:48px;display:grid;place-items:center;border:3px solid #35566a;border-radius:50%;background:#091e2c;color:#7697aa;font-size:12px;box-shadow:0 0 0 5px rgba(255,255,255,.014)}
+  #roadtoace .ace316jRoadNode>small{margin-top:8px;color:#66869a;font-size:4.5px;font-weight:1000;letter-spacing:.08em}
+  #roadtoace .ace316jRoadNode>b{width:100%;margin-top:2px;font-size:6.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #roadtoace .ace316jRoadNode>em{display:-webkit-box;width:100%;margin-top:4px;color:#718b9d;font-size:4.8px;line-height:1.25;font-style:normal;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #roadtoace .ace316jRoadNode>mark{margin-top:5px;padding:3px 5px;border-radius:999px;background:rgba(255,255,255,.04);color:#658297;font-size:4.3px;font-weight:1000;white-space:nowrap}
+  #roadtoace .ace316jLink{flex:1 1 22px;min-width:13px;height:3px;margin-top:23px;background:#29495c;box-shadow:0 0 7px rgba(50,111,146,.12)}
+  #roadtoace .ace316jRoadNode.owned .ace316jOrb{border-color:#55d49a;background:#0b3029;color:#a0f1c6;box-shadow:0 0 0 5px rgba(65,207,145,.035),0 0 18px rgba(65,207,145,.13)}
+  #roadtoace .ace316jRoadNode.owned+ .ace316jLink,#roadtoace .ace316jLink:has(+.ace316jRoadNode.owned){background:#42b986}
+  #roadtoace .ace316jRoadNode.owned>mark{color:#72dda6;background:rgba(42,151,104,.10)}
+  #roadtoace .ace316jRoadNode.available .ace316jOrb{border-color:#5abdf5;color:#d9f2ff;box-shadow:0 0 0 5px rgba(77,180,240,.04),0 0 22px rgba(67,168,229,.17);animation:ace316jPulse 1.8s ease-in-out infinite}
+  #roadtoace .ace316jRoadNode.available>mark{background:#11567f;color:#e9f8ff}
+  #roadtoace .ace316jRoadNode.locked{opacity:.48}
+  @keyframes ace316jPulse{50%{box-shadow:0 0 0 7px rgba(77,180,240,.06),0 0 28px rgba(67,168,229,.22)}}
+
+  /* A fork is a literal Y-junction, not two cards in a row. */
+  #roadtoace .ace316jChapter.fork{border-color:rgba(135,93,223,.24);background:radial-gradient(circle at 50% 55%,rgba(111,67,202,.10),transparent 38%),linear-gradient(145deg,#0a1729,#07101e)}
+  #roadtoace .ace316jForkMap{position:relative;z-index:2;height:168px;margin-top:4px}
+  #roadtoace .ace316jForkChoice{position:absolute;width:128px}
+  #roadtoace .ace316jForkChoice.top{left:calc(50% + 18px);top:8px}
+  #roadtoace .ace316jForkChoice.bottom{left:calc(50% + 18px);top:88px}
+  #roadtoace .ace316jForkChoice .ace316jRoadNode{width:128px;display:grid;grid-template-columns:46px minmax(0,1fr);grid-template-rows:auto auto auto;column-gap:7px;align-items:center;text-align:left}
+  #roadtoace .ace316jForkChoice .ace316jOrb{grid-row:1/4;width:44px;height:44px}
+  #roadtoace .ace316jForkChoice .ace316jRoadNode>small{margin:0;font-size:4.2px}
+  #roadtoace .ace316jForkChoice .ace316jRoadNode>b{margin:1px 0 0;font-size:7px}
+  #roadtoace .ace316jForkChoice .ace316jRoadNode>em{display:none}
+  #roadtoace .ace316jForkChoice .ace316jRoadNode>mark{justify-self:start;margin-top:2px}
+  #roadtoace .ace316jForkStem,#roadtoace .ace316jForkArm{position:absolute;display:block;background:#6e54b5;box-shadow:0 0 9px rgba(126,87,210,.20)}
+  #roadtoace .ace316jForkStem.in{left:18px;top:82px;width:58px;height:3px}
+  #roadtoace .ace316jForkArm.top{left:74px;top:44px;width:3px;height:40px;transform:rotate(38deg);transform-origin:bottom}
+  #roadtoace .ace316jForkArm.bottom{left:74px;top:84px;width:3px;height:40px;transform:rotate(-38deg);transform-origin:top}
+  #roadtoace .ace316jForkStem.out{right:4px;top:82px;width:27px;height:3px}
+  #roadtoace .ace316jForkBadge{position:absolute;left:6px;top:67px;padding:5px 7px;border:1px solid rgba(160,113,239,.26);border-radius:999px;background:#181035;color:#bca4f3;font-size:4.5px;font-weight:1000;letter-spacing:.08em}
+  #roadtoace .ace316jForkChoice .closed .ace316jOrb{border-style:dashed;border-color:#493f5d;color:#625872;background:#100d18;box-shadow:none}
+  #roadtoace .ace316jForkChoice .closed b{text-decoration:line-through;color:#665d70}
+  #roadtoace .ace316jForkChoice .closed mark{color:#796c87;background:#16101d}
+
+  /* Signature gets a deliberate boss-node treatment. */
+  #roadtoace .ace316jFeature{height:165px;display:grid;place-items:center}
+  #roadtoace .ace316jFeature .ace316jRoadNode{width:190px}
+  #roadtoace .ace316jFeature .ace316jOrb{width:68px;height:68px;border-width:3px;font-size:20px;background:radial-gradient(circle,#251b4d,#0b1727 70%);border-color:#8a6fe4;box-shadow:0 0 0 7px rgba(124,88,220,.035),0 0 28px rgba(124,88,220,.14)}
+  #roadtoace .ace316jFeature .ace316jRoadNode>b{font-size:9px}
+  #roadtoace .ace316jFeature .ace316jRoadNode>small{font-size:5px;color:#aa91ed}
+  #roadtoace .ace316jChapter.signature{border-color:rgba(135,99,225,.20)}
+
+  /* ACE+ is visually prestigious without turning the whole page gold. */
+  #roadtoace .ace316jChapter.aceplus{border-color:rgba(188,124,247,.22);background:radial-gradient(circle at 50% 45%,rgba(154,88,224,.10),transparent 38%),linear-gradient(145deg,#0a1728,#07101d)}
+  #roadtoace .ace316jLinear.ace .ace316jOrb{border-color:#a37be8;color:#d9c4ff;background:#17112d}
+  #roadtoace .ace316jLinear.ace .ace316jLink{background:#654b9e}
+
+  /* PRIMARY is identity, ACTIVE is what is actually being viewed.
+     Never let the permanent primary styling masquerade as the selected tab. */
+  #roadtoace .ace316gPathGrid button.primary:not(.active){background:#071722!important;border-color:rgba(80,168,219,.14)!important;box-shadow:none!important}
+  #roadtoace .ace316gPathGrid button.active{background:linear-gradient(135deg,#3097dc,#3e7ce0)!important;border-color:#62c5ff!important;box-shadow:inset 0 -2px rgba(207,241,255,.55),0 0 18px rgba(50,153,221,.10)!important}
+  #roadtoace .ace316gPathGrid button.active span small,
+  #roadtoace .ace316gPathGrid button.active span b,
+  #roadtoace .ace316gPathGrid button.active span em{color:#eaf8ff!important}
+
+  /* Pull the tree upward; the roadmap is the point of this screen. */
+  #roadtoace .ace316gPaths{margin-bottom:0!important}
+  #roadtoace .ace316gTree{margin-top:0!important}
+}
+</style>
+
+<script id="ace316j-branching-roadmap-build">
+window.ACE_SKILL_TREE_BRANCHING_ROADMAP="B21.36.316J";
+window.ACE_PROJECT_BUILD="B21.36.316J";
 </script>
 
 </body>
