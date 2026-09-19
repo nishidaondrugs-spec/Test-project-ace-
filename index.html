@@ -385,6 +385,16 @@ button{font:inherit}.app{min-height:100dvh;background:radial-gradient(circle at 
  #roadtoace .aceSt2Tabs{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
 }
 </style>
+
+<style id="ace315e-international-match-tab-css">
+#roadtoace .ace315eInternationalMatchHub{display:grid;gap:12px}
+#roadtoace .ace315eInternationalMatchHead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:18px;border:1px solid rgba(99,184,255,.18);border-radius:16px;background:linear-gradient(145deg,#071a2a,#06121d)}
+#roadtoace .ace315eInternationalMatchHead small{display:block;color:#69baff;font-size:7px;font-weight:1000;letter-spacing:.16em}
+#roadtoace .ace315eInternationalMatchHead h1{margin:5px 0 3px;font-size:28px;line-height:1}
+#roadtoace .ace315eInternationalMatchHead p{margin:0;color:#7f98aa;font-size:9px}
+#roadtoace .ace315eInternationalMatchHead>span{flex:0 0 auto;padding:7px 10px;border-radius:999px;border:1px solid rgba(99,184,255,.2);background:rgba(99,184,255,.08);color:#b8ddf8;font-size:7px;font-weight:1000}
+@media(max-width:760px){#roadtoace .ace315eInternationalMatchHead{align-items:flex-start;flex-direction:column;padding:14px 12px}#roadtoace .ace315eInternationalMatchHead h1{font-size:23px}}
+</style>
 </head>
 <body class="vdsAuthLocked ace152-theme ace153-home-theme">
 <div aria-live="polite" class="vdsAccountGate" id="vdsAccountGate">
@@ -39882,7 +39892,19 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return `<div class="rta88LineupStrip">${lineup.map(p=>`<span class="${p.is_user?"me":""}"><i>${esc(p.position||"")}</i><b>${esc(p.is_user?"YOU":String(p.player_name||"").split(/\s+/).slice(-1)[0]||"PLAYER")}</b><small>${Number(p.overall||0)}</small></span>`).join("")}</div>`;
   }
   function matchView(c){
-    if(c.season_complete)return `<main class="rta93Match"><section class="rta78SeasonDone"><small>SEASON COMPLETE</small><h1>The season is over.</h1><p>Review the year before deciding what comes next.</p><button class="rta62Btn primary" data-rta62-view="career">OPEN CAREER →</button></section></main>`;
+    /* 315E: once selected for international duty, the Matches tab becomes the
+       national-team match hub until that window is completed. This prevents
+       the accepted call-up from bouncing the player back into Career admin. */
+    if(c.season_complete){
+      let intlSel=null;try{intlSel=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}
+      const intlWindow=c.international_window||null;
+      const intlActive=!!(intlWindow&&String(intlWindow.stage||'')&&String(intlWindow.stage||'')!=='COMPLETE');
+      const intlSelected=intlSel?.eligible&&intlSel?.status==='SELECTED';
+      if(intlActive||intlSelected){
+        return `<main class="rta93Match ace315eInternationalMatchHub"><section class="ace315eInternationalMatchHead"><div><small>MATCHES · INTERNATIONAL DUTY</small><h1>${esc(c.nationality||'NATIONAL TEAM')}</h1><p>Your club season is paused. Camp, fixtures and tournament matches now live here.</p></div><span>${esc(intlWindow?.competition||intlSel?.competition||'INTERNATIONAL')}</span></section>${aceV77InternationalPanel(c)}</main>`;
+      }
+      return `<main class="rta93Match"><section class="rta78SeasonDone"><small>SEASON COMPLETE</small><h1>The season is over.</h1><p>Review the year before deciding what comes next.</p><button class="rta62Btn primary" data-rta62-view="career">OPEN CAREER →</button></section></main>`;
+    }
     const h=latestMatch(),ready=readiness(c),oppFallback=nextOpponent(),rank=leagueRank(),selState=S.selection||{},sel=selState.user||{},status=String(sel.selection_status||c.squad_role||"BENCH"),opp=String(selState.opponent||sel.opponent||oppFallback),rival=sel.direct_rival||null,coach=String(sel.coach_name||S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach"),leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League"),training=Number(c.training_used||0),firstMatch=Number(c.season||1)===1&&Number(c.season_match||0)===0,needsFirstTraining=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training===0,firstTrainingDone=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training>=1,playerTarget=posLabel(c.position)==="S"?"CONTROL THE OFFENCE":posLabel(c.position)==="L"?"OWN FIRST CONTACT":posLabel(c.position)==="M"?"WIN THE NET":"WIN YOUR ATTACKING MOMENTS",actionLabel=S.activeKey?"RESUME MATCH":rta88SelectionAction(status),rivalName=String(rival?.player_name||rival?.name||"").trim(),selectionNote=status==="BENCH"?(rivalName?`${rivalName} is currently ahead.`:"Stay ready."):(status==="ROTATION"?"Rotation role confirmed.":"You're in the starting six."),coachNote=status==="BENCH"?"Stay ready. Your chance may come.":status==="ROTATION"?"Make every touch count.":"Set the tone early.",matchday=Math.min(14,Number(c.season_match||0)+1);
     return `<main class="rta93Match ace245MatchPage ${firstMatch?"ace252FirstMatchMatch":""} ${needsFirstTraining?"ace253MatchNeedsTraining":firstTrainingDone?"ace253MatchReady":""}">
       <section class="rta93MatchHero ace245FixtureHero">
@@ -49739,7 +49761,14 @@ const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const money=n=>'£'+Number(n||0).toLocaleString('en-GB')+'/wk';
 function selection(){try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}}
 function offers(){const c=career();return Array.isArray(c?.transfer_offers)?c.transfer_offers:[]}
-function intlPending(){const c=career(),s=selection();if(!c?.season_complete||s?.status!=='SELECTED')return false;return String(c?.international_window?.stage||'')!=='COMPLETE'}
+function intlPending(){
+ const c=career(),s=selection();
+ if(!c?.season_complete||s?.status!=='SELECTED')return false;
+ /* Selected means international duty owns the off-season until the tournament
+    explicitly reaches COMPLETE. A missing window is still pending, not a
+    reason to expose the contract chooser. */
+ return String(c?.international_window?.stage||'')!=='COMPLETE'
+}
 function close(){document.querySelector('.ace311Backdrop')?.remove();document.body.style.overflow=''}
 async function refreshMarket(force=false){
  const c=career();if(!c?.season_complete||typeof window.ACE_RTA_RPC!=='function')return offers();
@@ -49751,7 +49780,7 @@ async function refreshMarket(force=false){
 }
 function internationalGate(){
  close();const c=career(),s=selection();const wrap=document.createElement('div');wrap.className='ace311Backdrop';
- wrap.innerHTML=`<section class="ace311Sheet" role="dialog" aria-modal="true"><header class="ace311Head"><div><small>INTERNATIONAL DUTY COMES FIRST</small><h2>Your club market is waiting.</h2><p>${esc(c?.nationality||'Your national team')} selected you as ${esc(s?.role||'ROTATION')}. Finish this international window before signing your next club contract.</p></div><button class="ace311Close" type="button">×</button></header><div class="ace311Spotlight"><span>✈</span><div><small>CAREER ORDER</small><b>CLUB SEASON ✓ → INTERNATIONAL DUTY → TRANSFER WINDOW</b><em>Your international performances can increase club interest and improve your offers.</em></div></div><button type="button" class="ace311Accept" data-ace311-intl>CONTINUE INTERNATIONAL DUTY →</button></section>`;
+ wrap.innerHTML=`<section class="ace311Sheet" role="dialog" aria-modal="true"><header class="ace311Head"><div><small>INTERNATIONAL DUTY COMES FIRST</small><h2>Your club market is waiting.</h2><p>${esc(c?.nationality||'Your national team')} selected you as ${esc(s?.role||'ROTATION')}. Finish this international window before your next club contract appears.</p></div><button class="ace311Close" type="button">×</button></header><div class="ace311Spotlight"><span>✈</span><div><small>CAREER ORDER</small><b>CLUB SEASON ✓ → INTERNATIONAL DUTY → CLUB CONTRACT</b><em>Your international performances can increase club interest and improve your offers.</em></div></div><button type="button" class="ace311Accept" data-ace311-intl>CONTINUE INTERNATIONAL DUTY →</button></section>`;
  document.body.appendChild(wrap);document.body.style.overflow='hidden';wrap.querySelector('.ace311Close')?.addEventListener('click',close);wrap.addEventListener('click',e=>{if(e.target===wrap)close();if(e.target.closest?.('[data-ace311-intl]')){close();try{window.ACE_INTL_CALLUP_V303?.openHub?.()}catch(_){}}});
 }
 function offerCard(o,i){
@@ -49965,7 +49994,11 @@ window.ACE_OFFSEASON_TRANSFER_V311={open:openChooser,refresh:refreshMarket,pendi
    return modal;
  }
  function openHub(){
-   const S=state();if(!S)return;S.view='career';S.careerPanel='international';try{window.__ACE_RTA_RENDER?.()}catch(_){}
+   const S=state();if(!S)return;
+   /* 315E: International duty is match content, not a Career admin panel.
+      Reporting to camp now lands directly on the Matches tab. */
+   S.view='match';
+   try{window.__ACE_RTA_RENDER?.()}catch(_){}
    requestAnimationFrame(()=>road()?.querySelector('[data-rta92-career-panel="international"]')?.scrollIntoView({block:'nearest'}));
  }
  function close(){if(!modal)return;modal.classList.remove('show');modal.setAttribute('aria-hidden','true');document.body.style.overflow='';}
@@ -50002,7 +50035,7 @@ window.ACE_OFFSEASON_TRANSFER_V311={open:openChooser,refresh:refreshMarket,pendi
  const r=road();if(r){observer=new MutationObserver(schedule);observer.observe(r,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});}
  setTimeout(schedule,350);
  window.ACE_INTL_CALLUP_V303={show:()=>show(true),openHub,check:schedule};
- window.ACE_PROJECT_BUILD='B21.36.304';
+ window.ACE_PROJECT_BUILD='B21.36.315E';
 })();
 </script>
 
@@ -50097,7 +50130,17 @@ function resultPopup(r,w){
 }
 document.addEventListener('click',async e=>{
  const start=e.target.closest?.('[data-intl-start-window]'),camp=e.target.closest?.('[data-intl-camp]'),play=e.target.closest?.('[data-intl-play]'),match=e.target.closest?.('[data-intl-match]'),back=e.target.closest?.('[data-intl-back-career]');
- if(back){const st=S();if(st){st.careerPanel='overview';window.__ACE_RTA_RENDER?.()}return}
+ if(back){
+   e.preventDefault();
+   const st=S();
+   if(st){st.view='career';st.careerPanel='overview';window.__ACE_RTA_RENDER?.()}
+   /* 315F: completing international duty returns to the OFF-SEASON CONTRACT
+      decision, not directly to a new season/pre-season. International results
+      can therefore feed the refreshed club market before the player signs. */
+   try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}
+   setTimeout(()=>{try{window.ACE_OFFSEASON_TRANSFER_V311?.open?.()}catch(err){console.warn('ACE 315F contract handoff failed',err)}},120);
+   return
+ }
  if(!start&&!camp&&!play&&!match)return;
  if(play){e.preventDefault();try{await window.ACE_RTA_START_INTL_MATCH?.()}catch(err){setStatus(String(err?.message||err||'Could not start international match.'),true)}return}
  e.preventDefault();if(busy)return;busy=true;road()?.querySelectorAll('.aceIntlWindow button').forEach(b=>b.disabled=true);
@@ -50194,7 +50237,16 @@ function render(){
 function open(startStep=0){const p=ps();if(!p?.status)return;close();step=p.status==='COMPLETE'?4:startStep;focus=String(p.focus||'');const wrap=document.createElement('div');wrap.className='ace312Backdrop';document.body.appendChild(wrap);document.body.style.overflow='hidden';render()}
 async function acceptClub(club){if(busy)return;busy=true;document.querySelectorAll('[data-rta62-next-season]').forEach(b=>b.disabled=true);try{const d=await rpc('vds_rta_start_next_season_v312',{p_club:club});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=0;focus='';open(0)}catch(err){console.error('ACE 312 arrival failed',err);alert(String(err?.message||err||'Could not start the next season.'))}finally{busy=false}}
 async function complete(){if(busy||!focus)return;busy=true;render();try{const d=await rpc('vds_rta_complete_preseason_v312',{p_focus:focus});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=4;render();try{window.__ACE_RTA_RENDER?.()}catch(_){}}catch(err){console.error('ACE 312 preseason failed',err);alert(String(err?.message||err||'Could not complete pre-season.'))}finally{busy=false;render()}}
-function queue(){const p=ps(),key=p?.status==='ARRIVAL'?`${C()?.season}|${p.new_club}`:'';if(key&&key!==autoOpened&&!document.querySelector('.ace312Backdrop')){autoOpened=key;setTimeout(()=>open(0),80)}}
+function queue(){
+ const c=C(),p=ps();
+ /* 315F: an old/new-club arrival must never surface while the previous club
+    season is still in its off-season. Selected players finish international
+    duty first; non-selected players sign their contract first. Only the
+    contract RPC starts the next season and makes pre-season eligible. */
+ if(!c||c.season_complete)return;
+ const key=p?.status==='ARRIVAL'?`${c.season}|${p.new_club}`:'';
+ if(key&&key!==autoOpened&&!document.querySelector('.ace312Backdrop')){autoOpened=key;setTimeout(()=>open(0),80)}
+}
 document.addEventListener('click',e=>{const sign=e.target.closest?.('[data-rta62-next-season]');if(sign&&sign.closest('.ace311Backdrop,.rta92OffersBlock')){
  e.preventDefault();e.stopImmediatePropagation();
  /* 314B: the 312 arrival interceptor used to bypass the 311 international gate
@@ -50555,5 +50607,11 @@ window.ACE_CAREER_BASELINE_CLEANUP_314D=true;
 <script id="ace-b21-36-315a-build">window.ACE_PROJECT_BUILD="B21.36.315B";window.ACE_SKILL_TREE_IDENTITY_LOCK=true;window.ACE_PLUS_MASTERY=true;</script>
 
 <!-- PROJECT ACE B21.36.315D · INTERNATIONAL HANDOFF HARD GATE -->
+
+<!-- PROJECT ACE B21.36.315F · OFF-SEASON ORDER FIX -->
+<script id="ace-b21-36-315f-build">
+window.ACE_PROJECT_BUILD='B21.36.315F';
+window.ACE_OFFSEASON_ORDER_315F={selected:'INTERNATIONAL_THEN_CONTRACT_THEN_PRESEASON',notSelected:'CONTRACT_THEN_PRESEASON'};
+</script>
 </body>
 </html>
