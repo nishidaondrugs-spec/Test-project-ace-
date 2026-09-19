@@ -38080,6 +38080,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       NOT_ENOUGH_SKILL_POINTS:"You do not have enough Skill Points.",
       STAT_MAXED:"That attribute is already 99.",
       SKILL_NODE_ALREADY_UNLOCKED:"You already own that skill.",
+      SPECIALIZATION_ALREADY_CHOSEN:"You already chose the other specialization for this archetype.",
+      SPECIALIZATION_PRIMARY_ONLY:"Specializations belong to your Primary archetype.",
+      CHOOSE_SPECIALIZATION:"Choose one Tier 8 specialization before unlocking your Signature.",
+      HYBRID_IDENTITY_MISMATCH:"That Hybrid belongs to a different Primary + Secondary combination.",
       SKILL_NODE_PREREQUISITE:"Unlock the previous node in this branch first.",
       SKILL_NODE_ROLE_GATE:"Your squad role is not high enough for that node yet.",
       SKILL_NODE_MILESTONE_GATE:"You have not completed that career milestone yet.",
@@ -39964,12 +39968,11 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <header class="ace245FixtureHeader"><div><small>NEXT FIXTURE</small><b>MATCHDAY ${matchday}</b></div><span>${esc(leagueName)}</span></header>
         <div class="ace245FixtureMain">
           <article class="ace245FixtureClub home">${rta77ClubLogo(c.club_name,"lg")}<div><small>HOME</small><h1>${esc(c.club_name)}</h1><p>${esc(c.squad_role)} · ${Number(c.overall)} OVR</p></div></article>
-          <div class="ace245FixtureVs"><span>VS</span><small>${esc(playerTarget)}</small></div>
+          <div class="ace245FixtureVs"><span>VS</span></div>
           <article class="ace245FixtureClub away">${rta77ClubLogo(opp,"lg")}<div><small>AWAY</small><h1>${esc(opp)}</h1><p>${esc(coach)}</p></div></article>
         </div>
         <footer class="ace245FixtureFooter"><span><b>${ready}%</b> READY</span><span><b>${esc(status)}</b> ROLE</span><span><b>${rank?`#${rank}`:"—"}</b> LEAGUE</span></footer>
       </section>
-      <section class="rta93MatchStatus ${rta88SelectionTone(status)}"><div><small>SELECTION</small><h2>${esc(rta88SelectionTitle(status))}</h2><p>${esc(selectionNote)}</p></div><div class="rta93MatchStatusMeta"><span><b>#${Number(sel.rank||1)}</b>DEPTH</span><span><b>${Number(sel.selection_score||0).toFixed(1)}</b>SELECT</span></div></section>
       ${firstMatch&&!S.activeKey?(needsFirstTraining?`<section class="ace252FirstMatchGuide ace253MatchRedirect">
         <div class="ace252GuideNumber">1</div>
         <div class="ace252GuideCopy"><small>CAREER TUTORIAL · 1 OF 3</small><h2>Train once before your debut.</h2><p>We want to show you how player development works first. Complete one drill, then come back here.</p></div>
@@ -39979,7 +39982,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <div class="ace252GuideCopy"><small>CAREER TUTORIAL · 3 OF 3</small><h2>Play your first fixture.</h2><p>Choose Key Moments or Sim Match.</p></div>
         <span class="ace252GuideArrow">↓</span>
       </section>`):""}
-      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>COACH'S OBJECTIVE</small><h2>${esc(playerTarget)}</h2><p>${esc(coachNote)}</p></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
+      <section class="rta93MatchActionArea ace316bLeanMatchActions"><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
     </main>`;
   }
 
@@ -40222,7 +40225,18 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const primary=ace315aPrimary(),secondary=ace315aSecondary(),type=aceSt3NodeType(n),tier=Number(n.tier||0);
     let identityOk=true,identityReason="";
     if(n.branch!=="HYBRID"&&type.startsWith("ACE_PLUS")){const rw=Number(n.effect_meta?.international_wins_required||0),ro=Number(n.effect_meta?.overall_required||100);identityOk=!!primary&&n.branch===primary&&Number(c.overall||0)>=ro&&Number(S.skillTree?.international_wins||0)>=rw;identityReason=!primary?"COMMIT PRIMARY":n.branch!==primary?"PRIMARY ONLY":Number(c.overall||0)<ro?"100 OVR REQUIRED":`${Number(S.skillTree?.international_wins||0)}/${rw} INT'L WINS`;}
-    else if(n.branch==="HYBRID"){identityOk=!!primary&&!!secondary;identityReason="PRIMARY + SECONDARY REQUIRED";}
+    else if(n.branch==="HYBRID"){
+      const rp=String(n.effect_meta?.required_primary||""),rs=String(n.effect_meta?.required_secondary||"");
+      identityOk=!!primary&&!!secondary&&(!rp||rp===primary)&&(!rs||rs===secondary);
+      identityReason=!primary||!secondary?"PRIMARY + SECONDARY REQUIRED":"YOUR ARCHETYPE COMBINATION";
+    }
+    else if(type==="SPECIALIZATION"){
+      identityOk=!!primary&&n.branch===primary;
+      identityReason=!primary?"COMMIT PRIMARY":"PRIMARY ONLY";
+      const group=String(n.effect_meta?.choice_group||"");
+      const other=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(x=>x.id!==n.id&&String(x.type||x.node_type||"").toUpperCase()==="SPECIALIZATION"&&String(x.effect_meta?.choice_group||"")===group&&unlocked.has(x.id));
+      if(other&&!owned){identityOk=false;identityReason=`SPECIALIZED · ${String(other.name||"CHOICE LOCKED")}`;}
+    }
     else if(!primary&&tier>4){identityOk=false;identityReason="COMMIT PRIMARY";}
     else if(primary&&n.branch!==primary){if(secondary===n.branch){if(tier>7){identityOk=false;identityReason="SECONDARY LIMIT · TIER 7"}}else if(tier>3){identityOk=false;identityReason=secondary?"FOUNDATION LIMIT · TIER 3":"CHOOSE AS SECONDARY"}}
     return {owned,prereqOk,roleOk,milestoneOk,spOk,identityOk,identityReason,currentMilestone,available:!owned&&prereqOk&&roleOk&&milestoneOk&&spOk&&identityOk};
@@ -40279,6 +40293,24 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function ace315aPowerRank(name=""){
     const p=ace315aPower();return p&&(!name||String(p.name||"").toUpperCase()===String(name).toUpperCase())?Number(p.rank||0):0;
   }
+  function ace316eOwned(id){
+    const arr=Array.isArray(S.career?.skill_nodes)?S.career.skill_nodes:[];
+    return arr.includes(String(id||""));
+  }
+  function ace316eTier(branch,tier,pos=null){
+    const p=String(pos||S.career?.position||"OH").toUpperCase();
+    return ace316eOwned(`ST2_${p}_${String(branch||"").toUpperCase()}_${String(Number(tier)||0).padStart(2,"0")}`);
+  }
+  function ace316eSpec(branch,suffix,pos=null){
+    const p=String(pos||S.career?.position||"OH").toUpperCase();
+    return ace316eOwned(`ST4_${p}_${String(branch||"").toUpperCase()}_SPEC_${String(suffix||"A").toUpperCase()}`);
+  }
+  function ace316eTriggeredText(d){
+    const t=Array.isArray(d?.skill_tree_effect?.triggered)?d.skill_tree_effect.triggered:[];
+    if(!t.length)return"";
+    return t.slice(0,2).map(x=>`◆ ${x.name}${x.trigger?` · ${String(x.trigger).trim()}`:""}`).join("  ");
+  }
+
   function ace315aIdentityHTML(c){
     const pos=String(c.position||"OH").toUpperCase(),paths=ACE_ST2_PATH_META[pos]||{},primary=ace315aPrimary(),secondary=ace315aSecondary();
     const active=String(ACE_ST2_ACTIVE_PATH||"");
@@ -40319,18 +40351,23 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const primary=coreKeys.map(k=>[k,aceSt2PathProgress(all.filter(n=>n.branch===k),owned)]).sort((a,b)=>b[1].got-a[1].got)[0];
     const nodeHtml=pathNodes.map((n,i)=>{
       const st=skillNodeState(n,c),cls=st.owned?"owned":st.available?"available":"locked",type=aceSt3NodeType(n);
-      const kind=type.startsWith("ACE_PLUS")?"♠":type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="TRAIT"?"◆":"●";
-      const effects=skillEffectsLabel(n.effects),meta=n.effect_meta||{},matchPct=Math.round(Number(meta.match_bonus||0)*1000)/10,trainPct=Math.round(Number(meta.training_bonus||0)*1000)/10;
-      const mechanic=(type==="TRAIT"||type==="PLAYSTYLE"||type==="HYBRID"||type.startsWith("ACE_PLUS"))?`<strong class="aceSt3Mechanic">${matchPct?`MATCH +${matchPct}%`:""}${matchPct&&trainPct?" · ":""}${trainPct?`TRAINING +${trainPct}%`:""}</strong>`:(effects!=="Special skill"?`<strong>${esc(effects)}</strong>`:"");
-      return `<div class="aceSt2Step ${cls} ${type.toLowerCase()}">${i?'<i class="aceSt2Line"></i>':""}<button type="button" class="aceSt2Node" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="aceSt2Kind">${kind}</span><div><small>${esc(type.startsWith("ACE_PLUS")?`ACE+ ${ace315aRoman(n.effect_meta?.power_rank)}`:type==="HYBRID"?"HYBRID SIGNATURE":type==="PLAYSTYLE"?"MAJOR PLAYSTYLE":type==="TRAIT"?"TRAIT":`TIER ${n.tier}`)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${mechanic}</div><mark>${st.owned?"✓ OWNED":st.available?`${n.cost} SP · UNLOCK`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
+      const kind=type.startsWith("ACE_PLUS")?"♠":type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="SPECIALIZATION"?"◇":type==="TRAIT"?"◆":"●";
+      const effects=skillEffectsLabel(n.effects),meta=n.effect_meta||{};
+      const abilityType=type==="SPECIALIZATION"?"SPECIALIZATION · CHOOSE 1":type==="HYBRID"?"HYBRID SIGNATURE":type==="PLAYSTYLE"?"SIGNATURE PLAYSTYLE":type==="TRAIT"?"TRAIT":type.startsWith("ACE_PLUS")?`ACE+ ${ace315aRoman(n.effect_meta?.power_rank)}`:`TIER ${n.tier}`;
+      const mechanicText=String(meta.mechanic_text||"");
+      const mechanicLabel=String(meta.mechanic_label||(type==="SPECIALIZATION"?"BUILD CHOICE":type==="HYBRID"?"SYNERGY":""));
+      const mechanic=(["TRAIT","PLAYSTYLE","HYBRID","SPECIALIZATION"].includes(type)||type.startsWith("ACE_PLUS"))
+        ?`<strong class="aceSt3Mechanic ace316eMechanic">${mechanicLabel?`<i>${esc(mechanicLabel)}</i>`:""}${mechanicText?`<span>${esc(mechanicText)}</span>`:""}</strong>`
+        :(effects!=="Special skill"?`<strong>${esc(effects)}</strong>`:"");
+      return `<div class="aceSt2Step ${cls} ${type.toLowerCase()}">${i?'<i class="aceSt2Line"></i>':""}<button type="button" class="aceSt2Node" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="aceSt2Kind">${kind}</span><div><small>${esc(abilityType)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${mechanic}</div><mark>${st.owned?"✓ OWNED":st.available?`${n.cost} SP · UNLOCK`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
     }).join("");
     return `<section class="aceSt2Shell">
-      <header class="aceSt2Header"><div><small>SKILL TREE 3.0 · ${esc(posLabel(pos))}</small><h2>${esc(pm[0])}</h2><p>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"COMBINE TWO DEVELOPED ARCHETYPES":primary?.[1]?.got?`PRIMARY BUILD · ${esc(paths[primary[0]][0])}`:"CHOOSE THE PLAYER YOU WANT TO BECOME"}</p></div><div class="aceSt2Sp"><b>${sp}</b><span>SP</span></div></header>
+      <header class="aceSt2Header"><div><small>SKILL TREE 3.2 · ${esc(posLabel(pos))}</small><h2>${esc(pm[0])}</h2><p>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"COMBINE TWO DEVELOPED ARCHETYPES":primary?.[1]?.got?`PRIMARY BUILD · ${esc(paths[primary[0]][0])}`:"CHOOSE THE PLAYER YOU WANT TO BECOME"}</p></div><div class="aceSt2Sp"><b>${sp}</b><span>SP</span></div></header>
       ${ace315aIdentityHTML(c)}
       <nav class="aceSt2Tabs">${keys.map(k=>{const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);return `<button type="button" data-ace-st2-path="${k}" class="${k===ACE_ST2_ACTIVE_PATH?"active":""}"><i>${paths[k][1]}</i><span>${esc(paths[k][0])}</span><small>${pr.pct}%</small></button>`}).join("")}</nav>
       <div class="aceSt2PathHero"><div class="aceSt2HeroIcon">${pm[1]}</div><div><small>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"CROSS-PATH MASTERY":"ARCHETYPE PATH"}</small><h3>${esc(pm[0])}</h3><p>${prog.got}/${prog.total} nodes · ${prog.pct}% developed</p></div><div class="aceSt2Meter"><i style="width:${prog.pct}%"></i></div></div>
       <div class="aceSt2Map">${nodeHtml}</div>
-      <footer class="aceSt2Footer"><span>● ATTRIBUTE · 1–2 SP</span><span>◆ TRAIT · 3 SP</span><span>★ SIGNATURE / HYBRID · 4–5 SP</span><span>♠ ACE+ · INTERNATIONAL MASTERY</span></footer>
+      <footer class="aceSt2Footer"><span>● ATTRIBUTE · 1–2 SP</span><span>◆ TRAIT · BUILD MECHANIC</span><span>◇ SPECIALIZATION · CHOOSE 1</span><span>★ SIGNATURE / HYBRID</span><span>♠ ACE+ · INTERNATIONAL MASTERY</span></footer>
     </section>`;
   }
 
@@ -40348,8 +40385,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       S.career=d.career;
       try{S.skillTree=await rpc("vds_rta_get_skill_tree")}catch(_){}
       render();
-      const effects=skillEffectsLabel(d.node?.effects||{});
-      toast(`${d.node?.name||"Skill unlocked"} · ${effects}`);
+      const effects=skillEffectsLabel(d.node?.effects||{}),meta=d.node?.effect_meta||{};
+      const unlockNote=meta.mechanic_text||meta.mechanic_label||(effects!=="Special skill"?effects:"ABILITY ACTIVE");
+      toast(`${d.node?.name||"Skill unlocked"} · ${unlockNote}`);
       vibrate([18,30,28]);
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
@@ -41690,7 +41728,16 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function overlayTop(kicker,title){
     const help=S.overlay==="training"&&S.training?`<button type="button" class="rta125GuideReplay" data-rta125-guide-open>? <span>HOW TO PLAY</span></button>`:"";
     const ap=(S.overlay==="key")?ace315aPower():null,aceBadge=ap?`<span class="ace315aPowerBadge">♠ ACE+ ${ace315aRoman(ap.rank)} · ${esc(ap.name)}</span>`:"";
-    return `<div class="rta62OverlayTop"><div><small>${esc(kicker)}</small><b>${esc(title)}</b>${aceBadge}</div><div class="rta125OverlayActions">${help}<button class="rta62Close" data-rta62-close>×</button></div></div>`;
+    let intlBadge="";
+    if(S.overlay==="key"&&S.key?.international){
+      const st=String(S.key?.match_context?.stage||window.ACE_INTL_PRESENTATION_316C?.currentStage||"GROUP").toUpperCase();
+      const no=Number(S.key?.moment_no||1),total=Number(S.key?.total_moments||1);
+      let label=st==="FINAL"?(no>=Math.max(1,total-1)?"CHAMPIONSHIP POINT":"FINAL · FOR THE TITLE"):
+        st==="SEMIFINAL"?(no>=Math.max(1,total-1)?"FINAL ON THE LINE":"KNOCKOUT · SEMIFINAL"):
+        (no===total?"CLOSING MOMENT · GROUP STAGE":"INTERNATIONAL · GROUP STAGE");
+      intlBadge=`<span class="ace316cPressureBadge">${esc(label)}</span>`;
+    }
+    return `<div class="rta62OverlayTop"><div><small>${esc(kicker)}</small><b>${esc(title)}</b><div class="ace316cOverlayBadges">${intlBadge}${aceBadge}</div></div><div class="rta125OverlayActions">${help}<button class="rta62Close" data-rta62-close>×</button></div></div>`;
   }
 
 
@@ -42030,7 +42077,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     rta242Stop();rta242ShowStage("aim");
     const tick=()=>{
       if(rta242Hit.phase!=="aim"||rta242Hit.busy)return;
-      rta242Hit.aim+=.012*rta242Hit.aimDir;
+      const fastControl=(ace316eTier("LITTLE_GIANT",5,"OH")||ace316eTier("RISING_DRAGON",5,"OP"))?.90:1;
+      rta242Hit.aim+=(.012*fastControl)*rta242Hit.aimDir;
       if(rta242Hit.aim>=1){rta242Hit.aim=1;rta242Hit.aimDir=-1}
       if(rta242Hit.aim<=0){rta242Hit.aim=0;rta242Hit.aimDir=1}
       const n=q("#aceHitAimNeedle");if(n)n.style.left=rta242Hit.aim*100+"%";rta242Arrow(rta242Hit.aim);
@@ -42055,7 +42103,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const tick=()=>{
       if(rta242Hit.phase!=="contact"||rta242Hit.busy)return;
       const airRank=Math.max(ace315aPowerRank("AIR TIME"),ace315aPowerRank("SKY BREAK"),ace315aPowerRank("ZERO TEMPO"));
-      rta242Hit.contact+=(.018*(1-airRank*.10))*rta242Hit.contactDir;
+      const pos=String(S.career?.position||"OH").toUpperCase();
+      const control=(ace316eTier("TERMINATOR",7,"OH")||ace316eTier("JUGGERNAUT",7,"OP")||ace316eTier("LITTLE_GIANT",7,"OH")||ace316eTier("RISING_DRAGON",7,"OP")||(pos==="M"&&ace316eTier("FIRST_TEMPO",5,"M")))?.92:1;
+      rta242Hit.contact+=(.018*(1-airRank*.10)*control)*rta242Hit.contactDir;
       if(rta242Hit.contact>=.94){rta242Hit.contact=.94;rta242Hit.contactDir=-1}
       if(rta242Hit.contact<=.06){rta242Hit.contact=.06;rta242Hit.contactDir=1}
       const n=q("#aceHitContactNeedle"),c=q("#aceHitContactCursor");
@@ -42068,10 +42118,14 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     let best=null;
     for(const sol of rta242Hit.scenario.solutions){
       const killRank=Math.max(ace315aPowerRank("KILL ZONE"),ace315aPowerRank("UNSTOPPABLE"));
-      const aimTol=.27+killRank*.025,powerTol=.30+killRank*.025;
+      const pos=String(S.career?.position||"OH").toUpperCase();
+      const powerWindow=(ace316eTier("TERMINATOR",5,"OH")||ace316eTier("JUGGERNAUT",5,"OP"))?.035:0;
+      const softGame=ace316eTier("GENIUS",5,"OH")&&String(sol.power)==="LOW"?.045:0;
+      const fullSend=(ace316eSpec("JUGGERNAUT","A","OP")||ace316eSpec("TERMINATOR","B","OH"))&&power>.70?.025:0;
+      const aimTol=.27+killRank*.025+softGame,powerTol=.30+killRank*.025+powerWindow+fullSend;
       const aimFit=clamp(1-Math.abs(effectiveAim-sol.aim)/aimTol);
       const powerFit=clamp(1-Math.abs(power-sol.p)/powerTol);
-      const executionFit=aimFit*.58+powerFit*.42,tactical=sol.value*executionFit;
+      const executionFit=aimFit*.58+powerFit*.42,tactical=clamp((sol.value+softGame*.55)*executionFit);
       if(!best||tactical>best.tactical)best={...sol,aimFit,powerFit,executionFit,tactical};
     }
     return best;
@@ -42081,7 +42135,11 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const contactAcc=clamp(1-Math.abs(rta242Hit.contactLocked-ct)/.26);
     const correction=(rta242Hit.contactLocked-.5)*.26,effectiveAim=clamp(rta242Hit.aimLocked-correction);
     const read=rta242Eval(effectiveAim,rta242Hit.powerLocked);
-    const tactical=clamp(read.tactical),mechanical=clamp(read.executionFit*.78+contactAcc*.22),quality=clamp(tactical*.62+mechanical*.38);
+    const tactical=clamp(read.tactical),mechanical=clamp(read.executionFit*.78+contactAcc*.22);
+    let quality=clamp(tactical*.62+mechanical*.38);
+    const pos=String(S.career?.position||"OH").toUpperCase();
+    const finisher=(pos==="OH"&&ace316eTier("TERMINATOR",9,"OH"))||(pos==="OP"&&ace316eTier("JUGGERNAUT",9,"OP"))||(pos==="M"&&ace316eTier("FIRST_TEMPO",9,"M"));
+    if(finisher&&rta242Hit.powerLocked>=.72&&contactAcc>=.78)quality=clamp(quality+.035);
     return {read,contactAcc,effectiveAim,tactical,mechanical,quality};
   }
   function rta242ReadBand(r){
@@ -42168,7 +42226,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
       vibrate(d.success?25:[20,35,20]);
       const out=String(d.outcome||d.final_outcome||(d.success?"KILL":"DEFENCE WINS")).replace(/\s*[—-].*$/,"");
-      rta242Feedback(r,out||"RESULT");
+      const proc=ace316eTriggeredText(d);
+      rta242Feedback(r,proc?`${out||"RESULT"} · ${proc}`:(out||"RESULT"));
       await new Promise(res=>setTimeout(res,2300));
       if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}
       else{S.key=d;S.feedback=null;renderKeyOverlay()}
@@ -43123,7 +43182,10 @@ function renderAttackKeyOverlay(){
   function rta95StartSetterTiming(){
     if(setterRaf)cancelAnimationFrame(setterRaf);
     setterStarted=performance.now();setterContactReady=true;setterContactLocked=false;
-    const ball=q("#rta95SetterBall"),prompt=q("#rta95SetterPrompt"),scene=q("#rta95SetterScene"),duration=1450;
+    const ball=q("#rta95SetterBall"),prompt=q("#rta95SetterPrompt"),scene=q("#rta95SetterScene");
+    const emergency=String(S.key?.moment?.type||"").toUpperCase()==="EMERGENCY_SET";
+    const tempoScale=(ace316eTier("MAESTRO",7,"S")?1.10:ace316eTier("MAESTRO",5,"S")?1.06:1)*(emergency&&ace316eTier("LIMITLESS",7,"S")?1.08:1);
+    const duration=1450*tempoScale;window.ACE316E_SETTER_DURATION=duration;
     scene?.classList.add("live");
     const tick=now=>{
       if(!setterContactReady||setterContactLocked)return;
@@ -43148,7 +43210,7 @@ function renderAttackKeyOverlay(){
     };
     setterRaf=requestAnimationFrame(tick);
   }
-  function rta95SetterTimingValue(){return clamp((performance.now()-setterStarted)/1450,0,1)}
+  function rta95SetterTimingValue(){return clamp((performance.now()-setterStarted)/Number(window.ACE316E_SETTER_DURATION||1450),0,1)}
   function rta95AnimateSet(choice,timing,done){
     const ball=q("#rta95SetterBall"),scene=q("#rta95SetterScene"),prompt=q("#rta95SetterPrompt");
     if(!ball){done?.();return}
@@ -44478,7 +44540,10 @@ function renderAttackKeyOverlay(){
   async function startInternationalKeyMatch(){
     if(S.busy)return;S.busy=true;
     try{
+      const intlStage=String(S.career?.international_window?.stage||"GROUP").toUpperCase();
+      try{await window.ACE_INTL_PRESENTATION_316C?.walkout?.(S.career)}catch(_){}
       const d=await rpc("vds_rta_start_international_key_match");
+      d.match_context=Object.assign({},d.match_context||{},{stage:intlStage});
       S.key=d;S.overlay="key";S.feedback=null;renderKeyOverlay();
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
@@ -44518,7 +44583,7 @@ function renderAttackKeyOverlay(){
       const intl=!!S.key?.international;
       const d=await rpc(intl?"vds_rta_resolve_international_key_moment_v315":"vds_rta_resolve_key_moment_v315",{p_choice:choice});if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;vibrate(d.success?25:[20,35,20]);
       if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}
-      else{S.key=d;S.feedback={good:!!d.success,text:d.outcome||""};renderKeyOverlay()}
+      else{const proc=ace316eTriggeredText(d);S.key=d;S.feedback={good:!!d.success,text:[d.outcome||"",proc].filter(Boolean).join(" · ")};renderKeyOverlay()}
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
 
@@ -44829,6 +44894,11 @@ function renderAttackKeyOverlay(){
     if(data?.role_changed)items.push("ROLE CHANGE");
     if(Number(m.coach_trust_change||0)>=4)items.push("COACH TRUST SURGE");
     if(data?.season_complete)items.push("SEASON COMPLETE");
+    if(data?.international){
+      const fresh=Array.isArray(data?.new_international_achievements)?data.new_international_achievements:[];
+      fresh.forEach(x=>{if(x&&!items.includes(String(x)))items.unshift(String(x))});
+      if(data?.international_milestone&&!items.includes(String(data.international_milestone)))items.unshift(String(data.international_milestone));
+    }
     return items.slice(0,3);
   }
   function rta102Confetti(){
@@ -44863,6 +44933,12 @@ function renderAttackKeyOverlay(){
 
   function showMatchResult(data){
     const m=data?.match||{},stats=m.stats||{},won=!!m.won,km=m.key_moments,cardCareer=data?.career||S.career,intl=!!data?.international;
+    const intlStage=String(window.ACE_INTL_PRESENTATION_316C?.currentStage||S.key?.match_context?.stage||"GROUP").toUpperCase();
+    const intlCompetition=String(cardCareer?.international_window?.competition||S.career?.international_window?.competition||"INTERNATIONAL");
+    const intlHeadline=!intl?(won?"VICTORY":"FULL TIME"):
+      intlStage==="FINAL"?(won?"CHAMPIONS":"RUNNERS-UP"):
+      intlStage==="SEMIFINAL"?(won?"FINAL QUALIFIED":"ELIMINATED"):
+      (won?"VICTORY":"FULL TIME");
     const sel=data?.selection||stats?.selection||{},playedRole=String(sel.selection_status||"");
     const perf=data?.performance_breakdown||stats?.performance_breakdown||{},ctx=data?.match_context||stats?.match_context||{};
     const fatigue=Number(stats.fatigue_end??ctx.fatigue??0),compliance=ctx.instruction_compliance;
@@ -44871,12 +44947,12 @@ function renderAttackKeyOverlay(){
       pos==="L"?[["DIGS",stats.digs],["RECEPTIONS",stats.receptions],["ASSISTS",stats.assists]]:
       pos==="M"?[["BLOCKS",stats.blocks],["KILLS",stats.kills],["ACES",stats.aces]]:
       [["KILLS",stats.kills],["BLOCKS",stats.blocks],["ACES",stats.aces]];
-    setOverlay(`<div class="rta62OverlayShell rta102ResultShell ${won?"win":"loss"}">
+    setOverlay(`<div class="rta62OverlayShell rta102ResultShell ${won?"win":"loss"} ${intl?"international":""}">
       <div class="rta102Confetti" id="rta102Confetti"></div>
       <section class="rta102ResultHero" data-rta102-settle>
         <div class="rta102ResultGlow"></div>
-        <small>${intl?"INTERNATIONAL · ":"MATCH COMPLETE · "}${esc(m.opponent||"OPPONENT")}</small>
-        <h1>${won?"VICTORY":"FULL TIME"}</h1>
+        <small>${intl?`${esc(intlCompetition)} · ${esc(intlStage)} · `:"MATCH COMPLETE · "}${esc(m.opponent||"OPPONENT")}</small>
+        <h1>${esc(intlHeadline)}</h1>
         <div class="rta102Score">${Number(m.sets_for||0)}<i>–</i>${Number(m.sets_against||0)}</div>
         <div class="rta102RatingOrb"><span>MATCH RATING</span><b id="rta102RatingNumber">5.0</b><small>${esc(perf.label||"PERFORMANCE")}</small></div>
         ${milestones.length?`<div class="rta102Milestones">${milestones.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
@@ -44951,7 +45027,31 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta76-save-manager]")){showSaveManager();return}
     const switchSave=e.target.closest?.("[data-rta76-switch-save]");if(switchSave){switchCareerSave(switchSave.dataset.rta76SwitchSave);return}
     const deleteSave=e.target.closest?.("[data-rta76-delete-save]");if(deleteSave){deleteCareerSave(deleteSave.dataset.rta76DeleteSave);return}
-    const view=e.target.closest?.("[data-rta62-view]");if(view){const next=String(view.dataset.rta62View||"home");S.view=next;if(next==="rankings")S.leaderboardLoaded=false;if(next==="train"){S.overlay=null;S.feedback=null;}if(next==="agent")rta257MarkAgentRead(S.career);render();rta316WarmView(next);return}
+    const view=e.target.closest?.("[data-rta62-view]");if(view){
+      const next=String(view.dataset.rta62View||"home");
+      /* 316A: MATCH is contextual. During active international duty the global
+         Match button opens the current national-team match hub directly instead
+         of sending the player to the empty/club match screen first. */
+      let intlMatch=false;
+      if(next==="match"){
+        try{intlMatch=!!window.ACE_INTERNATIONAL_UI_315H?.activeInternational?.(S.career)}catch(_){intlMatch=false}
+        if(!intlMatch){
+          const w=S.career?.international_window||{},stage=String(w.stage||"");
+          intlMatch=!!(S.career?.season_complete&&stage&&stage!=="COMPLETE");
+        }
+      }
+      if(intlMatch){
+        S.view="career";
+        S.careerPanel="international";
+        render();
+        return
+      }
+      S.view=next;
+      if(next==="rankings")S.leaderboardLoaded=false;
+      if(next==="train"){S.overlay=null;S.feedback=null;}
+      if(next==="agent")rta257MarkAgentRead(S.career);
+      render();rta316WarmView(next);return
+    }
     const pos=e.target.closest?.("[data-rta62-pos]");if(pos){S.createPos=pos.dataset.rta62Pos;renderCreate(q("#rta62Mount"));return}
     if(e.target.closest?.("[data-rta62-retry]")){loadState();return}
     if(e.target.closest?.("[data-rta62-account]")){q("#vdsAccountOpenBtn")?.click();return}
@@ -47383,9 +47483,8 @@ height:20px!important;} #roadtoace .rta92TableCard .rta62ClubCell b{min-width:0!
     if(c.season_complete)return `<main class="rta93Match"><section class="rta78SeasonDone"><small>SEASON COMPLETE</small><h1>The season is over.</h1><p>Review the year before deciding what comes next.</p><button class="rta62Btn primary" data-rta62-view="career">OPEN CAREER →</button></section></main>`;
     const h=latestMatch(),ready=readiness(c),oppFallback=nextOpponent(),rank=leagueRank(),selState=S.selection||{},sel=selState.user||{},status=String(sel.selection_status||c.squad_role||"BENCH"),opp=String(selState.opponent||sel.opponent||oppFallback),rival=sel.direct_rival||null,coach=String(sel.coach_name||S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach"),leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League"),training=Number(c.training_used||0),playerTarget=posLabel(c.position)==="S"?"CONTROL THE OFFENCE":posLabel(c.position)==="L"?"OWN FIRST CONTACT":posLabel(c.position)==="M"?"WIN THE NET":"WIN YOUR ATTACKING MOMENTS",actionLabel=S.activeKey?"RESUME MATCH":rta88SelectionAction(status),story=(sel.reason_text||"Your form, quality and system fit decide your match role.");
     return `<main class="rta93Match">
-      <section class="rta93MatchHero ace241MatchHero"><div class="rta93MatchTop ace241MatchTop"><small>NEXT FIXTURE · MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)} · ${esc(leagueName)}</small><span>${training}/2 training · ${rank?`league #${rank}`:"season"}</span></div><div class="ace241MatchBanner"><article class="ace241Team home">${rta77ClubLogo(c.club_name,"lg")}<small>HOME</small><h1>${esc(c.club_name)}</h1><p>${esc(c.squad_role)} · ${Number(c.overall)} OVR</p></article><div class="ace241Center"><small>NEXT MATCH</small><strong>VS</strong><p>${esc(playerTarget)}</p></div><article class="ace241Team away">${rta77ClubLogo(opp,"lg")}<small>AWAY</small><h1>${esc(opp)}</h1><p>${esc(coach)} · OPPOSITION</p></article></div><div class="ace241MatchChips"><span>${ready}% READY</span><span>${esc(status)}</span><span>${rank?`LEAGUE #${rank}`:`MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)}`}</span></div></section>
-      <section class="rta93MatchStatus ${rta88SelectionTone(status)}"><div><small>TEAM SELECTION</small><h2>${esc(rta88SelectionTitle(status))}</h2><p>${esc(story)}</p></div><div class="rta93MatchStatusMeta"><span><b>${ready}%</b>READY</span><span><b>#${Number(sel.rank||1)}</b>DEPTH</span><span><b>${Number(sel.selection_score||0).toFixed(1)}</b>SELECT</span></div></section>
-      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
+      <section class="rta93MatchHero ace241MatchHero"><div class="rta93MatchTop ace241MatchTop"><small>NEXT FIXTURE · MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)} · ${esc(leagueName)}</small><span>${training}/2 training · ${rank?`league #${rank}`:"season"}</span></div><div class="ace241MatchBanner"><article class="ace241Team home">${rta77ClubLogo(c.club_name,"lg")}<small>HOME</small><h1>${esc(c.club_name)}</h1><p>${esc(c.squad_role)} · ${Number(c.overall)} OVR</p></article><div class="ace241Center"><small>NEXT MATCH</small><strong>VS</strong></div><article class="ace241Team away">${rta77ClubLogo(opp,"lg")}<small>AWAY</small><h1>${esc(opp)}</h1><p>${esc(coach)} · OPPOSITION</p></article></div><div class="ace241MatchChips"><span>${ready}% READY</span><span>${esc(status)}</span><span>${rank?`LEAGUE #${rank}`:`MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)}`}</span></div></section>
+      <section class="rta93MatchActionArea ace316bLeanMatchActions"><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
     </main>`;
   };
   window.ACE_MATCHDAY_REDESIGN_JS_BUILD='B21.36.241';
@@ -47413,13 +47512,12 @@ height:20px!important;} #roadtoace .rta92TableCard .rta62ClubCell b{min-width:0!
         <div class="ace244MatchTop"><small>NEXT FIXTURE · MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)} · ${esc(leagueName)}</small><span>${training}/2 training · ${rank?`league #${rank}`:"season"}</span></div>
         <div class="ace244MatchBody">
           <article class="ace244MatchTeam home">${rta77ClubLogo(c.club_name,"lg")}<small>HOME</small><h1>${esc(c.club_name)}</h1><p>${esc(c.squad_role)} · ${Number(c.overall)} OVR</p></article>
-          <div class="ace244MatchMid"><em>NEXT MATCH</em><strong>VS</strong><b>${esc(playerTarget)}</b><span>${esc(story)}</span></div>
+          <div class="ace244MatchMid"><em>NEXT MATCH</em><strong>VS</strong></div>
           <article class="ace244MatchTeam away">${rta77ClubLogo(opp,"lg")}<small>AWAY</small><h1>${esc(opp)}</h1><p>${esc(coach)} · OPPOSITION</p></article>
         </div>
         <div class="ace244MatchFooter"><span class="ace244MatchPill">${ready}% READY</span><span class="ace244MatchPill">${esc(status)}</span><span class="ace244MatchPill">${rank?`LEAGUE #${rank}`:`MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)}`}</span></div>
       </section>
-      <section class="rta93MatchStatus ${rta88SelectionTone(status)}"><div><small>TEAM SELECTION</small><h2>${esc(rta88SelectionTitle(status))}</h2><p>${esc(story)}</p></div><div class="rta93MatchStatusMeta"><span><b>${ready}%</b>READY</span><span><b>#${Number(sel.rank||1)}</b>DEPTH</span><span><b>${Number(sel.selection_score||0).toFixed(1)}</b>SELECT</span></div></section>
-      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
+      <section class="rta93MatchActionArea ace316bLeanMatchActions"><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
     </main>`;
   };
   window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.293';
@@ -50162,7 +50260,7 @@ function results(w){
  return a.map(r=>`<div class="aceIntlResultRow ${r.won?'':'loss'}"><strong>${r.won?'W':'L'}</strong><div><small>${esc(r.stage||'GROUP')} · ${esc(r.approach)}</small><b>${esc(r.opponent)}</b></div><span>${Number(r.sets_for)}–${Number(r.sets_against)}</span></div>`).join('');
 }
 function approachButtons(stage){
- return `<div class="ace311cMatchActions"><button class="aceIntlPrimary ace311cPlay" data-intl-play><b>▶ PLAY MATCH</b></button><button class="ace311cSim" data-intl-match="TACTICAL"><b>SIM MATCH</b></button></div>`;
+ return `<div class="ace311cMatchActions ace316dIntlPlayOnly"><button class="aceIntlPrimary ace311cPlay" data-intl-play><b>▶ PLAY MATCH</b></button></div>`;
 }
 function path(stage){
  const order=['CAMP','GROUP','SEMIFINAL','FINAL','COMPLETE'],i=Math.max(0,order.indexOf(stage));
@@ -50206,7 +50304,7 @@ function resultPopup(r,w){
  resultModal.innerHTML=`<section class="aceIntlResultStage ${champ?'ace307ResultChampion':''}"><small>${final?'CHAMPIONSHIP FINAL':semi?'KNOCKOUT STAGE':'GROUP STAGE'} · FULL TIME</small><h2 class="${r.won?'win':'loss'}">${champ?'🏆 CHAMPIONS':r.won?(semi?'FINAL BOUND':'VICTORY'):(final?'RUNNERS-UP':semi?'ELIMINATED':'DEFEAT')}</h2><div class="aceIntlResultScore">${Number(r.sets_for)}–${Number(r.sets_against)}</div><p>vs ${esc(r.opponent)} · ${esc(r.approach)} approach</p>${champ?'<div class="ace307MiniTrophy">THE TITLE IS YOURS.</div>':''}<button type="button" class="aceIntlPrimary" data-intl-result-close>${w?.stage==='COMPLETE'?'VIEW TOURNAMENT REVIEW':'CONTINUE →'}</button></section>`;resultModal.classList.add('show');
 }
 document.addEventListener('click',async e=>{
- const start=e.target.closest?.('[data-intl-start-window]'),camp=e.target.closest?.('[data-intl-camp]'),play=e.target.closest?.('[data-intl-play]'),match=e.target.closest?.('[data-intl-match]'),back=e.target.closest?.('[data-intl-back-career]');
+ const start=e.target.closest?.('[data-intl-start-window]'),camp=e.target.closest?.('[data-intl-camp]'),play=e.target.closest?.('[data-intl-play]'),back=e.target.closest?.('[data-intl-back-career]');
  if(back){
    e.preventDefault();
    const st=S();
@@ -50218,13 +50316,12 @@ document.addEventListener('click',async e=>{
    setTimeout(()=>{try{window.ACE_OFFSEASON_TRANSFER_V311?.open?.()}catch(err){console.warn('ACE 315F contract handoff failed',err)}},120);
    return
  }
- if(!start&&!camp&&!play&&!match)return;
+ if(!start&&!camp&&!play)return;
  if(play){e.preventDefault();try{await window.ACE_RTA_START_INTL_MATCH?.()}catch(err){setStatus(String(err?.message||err||'Could not start international match.'),true)}return}
  e.preventDefault();if(busy)return;busy=true;road()?.querySelectorAll('.aceIntlWindow button').forEach(b=>b.disabled=true);
  try{
    if(start){setStatus('Opening national-team camp…');await sync(await rpc('vds_rta_start_international_window',{p_role:selection()?.role||'ROTATION'}));}
    else if(camp){setStatus('Completing camp session…');await sync(await rpc('vds_rta_complete_international_camp',{p_focus:camp.dataset.intlCamp}));}
-   else if(match){const stage=currentWindow(career())?.stage||'MATCH';setStatus(stage==='FINAL'?'Playing the championship final…':stage==='SEMIFINAL'?'Playing the semifinal…':'Playing group-stage match…');const d=await rpc('vds_rta_play_international_match',{p_approach:match.dataset.intlMatch});await sync(d);if(d?.result)resultPopup(d.result,d.window);}
  }catch(err){setStatus(String(err?.message||err||'International tournament request failed.'),true)}
  finally{busy=false;road()?.querySelectorAll('.aceIntlWindow button').forEach(b=>b.disabled=false)}
 },true);
@@ -50780,5 +50877,124 @@ window.ACE_PROJECT_BUILD='B21.36.315L';window.ACE_INTERNATIONAL_UI_315H={flag,op
 window.ACE_PROJECT_BUILD="B21.36.316";
 window.ACE_RTA_PERFORMANCE_BUILD="B21.36.316";
 </script>
+
+<script id="ace316a-contextual-match-nav-build">window.ACE_CONTEXTUAL_MATCH_NAV_BUILD="B21.36.316A";window.ACE_PROJECT_BUILD="B21.36.316A";</script>
+
+<style id="ace316b-lean-club-match-ui">
+#roadtoace .ace316bLeanMatchActions{display:block!important}
+#roadtoace .ace316bLeanMatchActions .rta93MatchButtons{
+  width:100%!important;max-width:none!important;display:grid!important;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)!important;gap:10px!important
+}
+#roadtoace .ace316bLeanMatchActions .rta93MatchButtons>button{width:100%!important;min-width:0!important}
+@media(max-width:520px){
+  #roadtoace .ace316bLeanMatchActions .rta93MatchButtons{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)!important}
+}
+</style>
+<script id="ace316b-lean-club-match-build">
+window.ACE_CLUB_MATCH_LEAN_UI_BUILD="B21.36.316B";
+window.ACE_PROJECT_BUILD="B21.36.316B";
+</script>
+
+
+<style id="ace316c-international-presentation-css">
+#ace316cIntlWalkout{position:fixed;inset:0;z-index:2147483640;display:none;place-items:center;background:
+radial-gradient(circle at 50% 36%,rgba(38,139,210,.22),transparent 34%),
+linear-gradient(180deg,#02070d 0%,#04111d 56%,#02070d 100%);color:#fff}
+#ace316cIntlWalkout.show{display:grid;animation:ace316cFade .18s ease-out}
+.ace316cWalkoutInner{width:min(680px,92vw);text-align:center}
+.ace316cWalkoutComp{font-size:10px;font-weight:1000;letter-spacing:.22em;color:#7fb9e5}
+.ace316cWalkoutStage{margin-top:8px;font-size:8px;font-weight:1000;letter-spacing:.18em;color:#d9b85d}
+.ace316cWalkoutTeams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;margin:34px 0 28px}
+.ace316cWalkoutTeam{display:grid;justify-items:center;gap:10px}
+.ace316cWalkoutFlag{font-size:62px;line-height:1}
+.ace316cWalkoutTeam b{font-size:24px;letter-spacing:-.03em}
+.ace316cWalkoutVs{font-size:25px;font-weight:1000;color:#d9b85d}
+.ace316cWalkoutLine{font-size:13px;font-weight:1000;letter-spacing:.16em}
+.ace316cWalkoutLine.final{font-size:17px;color:#f0d57d}
+.ace316cWalkoutSub{margin-top:8px;color:#6e8498;font-size:8px;font-weight:900;letter-spacing:.12em}
+.ace316cOverlayBadges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px}
+.ace316cPressureBadge{display:inline-flex;padding:5px 8px;border:1px solid rgba(226,190,90,.32);border-radius:999px;background:rgba(226,190,90,.09);color:#e8c966;font-size:6px;font-weight:1000;letter-spacing:.12em}
+.rta102ResultShell.international .rta102ResultHero{background:
+radial-gradient(circle at 50% 0,rgba(223,185,77,.13),transparent 40%),
+linear-gradient(180deg,rgba(5,20,34,.98),rgba(3,12,21,.98))}
+@keyframes ace316cFade{from{opacity:0}to{opacity:1}}
+@media(max-width:520px){
+ .ace316cWalkoutTeams{gap:8px}.ace316cWalkoutFlag{font-size:48px}.ace316cWalkoutTeam b{font-size:19px}
+}
+</style>
+<script id="ace316c-international-presentation">
+(()=>{
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const esc=s=>String(s??"").replace(/[&<>"\']/g,m=>m==="&"?"&amp;":m==="<"?"&lt;":m===">"?"&gt;":m===String.fromCharCode(34)?"&quot;":"&#39;");
+  function flag(name){
+    try{return window.ACE_INTERNATIONAL_UI_315H?.flag?.(name)?.replace(/^.*?>|<\/span>$/g,"")||"🏐"}catch(_){return"🏐"}
+  }
+  function opponent(c,w){
+    if(String(w?.stage||"")==="GROUP"){
+      const f=Array.isArray(w?.fixtures)?w.fixtures:[];
+      return f[Number(w?.match_index||0)]||"Opponent";
+    }
+    return w?.knockout?.opponent||"Opponent";
+  }
+  function ensure(){
+    let el=document.getElementById("ace316cIntlWalkout");
+    if(el)return el;
+    el=document.createElement("div");el.id="ace316cIntlWalkout";document.body.appendChild(el);return el;
+  }
+  async function walkout(c){
+    const w=c?.international_window||{},stage=String(w.stage||"GROUP").toUpperCase(),opp=opponent(c,w);
+    api.currentStage=stage;
+    const el=ensure(),comp=String(w.competition||"INTERNATIONAL");
+    const line=stage==="FINAL"?"FOR THE TITLE":stage==="SEMIFINAL"?"WIN AND YOU'RE IN THE FINAL":"REPRESENT YOUR COUNTRY";
+    el.innerHTML=`<div class="ace316cWalkoutInner">
+      <div class="ace316cWalkoutComp">${esc(comp)}</div>
+      <div class="ace316cWalkoutStage">${esc(stage==="SEMIFINAL"?"SEMIFINAL":stage)}</div>
+      <div class="ace316cWalkoutTeams">
+        <div class="ace316cWalkoutTeam"><span class="ace316cWalkoutFlag">${flag(c?.nationality)}</span><b>${esc(c?.nationality||"YOUR COUNTRY")}</b></div>
+        <div class="ace316cWalkoutVs">VS</div>
+        <div class="ace316cWalkoutTeam"><span class="ace316cWalkoutFlag">${flag(opp)}</span><b>${esc(opp)}</b></div>
+      </div>
+      <div class="ace316cWalkoutLine ${stage==="FINAL"?"final":""}">${esc(line)}</div>
+      <div class="ace316cWalkoutSub">${stage==="FINAL"?"CHAMPIONSHIP MATCH":stage==="SEMIFINAL"?"KNOCKOUT VOLLEYBALL":"NATIONAL TEAM DUTY"}</div>
+    </div>`;
+    el.classList.add("show");
+    if(navigator.vibrate)try{navigator.vibrate(stage==="FINAL"?[25,45,25]:20)}catch(_){}
+    await sleep(stage==="FINAL"?1900:1450);
+    el.classList.remove("show");
+    await sleep(170);
+  }
+  const api={walkout,currentStage:"GROUP"};
+  window.ACE_INTL_PRESENTATION_316C=api;
+  window.ACE_PROJECT_BUILD="B21.36.316C";
+})();
+</script>
+
+
+<style id="ace316d-international-play-only-css">
+#roadtoace .ace316dIntlPlayOnly{display:block!important}
+#roadtoace .ace316dIntlPlayOnly .ace311cPlay{width:100%!important;min-height:58px!important}
+</style>
+<script id="ace316d-international-play-only-build">
+window.ACE_INTERNATIONAL_PLAY_ONLY=true;
+window.ACE_PROJECT_BUILD="B21.36.316D";
+</script>
+
+
+<style id="ace316e-skill-depth-css">
+#roadtoace .aceSt2Step.specialization .aceSt2Node{border-color:rgba(187,126,255,.28);background:linear-gradient(135deg,rgba(39,20,62,.88),rgba(9,23,36,.96))}
+#roadtoace .aceSt2Step.specialization.available .aceSt2Node{box-shadow:0 0 0 1px rgba(187,126,255,.12),0 12px 28px rgba(0,0,0,.16)}
+#roadtoace .aceSt2Step.specialization .aceSt2Kind{color:#c9a0ff}
+#roadtoace .ace316eMechanic{display:grid!important;gap:3px!important;margin-top:8px!important;padding:7px 9px!important;border-radius:9px!important;background:rgba(5,14,22,.46)!important}
+#roadtoace .ace316eMechanic i{font-style:normal!important;font-size:6px!important;letter-spacing:.13em!important;color:#76c7ff!important}
+#roadtoace .ace316eMechanic span{font-size:8px!important;line-height:1.35!important;color:#b9cad7!important;font-weight:750!important}
+#roadtoace .aceSt2Step.hybrid .ace316eMechanic i{color:#e3c76e!important}
+#roadtoace .aceSt2Step.specialization .ace316eMechanic i{color:#c9a0ff!important}
+</style>
+<script id="ace316e-skill-depth-build">
+window.ACE_SKILL_TREE_DEPTH_BUILD="B21.36.316E";
+window.ACE_PROJECT_BUILD="B21.36.316E";
+</script>
+
 </body>
 </html>
