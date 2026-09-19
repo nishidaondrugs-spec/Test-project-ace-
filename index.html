@@ -43821,7 +43821,10 @@ function renderAttackKeyOverlay(){
     qa(".ace320SettingStage span").forEach((el,i)=>el.classList.toggle("active",i===index));
   }
   function ace320SetTargetPoint(){
-    return {OH:{x:.18,y:.39},QUICK:{x:.47,y:.36},OP:{x:.82,y:.39},PIPE:{x:.50,y:.55}}[String(skillSetCall||"QUICK").toUpperCase()]||{x:.47,y:.36};
+    /* B21.36.322 — setter and hitters are on the SAME side of the net.
+       Net is ~49%; front-row attackers sit just inside our front court,
+       pipe is deeper in our back court. */
+    return {OH:{x:.20,y:.61},QUICK:{x:.50,y:.56},OP:{x:.80,y:.61},PIPE:{x:.50,y:.72}}[String(skillSetCall||"QUICK").toUpperCase()]||{x:.50,y:.56};
   }
   function ace320DesiredSetVector(){
     const court=q("#rta102SkillCourt"),r=court?.getBoundingClientRect(),to=ace320SetTargetPoint();
@@ -43932,6 +43935,7 @@ function renderAttackKeyOverlay(){
         <div class="rta102SceneCol ace318Receive2SceneCol ace319Receive2SceneCol ace320UnifiedScene">${rta102ReceiveScene(rep)}</div>
         <aside class="rta102SkillSide ace318Receive2Side ace319Receive2Side ace320UnifiedSide">
           <div class="ace318ReceiveIntro"><small>FIRST CONTACT · ${esc(rep.ball_type||"SERVE")}</small><h2>Own the pass.</h2><p>${esc(rep.cue||"Read the serve, move behind it, platform the ball, then aim the pass into the setter window.")}</p></div>
+          ${ace321PlaystyleChip("RECEIVE")}
           <div class="ace318ReceiveSteps ace319ReceiveSteps"><div><small>1 · READ</small><b>TRACK THE SERVE</b></div><div><small>2 · MOVE</small><b>BEAT THE BALL</b></div><div><small>3 · PLATFORM</small><b>CONTACT</b></div><div><small>4 · AIM</small><b>${rta102IsTouch()?"SWIPE TO SETTER":"DIRECTION KEYS"}</b></div></div>
           <div class="rta102ControlLine ace318ReceiveControls"><b>${rta102IsTouch()?"DRAG":"WASD"}</b><span>MOVE</span><i>→</i><b>${rta102IsTouch()?"TAP":"SPACE"}</b><span>CONTACT</span><i>→</i><b>${rta102IsTouch()?"SWIPE":"WASD / ARROWS"}</b><span>AIM</span></div>
           <button type="button" class="rta102ContactBtn ace318ReceiveContact" data-rta102-contact><span>👐</span><b>PLATFORM CONTACT</b><small>THEN AIM THE PASS</small></button>
@@ -43958,6 +43962,7 @@ function renderAttackKeyOverlay(){
         <div class="rta102SceneCol ace320UnifiedScene">${rta102SettingScene(rep,target)}</div>
         <aside class="rta102SkillSide ace320UnifiedSide ace320SettingSide">
           <div class="ace320TechIntro"><small>SECOND CONTACT · SETTING</small><h2>Run the offence.</h2><p>${esc(rep.cue||`Get under the pass, make clean contact, then flick the ball to ${meta.label}.`)}</p></div>
+          ${ace321PlaystyleChip("SETTING")}
           <div class="ace320TechSteps"><div><small>1 · READ</small><b>TRACK PASS</b></div><div><small>2 · MOVE</small><b>GET UNDER IT</b></div><div><small>3 · CONTACT</small><b>SET WINDOW</b></div><div><small>4 · AIM</small><b>${rta102IsTouch()?"FLICK":"DIRECTION KEYS"}</b></div></div>
           <button type="button" class="rta102ContactBtn setting ace320RoundAction ace320SettingContact" data-rta102-contact><span>◇</span><b>SET CONTACT</b><small>THEN AIM TO ${esc(meta.label)}</small></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_reps||8)},(_,i)=>`<i class="${i<Number(d.rep_no)-1?"done":""}"></i>`).join("")}</div>
@@ -44029,19 +44034,18 @@ function renderAttackKeyOverlay(){
     return pre;
   }
   function ace316fBlockScene(m){
-    return `<div class="aceBlockV2Scene" id="ace316fBlockScene">
-      <div class="aceBlockV2Stands"></div>
-      <div class="aceBlockV2Court"></div>
-      <div class="aceBlockV2Net"><i></i></div>
-      <div class="aceBlockV2Setter" id="ace316fSetter"><span></span><b>S</b><i></i></div>
-      <div class="aceBlockV2Hitter left" data-block-lane="left"><span></span><b>OH</b></div>
-      <div class="aceBlockV2Hitter middle" data-block-lane="middle"><span></span><b>M</b></div>
-      <div class="aceBlockV2Hitter right" data-block-lane="right"><span></span><b>OP</b></div>
-      <div class="aceBlockV2Ball" id="ace316fBlockBall"></div>
+    return `<div class="aceBlockV2Scene ace320BlockScene ace323BlockScene ace323BlockKeyScene" id="ace316fBlockScene">
+      <div class="aceHitStands"></div>
+      <div class="aceHitCourt ace323BlockCourt"></div>
+      <div class="aceHitNet ace323BlockNet"></div>
+      <div class="aceBlockV2Setter ace323BlockActor ace323Setter" id="ace316fSetter"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i></div>
+      <div class="aceBlockV2Hitter ace323BlockActor ace323Opponent left" data-block-lane="left"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i></div>
+      <div class="aceBlockV2Hitter ace323BlockActor ace323Opponent middle" data-block-lane="middle"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i></div>
+      <div class="aceBlockV2Hitter ace323BlockActor ace323Opponent right" data-block-lane="right"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i></div>
+      <div class="aceBlockV2Ball ace323BlockBall" id="ace316fBlockBall"></div>
       <div class="aceBlockV2Target" id="ace316fBlockTarget"><i></i><b>READ</b></div>
-      <div class="aceBlockV2Player" id="ace316fBlocker"><div class="hands"><i></i><i></i></div><span></span><b>YOU</b></div>
-      <div class="aceBlockV2Prompt" id="ace316fBlockPrompt">READ THE SETTER</div>
-      <div class="aceBlockV2StageHUD"><span class="active" data-block-stage="read">1 · READ</span><span data-block-stage="close">2 · CLOSE</span><span data-block-stage="press">3 · PRESS</span></div>
+      <div class="aceBlockV2Player ace323BlockActor ace323UserBlocker" id="ace316fBlocker"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitArms"></i><i class="aceHitLegs"></i><div class="ace323You">YOU</div></div>
+      <div class="aceBlockV2Prompt ace323BlockPrompt" id="ace316fBlockPrompt">READ THE SETTER</div>
       <div class="aceBlockV2Ability" id="ace316fBlockAbility"></div>
       <div class="aceBlockV2TouchZones"><button data-ace316f-block-nudge="-1">‹</button><button data-ace316f-block-nudge="1">›</button></div>
     </div>`;
@@ -44106,7 +44110,7 @@ function renderAttackKeyOverlay(){
         const b=target.querySelector("b");if(b)b.textContent=revealed?ace316fBlockLane(blockMatchTarget):"READ";
       }
       const setter=q("#ace316fSetter");
-      if(setter)setter.style.transform=`translateX(-50%) rotate(${revealed?(blockMatchTarget-.5)*18:Math.sin(t*18)*1.5}deg)`;
+      if(setter)setter.style.transform=`translate(-50%,-50%) rotate(${revealed?(blockMatchTarget-.5)*18:Math.sin(t*18)*1.5}deg)`;
       const ball=q("#ace316fBlockBall");
       const arc=Math.sin(Math.PI*clamp((t-revealAt)/Math.max(.15,1-revealAt),0,1));
       const bx=revealed?.5+(blockMatchTarget-.5)*clamp((t-revealAt)/.45,0,1):.5;
@@ -44154,27 +44158,21 @@ function renderAttackKeyOverlay(){
     cleanupRaf();
     const opts=Array.isArray(m.options)?m.options:[];
     const proc=String(window.ACE316F_BLOCK_EXEC_LABEL||"");window.ACE316F_BLOCK_EXEC_LABEL="";
-    setOverlay(`<div class="rta62OverlayShell aceBlockV2Shell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)}`)}
-      <div class="aceBlockV2Body">
-        ${ace316fBlockScene(m)}
-        <aside class="aceBlockV2Panel">
+    setOverlay(`<div class="rta62OverlayShell aceBlockV2Shell ace320TechShell ace320BlockShell ace321KeyBlockShell ace323BlockShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)}`)}
+      <div class="aceBlockV2Body ace321KeyBlockBody ace323BlockBody">
+        <div class="ace323BlockSceneWrap">${ace316fBlockScene(m)}</div>
+        <aside class="aceBlockV2Panel ace320UnifiedSide ace320BlockSide ace321KeyBlockSide ace323BlockPanel">
           <div class="aceBlockV2PanelTop"><small>${esc(m.context||"BLOCKING")}</small><b>${esc(m.title||"READ THE SETTER")}</b><span>${esc(m.cue||"Read the setter and close the hitter.")}</span></div>
-          <div class="aceBlockV2StageTitle">1 · MAKE THE READ</div>
-          ${ace316fBlockButtons(opts)}
-          <div class="aceBlockV2Execution">
-            <div><small>2 · CLOSE</small><b>MOVE WITH THE SET</b></div>
-            <div><small>3 · PRESS</small><b>JUMP WITH THE HITTER</b></div>
-          </div>
-          <button type="button" class="aceBlockV2Press" data-ace316f-block-press disabled><span>✋</span><b>PRESS BLOCK</b></button>
+          ${ace321PlaystyleChip("BLOCK")}
+          <div class="ace323BlockSteps"><span class="active" data-block-stage="read">1 · READ</span><span data-block-stage="close">2 · CLOSE</span><span data-block-stage="press">3 · PRESS</span></div>
+          <div class="aceBlockV2Reads">${(opts||[]).map(o=>{const id=String(o.id||o),meta=ace316fBlockChoiceMeta(id);return `<button type="button" data-rta97-block="${esc(id)}"><i>${esc(meta[2])}</i><span><b>${esc(o.label||meta[0])}</b><small>${esc(o.desc||meta[1])}</small></span></button>`}).join("")}</div>
+          <button type="button" class="aceBlockV2Press ace323BlockPress" data-ace316f-block-press disabled><span>✋</span><b>PRESS BLOCK</b></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_moments||5)},(_,i)=>`<i class="${i<Number(d.moment_no)-1?"done":""}"></i>`).join("")}</div>
-          <div class="aceBlockV2Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${esc([proc,S.feedback?.text||"Read first. Close second. Press over the net at contact."].filter(Boolean).join(" · "))}</div>
+          <div class="aceBlockV2Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${esc([proc,S.feedback?.text||"Read first. Close second. Press at contact."].filter(Boolean).join(" · "))}</div>
         </aside>
       </div></div>`,"key");
     ace316fMoveBlocker(.5);
   }
-
-  // Legacy entry point retained for old handlers; Blocking 2.0 now starts
-  // an execution sequence instead of auto-resolving the choice.
   function rta97ResolveBlock(choice){ace316fStartBlock(choice)}
 
   function rta107IsQuickMoment(m){
@@ -44360,18 +44358,29 @@ function renderAttackKeyOverlay(){
   }
   function rta112BlockScene(rep){
     const tx=clamp(Number(rep?.target_x||.5),.18,.82);
-    return `<div class="rta112BlockCourt" id="rta112BlockCourt">
-      <div class="rta112Arena"></div><div class="rta112CourtFloor"></div><div class="rta112BlockNet"><i></i></div>
-      <div class="rta112Setter"><span></span><b>S</b></div>
-      <div class="rta112BlockHitters"><span class="left">OH</span><span class="mid">M</span><span class="right">OP</span></div>
-      <div class="rta112BlockTarget" id="rta112BlockTarget" style="left:${tx*100}%"><i></i><b>${rta112BlockLaneLabel(tx)}</b></div>
-      <div class="rta112BlockBall" id="rta112BlockBall"></div>
-      <div class="rta112TrainBlocker" id="rta112TrainBlocker" style="left:50%;top:70%">
-        <div class="rta112TrainHands"><i></i><i></i></div><span></span><b>YOU</b>
+    return `<div class="rta112BlockCourt ace323BlockScene" id="rta112BlockCourt">
+      <div class="aceHitStands"></div>
+      <div class="aceHitCourt ace323BlockCourt"></div>
+      <div class="aceHitNet ace323BlockNet"></div>
+      <div class="rta112Setter ace323BlockActor ace323Setter">
+        <i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i>
       </div>
-      <div class="rta112DrillPrompt" id="rta112BlockPrompt">READ THE SET</div>
-      ${rta112IsTouch()?`<div class="rta112TouchMove">DRAG / TAP TO MOVE</div>`:`<div class="rta112WasdHint"><b>WASD</b><span>MOVE</span><b>SPACE</b><span>JUMP</span></div>`}
+      <div class="rta112BlockHitters ace323BlockHitters">
+        <span class="left ace323BlockActor ace323Opponent"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i></span>
+        <span class="mid ace323BlockActor ace323Opponent"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i></span>
+        <span class="right ace323BlockActor ace323Opponent"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i></span>
+      </div>
+      <div class="rta112BlockTarget" id="rta112BlockTarget" style="left:${tx*100}%"><i></i><b>${rta112BlockLaneLabel(tx)}</b></div>
+      <div class="rta112BlockBall ace323BlockBall" id="rta112BlockBall"></div>
+      <div class="rta112TrainBlocker ace323BlockActor ace323UserBlocker" id="rta112TrainBlocker" style="left:50%;top:70%">
+        <i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitArms"></i><i class="aceHitLegs"></i><div class="ace323You">YOU</div>
+      </div>
+      <div class="rta112DrillPrompt ace323BlockPrompt" id="rta112BlockPrompt">READ THE SET</div>
+      ${rta112IsTouch()?`<div class="rta112TouchMove ace323MoveHint">DRAG TO CLOSE</div>`:`<div class="rta112WasdHint ace323MoveHint"><b>A / D</b><span>CLOSE</span><b>SPACE</b><span>PRESS</span></div>`}
     </div>`;
+  }
+  function ace323TrainBlockStage(stage){
+    qa('[data-block-training-stage]').forEach(x=>x.classList.toggle('active',x.dataset.blockTrainingStage===stage));
   }
   function rta112MoveBlocker(x,y=blockTrainY){
     blockTrainPos=clamp(Number(x),.12,.88);blockTrainY=clamp(Number(y),.58,.79);
@@ -44404,6 +44413,7 @@ function renderAttackKeyOverlay(){
       if(blockTrainKeys.w)blockTrainY-=mv*.55;if(blockTrainKeys.s)blockTrainY+=mv*.55;
       rta112MoveBlocker(blockTrainPos,blockTrainY);
       const t=clamp((now-blockTrainStart)/duration,0,1);blockTrainT=t;
+      ace323TrainBlockStage(t<.34?"read":t<.62?"close":"press");
       const ball=q("#rta112BlockBall"),prompt=q("#rta112BlockPrompt"),target=q("#rta112BlockTarget");
       const arc=Math.sin(Math.PI*t);
       const bx=.5+(tx-.5)*Math.min(1,t*1.12);
@@ -44427,7 +44437,7 @@ function renderAttackKeyOverlay(){
     const blockControl=(ace316eTier("TITAN",5,"M")||ace316eTier("TITAN",7,"M")||ace315aPowerRank("TITAN LOCK")>0)?.82:1;
     const timing=timedOut?1:clamp(.5+(t-ideal)*1.8*blockControl,0,1);
     const blocker=q("#rta112TrainBlocker"),prompt=q("#rta112BlockPrompt");
-    blocker?.classList.add("jump");
+    blocker?.classList.add("jump");ace323TrainBlockStage("press");
     if(prompt)prompt.textContent=timedOut?"MISSED":Math.abs(t-ideal)<.055?"ROOF IT!":t<ideal?"EARLY":"LATE";
     S.busy=true;
     try{
@@ -44447,23 +44457,22 @@ function renderAttackKeyOverlay(){
   function renderBlockingTrainingOverlay(){
     const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}
     cleanupRaf();
-    setOverlay(`<div class="rta62OverlayShell aceBlockV2Shell training ace320TechShell ace320BlockShell">${overlayTop(`BLOCKING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,String(rep.ball_type||"BLOCK"))}
-      <div class="aceBlockV2Body training">
-        <div class="aceBlockV2TrainingScene ace320BlockScene">${rta112BlockScene(rep)}<div class="aceBlockV2StageHUD training"><span class="active">1 · READ</span><span>2 · CLOSE</span><span>3 · PRESS</span></div></div>
-        <aside class="aceBlockV2Panel training ace320UnifiedSide ace320BlockSide">
+    setOverlay(`<div class="rta62OverlayShell aceBlockV2Shell training ace320TechShell ace320BlockShell ace323BlockShell">${overlayTop(`BLOCKING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,String(rep.ball_type||"BLOCK"))}
+      <div class="aceBlockV2Body training ace323BlockBody">
+        <div class="aceBlockV2TrainingScene ace320BlockScene ace323BlockSceneWrap">${rta112BlockScene(rep)}</div>
+        <aside class="aceBlockV2Panel training ace320UnifiedSide ace320BlockSide ace323BlockPanel">
           <div class="aceBlockV2PanelTop"><small>BLOCKING FOOTWORK</small><b>CLOSE WITH THE BALL</b><span>${esc(rep.cue||"Read the set, close the seam, then press over the net.")}</span></div>
-          <div class="aceBlockV2Execution">
-            <div><small>${rta112IsTouch()?"DRAG":"A / D"}</small><b>CLOSE THE LANE</b></div>
-            <div><small>${rta112IsTouch()?"TAP BUTTON":"SPACE"}</small><b>TIME THE PRESS</b></div>
-          </div>
-          <button type="button" class="aceBlockV2Press training" data-rta112-block-jump><span>✋</span><b>PRESS BLOCK</b></button>
+          ${ace321PlaystyleChip("BLOCK")}
+          <div class="ace323BlockSteps"><span class="active" data-block-training-stage="read">1 · READ</span><span data-block-training-stage="close">2 · CLOSE</span><span data-block-training-stage="press">3 · PRESS</span></div>
+          <div class="ace323BlockHelp"><b>CLOSE THE HITTER</b><span>${rta112IsTouch()?"Drag into the hitter's lane, then press at contact.":"Use A / D to close, then Space at contact."}</span></div>
+          <button type="button" class="aceBlockV2Press training ace323BlockPress" data-rta112-block-jump><span>✋</span><b>PRESS BLOCK</b></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_reps||8)},(_,i)=>`<i class="${i<Number(d.rep_no)-1?"done":""}"></i>`).join("")}</div>
-          <div class="aceBlockV2Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${esc(S.feedback?.text||"Track the set with your feet. Jump only after you have closed the hitter.")}</div>
+          <div class="aceBlockV2Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${esc(S.feedback?.text||"Read the set, close the lane, then press over the net.")}</div>
         </aside>
       </div></div>`,"training");
+    ace323TrainBlockStage("read");
     rta112StartBlockRep();
   }
-
   function rta112ReactionKey(rep){
     const x=Number(rep?.target_x||.5),y=Number(rep?.target_y||.5);
     if(Math.abs(x-.5)>.12)return x<.5?"a":"d";
@@ -45861,6 +45870,246 @@ function renderAttackKeyOverlay(){
     }
   });
 
+
+
+  /* B21.36.321 — shared technical Key Moments + skill-tree/playstyle gameplay */
+  let ace321KeyRep=null,ace321KeyMode="",ace321KeyMeta=null;
+
+  function ace321PathProgress(branch,pos=String(S.career?.position||"OH").toUpperCase()){
+    let highest=0,count=0;
+    for(let t=1;t<=9;t++)if(ace316eTier(branch,t,pos)){highest=t;count++}
+    const sig=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(n=>
+      String(n?.branch||"").toUpperCase()===String(branch||"").toUpperCase() &&
+      aceSt3NodeType(n)==="PLAYSTYLE" && ace316eOwned(n.id)
+    )||null;
+    return{branch:String(branch||"").toUpperCase(),highest,count,signature:sig};
+  }
+  function ace321ActiveTechnicalProfile(mode){
+    const m=String(mode||"").toUpperCase(),pos=String(S.career?.position||"OH").toUpperCase();
+    const primary=ace315aPrimary(),secondary=ace315aSecondary();
+    const candidates=m==="RECEIVE"?
+      (pos==="L"?["ANCHOR","FLOOR_HOUND","SHARINGAN","PLAYMAKER"]:pos==="OH"?["DEEP_COURT_GUARDIAN","LITTLE_GIANT"]:[]):
+      m==="SETTING"?
+      (pos==="S"?["MAESTRO","KYOKA_SUIGETSU","KINGS_GAMBIT","LIMITLESS"]:pos==="L"?["PLAYMAKER"]:[]):
+      m==="BLOCK"?
+      (pos==="M"?["ORACLE","TITAN","PHANTOM"]:pos==="OP"?["BLOCK_HUNTER","GREAT_WALL"]:[]):[];
+    let best=null;
+    candidates.forEach(b=>{
+      const p=ace321PathProgress(b,pos);
+      let score=p.highest+(p.signature?3:0)+(b===primary ? 1.5 : b===secondary ? .7 : 0);
+      if(!best||score>best.score)best={...p,score};
+    });
+    return best&&best.score>0?best:null;
+  }
+  function ace321TechnicalMods(mode){
+    const m=String(mode||"").toUpperCase(),p=ace321ActiveTechnicalProfile(m),mods={move:1,time:1,contact:0,aim:0,reveal:0,label:"",signature:""};
+    if(!p)return mods;
+    const r=Math.min(1,Math.max(0,p.highest/9)),sig=!!p.signature;
+    mods.label=pretty(p.branch);mods.signature=p.signature?.name||"";
+    if(m==="RECEIVE"){
+      if(p.branch==="ANCHOR"){mods.contact=.035+r*.025;mods.aim=.018+r*.018}
+      if(p.branch==="FLOOR_HOUND"){mods.move=1.07+r*.09;mods.contact=.012+r*.012}
+      if(p.branch==="SHARINGAN"){mods.time=1.05+r*.08;mods.reveal=.12+r*.12;mods.contact=.015+r*.018}
+      if(p.branch==="PLAYMAKER"){mods.aim=.045+r*.055;mods.contact=.012+r*.015}
+      if(p.branch==="DEEP_COURT_GUARDIAN"){mods.contact=.03+r*.03;mods.aim=.02+r*.02}
+      if(p.branch==="LITTLE_GIANT"){mods.move=1.05+r*.07;mods.time=1.02+r*.035}
+    }else if(m==="SETTING"){
+      if(p.branch==="MAESTRO"){mods.contact=.04+r*.045;mods.aim=.025+r*.035;mods.time=1.025+r*.025}
+      if(p.branch==="KYOKA_SUIGETSU"){mods.aim=.055+r*.065;mods.contact=.012+r*.015}
+      if(p.branch==="KINGS_GAMBIT"){mods.contact=.035+r*.035;mods.time=1.025+r*.035}
+      if(p.branch==="LIMITLESS"){mods.move=1.07+r*.08;mods.contact=.018+r*.02;mods.aim=.018+r*.02}
+      if(p.branch==="PLAYMAKER"){mods.aim=.04+r*.045;mods.contact=.025+r*.025}
+    }
+    if(sig){mods.contact+=.018;mods.aim+=.025;mods.move+=.025;mods.time+=.025}
+    return mods;
+  }
+  function ace321PlaystyleChip(mode){
+    const p=ace321ActiveTechnicalProfile(mode);if(!p)return"";
+    const detail=p.signature?.name||ace316gArchetypeTagline(p.branch);
+    return `<div class="ace321StyleChip"><i>★</i><span><small>${p.signature?"SIGNATURE ACTIVE":"BUILD EFFECT"}</small><b>${esc(pretty(p.branch))}</b><em>${esc(detail)}</em></span></div>`;
+  }
+
+  const ace321BasePrepareSkillRep=rta102PrepareSkillRep;
+  rta102PrepareSkillRep=function(mode,rep,target=""){
+    ace321BasePrepareSkillRep(mode,rep,target);
+    const mods=ace321TechnicalMods(mode);skillDuration*=mods.time;
+  };
+
+  const ace321BaseReceiveContactQuality=ace319ReceiveContactQuality;
+  ace319ReceiveContactQuality=function(t,posErr,ideal){
+    return clamp(ace321BaseReceiveContactQuality(t,posErr,ideal)+ace321TechnicalMods("RECEIVE").contact,0,1);
+  };
+  const ace321BaseReceiveAimQuality=ace319AimQuality;
+  ace319AimQuality=function(vec){return clamp(ace321BaseReceiveAimQuality(vec)+ace321TechnicalMods("RECEIVE").aim,0,1)};
+  const ace321BaseSetAimQuality=ace320SetAimQuality;
+  ace320SetAimQuality=function(vec){return clamp(ace321BaseSetAimQuality(vec)+ace321TechnicalMods("SETTING").aim,0,1)};
+
+  function ace321CurrentSkillRep(){return S.overlay==="key"?ace321KeyRep:S.training?.rep||{}}
+  rta102StartSkillLoop=function(){
+    if(skillRaf)cancelAnimationFrame(skillRaf);
+    skillStart=performance.now();skillLastFrame=skillStart;
+    const ideal=skillMode==="RECEIVE"?.86:.83,mods=ace321TechnicalMods(skillMode);
+    const tick=now=>{
+      if(!["training","key"].includes(String(S.overlay||""))||!skillMode||skillLocked)return;
+      const dt=Math.min(36,now-skillLastFrame);skillLastFrame=now;
+      const move=.00043*dt*mods.move;
+      if(skillKeys.w)skillPlayer.y-=move;if(skillKeys.s)skillPlayer.y+=move;
+      if(skillKeys.a)skillPlayer.x-=move;if(skillKeys.d)skillPlayer.x+=move;
+      rta102MovePlayerTo(skillPlayer.x,skillPlayer.y);
+      const t=clamp((now-skillStart)/skillDuration,0,1);skillFlight=t;
+      const rep=ace321CurrentSkillRep()||{},curve=Number(rep.curve||0);
+      const ball=q("#rta102SkillBall"),landing=q("#rta102Landing"),trail=q("#rta102Trail"),prompt=q("#rta102SkillPrompt");
+      const arc=Math.sin(Math.PI*t);
+      const x=skillStartBall.x+(skillPassTarget.x-skillStartBall.x)*t+(skillMode==="RECEIVE"?curve*arc*1.2:Math.sin(Math.PI*t*1.1)*.025);
+      const y=skillStartBall.y+(skillPassTarget.y-skillStartBall.y)*t-arc*.055;
+      if(ball){ball.style.left=(x*100)+"%";ball.style.top=(y*100)+"%";ball.style.transform=`translate(-50%,-50%) scale(${.72+t*.28})`}
+      if(trail){trail.style.setProperty("--sx",(skillStartBall.x*100)+"%");trail.style.setProperty("--sy",(skillStartBall.y*100)+"%");trail.style.setProperty("--tx",(x*100)+"%");trail.style.setProperty("--ty",(y*100)+"%");}
+      if(landing){landing.style.left=(skillPassTarget.x*100)+"%";landing.style.top=(skillPassTarget.y*100)+"%";landing.style.opacity=String(clamp((t-(.42-mods.reveal))*2.2,0,.78));}
+      const posErr=Math.hypot(skillPlayer.x-skillPassTarget.x,skillPlayer.y-skillPassTarget.y),posWindow=.13+mods.contact*.22,timingWindow=.075+mods.contact*.13;
+      if(prompt){prompt.classList.toggle("perfect",Math.abs(t-ideal)<(.065+mods.contact*.09)&&posErr<posWindow);prompt.textContent=t<.46?(skillMode==="RECEIVE"?"READ THE DRIFT":"TRACK THE PASS"):t<ideal-.10?"MOVE INTO LINE":t<ideal+.07?(posErr<posWindow?(skillMode==="RECEIVE"?"PLATFORM NOW!":"SET NOW!"):"GET UNDER IT"):"LATE";}
+      if(skillMode==="RECEIVE"){
+        const stage=t<.46?0:t<ideal-.10?1:2;qa(".ace318ReceiveStage span").forEach((el,i)=>el.classList.toggle("active",i===stage));
+        const action=q(".ace318ReceiveContact");if(action){const inWindow=Math.abs(t-ideal)<timingWindow&&posErr<posWindow;action.classList.toggle("ready",t>=.52&&t<.96);action.classList.toggle("perfect",inWindow);}
+        const read=q("#ace318ReceiveRead");if(read){const b=read.querySelector("b"),sm=read.querySelector("small");if(sm)sm.textContent=t<.46?"SERVER CONTACT":t<ideal-.10?"BALL FLIGHT":"PASS WINDOW";if(b)b.textContent=t<.46?"TRACK THE FLIGHT":t<ideal-.10?(posErr<posWindow+.03?"SET YOUR FEET":"MOVE INTO LINE"):(posErr<posWindow?"PLATFORM READY":"GET BEHIND IT");}
+      }
+      if(t<1)skillRaf=requestAnimationFrame(tick);else{skillRaf=0;setTimeout(()=>{if(!skillLocked&&["training","key"].includes(String(S.overlay||"")))rta102SkillContact(true)},20)}
+    };
+    skillRaf=requestAnimationFrame(tick);
+  };
+
+  function ace321ReceiveMomentRep(m,d){
+    const best=rta97ReadBestFromCue("RECEIVE",m?.cue)||String(m?.options?.[0]?.id||"CENTRE").toUpperCase();
+    const pt={LEFT:[.28,.73],CENTRE:[.50,.74],RIGHT:[.72,.73],SHORT:[.50,.55]}[best]||[.50,.73];
+    const cue=String(m?.cue||"").toLowerCase(),curve=cue.includes("left")?-.045:cue.includes("right")?.045:cue.includes("float")?.025:0;
+    return{rep_no:Number(d?.moment_no||1),target_x:pt[0],target_y:pt[1],curve,speed:cue.includes("fast")||cue.includes("topspin")?1.12:cue.includes("short")?.92:1,ball_type:m?.context||"SERVE",cue:m?.cue||m?.prompt||"Read the serve."};
+  }
+  function ace321SettingMomentRep(m,d){
+    const read=rta95SetterSceneRead(m),pt=read.pass==="C"?[.34,.68]:read.pass==="B"?[.61,.64]:[.50,.61];
+    return{rep_no:Number(d?.moment_no||1),target_x:pt[0],target_y:pt[1],curve:read.pass==="C"?.025:0,speed:read.pass==="C"?1.06:1,ball_type:`PASS ${read.pass}`,cue:m?.cue||m?.prompt||"Track the pass."};
+  }
+  function ace321KeyProgress(d){return `<div class="rta62Progress">${Array.from({length:Number(d?.total_moments||5)},(_,i)=>`<i class="${i<Number(d?.moment_no)-1?"done":""}"></i>`).join("")}</div>`}
+  function ace321KeyFeedback(text="Execute the touch, then finish the play."){return `<div class="rta102RepFeedback ${S.feedback?(S.feedback.good?"good":"bad"):""}">${esc(S.feedback?.text||text)}</div>`}
+
+  function renderLiberoKeyOverlay(type){
+    const d=S.key,m=d?.moment;if(!d||!m){closeOverlay();return}cleanupRaf();
+    const rep=ace321ReceiveMomentRep(m,d);ace321KeyRep=rep;ace321KeyMode="RECEIVE";ace321KeyMeta={best:rta97ReadBestFromCue("RECEIVE",m.cue)||"CENTRE",options:Array.isArray(m.options)?m.options:[]};
+    setOverlay(`<div class="rta62OverlayShell rta102SkillShell ace318Receive2Shell ace319Receive2Shell ace320TechShell ace321KeyTechShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)} · RECEIVE`)}
+      <div class="rta102SkillLayout ace318Receive2Layout ace319Receive2Layout ace320UnifiedLayout ace321KeyReceiveLayout">
+        <div class="rta102SceneCol ace318Receive2SceneCol ace319Receive2SceneCol ace320UnifiedScene">${rta102ReceiveScene(rep)}</div>
+        <aside class="rta102SkillSide ace318Receive2Side ace319Receive2Side ace320UnifiedSide ace321KeySide">
+          <div class="ace318ReceiveIntro"><small>MATCH FIRST CONTACT</small><h2>${esc(m.title||"Own the pass.")}</h2><p>${esc(m.cue||m.prompt||"Read the serve, move behind it, contact cleanly, then send the pass to the setter.")}</p></div>
+          ${ace321PlaystyleChip("RECEIVE")}
+          <div class="ace318ReceiveSteps ace319ReceiveSteps"><div><small>1 · READ</small><b>TRACK SERVE</b></div><div><small>2 · MOVE</small><b>GET IN LINE</b></div><div><small>3 · PLATFORM</small><b>CONTACT</b></div><div><small>4 · AIM</small><b>${rta102IsTouch()?"SWIPE":"DIRECTION KEYS"}</b></div></div>
+          <button type="button" class="rta102ContactBtn ace318ReceiveContact" data-rta102-contact><span>👐</span><b>PLATFORM CONTACT</b><small>THEN AIM TO SETTER</small></button>
+          ${ace321KeyProgress(d)}${ace321KeyFeedback("Win the first contact: move → platform → send it to the setter.")}
+        </aside>
+      </div></div>`,"key");
+    rta102PrepareSkillRep("RECEIVE",rep);requestAnimationFrame(()=>q(".rta102Server")?.classList.add("ace318Serving"));
+  }
+
+  function ace321KeySetTargets(options){
+    const opts=(options||[]).map(o=>String(typeof o==="string"?o:o.id||"").toUpperCase()).filter(Boolean);
+    return `<div class="ace321KeySetTargets">${opts.map(id=>{const p=ace321SetPoint(id),meta=rta95SetterOptionMeta(id),action=["DUMP","FAKE"].includes(id);return `<span class="${action?"ace322SetActionTarget":"ace322SetTeammate"}" data-ace321-set-target="${esc(id)}" style="left:${p.x*100}%;top:${p.y*100}%"><i></i><b>${esc(meta.short)}</b><small>${esc(meta.label)}</small></span>`}).join("")}</div>`;
+  }
+  function ace321SetPoint(id){
+    const k=String(id||"").toUpperCase();
+    /* Teammate attack options live on our half (> .50). DUMP is intentionally
+       over the net because it is an attack by the setter rather than a teammate. */
+    return {OH:{x:.20,y:.61},SAFE:{x:.20,y:.61},QUICK:{x:.50,y:.56},OP:{x:.80,y:.61},PIPE:{x:.50,y:.72},DUMP:{x:.50,y:.40},FAKE:{x:.50,y:.56},FREE:{x:.50,y:.69}}[k]||{x:.50,y:.61};
+  }
+  function ace321SettingKeyScene(rep,options){
+    const base=rta102SettingScene(rep,"");
+    return base.replace('<div class="rta102SetTargets">','<div class="rta102SetTargets ace321HideDefaultTargets">').replace('<div class="ace320SetGuide"',`${ace321KeySetTargets(options)}<div class="ace320SetGuide"`);
+  }
+  function renderSetterKeyOverlay(){
+    const d=S.key,m=d?.moment;if(!d||!m){closeOverlay();return}cleanupRaf();
+    const opts=Array.isArray(m.options)?m.options:[],rep=ace321SettingMomentRep(m,d),read=rta95SetterSceneRead(m);ace321KeyRep=rep;ace321KeyMode="SETTING";ace321KeyMeta={options:opts,read};
+    setOverlay(`<div class="rta62OverlayShell rta102SkillShell ace320TechShell ace320SettingShell ace321KeyTechShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)} · SETTING`)}
+      <div class="rta102SkillLayout ace320UnifiedLayout ace320SettingLayout ace321KeySettingLayout">
+        <div class="rta102SceneCol ace320UnifiedScene">${ace321SettingKeyScene(rep,opts)}</div>
+        <aside class="rta102SkillSide ace320UnifiedSide ace320SettingSide ace321KeySide">
+          <div class="ace320TechIntro"><small>SECOND CONTACT · MATCH</small><h2>${esc(m.title||"Run the offence.")}</h2><p>${esc(m.cue||m.prompt||"Get under the pass, make contact, then flick the set to the attacker you choose.")}</p></div>
+          ${ace321PlaystyleChip("SETTING")}
+          <div class="ace320TechSteps"><div><small>1 · READ</small><b>TRACK PASS</b></div><div><small>2 · MOVE</small><b>GET UNDER IT</b></div><div><small>3 · CONTACT</small><b>SET WINDOW</b></div><div><small>4 · AIM</small><b>${rta102IsTouch()?"FLICK TO HITTER":"DIRECTION KEYS"}</b></div></div>
+          <div class="ace321ReadStrip"><span>PASS <b>${esc(read.pass)}</b></span><span>BLOCK <b>${esc(pretty(read.block))}</b></span></div>
+          <button type="button" class="rta102ContactBtn setting ace320RoundAction ace320SettingContact" data-rta102-contact><span>◇</span><b>SET CONTACT</b><small>THEN PICK WITH YOUR FLICK</small></button>
+          ${ace321KeyProgress(d)}${ace321KeyFeedback("Read the block, get under the pass, then flick to the hitter you want.")}
+        </aside>
+      </div></div>`,"key");
+    rta102PrepareSkillRep("SETTING",rep,"");
+  }
+
+  const ace321BaseSetGuide=ace320UpdateSetAimGuide;
+  ace320UpdateSetAimGuide=function(vec=null){
+    if(S.overlay!=="key"||skillMode!=="SETTING")return ace321BaseSetGuide(vec);
+    const guide=q("#ace320SetGuide"),desired=q("#ace320SetDesiredLine"),actual=q("#ace320SetAimLine"),cue=q("#ace320SetAimCue");if(!guide)return;
+    guide.classList.toggle("show",skillSetPhase==="aim");if(skillSetPhase!=="aim")return;if(desired)desired.style.opacity="0";
+    if(cue)cue.textContent=rta102IsTouch()?"FLICK TOWARDS THE HITTER":"PRESS THE DIRECTION · COMBINE KEYS FOR DIAGONALS";
+    if(actual){if(vec&&Math.hypot(Number(vec.x)||0,Number(vec.y)||0)>.01){const court=q("#rta102SkillCourt"),r=court?.getBoundingClientRect(),len=Math.min(145,Math.max(58,Number(vec.mag||90))),end={x:clamp(skillPlayer.x+(Number(vec.x)||0)*len/(r?.width||1),0,1),y:clamp(skillPlayer.y+(Number(vec.y)||0)*len/(r?.height||1),0,1)};ace319PositionGuideLine(actual,skillPlayer,end);actual.style.opacity="1"}else actual.style.opacity="0";}
+  };
+  function ace321PickSetChoice(vec){
+    const opts=(ace321KeyMeta?.options||[]).map(o=>String(typeof o==="string"?o:o.id||"").toUpperCase()).filter(Boolean);if(!opts.length)return{choice:"",quality:0};
+    const court=q("#rta102SkillCourt"),r=court?.getBoundingClientRect(),vm=Math.hypot(Number(vec?.x)||0,Number(vec?.y)||0)||1,vx=(Number(vec?.x)||0)/vm,vy=(Number(vec?.y)||0)/vm;
+    let best=null;opts.forEach(id=>{const p=ace321SetPoint(id),dx=(p.x-skillPlayer.x)*(r?.width||1),dy=(p.y-skillPlayer.y)*(r?.height||1),m=Math.hypot(dx,dy)||1,dot=clamp(vx*(dx/m)+vy*(dy/m),-1,1),score=(dot+1)/2;if(!best||score>best.quality)best={choice:id,quality:score,point:p}});return best||{choice:opts[0],quality:0,point:ace321SetPoint(opts[0])};
+  }
+
+  async function ace321FinishKeyReceive(vec,timedOut=false){
+    if(skillReceivePhase!=="aim"||skillLocked||S.busy)return;if(skillAimTimer)clearTimeout(skillAimTimer);skillAimTimer=0;
+    const aimQuality=timedOut?0:ace319AimQuality(vec),contactQuality=clamp(Number(skillReceiveContact?.quality)||0,0,1),composite=clamp(contactQuality*.62+aimQuality*.38,0,1);skillReceivePhase="result";skillLocked=true;
+    const prompt=q("#rta102SkillPrompt"),read=q("#ace318ReceiveRead"),guide=q("#ace319PassGuide"),ball=q("#rta102SkillBall"),target=q("#ace319SetterTarget");guide?.classList.remove("show");target?.classList.remove("hot");
+    const title=timedOut?"NO PASS INPUT":composite>=.90?"PERFECT PASS":composite>=.76?"IN SYSTEM":composite>=.58?"PLAYABLE":"SHANK";if(prompt){prompt.textContent=title;prompt.classList.toggle("perfect",composite>=.90)}if(read){const b=read.querySelector("b"),sm=read.querySelector("small");if(sm)sm.textContent="MATCH PASS";if(b)b.textContent=`${Math.round(composite*100)}% · AIM ${Math.round(aimQuality*100)}%`}
+    if(ball){const court=q("#rta102SkillCourt"),r=court?.getBoundingClientRect(),m=Math.hypot(Number(vec?.x)||0,Number(vec?.y)||0)||1,vx=(Number(vec?.x)||0)/m,vy=(Number(vec?.y)||0)/m,travel=Math.hypot((skillSetterTarget.x-skillPlayer.x)*(r?.width||1),(skillSetterTarget.y-skillPlayer.y)*(r?.height||1)),end=aimQuality>=.90?skillSetterTarget:{x:clamp(skillPlayer.x+vx*travel/(r?.width||1),.06,.94),y:clamp(skillPlayer.y+vy*travel/(r?.height||1),.08,.92)};ball.style.transition="left 480ms cubic-bezier(.15,.78,.25,1),top 480ms ease,transform 480ms linear";requestAnimationFrame(()=>{ball.style.left=(end.x*100)+"%";ball.style.top=(end.y*100)+"%";ball.style.transform="translate(-50%,-50%) scale(.56) rotate(300deg)"})}
+    await new Promise(r=>setTimeout(r,500));
+    if(timedOut||composite<.40){await resolveKeyTimeout();return}
+    const best=String(ace321KeyMeta?.best||"CENTRE"),opts=(ace321KeyMeta?.options||[]),legal=opts.map(o=>String(typeof o==="string"?o:o.id||"").toUpperCase());
+    if(composite<.54){const alt=legal.find(x=>x&&x!==best);await resolveKey(alt||best);return}
+    await resolveKey(legal.includes(best)?best:String(opts[0]?.id||opts[0]||best));
+  }
+  async function ace321FinishKeySet(vec,timedOut=false){
+    if(skillSetPhase!=="aim"||skillLocked||S.busy)return;if(skillSetAimTimer)clearTimeout(skillSetAimTimer);skillSetAimTimer=0;
+    const picked=timedOut?{choice:"",quality:0,point:{x:skillPlayer.x,y:skillPlayer.y-.08}}:ace321PickSetChoice(vec),aimQuality=clamp(Number(picked.quality||0)+ace321TechnicalMods("SETTING").aim,0,1),contactQuality=clamp(Number(skillSetContact?.quality)||0,0,1),composite=clamp(contactQuality*.58+aimQuality*.42,0,1);skillSetPhase="result";skillLocked=true;
+    const prompt=q("#rta102SkillPrompt"),guide=q("#ace320SetGuide"),ball=q("#rta102SkillBall");guide?.classList.remove("show");qa("[data-ace321-set-target]").forEach(x=>x.classList.toggle("chosen",String(x.dataset.ace321SetTarget||"")===String(picked.choice||"")));
+    const label=picked.choice?rta95SetterOptionMeta(picked.choice).label:"NO TARGET",title=timedOut?"NO SET INPUT":composite>=.90?`PERFECT · ${label}`:composite>=.72?`IN RHYTHM · ${label}`:composite>=.52?`HITTABLE · ${label}`:`OFF TARGET · ${label}`;if(prompt){prompt.textContent=title;prompt.classList.toggle("perfect",composite>=.90)}
+    if(ball){const p=picked.point||{x:.5,y:.4};ball.style.transition="left 470ms cubic-bezier(.15,.78,.25,1),top 470ms ease,transform 470ms linear";requestAnimationFrame(()=>{ball.style.left=(p.x*100)+"%";ball.style.top=(p.y*100)+"%";ball.style.transform="translate(-50%,-50%) scale(.55) rotate(300deg)"})}
+    await new Promise(r=>setTimeout(r,500));if(timedOut||!picked.choice||composite<.38){await resolveKeyTimeout();return}await resolveKey(picked.choice);
+  }
+
+  const ace321BaseFinishReceive=ace319FinishReceiveAim;
+  ace319FinishReceiveAim=function(vec,timedOut=false){return S.overlay==="key"?ace321FinishKeyReceive(vec,timedOut):ace321BaseFinishReceive(vec,timedOut)};
+  const ace321BaseFinishSet=ace320FinishSetAim;
+  ace320FinishSetAim=function(vec,timedOut=false){return S.overlay==="key"?ace321FinishKeySet(vec,timedOut):ace321BaseFinishSet(vec,timedOut)};
+
+  const ace321BaseSkillContact=rta102SkillContact;
+  rta102SkillContact=async function(timedOut=false){
+    if(S.overlay!=="key")return ace321BaseSkillContact(timedOut);
+    if(S.busy||!S.key?.moment||skillLocked||!skillMode)return;
+    const t=timedOut?1:skillFlight,ideal=skillMode==="RECEIVE"?.86:.83,posErr=Math.hypot(skillPlayer.x-skillPassTarget.x,skillPlayer.y-skillPassTarget.y),timing=timedOut?1:clamp(.5+(t-ideal)*2.25,0,1),label=timedOut?"MISSED":rta102ContactQualityLabel(t,posErr,ideal);
+    if(skillMode==="RECEIVE"&&!timedOut&&skillReceivePhase==="flight"){ace319BeginReceiveAim(t,posErr,label,timing);return}
+    if(skillMode==="SETTING"&&!timedOut&&skillSetPhase==="flight"){ace320BeginSetAim(t,posErr,label,timing);return}
+    if(timedOut){skillLocked=true;if(skillRaf)cancelAnimationFrame(skillRaf);skillRaf=0;const prompt=q("#rta102SkillPrompt");if(prompt)prompt.textContent="MISSED CONTACT";await new Promise(r=>setTimeout(r,180));await resolveKeyTimeout();}
+  };
+
+  document.addEventListener("keydown",e=>{
+    if(S.overlay!=="key"||!["RECEIVE","SETTING"].includes(skillMode))return;
+    const raw=String(e.key||"").toLowerCase(),map={arrowup:"w",arrowleft:"a",arrowdown:"s",arrowright:"d"},k=map[raw]||raw;
+    if(["w","a","s","d"," "].includes(k)||e.code==="Space")e.preventDefault();
+    if(e.code==="Space"||k===" "){if((skillMode==="RECEIVE"&&skillReceivePhase==="aim")||(skillMode==="SETTING"&&skillSetPhase==="aim"))return;if(!e.repeat)rta102SkillContact(false);return}
+    if(!["w","a","s","d"].includes(k))return;
+    if(skillMode==="SETTING"&&skillSetPhase==="aim"){
+      skillSetAimKeys[k]=true;const vx=(skillSetAimKeys.d?1:0)-(skillSetAimKeys.a?1:0),vy=(skillSetAimKeys.s?1:0)-(skillSetAimKeys.w?1:0),m=Math.hypot(vx,vy);if(m){skillSetAimVec={x:vx/m,y:vy/m,mag:90};ace320UpdateSetAimGuide(skillSetAimVec)}if(skillSetAimComboTimer)clearTimeout(skillSetAimComboTimer);skillSetAimComboTimer=setTimeout(()=>{const x=(skillSetAimKeys.d?1:0)-(skillSetAimKeys.a?1:0),y=(skillSetAimKeys.s?1:0)-(skillSetAimKeys.w?1:0),mm=Math.hypot(x,y);if(mm&&skillSetPhase==="aim")ace320FinishSetAim({x:x/mm,y:y/mm,mag:90},false)},260);return;
+    }
+    if(skillMode==="RECEIVE"&&skillReceivePhase==="aim"){
+      skillAimKeys[k]=true;const vx=(skillAimKeys.d?1:0)-(skillAimKeys.a?1:0),vy=(skillAimKeys.s?1:0)-(skillAimKeys.w?1:0),m=Math.hypot(vx,vy);if(m){skillAimVec={x:vx/m,y:vy/m,mag:90};ace319UpdateAimGuide(skillAimVec)}if(skillAimComboTimer)clearTimeout(skillAimComboTimer);skillAimComboTimer=setTimeout(()=>{const x=(skillAimKeys.d?1:0)-(skillAimKeys.a?1:0),y=(skillAimKeys.s?1:0)-(skillAimKeys.w?1:0),mm=Math.hypot(x,y);if(mm&&skillReceivePhase==="aim")ace319FinishReceiveAim({x:x/mm,y:y/mm,mag:90},false)},260);return;
+    }
+    skillKeys[k]=true;rta102SyncKeys();
+  },{passive:false});
+  document.addEventListener("keyup",e=>{
+    if(S.overlay!=="key"||!["RECEIVE","SETTING"].includes(skillMode))return;const raw=String(e.key||"").toLowerCase(),map={arrowup:"w",arrowleft:"a",arrowdown:"s",arrowright:"d"},k=map[raw]||raw;if(!["w","a","s","d"].includes(k))return;
+    if(skillMode==="SETTING"&&skillSetPhase==="aim"){skillSetAimKeys[k]=false;return}if(skillMode==="RECEIVE"&&skillReceivePhase==="aim"){skillAimKeys[k]=false;return}skillKeys[k]=false;rta102SyncKeys();
+  });
+
+  window.ACE_RTA_KEY_MOMENTS_SHARED_TECHNICAL_UI=true;
+  window.ACE_RTA_TECHNICAL_PLAYSTYLE_GAMEPLAY=true;
   const page=q("#roadtoace");
   if(page){
     new MutationObserver(()=>{if(page.classList.contains("active"))loadState({silent:S.loaded})})
@@ -52154,72 +52403,72 @@ window.ACE_PROJECT_BUILD="B21.36.316N";
 
 <style id="ace320-unified-technical-drills">
 /* B21.36.320 — ATTACK visual language shared by RECEIVE / SETTING / BLOCKING */
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt,.rta112BlockCourt){background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)!important;overflow:hidden!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor,
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112CourtFloor{position:absolute!important;left:4%!important;right:4%!important;top:6%!important;bottom:5%!important;width:auto!important;height:auto!important;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%)!important;background:linear-gradient(90deg,transparent 49.65%,rgba(255,255,255,.95) 49.65% 50.35%,transparent 50.35%),linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.96) 49.6% 50.4%,transparent 50.4%),linear-gradient(180deg,#b96a3b,#955532)!important;border:3px solid rgba(255,255,255,.94)!important;box-shadow:0 25px 50px rgba(0,0,0,.34)!important;transform:none!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:before,
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:after,
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112CourtFloor:before,
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112CourtFloor:after{content:""!important;position:absolute!important;left:0!important;right:0!important;height:2px!important;background:rgba(255,255,255,.9)!important;width:auto!important;transform:none!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:before,#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112CourtFloor:before{top:33%!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:after,#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112CourtFloor:after{top:66%!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102SkillNet,
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112BlockNet{position:absolute!important;left:2%!important;right:2%!important;top:48.8%!important;height:16px!important;z-index:30!important;border-top:2px solid #fff!important;border-bottom:1px solid rgba(255,255,255,.6)!important;background:repeating-linear-gradient(90deg,rgba(255,255,255,.38) 0 1px,transparent 1px 10px),repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)!important;box-shadow:none!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102SkillNet i,
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112BlockNet i{position:absolute!important;inset:0!important;background:transparent!important}
-#rta62Overlay[data-kind="training"] .ace320Arena{position:absolute;inset:0 0 72%;opacity:.55;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent),repeating-linear-gradient(90deg,transparent 0 26px,rgba(255,255,255,.025) 26px 28px)}
-#rta62Overlay[data-kind="training"] .ace318ReceiveAtmosphere{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveCourt .rta102Server b{background:#dfe6ea!important;color:#17212a!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102PlayerBody{background:#183149!important;border-radius:7px!important}
-#rta62Overlay[data-kind="training"] .ace320SettingCourt .rta102PlayerBody{background:#225272!important}
-#rta62Overlay[data-kind="training"] :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102SkillBall,#rta62Overlay[data-kind="training"] .rta112BlockBall{background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%)!important;box-shadow:inset -5px -6px 9px rgba(0,0,0,.17),0 5px 12px rgba(0,0,0,.36)!important}
-#rta62Overlay[data-kind="training"] .ace320TechStage{position:absolute;z-index:58;left:50%;top:3%;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(3,11,18,.76);border:1px solid rgba(255,255,255,.07)}
-#rta62Overlay[data-kind="training"] .ace320TechStage span{padding:5px 7px;border-radius:999px;color:#617d8e;font-size:6px;font-weight:1000;letter-spacing:.08em;white-space:nowrap}
-#rta62Overlay[data-kind="training"] .ace320TechStage span.active{background:#153a53;color:#d9f2ff}
-#rta62Overlay[data-kind="training"] .ace320SetGuide{position:absolute;inset:0;z-index:46;pointer-events:none;opacity:0;transition:opacity .15s ease}
-#rta62Overlay[data-kind="training"] .ace320SetGuide.show{opacity:1}
-#rta62Overlay[data-kind="training"] .ace320SetGuide i{position:absolute;height:3px;transform-origin:0 50%;border-radius:999px}
-#rta62Overlay[data-kind="training"] .ace320SetGuide i.desired{height:2px;background:repeating-linear-gradient(90deg,rgba(111,208,255,.80) 0 8px,transparent 8px 14px);filter:drop-shadow(0 0 5px rgba(111,208,255,.30))}
-#rta62Overlay[data-kind="training"] .ace320SetGuide i.actual{background:linear-gradient(90deg,#6fd0ff,#8ef0b8);box-shadow:0 0 13px rgba(103,210,255,.35);opacity:0}
-#rta62Overlay[data-kind="training"] .ace320SetGuide i:after{content:"";position:absolute;right:-2px;top:50%;width:9px;height:9px;border-top:2px solid #8fdcff;border-right:2px solid #8fdcff;transform:translateY(-50%) rotate(45deg)}
-#rta62Overlay[data-kind="training"] .ace320SetGuide b{position:absolute;left:50%;bottom:13%;transform:translateX(-50%);min-width:170px;padding:8px 12px;border:1px solid rgba(115,190,245,.24);border-radius:10px;background:rgba(4,10,20,.86);color:#dcefff;text-align:center;font-size:7px;font-weight:1000;letter-spacing:.08em;box-shadow:0 10px 25px rgba(0,0,0,.25)}
-#rta62Overlay[data-kind="training"] .ace320UnifiedSide{background:linear-gradient(180deg,#071724,#04101a)!important;border-color:rgba(255,255,255,.06)!important}
-#rta62Overlay[data-kind="training"] .ace320TechIntro small{color:#67b9ea;font-size:7px;font-weight:1000;letter-spacing:.12em}
-#rta62Overlay[data-kind="training"] .ace320TechIntro h2{margin:4px 0 0;font-size:21px;color:#f1f8fc}
-#rta62Overlay[data-kind="training"] .ace320TechIntro p{margin:5px 0 0;color:#7894a8;font-size:8px;line-height:1.4}
-#rta62Overlay[data-kind="training"] .ace320TechSteps{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-#rta62Overlay[data-kind="training"] .ace320TechSteps>div{padding:8px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.018)}
-#rta62Overlay[data-kind="training"] .ace320TechSteps small{display:block;color:#5e91b2;font-size:5.5px;font-weight:1000;letter-spacing:.08em}
-#rta62Overlay[data-kind="training"] .ace320TechSteps b{display:block;margin-top:4px;color:#cdd7e7;font-size:7px}
-#rta62Overlay[data-kind="training"] .ace320RoundAction{align-self:center!important;width:108px!important;height:108px!important;min-height:108px!important;border-radius:50%!important;padding:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;border:1px solid rgba(101,194,250,.28)!important;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%)!important;color:#fff!important;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)!important}
-#rta62Overlay[data-kind="training"] .ace320RoundAction>span{font-size:27px}#rta62Overlay[data-kind="training"] .ace320RoundAction>b{font-size:6.4px;letter-spacing:.09em}#rta62Overlay[data-kind="training"] .ace320RoundAction>small{font-size:4.8px;color:#7f9bad;font-weight:900;letter-spacing:.07em;text-align:center;max-width:82px}
-#rta62Overlay[data-kind="training"] .ace320RoundAction.aiming{border-color:rgba(111,208,255,.52)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),0 0 30px rgba(92,184,240,.18),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt,.rta112BlockCourt){background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)!important;overflow:hidden!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112CourtFloor{position:absolute!important;left:4%!important;right:4%!important;top:6%!important;bottom:5%!important;width:auto!important;height:auto!important;clip-path:polygon(14% 0,86% 0,100% 100%,0 100%)!important;background:linear-gradient(90deg,transparent 49.65%,rgba(255,255,255,.95) 49.65% 50.35%,transparent 50.35%),linear-gradient(180deg,transparent 49.6%,rgba(255,255,255,.96) 49.6% 50.4%,transparent 50.4%),linear-gradient(180deg,#b96a3b,#955532)!important;border:3px solid rgba(255,255,255,.94)!important;box-shadow:0 25px 50px rgba(0,0,0,.34)!important;transform:none!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:before,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:after,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112CourtFloor:before,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112CourtFloor:after{content:""!important;position:absolute!important;left:0!important;right:0!important;height:2px!important;background:rgba(255,255,255,.9)!important;width:auto!important;transform:none!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:before,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112CourtFloor:before{top:33%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor:after,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112CourtFloor:after{top:66%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102SkillNet,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112BlockNet{position:absolute!important;left:2%!important;right:2%!important;top:48.8%!important;height:16px!important;z-index:30!important;border-top:2px solid #fff!important;border-bottom:1px solid rgba(255,255,255,.6)!important;background:repeating-linear-gradient(90deg,rgba(255,255,255,.38) 0 1px,transparent 1px 10px),repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)!important;box-shadow:none!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102SkillNet i,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112BlockNet i{position:absolute!important;inset:0!important;background:transparent!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320Arena{position:absolute;inset:0 0 72%;opacity:.55;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent),repeating-linear-gradient(90deg,transparent 0 26px,rgba(255,255,255,.025) 26px 28px)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveAtmosphere{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveCourt .rta102Server b{background:#dfe6ea!important;color:#17212a!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102PlayerBody{background:#183149!important;border-radius:7px!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102PlayerBody{background:#225272!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102SkillBall,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockBall{background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%)!important;box-shadow:inset -5px -6px 9px rgba(0,0,0,.17),0 5px 12px rgba(0,0,0,.36)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechStage{position:absolute;z-index:58;left:50%;top:3%;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(3,11,18,.76);border:1px solid rgba(255,255,255,.07)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechStage span{padding:5px 7px;border-radius:999px;color:#617d8e;font-size:6px;font-weight:1000;letter-spacing:.08em;white-space:nowrap}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechStage span.active{background:#153a53;color:#d9f2ff}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide{position:absolute;inset:0;z-index:46;pointer-events:none;opacity:0;transition:opacity .15s ease}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide.show{opacity:1}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide i{position:absolute;height:3px;transform-origin:0 50%;border-radius:999px}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide i.desired{height:2px;background:repeating-linear-gradient(90deg,rgba(111,208,255,.80) 0 8px,transparent 8px 14px);filter:drop-shadow(0 0 5px rgba(111,208,255,.30))}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide i.actual{background:linear-gradient(90deg,#6fd0ff,#8ef0b8);box-shadow:0 0 13px rgba(103,210,255,.35);opacity:0}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide i:after{content:"";position:absolute;right:-2px;top:50%;width:9px;height:9px;border-top:2px solid #8fdcff;border-right:2px solid #8fdcff;transform:translateY(-50%) rotate(45deg)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide b{position:absolute;left:50%;bottom:13%;transform:translateX(-50%);min-width:170px;padding:8px 12px;border:1px solid rgba(115,190,245,.24);border-radius:10px;background:rgba(4,10,20,.86);color:#dcefff;text-align:center;font-size:7px;font-weight:1000;letter-spacing:.08em;box-shadow:0 10px 25px rgba(0,0,0,.25)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320UnifiedSide{background:linear-gradient(180deg,#071724,#04101a)!important;border-color:rgba(255,255,255,.06)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechIntro small{color:#67b9ea;font-size:7px;font-weight:1000;letter-spacing:.12em}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechIntro h2{margin:4px 0 0;font-size:21px;color:#f1f8fc}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechIntro p{margin:5px 0 0;color:#7894a8;font-size:8px;line-height:1.4}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechSteps{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechSteps>div{padding:8px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.018)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechSteps small{display:block;color:#5e91b2;font-size:5.5px;font-weight:1000;letter-spacing:.08em}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechSteps b{display:block;margin-top:4px;color:#cdd7e7;font-size:7px}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320RoundAction{align-self:center!important;width:108px!important;height:108px!important;min-height:108px!important;border-radius:50%!important;padding:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;border:1px solid rgba(101,194,250,.28)!important;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%)!important;color:#fff!important;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320RoundAction>span{font-size:27px}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320RoundAction>b{font-size:6.4px;letter-spacing:.09em}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320RoundAction>small{font-size:4.8px;color:#7f9bad;font-weight:900;letter-spacing:.07em;text-align:center;max-width:82px}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320RoundAction.aiming{border-color:rgba(111,208,255,.52)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),0 0 30px rgba(92,184,240,.18),inset 0 0 0 6px rgba(255,255,255,.02)!important}
 /* Blocking: keep its mechanics, switch presentation to the same court language */
-#rta62Overlay[data-kind="training"] .ace320BlockScene{background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)!important}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112Arena{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)!important}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112Setter b{background:#dfe6ea!important;color:#17212a!important}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112TrainBlocker b{background:#183149!important;color:#fff!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockScene{background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112Arena{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112Setter b{background:#dfe6ea!important;color:#17212a!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112TrainBlocker b{background:#183149!important;color:#fff!important}
 @media(max-width:760px){
- #rta62Overlay[data-kind="training"] .ace320SettingLayout{position:relative!important}
- #rta62Overlay[data-kind="training"] .ace320SettingLayout .ace320UnifiedScene{flex:1 1 100%!important;height:100%!important}
- #rta62Overlay[data-kind="training"] .ace320SettingSide{position:absolute!important;inset:0!important;z-index:80!important;max-height:none!important;overflow:visible!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:none!important}
- #rta62Overlay[data-kind="training"] .ace320SettingSide .ace320TechIntro,#rta62Overlay[data-kind="training"] .ace320SettingSide .ace320TechSteps{display:none!important}
- #rta62Overlay[data-kind="training"] .ace320SettingSide .ace320SettingContact{pointer-events:auto!important;position:absolute!important;right:9px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:82px!important;height:82px!important;min-height:82px!important;margin:0!important;z-index:88!important}
- #rta62Overlay[data-kind="training"] .ace320SettingSide .ace320SettingContact>small{display:none!important}
- #rta62Overlay[data-kind="training"] .ace320SettingSide .rta62Progress{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(49px + env(safe-area-inset-bottom))!important;height:5px!important;margin:0!important;pointer-events:none!important}
- #rta62Overlay[data-kind="training"] .ace320SettingSide .rta102RepFeedback{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;min-height:32px!important;max-height:36px!important;margin:0!important;padding:6px 7px!important;background:rgba(4,10,18,.84)!important;backdrop-filter:blur(8px);pointer-events:none!important;font-size:6.5px!important}
- #rta62Overlay[data-kind="training"] .ace320TechStage{top:2.2%;gap:3px;padding:4px}.ace320TechStage span{padding:4px 5px!important;font-size:4.9px!important}
- #rta62Overlay[data-kind="training"] .ace320SetGuide b{bottom:20%;font-size:6px;min-width:156px;padding:7px 9px}
- #rta62Overlay[data-kind="training"] .ace320SettingTouchHint{bottom:84px!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingLayout{position:relative!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingLayout .ace320UnifiedScene{flex:1 1 100%!important;height:100%!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingSide{position:absolute!important;inset:0!important;z-index:80!important;max-height:none!important;overflow:visible!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:none!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingSide .ace320TechIntro,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingSide .ace320TechSteps{display:none!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingSide .ace320SettingContact{pointer-events:auto!important;position:absolute!important;right:9px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:82px!important;height:82px!important;min-height:82px!important;margin:0!important;z-index:88!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingSide .ace320SettingContact>small{display:none!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingSide .rta62Progress{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(49px + env(safe-area-inset-bottom))!important;height:5px!important;margin:0!important;pointer-events:none!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingSide .rta102RepFeedback{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;min-height:32px!important;max-height:36px!important;margin:0!important;padding:6px 7px!important;background:rgba(4,10,18,.84)!important;backdrop-filter:blur(8px);pointer-events:none!important;font-size:6.5px!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320TechStage{top:2.2%;gap:3px;padding:4px}.ace320TechStage span{padding:4px 5px!important;font-size:4.9px!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SetGuide b{bottom:20%;font-size:6px;min-width:156px;padding:7px 9px}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingTouchHint{bottom:84px!important}
  /* make block training controls compact/overlayed instead of a visually different right panel on phone */
- #rta62Overlay[data-kind="training"] .ace320BlockShell .aceBlockV2Body.training{position:relative!important;display:block!important;height:calc(100dvh - 76px)!important;min-height:0!important}
- #rta62Overlay[data-kind="training"] .ace320BlockShell .ace320BlockScene{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
- #rta62Overlay[data-kind="training"] .ace320BlockShell .ace320BlockSide{position:absolute!important;inset:0!important;z-index:80!important;pointer-events:none!important;padding:0!important;background:transparent!important;border:0!important;overflow:visible!important}
- #rta62Overlay[data-kind="training"] .ace320BlockShell .aceBlockV2PanelTop,#rta62Overlay[data-kind="training"] .ace320BlockShell .aceBlockV2Execution{display:none!important}
- #rta62Overlay[data-kind="training"] .ace320BlockShell .aceBlockV2Press{pointer-events:auto!important;position:absolute!important;right:9px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:82px!important;height:82px!important;min-height:82px!important;border-radius:50%!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:0!important;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%)!important;border:1px solid rgba(101,194,250,.28)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)!important}
- #rta62Overlay[data-kind="training"] .ace320BlockShell .aceBlockV2Press span{font-size:22px!important}#rta62Overlay[data-kind="training"] .ace320BlockShell .aceBlockV2Press b{font-size:5.5px!important}
- #rta62Overlay[data-kind="training"] .ace320BlockShell .rta62Progress{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(49px + env(safe-area-inset-bottom))!important;height:5px!important;margin:0!important}
- #rta62Overlay[data-kind="training"] .ace320BlockShell .aceBlockV2Feedback{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;min-height:32px!important;max-height:36px!important;margin:0!important;padding:6px 7px!important;border-radius:10px!important;background:rgba(4,10,18,.84)!important;color:#8295a9!important;font-size:6.5px!important;line-height:1.35!important;backdrop-filter:blur(8px)}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .aceBlockV2Body.training{position:relative!important;display:block!important;height:calc(100dvh - 76px)!important;min-height:0!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .ace320BlockScene{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .ace320BlockSide{position:absolute!important;inset:0!important;z-index:80!important;pointer-events:none!important;padding:0!important;background:transparent!important;border:0!important;overflow:visible!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .aceBlockV2PanelTop,#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .aceBlockV2Execution{display:none!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .aceBlockV2Press{pointer-events:auto!important;position:absolute!important;right:9px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:82px!important;height:82px!important;min-height:82px!important;border-radius:50%!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:0!important;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%)!important;border:1px solid rgba(101,194,250,.28)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .aceBlockV2Press span{font-size:22px!important}#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .aceBlockV2Press b{font-size:5.5px!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .rta62Progress{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(49px + env(safe-area-inset-bottom))!important;height:5px!important;margin:0!important}
+ #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320BlockShell .aceBlockV2Feedback{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;min-height:32px!important;max-height:36px!important;margin:0!important;padding:6px 7px!important;border-radius:10px!important;background:rgba(4,10,18,.84)!important;color:#8295a9!important;font-size:6.5px!important;line-height:1.35!important;backdrop-filter:blur(8px)}
 }
 </style>
 <script id="ace320-build-marker">window.ACE_UNIFIED_TECHNICAL_UI="B21.36.320";window.ACE_SETTING_FLICK_AIM="B21.36.320";window.ACE_RECEIVE_2_BUILD="B21.36.320";window.ACE_PROJECT_BUILD="B21.36.320";</script>
@@ -52227,30 +52476,309 @@ window.ACE_PROJECT_BUILD="B21.36.316N";
 
 <style id="ace320-unified-technical-refine">
 /* Final shared art pass — same blue/orange broadcast language as ATTACK. */
-#rta62Overlay[data-kind="training"] .ace318ReceiveStage span.active{color:#eaf7ff!important;background:#153a53!important;box-shadow:none!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveSetterTarget{border-color:rgba(113,213,248,.45)!important;background:rgba(69,163,218,.04)!important;box-shadow:0 0 22px rgba(76,182,226,.12)!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveSetterTarget span{color:#8ed9f7!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveSetterTarget.hot{border-color:rgba(138,221,255,.78)!important;box-shadow:0 0 0 8px rgba(75,181,240,.05),0 0 34px rgba(89,190,246,.26)!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveContact{border-color:rgba(101,194,250,.28)!important;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveContact.ready{border-color:rgba(96,188,245,.52)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),0 0 30px rgba(92,184,240,.18),inset 0 0 0 6px rgba(255,255,255,.02)!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveContact.perfect{border-color:rgba(82,218,153,.62)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),0 0 32px rgba(82,218,153,.22),inset 0 0 0 6px rgba(255,255,255,.02)!important}
-#rta62Overlay[data-kind="training"] .ace318ReceiveRead small{color:#6f9fbd!important}
-#rta62Overlay[data-kind="training"] .ace318Receive2Side{background:linear-gradient(180deg,#071724,#04101a)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveStage span.active{color:#eaf7ff!important;background:#153a53!important;box-shadow:none!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveSetterTarget{border-color:rgba(113,213,248,.45)!important;background:rgba(69,163,218,.04)!important;box-shadow:0 0 22px rgba(76,182,226,.12)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveSetterTarget span{color:#8ed9f7!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveSetterTarget.hot{border-color:rgba(138,221,255,.78)!important;box-shadow:0 0 0 8px rgba(75,181,240,.05),0 0 34px rgba(89,190,246,.26)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveContact{border-color:rgba(101,194,250,.28)!important;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveContact.ready{border-color:rgba(96,188,245,.52)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),0 0 30px rgba(92,184,240,.18),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveContact.perfect{border-color:rgba(82,218,153,.62)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),0 0 32px rgba(82,218,153,.22),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveRead small{color:#6f9fbd!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318Receive2Side{background:linear-gradient(180deg,#071724,#04101a)!important}
 /* Setting targets become actual court players rather than floating pills. */
-#rta62Overlay[data-kind="training"] .ace320SettingCourt .rta102SetTargets span{min-width:0!important;width:42px!important;height:58px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:transparent!important;box-shadow:none!important;transform:translate(-50%,-50%)!important;overflow:visible!important}
-#rta62Overlay[data-kind="training"] .ace320SettingCourt .rta102SetTargets .oh{left:18%!important;top:39%!important}.ace320SettingCourt .rta102SetTargets .quick{left:50%!important;top:36%!important}.ace320SettingCourt .rta102SetTargets .op{left:82%!important;right:auto!important;top:39%!important}.ace320SettingCourt .rta102SetTargets .pipe{left:50%!important;top:55%!important}
-#rta62Overlay[data-kind="training"] .ace320SettingCourt .rta102SetTargets span:before{content:"";position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%);z-index:2}
-#rta62Overlay[data-kind="training"] .ace320SettingCourt .rta102SetTargets span:after{content:attr(class);position:absolute;left:50%;top:13px;width:27px;height:31px;display:grid;place-items:center;border-radius:7px;background:#dfe6ea;color:#17212a;transform:translateX(-50%);font-size:7px;font-weight:1000;text-transform:uppercase;box-shadow:0 7px 16px rgba(0,0,0,.20)}
-#rta62Overlay[data-kind="training"] .ace320SettingCourt .rta102SetTargets span.hot:after{background:#3fa37d!important;color:#fff!important;box-shadow:0 0 0 4px rgba(242,200,75,.18),0 0 22px rgba(242,200,75,.22)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets span{min-width:0!important;width:42px!important;height:58px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:transparent!important;box-shadow:none!important;transform:translate(-50%,-50%)!important;overflow:visible!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .oh{left:18%!important;top:39%!important}.ace320SettingCourt .rta102SetTargets .quick{left:50%!important;top:36%!important}.ace320SettingCourt .rta102SetTargets .op{left:82%!important;right:auto!important;top:39%!important}.ace320SettingCourt .rta102SetTargets .pipe{left:50%!important;top:55%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets span:before{content:"";position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%);z-index:2}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets span:after{content:attr(class);position:absolute;left:50%;top:13px;width:27px;height:31px;display:grid;place-items:center;border-radius:7px;background:#dfe6ea;color:#17212a;transform:translateX(-50%);font-size:7px;font-weight:1000;text-transform:uppercase;box-shadow:0 7px 16px rgba(0,0,0,.20)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets span.hot:after{background:#3fa37d!important;color:#fff!important;box-shadow:0 0 0 4px rgba(242,200,75,.18),0 0 22px rgba(242,200,75,.22)!important}
 /* Blocking opponents use the same simple player silhouettes as ATTACK. */
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112BlockHitters span{width:40px!important;height:58px!important;padding:0!important;border-radius:0!important;background:transparent!important;color:transparent!important;overflow:visible!important;transform:translateX(-50%)!important}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112BlockHitters .left{left:20%!important}.rta112BlockCourt .rta112BlockHitters .mid{left:50%!important}.rta112BlockCourt .rta112BlockHitters .right{left:80%!important;right:auto!important}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112BlockHitters span:before{content:"";position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%)}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112BlockHitters span:after{content:"";position:absolute;left:50%;top:13px;width:25px;height:31px;border-radius:7px;background:#dfe6ea;transform:translateX(-50%);box-shadow:0 7px 16px rgba(0,0,0,.20)}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112BlockHitters span.live:after{background:#3fa37d!important;box-shadow:0 0 0 4px rgba(242,200,75,.16),0 0 20px rgba(242,200,75,.20)!important}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112Setter b{width:27px!important;height:31px!important;margin-top:-1px!important;border-radius:7px!important;font-size:7px!important;background:#dfe6ea!important;color:#17212a!important}
-#rta62Overlay[data-kind="training"] .rta112BlockCourt .rta112Setter span{width:14px!important;height:14px!important;background:#cea080!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112BlockHitters span{width:40px!important;height:58px!important;padding:0!important;border-radius:0!important;background:transparent!important;color:transparent!important;overflow:visible!important;transform:translateX(-50%)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112BlockHitters .left{left:20%!important}.rta112BlockCourt .rta112BlockHitters .mid{left:50%!important}.rta112BlockCourt .rta112BlockHitters .right{left:80%!important;right:auto!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112BlockHitters span:before{content:"";position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112BlockHitters span:after{content:"";position:absolute;left:50%;top:13px;width:25px;height:31px;border-radius:7px;background:#dfe6ea;transform:translateX(-50%);box-shadow:0 7px 16px rgba(0,0,0,.20)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112BlockHitters span.live:after{background:#3fa37d!important;box-shadow:0 0 0 4px rgba(242,200,75,.16),0 0 20px rgba(242,200,75,.20)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112Setter b{width:27px!important;height:31px!important;margin-top:-1px!important;border-radius:7px!important;font-size:7px!important;background:#dfe6ea!important;color:#17212a!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112Setter span{width:14px!important;height:14px!important;background:#cea080!important}
 </style>
 
+
+<style id="ace321-key-technical-css">
+.ace321StyleChip{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid rgba(240,183,91,.20);border-radius:10px;background:linear-gradient(90deg,rgba(77,48,17,.22),rgba(8,20,31,.38));color:#d8e7f2}
+.ace321StyleChip>i{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:rgba(240,183,91,.10);color:#f1c36c;font-style:normal;font-size:12px}.ace321StyleChip span{min-width:0}.ace321StyleChip small{display:block;color:#987f52;font-size:5px;font-weight:1000;letter-spacing:.12em}.ace321StyleChip b{display:inline-block;margin-top:2px;font-size:7px;letter-spacing:.04em}.ace321StyleChip em{display:block;margin-top:2px;color:#7890a4;font-size:5.5px;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rta62Overlay[data-kind="key"] .ace321KeyTechShell .rta102RepFeedback{min-height:43px;padding:8px 9px;border-radius:10px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.02);color:#8295a9;font-size:7px;line-height:1.4}
+#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320UnifiedSide{background:linear-gradient(180deg,#071724,#04101a)!important;border-color:rgba(255,255,255,.06)!important}
+#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveContact,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320RoundAction{align-self:center;width:108px;height:108px;min-height:108px;border-radius:50%;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#fff;border:1px solid rgba(101,194,250,.28);background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%);box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)}
+#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveContact>span,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320RoundAction>span{font-size:27px}#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveContact>b,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320RoundAction>b{font-size:6.4px;letter-spacing:.09em}#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveContact>small,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320RoundAction>small{font-size:4.8px;color:#7f9bad;font-weight:900;letter-spacing:.07em;text-align:center;max-width:82px}
+.ace321KeySetTargets{position:absolute;inset:0;z-index:38;pointer-events:none}.ace321KeySetTargets span{position:absolute;width:46px;height:62px;transform:translate(-50%,-50%);text-align:center}.ace321KeySetTargets span i{position:absolute;left:50%;top:0;width:14px;height:14px;border-radius:50%;background:#cea080;transform:translateX(-50%)}.ace321KeySetTargets span b{position:absolute;left:50%;top:13px;width:29px;height:32px;display:grid;place-items:center;border-radius:7px;background:#dfe6ea;color:#17212a;transform:translateX(-50%);font-size:7px}.ace321KeySetTargets span small{position:absolute;left:50%;top:48px;transform:translateX(-50%);white-space:nowrap;color:#8ba1b3;font-size:5px;font-weight:1000;letter-spacing:.06em}.ace321KeySetTargets span.chosen b{background:#3fa37d;color:#fff;box-shadow:0 0 0 4px rgba(242,200,75,.18),0 0 22px rgba(242,200,75,.22)}
+#rta62Overlay[data-kind="key"] .ace321HideDefaultTargets>span{display:none!important}.ace321ReadStrip{display:flex;gap:5px}.ace321ReadStrip span{flex:1;padding:6px 7px;border:1px solid rgba(255,255,255,.055);border-radius:8px;background:rgba(255,255,255,.018);color:#6f879a;font-size:5.5px;font-weight:900;letter-spacing:.08em}.ace321ReadStrip b{color:#d8e6ef}
+#rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2Scene{background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)!important}
+@media(max-width:760px){
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace319Receive2Layout,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320SettingLayout{position:relative!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace319Receive2SceneCol,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320UnifiedScene{flex:1 1 100%!important;height:100%!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace321KeySide{position:absolute!important;inset:0!important;z-index:80!important;max-height:none!important;overflow:visible!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:none!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveIntro,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace319ReceiveSteps,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320TechIntro,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320TechSteps,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace321StyleChip,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace321ReadStrip{display:none!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveContact,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320SettingContact{pointer-events:auto!important;position:absolute!important;right:9px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:82px!important;height:82px!important;min-height:82px!important;margin:0!important;z-index:88!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveContact>small,#rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace320SettingContact>small{display:none!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .rta62Progress{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(49px + env(safe-area-inset-bottom))!important;height:5px!important;margin:0!important;pointer-events:none!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyTechShell .rta102RepFeedback{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;min-height:32px!important;max-height:36px!important;margin:0!important;padding:6px 7px!important;background:rgba(4,10,18,.84)!important;backdrop-filter:blur(8px);pointer-events:none!important;font-size:6.5px!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .ace321KeyBlockBody{position:relative!important;display:block!important;height:calc(100dvh - 76px)!important;min-height:0!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .ace320BlockScene{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .ace321KeyBlockSide{position:absolute!important;inset:0!important;z-index:80!important;pointer-events:none!important;padding:0!important;background:transparent!important;border:0!important;overflow:visible!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2PanelTop,#rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2Execution,#rta62Overlay[data-kind="key"] .ace321KeyBlockShell .ace321StyleChip{display:none!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2Reads{pointer-events:auto!important;position:absolute!important;left:8px!important;right:8px!important;top:8px!important;z-index:88!important;display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:4px!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2Reads button{min-width:0!important;padding:6px 4px!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2Reads button span small{display:none!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2Press{pointer-events:auto!important;position:absolute!important;right:9px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:82px!important;height:82px!important;min-height:82px!important;border-radius:50%!important;margin:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:0!important;background:radial-gradient(circle at 38% 28%,#163f5d,#071a29 68%)!important;border:1px solid rgba(101,194,250,.28)!important;box-shadow:0 9px 24px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.02)!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .rta62Progress{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(49px + env(safe-area-inset-bottom))!important;height:5px!important;margin:0!important}
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell .aceBlockV2Feedback{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;min-height:32px!important;max-height:36px!important;margin:0!important;padding:6px 7px!important;border-radius:10px!important;background:rgba(4,10,18,.84)!important;color:#8295a9!important;font-size:6.5px!important;line-height:1.35!important;backdrop-filter:blur(8px)}
+}
+</style>
+<script id="ace321-build-marker">window.ACE_KEY_MOMENTS_TECH_UI="B21.36.321";window.ACE_TECH_PLAYSTYLE_INTEGRATION="B21.36.321";window.ACE_PROJECT_BUILD="B21.36.321";</script>
+
+<style id="ace322-court-and-receive-fixes">
+/* B21.36.322 ---------------------------------------------------------------
+   Volleyball court geometry correction:
+   - no longitudinal centre line (a volleyball court does not have one)
+   - the separate net remains the centre divider
+   - the two attack lines remain
+   Applied to every CURRENT technical drill that shared the mistaken line. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceHitCourt,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceServeV5Court{
+  background:linear-gradient(180deg,#b96a3b,#955532)!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceDef42-court{
+  background:#a96039!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) :is(.ace318ReceiveCourt,.ace320SettingCourt) .rta102CourtFloor,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta112BlockCourt .rta112CourtFloor{
+  background:linear-gradient(180deg,#b96a3b,#955532)!important;
+}
+/* Older/emergency setter/libero views can still appear in special moments. Remove
+   their false vertical centre stripe without changing their existing palette. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta95SetterCourt{
+  background:linear-gradient(180deg,transparent 28%,rgba(255,255,255,.18) 28% 29%,transparent 29%),rgba(111,71,147,.92)!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .rta97Court{
+  background:linear-gradient(180deg,transparent 29%,rgba(255,255,255,.19) 29% 30%,transparent 30%),rgba(111,71,147,.93)!important;
+}
+/* Generic fallback training court also obeys real court geometry. */
+#rta62Overlay[data-kind="training"] .rta62Court{
+  background:linear-gradient(0deg,transparent 33%,rgba(255,255,255,.12) 33.2%,transparent 33.4%,transparent 66%,rgba(255,255,255,.12) 66.2%,transparent 66.4%),linear-gradient(135deg,#a65432,#bd6941)!important;
+}
+
+/* SETTING — all hitter bodies are on OUR side of the net. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .oh{left:20%!important;top:61%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .quick{left:50%!important;top:56%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .op{left:80%!important;right:auto!important;top:61%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .pipe{left:50%!important;top:72%!important}
+/* Never show the class string (e.g. "HOT QUICK") as the jersey label. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .oh:after{content:"OH"!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .quick:after{content:"M"!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .op:after{content:"OP"!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace320SettingCourt .rta102SetTargets .pipe:after{content:"PIPE"!important}
+
+/* Key-moment setter options: teammate targets stay as players. Setter actions such
+   as DUMP/FAKE are target rings, not fake opponent-side teammates. */
+.ace321KeySetTargets .ace322SetActionTarget i{display:none!important}
+.ace321KeySetTargets .ace322SetActionTarget b{
+  top:8px!important;width:40px!important;height:40px!important;border-radius:50%!important;
+  border:2px solid rgba(111,208,255,.70)!important;background:rgba(23,75,108,.32)!important;
+  color:#dff5ff!important;box-shadow:0 0 22px rgba(91,190,244,.18)!important
+}
+.ace321KeySetTargets .ace322SetActionTarget small{top:51px!important;color:#8fd5f4!important}
+
+/* RECEIVE visibility hardening.
+   The 319/320 mobile overlay inherited several competing height rules. On Safari
+   that could collapse the scene while leaving the HUD/action layer visible.
+   Give the gameplay canvas an explicit, independent fill layer. */
+@media(max-width:760px){
+  #rta62Overlay[data-kind="training"] .ace318Receive2Shell .ace319Receive2Layout,
+  #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace321KeyReceiveLayout{
+    position:relative!important;display:block!important;flex:1 1 auto!important;
+    width:100%!important;height:auto!important;min-height:0!important;overflow:hidden!important;
+  }
+  #rta62Overlay[data-kind="training"] .ace318Receive2Shell .ace319Receive2SceneCol,
+  #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace319Receive2SceneCol{
+    position:absolute!important;inset:0!important;display:block!important;width:100%!important;
+    height:auto!important;min-height:0!important;overflow:hidden!important;
+  }
+  #rta62Overlay[data-kind="training"] .ace318Receive2Shell .ace318ReceiveCourt,
+  #rta62Overlay[data-kind="key"] .ace321KeyTechShell .ace318ReceiveCourt{
+    position:absolute!important;inset:0!important;display:block!important;width:100%!important;
+    height:100%!important;min-height:0!important;visibility:visible!important;opacity:1!important;
+  }
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace318ReceiveCourt :is(.rta102CourtFloor,.rta102SkillNet,.rta102Server,.rta102SkillBall,.rta102SkillPlayer,.ace318ReceiveStage,.ace318ReceiveSetterTarget,.ace318ReceiveRead,.rta102SkillPrompt){visibility:visible!important}
+}
+</style>
+<script id="ace322-build-marker">
+window.ACE_PROJECT_BUILD="B21.36.322";
+window.ACE_COURT_GEOMETRY_FIX="B21.36.322";
+window.ACE_RECEIVE_VISIBILITY_FIX="B21.36.322";
+window.ACE_SETTING_TEAM_SIDE_FIX="B21.36.322";
+</script>
+
+
+<style id="ace323-blocking-visual-rebuild">
+/* B21.36.323 — Blocking now uses the ATTACK court, net and player language. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockSceneWrap{
+  position:relative;min-width:0;min-height:0;overflow:hidden;background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%);
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene{
+  position:relative!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;
+  background:linear-gradient(180deg,#123342 0 20%,#183f45 20% 28%,#173427 28%)!important;touch-action:none;
+}
+/* Exact ATTACK geometry: trapezoid court, attack lines only, no false longitudinal centre line. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockCourt{
+  left:4%!important;right:4%!important;top:6%!important;bottom:5%!important;
+  background:linear-gradient(180deg,#b96a3b,#955532)!important;
+  border:3px solid rgba(255,255,255,.94)!important;
+  clip-path:polygon(14% 0,86% 0,100% 100%,0 100%)!important;
+  box-shadow:0 25px 50px rgba(0,0,0,.34)!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockCourt:before,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockCourt:after{
+  content:""!important;position:absolute!important;left:0!important;right:0!important;height:2px!important;background:rgba(255,255,255,.9)!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockCourt:before{top:33%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockCourt:after{top:66%!important}
+/* Exact ATTACK net. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockNet{
+  left:2%!important;right:2%!important;top:48.8%!important;height:16px!important;z-index:30!important;
+  border-top:2px solid #fff!important;border-bottom:1px solid rgba(255,255,255,.6)!important;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.38) 0 1px,transparent 1px 10px),repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.22) 4px 5px)!important;
+  box-shadow:none!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockNet:before,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockNet:after{
+  content:""!important;position:absolute!important;top:-9px!important;width:4px!important;height:33px!important;background:#edf5f8!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockNet:before{left:0!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockNet:after{right:0!important}
+/* Players are built from the same head/torso/legs/arms primitives as ATTACK. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockActor{
+  position:absolute!important;z-index:24!important;width:38px!important;height:57px!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;color:transparent!important;overflow:visible!important;
+  transform:translate(-50%,-50%);pointer-events:none!important;opacity:1;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockActor .aceHitTorso{background:#183149!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323Opponent .aceHitTorso{background:#dfe6ea!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323Setter{left:50%!important;top:28%!important;width:34px!important;height:50px!important;z-index:23!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323Setter .aceHitTorso{background:#3fa37d!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockHitters .left,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceBlockV2Hitter.left{left:20%!important;top:36%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockHitters .mid,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceBlockV2Hitter.middle{left:50%!important;top:35%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockHitters .right,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceBlockV2Hitter.right{left:80%!important;right:auto!important;top:36%!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceBlockV2Hitter.ace323Opponent{opacity:.42!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceBlockV2Hitter.ace323Opponent.live{opacity:1!important;transform:translate(-50%,-58%) scale(1.08)!important;filter:drop-shadow(0 0 10px rgba(255,206,98,.28))}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323UserBlocker{
+  z-index:34!important;width:38px!important;height:57px!important;transition:left .06s linear,top .06s linear!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323UserBlocker .aceHitArms:before,
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323UserBlocker .aceHitArms:after{height:29px!important;top:-11px!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323You{
+  position:absolute;left:50%;top:55px;transform:translateX(-50%);color:#eaf5fb;font-size:6px;font-weight:1000;letter-spacing:.11em;white-space:nowrap;
+}
+/* Same ball rendering as ATTACK. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockBall{
+  position:absolute!important;z-index:40!important;width:22px!important;height:22px!important;border-radius:50%!important;opacity:1;
+  background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.98) 0 11%,rgba(255,255,255,.58) 12% 17%,rgba(255,255,255,0) 18% 26%),conic-gradient(from -18deg,#f4d84b 0 14%,#1d5dcb 14% 26%,#f4d84b 26% 40%,#1d5dcb 40% 51%,#f4d84b 51% 65%,#1d5dcb 65% 77%,#f4d84b 77% 91%,#1d5dcb 91% 97%,#f4d84b 97% 100%)!important;
+  box-shadow:inset -5px -6px 9px rgba(0,0,0,.17),0 5px 12px rgba(0,0,0,.36)!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .aceBlockV2Ball.ace323BlockBall{opacity:0}
+/* Court guidance stays in the scene; control chrome does not. */
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockPrompt{
+  left:18px!important;top:14px!important;bottom:auto!important;transform:none!important;min-width:0!important;padding:8px 11px!important;border-radius:13px!important;
+  background:rgba(3,11,18,.82)!important;font-size:7px!important;letter-spacing:.12em!important;
+}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323MoveHint{right:16px!important;bottom:15px!important;font-size:6px!important;opacity:.72}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockPanel{background:linear-gradient(180deg,#071724,#04101a)!important}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockSteps{display:flex;gap:5px;padding:4px;border:1px solid rgba(255,255,255,.06);border-radius:11px;background:#06131e}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockSteps span{flex:1;padding:7px 8px;border-radius:8px;color:#607a8e;font-size:6px;font-weight:1000;letter-spacing:.10em;text-align:center}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockSteps span.active{background:#173a57;color:#e7f6ff}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockHelp{padding:9px 10px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.018)}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockHelp b{display:block;font-size:8px;color:#dce9f1}
+#rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockHelp span{display:block;margin-top:3px;font-size:7px;color:#738b9d}
+@media(max-width:760px){
+  /* Undo 320/321's full-screen floating-control experiment. The court and control
+     panel are separate again, exactly like ATTACK on phone. */
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockBody{
+    position:relative!important;display:grid!important;grid-template-rows:minmax(0,1fr) auto!important;
+    height:calc(100dvh - 76px)!important;min-height:0!important;overflow:hidden!important;
+  }
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockSceneWrap,
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace320BlockScene{
+    position:relative!important;inset:auto!important;display:block!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;
+  }
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockPanel{
+    position:relative!important;inset:auto!important;z-index:90!important;pointer-events:auto!important;max-height:none!important;overflow:visible!important;
+    display:grid!important;grid-template-columns:minmax(0,1fr) 84px!important;grid-auto-rows:auto!important;gap:6px 9px!important;
+    padding:9px 10px calc(10px + env(safe-area-inset-bottom))!important;border:0!important;border-top:1px solid rgba(255,255,255,.07)!important;
+    background:linear-gradient(180deg,#071724,#04101a)!important;
+  }
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .aceBlockV2PanelTop,
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace321StyleChip,
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .aceBlockV2Execution,
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .aceBlockV2StageTitle{display:none!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockSteps{
+    grid-column:1!important;grid-row:1!important;margin:0!important;
+  }
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockHelp{grid-column:1!important;grid-row:2!important;padding:6px 8px!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockHelp b{font-size:6.5px!important}.ace323BlockHelp span{font-size:5.8px!important}
+  #rta62Overlay[data-kind="key"] .ace323BlockShell .aceBlockV2Reads{
+    position:static!important;inset:auto!important;grid-column:1!important;grid-row:2!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;pointer-events:auto!important;
+  }
+  #rta62Overlay[data-kind="key"] .ace323BlockShell .aceBlockV2Reads button{min-width:0!important;min-height:42px!important;height:42px!important;padding:4px!important;grid-template-columns:26px 1fr!important}
+  #rta62Overlay[data-kind="key"] .ace323BlockShell .aceBlockV2Reads button>i{width:25px!important;height:25px!important;font-size:5px!important}
+  #rta62Overlay[data-kind="key"] .ace323BlockShell .aceBlockV2Reads button b{font-size:6px!important}#rta62Overlay[data-kind="key"] .ace323BlockShell .aceBlockV2Reads button small{display:none!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockPress{
+    pointer-events:auto!important;position:static!important;inset:auto!important;grid-column:2!important;grid-row:1 / span 4!important;
+    align-self:center!important;justify-self:center!important;width:78px!important;height:78px!important;min-height:78px!important;margin:0!important;border-radius:50%!important;
+  }
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockPress span{font-size:22px!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .ace323BlockPress b{font-size:5.4px!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .rta62Progress{
+    position:static!important;inset:auto!important;grid-column:1!important;grid-row:3!important;height:5px!important;margin:1px 0 0!important;pointer-events:none!important;
+  }
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockShell .aceBlockV2Feedback{
+    position:static!important;inset:auto!important;grid-column:1!important;grid-row:4!important;min-height:30px!important;max-height:none!important;margin:0!important;padding:6px 7px!important;font-size:6.2px!important;line-height:1.3!important;
+  }
+  #rta62Overlay[data-kind="key"] .ace323BlockShell .rta62Progress{grid-row:3!important}
+  #rta62Overlay[data-kind="key"] .ace323BlockShell .aceBlockV2Feedback{grid-row:4!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323MoveHint{display:none!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .ace323BlockPrompt{top:10px!important;left:10px!important}
+  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace323BlockScene .aceBlockV2TouchZones{bottom:10px!important}
+}
+</style>
+<script id="ace323-build-marker">
+window.ACE_PROJECT_BUILD="B21.36.323";
+window.ACE_BLOCKING_VISUAL_REBUILD="B21.36.323";
+</script>
+
+<style id="ace323-blocking-mobile-specificity-fix">
+@media(max-width:760px){
+ #rta62Overlay[data-kind="training"] .ace320BlockShell.ace323BlockShell .aceBlockV2Body.training.ace323BlockBody,
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell.ace323BlockShell .aceBlockV2Body.ace321KeyBlockBody.ace323BlockBody{
+   position:relative!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important;
+   height:auto!important;min-height:0!important;flex:1 1 auto!important;overflow:hidden!important;
+ }
+ #rta62Overlay[data-kind="training"] .ace320BlockShell.ace323BlockShell .aceBlockV2TrainingScene.ace323BlockSceneWrap,
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell.ace323BlockShell .ace323BlockSceneWrap{
+   position:relative!important;inset:auto!important;width:100%!important;height:auto!important;min-height:0!important;overflow:hidden!important;
+ }
+ #rta62Overlay[data-kind="training"] .ace320BlockShell.ace323BlockShell .aceBlockV2Panel.training.ace320BlockSide.ace323BlockPanel,
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell.ace323BlockShell .aceBlockV2Panel.ace321KeyBlockSide.ace323BlockPanel{
+   position:relative!important;inset:auto!important;z-index:90!important;pointer-events:auto!important;max-height:none!important;overflow:visible!important;
+   display:grid!important;grid-template-columns:minmax(0,1fr) 84px!important;grid-auto-rows:auto!important;gap:6px 9px!important;
+   padding:9px 10px calc(10px + env(safe-area-inset-bottom))!important;border:0!important;border-top:1px solid rgba(255,255,255,.07)!important;
+   background:linear-gradient(180deg,#071724,#04101a)!important;
+ }
+ #rta62Overlay[data-kind="training"] .ace320BlockShell.ace323BlockShell .ace320BlockScene.ace323BlockSceneWrap,
+ #rta62Overlay[data-kind="key"] .ace321KeyBlockShell.ace323BlockShell .ace320BlockScene.ace323BlockScene{
+   position:relative!important;inset:auto!important;width:100%!important;height:100%!important;min-height:0!important;
+ }
+}
+</style>
 </body>
 </html>
