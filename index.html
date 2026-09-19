@@ -40497,19 +40497,6 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const selectedPair=nodeStates.find(([n])=>n.id===ACE316K_SELECTED_NODE)||nodeStates.find(([n,st])=>!st.owned&&st.available)||nodeStates.find(([n,st])=>st.owned)||nodeStates[0];
     if(selectedPair)ACE316K_SELECTED_NODE=selectedPair[0].id;
 
-    const stages=[
-      ["FOUNDATION",nodeStates.filter(([n])=>Number(n.tier||0)<=3)],
-      ["CORE",nodeStates.filter(([n])=>Number(n.tier||0)>3&&!["SPECIALIZATION","PLAYSTYLE","HYBRID"].includes(aceSt3NodeType(n))&&!aceSt3NodeType(n).startsWith("ACE_PLUS"))],
-      ["FORK",nodeStates.filter(([n])=>aceSt3NodeType(n)==="SPECIALIZATION")],
-      ["SIGNATURE",nodeStates.filter(([n])=>aceSt3NodeType(n)==="PLAYSTYLE")],
-      ["HYBRID",nodeStates.filter(([n])=>aceSt3NodeType(n)==="HYBRID")],
-      ["ACE+",nodeStates.filter(([n])=>aceSt3NodeType(n).startsWith("ACE_PLUS"))]
-    ].filter(([,arr])=>arr.length);
-    const stageTabs=stages.map(([label,arr])=>{
-      const done=arr.every(([,st])=>st.owned),open=arr.some(([,st])=>st.available),selected=arr.some(([n])=>n.id===ACE316K_SELECTED_NODE);
-      return `<button type="button" class="${done?"done":open?"open":"locked"} ${selected?"selected":""}" data-ace316k-stage="${esc(label)}"><b>${esc(label)}</b><span>${done?"✓":open?"•":"🔒"}</span></button>`;
-    }).join("");
-
     const pathPicker=keys.map(k=>{
       const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);
       const state=k===active?"VIEWING":k===primary?"PRIMARY":k===secondary?"SECONDARY":k==="HYBRID"?"HYBRID":"PATH";
@@ -40534,8 +40521,6 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       </section>
 
       <nav class="ace316kPaths">${pathPicker}</nav>
-      <nav class="ace316kStages">${stageTabs}</nav>
-
       <section class="ace316kWorkspace">
         <div class="ace316kTreePane">
           <div class="ace316kTreeHead"><small>FULL PATH · VIEWING</small><b>${esc(pm[0])}</b></div>
@@ -40560,15 +40545,34 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const sName=secondary?(paths[secondary]?.[0]||pretty(secondary)):"NOT CHOSEN";
     const panel=document.getElementById("ace316kDetails");
     if(panel)panel.innerHTML=ace316kDetailHTML(n,skillNodeState(n,c),c,sName);
+    setTimeout(ace316lFollowDetails,0);
   });
+
+  let ACE316L_DETAIL_RAF=0;
+  function ace316lFollowDetails(){
+    ACE316L_DETAIL_RAF=0;
+    const ws=document.querySelector("#roadtoace .ace316kWorkspace");
+    const panel=document.querySelector("#roadtoace .ace316kDetails");
+    if(!ws||!panel)return;
+    if(window.innerWidth>760){panel.style.removeProperty("--ace316l-detail-y");return;}
+    const wr=ws.getBoundingClientRect();
+    const pageTop=window.scrollY+wr.top;
+    const desired=Math.max(0,window.scrollY+58-pageTop);
+    const max=Math.max(0,ws.offsetHeight-panel.offsetHeight);
+    panel.style.setProperty("--ace316l-detail-y",`${Math.min(desired,max)}px`);
+  }
+  function ace316lQueueDetails(){
+    if(ACE316L_DETAIL_RAF)return;
+    ACE316L_DETAIL_RAF=requestAnimationFrame(ace316lFollowDetails);
+  }
+  window.addEventListener("scroll",ace316lQueueDetails,{passive:true});
+  window.addEventListener("resize",ace316lQueueDetails,{passive:true});
   document.addEventListener("click",function(e){
-    const stage=e.target?.closest?.("[data-ace316k-stage]");
-    if(!stage)return;
-    e.preventDefault();e.stopPropagation();
-    const label=String(stage.getAttribute("data-ace316k-stage")||"");
-    const target=[...document.querySelectorAll(".ace316kStageRail div")].find(x=>String(x.querySelector("b")?.textContent||"")===label||label==="FORK"&&String(x.querySelector("b")?.textContent||"")==="SPECIALISATION");
-    target?.scrollIntoView?.({behavior:"smooth",block:"center"});
+    if(e.target?.closest?.("[data-ace316k-node-select],[data-ace-st2-path],[data-rta93-player-panel]")){
+      setTimeout(ace316lFollowDetails,0);
+    }
   });
+
   document.addEventListener("click",function(e){
     const b=e.target?.closest?.("[data-ace-st2-path]");
     if(!b)return;
@@ -51577,8 +51581,7 @@ window.ACE_PROJECT_BUILD="B21.36.316G";
 window.ACE_SKILL_TREE_PHONE_BUILD="B21.36.316H";
 window.ACE_PROJECT_BUILD="B21.36.316H";
 </script>
-
-<style id="ace316k-rpg-skill-tree-css">
+<style id="ace316l-rpg-skill-tree-css">
 #roadtoace .ace316kPage{width:min(1180px,calc(100% - 18px));margin:0 auto;padding:0 0 120px;color:#eaf7ff}
 #roadtoace .ace316kTop{position:sticky;top:0;z-index:90;display:grid;grid-template-columns:52px minmax(0,1fr) 62px;align-items:center;gap:8px;padding:9px 0 8px;background:linear-gradient(180deg,#04101a 76%,rgba(4,16,26,.94) 90%,transparent);backdrop-filter:blur(10px)}
 #roadtoace .ace316kBack{width:44px;height:36px;border:1px solid rgba(82,180,238,.14);border-radius:10px;background:#071925;color:#82cfff;font-size:22px}
@@ -51594,9 +51597,7 @@ window.ACE_PROJECT_BUILD="B21.36.316H";
 
 #roadtoace .ace316kPaths{display:flex;gap:5px;margin-top:7px;padding:7px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:#06131f;overflow-x:auto;scrollbar-width:none}.ace316kPaths::-webkit-scrollbar{display:none}.ace316kPaths button{flex:0 0 128px;display:grid;grid-template-columns:29px minmax(0,1fr);align-items:center;gap:6px;min-height:44px;padding:6px;border:1px solid rgba(82,145,184,.10);border-radius:9px;background:#071722;color:#9ab1c0;text-align:left}.ace316kPaths button.active{border-color:#4fc1ff;background:linear-gradient(135deg,#157ab7,#2867c4);box-shadow:0 0 15px rgba(58,169,235,.13)}.ace316kPaths i{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#09243a;font-style:normal}.ace316kPaths small{display:block;font-size:4px;letter-spacing:.08em}.ace316kPaths b{display:block;margin-top:1px;font-size:6.5px}.ace316kPaths em{display:block;margin-top:1px;color:#66869a;font-size:4.2px;font-style:normal}
 
-#roadtoace .ace316kStages{display:flex;gap:4px;margin:7px 0;padding:0;overflow-x:auto;scrollbar-width:none}.ace316kStages::-webkit-scrollbar{display:none}.ace316kStages button{flex:1 0 64px;min-height:34px;display:flex;align-items:center;justify-content:center;gap:4px;border:1px solid rgba(70,145,188,.12);border-radius:8px;background:#071722;color:#66869a}.ace316kStages b{font-size:4.7px;letter-spacing:.06em}.ace316kStages span{font-size:6px}.ace316kStages .done{border-color:rgba(67,210,151,.22);color:#63dba7;background:#08231f}.ace316kStages .open,.ace316kStages .selected{border-color:#3faef1;color:#8bd5ff;box-shadow:inset 0 -2px #279ce2}.ace316kStages .locked{opacity:.55}
-
-#roadtoace .ace316kWorkspace{display:grid;grid-template-columns:minmax(0,57%) minmax(0,43%);gap:6px;align-items:start}
+#roadtoace .ace316kWorkspace{position:relative;display:grid;grid-template-columns:minmax(0,57%) minmax(0,43%);gap:6px;align-items:start}
 #roadtoace .ace316kTreePane,#roadtoace .ace316kDetails{border:1px solid rgba(73,153,199,.11);border-radius:13px;background:#06131f;overflow:hidden}
 #roadtoace .ace316kTreeHead{padding:8px 9px;border-bottom:1px solid rgba(255,255,255,.045);background:linear-gradient(180deg,#081a28,#06131f)}.ace316kTreeHead small{display:block;color:#66889e;font-size:4.5px;font-weight:1000;letter-spacing:.1em}.ace316kTreeHead b{display:block;margin-top:2px;font-size:9px}
 
@@ -51618,7 +51619,7 @@ linear-gradient(180deg,#06131f,#05111b);background-size:20px 20px,20px 20px,auto
 #roadtoace .ace316kNode.specialization .ace316kOrb{border-radius:30%}.ace316kNode.playstyle .ace316kOrb,.ace316kNode.ace_plus .ace316kOrb{width:54px;height:54px;border-color:#8c68df;background:#17102f;color:#e1d2ff}.ace316kNode.trait .ace316kOrb{border-radius:30%}
 @keyframes ace316kPulse{50%{transform:scale(1.05);box-shadow:0 0 0 7px rgba(61,175,239,.05),0 0 24px rgba(61,175,239,.24)}}
 
-#roadtoace .ace316kDetails{position:sticky;top:62px;min-height:300px;background:linear-gradient(160deg,#071a28,#06121d)}
+#roadtoace .ace316kDetails{position:absolute;z-index:12;right:0;top:0;width:calc(43% - 3px);min-height:250px;max-height:calc(100dvh - 178px);overflow-y:auto!important;-webkit-overflow-scrolling:touch;background:linear-gradient(160deg,#071a28,#06121d);transform:translateY(var(--ace316l-detail-y,0px));transition:transform .06s linear;box-shadow:0 14px 30px rgba(0,0,0,.16)}
 #roadtoace .ace316kDetailInner{padding:9px}.ace316kDetailKicker{color:#6a91aa;font-size:4.5px;font-weight:1000;letter-spacing:.11em}.ace316kDetailType{display:inline-block;margin-top:7px;padding:4px 5px;border:1px solid rgba(147,102,226,.28);border-radius:999px;background:#16102c;color:#ba9bf0;font-size:4px;font-weight:1000}.ace316kDetailInner h2{margin:6px 0 1px;font-size:14px;line-height:1}.ace316kDetailInner h4{margin:0;color:#63a9d0;font-size:4.8px;letter-spacing:.07em}.ace316kDetailInner>p{margin:8px 0;color:#8aa2b2;font-size:5.3px;line-height:1.45}
 #roadtoace .ace316kEffect,#roadtoace .ace316kSynergy{margin-top:7px;padding:7px;border:1px solid rgba(72,164,216,.10);border-radius:8px;background:#061724}.ace316kEffect small,.ace316kSynergy small{display:block;color:#5f8aa5;font-size:4px;font-weight:1000;letter-spacing:.08em}.ace316kEffect b,.ace316kSynergy b{display:block;margin-top:3px;color:#7ddfba;font-size:5.3px;line-height:1.3}.ace316kSynergy b{color:#d1b7ff}.ace316kSynergy span{display:block;margin-top:2px;color:#728c9d;font-size:4.6px;line-height:1.3}
 #roadtoace .ace316kStatus{margin-top:8px;padding:7px;border-radius:8px;background:#081823}.ace316kStatus b{display:block;font-size:5px}.ace316kStatus span{display:block;margin-top:2px;color:#718b9b;font-size:4.5px;line-height:1.3}.ace316kStatus.owned b{color:#58d89c}.ace316kStatus.available b{color:#61c5ff}.ace316kStatus.locked b{color:#8b8291}
@@ -51627,13 +51628,25 @@ linear-gradient(180deg,#06131f,#05111b);background-size:20px 20px,20px 20px,auto
 
 @media(min-width:761px){
  #roadtoace .ace316kWorkspace{grid-template-columns:minmax(0,62%) minmax(280px,38%);gap:12px}
+ #roadtoace .ace316kDetails{position:sticky;right:auto;top:70px;width:auto;max-height:calc(100dvh - 90px);transform:none!important}
  #roadtoace .ace316kNode{left:calc(var(--x)*1% - 36px);width:72px}.ace316kOrb{width:58px;height:58px}.ace316kNode>b,.ace316kNode>small{width:110px;margin-left:-19px}
  #roadtoace .ace316kDetailInner{padding:18px}.ace316kDetailInner h2{font-size:25px}.ace316kDetailInner>p{font-size:9px}.ace316kEffect b,.ace316kSynergy b{font-size:9px}
 }
+
+@media(max-width:760px){
+ #roadtoace .ace316kWorkspace{margin-top:7px}
+ #roadtoace .ace316kDetails{scrollbar-width:none}
+ #roadtoace .ace316kDetails::-webkit-scrollbar{display:none}
+ #roadtoace .ace316kDetailInner{padding:8px 7px 10px}
+ #roadtoace .ace316kDetailInner h2{font-size:13px;overflow-wrap:anywhere}
+ #roadtoace .ace316kDetailInner>p{font-size:5.1px;line-height:1.5}
+ #roadtoace .ace316kEffect,#roadtoace .ace316kSynergy{padding:6px}
+ #roadtoace .ace316kStatus{background:#071a27;border:1px solid rgba(255,255,255,.05)}
+}
 </style>
-<script id="ace316k-rpg-skill-tree-build">
-window.ACE_SKILL_TREE_RPG_BUILD="B21.36.316K";
-window.ACE_PROJECT_BUILD="B21.36.316K";
+<script id="ace316l-rpg-skill-tree-build">
+window.ACE_SKILL_TREE_RPG_BUILD="B21.36.316L";
+window.ACE_PROJECT_BUILD="B21.36.316L";
 </script>
 
 </body>
