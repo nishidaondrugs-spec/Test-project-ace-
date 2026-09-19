@@ -40424,7 +40424,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         pair.forEach(([sn,ss],idx)=>{
           positions.push({n:sn,st:ss,x:idx?72:32,y});
           emittedSpec.add(sn.id);
-          if(lastCenter)edges.push({x1:lastCenter.x,y1:lastCenter.y,x2:idx?72:32,y2:y,cls:ss.owned?"owned":ss.available?"available":"locked"});
+          if(lastCenter)edges.push({x1:lastCenter.x,y1:lastCenter.y,x2:idx?72:32,y2:y,cls:`${ss.owned?"owned":ss.available?"available":"locked"} specialization`});
         });
         lastFork={items:pair.map(([sn,ss],idx)=>({n:sn,st:ss,x:idx?72:32,y}))};
         lastCenter=null;
@@ -40434,10 +40434,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       const pos={n,st,x:52,y};
       positions.push(pos);
       if(lastFork){
-        lastFork.items.forEach(fp=>edges.push({x1:fp.x,y1:fp.y,x2:52,y2:y,cls:(fp.st.owned&&st.owned)?"owned":st.available?"available":"locked"}));
+        lastFork.items.forEach(fp=>edges.push({x1:fp.x,y1:fp.y,x2:52,y2:y,cls:`${(fp.st.owned&&st.owned)?"owned":st.available?"available":"locked"} ${type.toLowerCase()}`}));
         lastFork=null;
       }else if(lastCenter){
-        edges.push({x1:lastCenter.x,y1:lastCenter.y,x2:52,y2:y,cls:st.owned?"owned":st.available?"available":"locked"});
+        edges.push({x1:lastCenter.x,y1:lastCenter.y,x2:52,y2:y,cls:`${st.owned?"owned":st.available?"available":"locked"} ${type.toLowerCase()}`});
       }
       lastCenter=pos;
       y+= type==="PLAYSTYLE"||type.startsWith("ACE_PLUS")?108:88;
@@ -40640,7 +40640,20 @@ document.addEventListener("click",function(e){
     if(S.playerPanel==="tree")return skillTreeHTML(c);
     if(S.playerPanel==="form")return `<section class="rta93PlayerPanel rta182FormPanel"><div class="rta93PanelTitle"><div><small>FORM</small><h2>Recent performances.</h2></div><span class="rta182FormLabel">LAST ${Math.min(4,recent.length||0)} MATCHES</span></div><div class="rta182FormGrid"><article><div class="rta182Subhead"><span>RECENT MATCHES</span><small>RATING</small></div>${formRows}</article><article><div class="rta182Subhead"><span>ACTIVE PLAYSTYLES</span><small>${styles.length}</small></div><div class="rta182Playstyles">${activeStyles}</div></article></div></section>`;
     if(S.playerPanel==="career")return `<section class="rta93PlayerPanel"><div class="rta93PanelTitle"><div><small>CAREER OUTPUT</small><h2>${esc(rs.name)}</h2></div><b>${Number(c.reputation||0)} REP</b></div><div class="rta93CareerOutputs">${outputs.map(([n,v])=>`<div><span>${n}</span><b>${Number(v||0)}</b></div>`).join("")}</div><div class="rta93CareerFacts"><span><b>${Number(c.age||17)}</b>AGE</span><span><b>${Number(c.season||1)}</b>SEASONS</span><span><b>${Number(c.matches||0)}</b>MATCHES</span><span><b>${Number(c.career_wins||0)}</b>WINS</span><span><b>${esc(c.squad_role)}</b>ROLE</span></div></section>`;
-    return `<section class="rta93PlayerPanel"><div class="rta93PanelTitle"><div><small>ATTRIBUTES</small><h2>Your current player.</h2></div><b>${Number(c.skill_points||0)} SP</b></div><div class="rta93AttributeGrid">${STATS.map(([k,l])=>{const v=Number(c[k]||0),g=Math.max(0,Number(gains?.[k]||0));return `<div><span>${l}</span><b class="rta182StatValue"><span>${v}</span>${g?`<small class="rta182Gain">+${g}</small>`:""}</b>${rta93StatBar(v,gains,k)}</div>`}).join("")}</div><div class="rta93StrengthRow">${traits.slice(0,4).map(([n,v])=>`<span>${esc(n)} <b>${Number(v)}</b></span>`).join("")}</div></section>`;
+    const bestAttr=STATS.map(([k,l])=>[l,Number(c[k]||0)]).sort((a,b)=>b[1]-a[1])[0]||["—",0];
+    const attrOpen=(typeof window!=="undefined"&&window.innerWidth>760)?" open":"";
+    return `<section class="rta93PlayerPanel ace316mAttributesPanel">
+      <details class="ace316mAttributesFold"${attrOpen}>
+        <summary>
+          <div><small>ATTRIBUTES</small><h2>Your current player.</h2><p>${STATS.length} ratings · Best: ${esc(bestAttr[0])} ${Number(bestAttr[1])}</p></div>
+          <div class="ace316mAttrSummaryRight"><b>${Number(c.skill_points||0)} SP</b><span class="ace316mFoldLabel">SHOW</span><i>⌄</i></div>
+        </summary>
+        <div class="ace316mAttributesBody">
+          <div class="rta93AttributeGrid">${STATS.map(([k,l])=>{const v=Number(c[k]||0),g=Math.max(0,Number(gains?.[k]||0));return `<div><span>${l}</span><b class="rta182StatValue"><span>${v}</span>${g?`<small class="rta182Gain">+${g}</small>`:""}</b>${rta93StatBar(v,gains,k)}</div>`}).join("")}</div>
+          <div class="rta93StrengthRow">${traits.slice(0,4).map(([n,v])=>`<span>${esc(n)} <b>${Number(v)}</b></span>`).join("")}</div>
+        </div>
+      </details>
+    </section>`;
   }
 
   function rta217PlayerRadarHTML(c){
@@ -40664,7 +40677,7 @@ document.addEventListener("click",function(e){
     if(S.playerPanel==="tree")return `<main class="ace316gSkillPage">${skillTreeHTML(c)}</main>`;
     const xp=xpProgress(c),rp=roleProgress(c),rep=repProgress(c),gains=rta93PlayerGains(c);
     return `<main class="rta93Player">
-      <section class="rta93PlayerHero"><div class="rta93PlayerCardStage">${careerCardHTML(c)}</div><div class="rta93PlayerIdentity"><small>YOUR PLAYER</small><div class="rta93PlayerName"><h1>${esc(c.player_name)}</h1><strong>${Number(c.overall)}<span>OVR</span></strong></div><p>${esc(c.squad_role)} · ${esc(posLabel(c.position))} · #${Number(c.jersey_number)} · ${Number(c.height_cm)}cm · ${esc(c.nationality||"England")}</p>${rta217PlayerRadarHTML(c)}${rta93CompactAttributeRows(c,gains)}<div class="rta180MetaLine"><span>LEVEL <b>${Number(c.level||1)}</b></span><span>SP <b>${Number(c.skill_points||0)}</b></span><span>TRUST <b>${Number(c.coach_trust||0)}</b></span><span>REP <b>${Number(c.reputation||0)}</b></span></div><div class="rta93PlayerProgress"><div><span>XP</span><b>${xp.xp}/${xp.need}</b><i><em style="width:${xp.pct}%"></em></i></div><div><span>NEXT ROLE</span><b>${esc(rp.next||c.squad_role)}</b><i><em style="width:${rp.pct}%"></em></i></div><div><span>REPUTATION</span><b>${esc(rep.label)}</b><i><em style="width:${rep.pct}%"></em></i></div></div><div class="rta93PlayerActions"><button class="primary" data-rta93-player-panel="tree" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'tree')">DEVELOP PLAYER →</button><button data-rta83-open-card-studio>EDIT CARD</button></div></div></section>
+      <section class="rta93PlayerHero"><div class="rta93PlayerCardStage">${careerCardHTML(c)}</div><div class="rta93PlayerIdentity"><small>YOUR PLAYER</small><div class="rta93PlayerName"><h1>${esc(c.player_name)}</h1><strong>${Number(c.overall)}<span>OVR</span></strong></div><p>${esc(c.squad_role)} · ${esc(posLabel(c.position))} · #${Number(c.jersey_number)} · ${Number(c.height_cm)}cm · ${esc(c.nationality||"England")}</p><details class="ace316mQuickProfile"${(typeof window!=="undefined"&&window.innerWidth>760)?" open":""}><summary><span>QUICK ATTRIBUTES</span><b>VIEW PROFILE</b><i>⌄</i></summary><div class="ace316mQuickProfileBody">${rta217PlayerRadarHTML(c)}${rta93CompactAttributeRows(c,gains)}</div></details><div class="rta180MetaLine"><span>LEVEL <b>${Number(c.level||1)}</b></span><span>SP <b>${Number(c.skill_points||0)}</b></span><span>TRUST <b>${Number(c.coach_trust||0)}</b></span><span>REP <b>${Number(c.reputation||0)}</b></span></div><div class="rta93PlayerProgress"><div><span>XP</span><b>${xp.xp}/${xp.need}</b><i><em style="width:${xp.pct}%"></em></i></div><div><span>NEXT ROLE</span><b>${esc(rp.next||c.squad_role)}</b><i><em style="width:${rp.pct}%"></em></i></div><div><span>REPUTATION</span><b>${esc(rep.label)}</b><i><em style="width:${rep.pct}%"></em></i></div></div><div class="rta93PlayerActions"><button class="primary" data-rta93-player-panel="tree" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'tree')">DEVELOP PLAYER →</button><button data-rta83-open-card-studio>EDIT CARD</button></div></div></section>
       <nav class="rta93PlayerTabs">${rta93PlayerTabButton("attributes","ATTRIBUTES","▦")}${rta93PlayerTabButton("tree","SKILL TREE","✦")}${rta93PlayerTabButton("form","FORM","↗")}${rta93PlayerTabButton("career","CAREER","◎")}</nav>
       ${rta93PlayerPanel(c)}
     </main>`;
@@ -51581,7 +51594,7 @@ window.ACE_PROJECT_BUILD="B21.36.316G";
 window.ACE_SKILL_TREE_PHONE_BUILD="B21.36.316H";
 window.ACE_PROJECT_BUILD="B21.36.316H";
 </script>
-<style id="ace316l-rpg-skill-tree-css">
+<style id="ace316m-rpg-skill-tree-css">
 #roadtoace .ace316kPage{width:min(1180px,calc(100% - 18px));margin:0 auto;padding:0 0 120px;color:#eaf7ff}
 #roadtoace .ace316kTop{position:sticky;top:0;z-index:90;display:grid;grid-template-columns:52px minmax(0,1fr) 62px;align-items:center;gap:8px;padding:9px 0 8px;background:linear-gradient(180deg,#04101a 76%,rgba(4,16,26,.94) 90%,transparent);backdrop-filter:blur(10px)}
 #roadtoace .ace316kBack{width:44px;height:36px;border:1px solid rgba(82,180,238,.14);border-radius:10px;background:#071925;color:#82cfff;font-size:22px}
@@ -51602,12 +51615,18 @@ window.ACE_PROJECT_BUILD="B21.36.316H";
 #roadtoace .ace316kTreeHead{padding:8px 9px;border-bottom:1px solid rgba(255,255,255,.045);background:linear-gradient(180deg,#081a28,#06131f)}.ace316kTreeHead small{display:block;color:#66889e;font-size:4.5px;font-weight:1000;letter-spacing:.1em}.ace316kTreeHead b{display:block;margin-top:2px;font-size:9px}
 
 #roadtoace .ace316kTreeCanvas{position:relative;height:var(--tree-h);min-height:520px;background:
-linear-gradient(rgba(76,145,184,.025) 1px,transparent 1px),
-linear-gradient(90deg,rgba(76,145,184,.025) 1px,transparent 1px),
-radial-gradient(circle at 58% 12%,rgba(30,126,185,.08),transparent 28%),
-linear-gradient(180deg,#06131f,#05111b);background-size:20px 20px,20px 20px,auto,auto;overflow:hidden}
+radial-gradient(circle at 52% 7%,rgba(49,167,226,.12),transparent 19%),
+radial-gradient(circle at 15% 38%,rgba(78,84,190,.07),transparent 23%),
+radial-gradient(circle at 86% 72%,rgba(27,148,139,.055),transparent 24%),
+linear-gradient(rgba(76,145,184,.032) 1px,transparent 1px),
+linear-gradient(90deg,rgba(76,145,184,.032) 1px,transparent 1px),
+linear-gradient(180deg,#071724 0%,#05131f 46%,#04101a 100%);background-size:auto,auto,auto,20px 20px,20px 20px,auto;overflow:hidden}
+#roadtoace .ace316kTreeCanvas:before{content:"";position:absolute;inset:0;pointer-events:none;background:
+linear-gradient(90deg,transparent 0 11%,rgba(90,184,232,.045) 11% 11.4%,transparent 11.4% 92%,rgba(90,184,232,.03) 92% 92.4%,transparent 92.4%),
+repeating-linear-gradient(135deg,rgba(255,255,255,.012) 0 1px,transparent 1px 12px);opacity:.9}
+#roadtoace .ace316kTreeCanvas:after{content:"ROAD TO ACE";position:absolute;right:-29px;top:300px;transform:rotate(90deg);transform-origin:center;color:rgba(91,174,220,.035);font-size:22px;font-weight:1000;letter-spacing:.24em;pointer-events:none}
 #roadtoace .ace316kLines{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}.ace316kLines path{fill:none;stroke:#263f51;stroke-width:1.25;vector-effect:non-scaling-stroke}.ace316kLines path.owned{stroke:#4acb91;filter:drop-shadow(0 0 3px rgba(61,208,144,.35))}.ace316kLines path.available{stroke:#3aa8eb;filter:drop-shadow(0 0 3px rgba(55,164,229,.3))}.ace316kLines path.locked{stroke:#31404e}
-#roadtoace .ace316kStageRail{position:absolute;inset:0 auto 0 4px;width:37px;border-right:1px dashed rgba(85,150,188,.14)}.ace316kStageRail div{position:absolute;left:0;width:35px}.ace316kStageRail small{display:block;color:#55a9d7;font-size:5px;font-weight:1000}.ace316kStageRail b{display:block;margin-top:1px;color:#6f91a6;font-size:4.2px;line-height:1.05;word-break:break-word}
+#roadtoace .ace316kStageRail{position:absolute;z-index:2;inset:0 auto 0 4px;width:37px;border-right:1px dashed rgba(85,150,188,.18);background:linear-gradient(90deg,rgba(20,70,99,.06),transparent)}.ace316kStageRail div{position:absolute;left:0;width:35px}.ace316kStageRail small{display:grid;place-items:center;width:19px;height:19px;border:1px solid rgba(76,177,230,.18);border-radius:6px;background:#082033;color:#62bce9;font-size:5px;font-weight:1000;box-shadow:0 0 12px rgba(44,151,210,.08)}.ace316kStageRail b{display:block;margin-top:1px;color:#6f91a6;font-size:4.2px;line-height:1.05;word-break:break-word}
 
 #roadtoace .ace316kNode{position:absolute;z-index:4;left:calc(var(--x)*1% - 29px);top:calc(var(--y) - 28px);width:58px;padding:0;border:0;background:transparent;color:#dcecf5;text-align:center;overflow:visible}
 #roadtoace .ace316kOrb{width:48px;height:48px;margin:0 auto;display:grid;place-items:center;border:3px solid #36566a;border-radius:50%;background:#081b29;color:#6f8ea0;font-size:12px;box-shadow:0 0 0 5px rgba(255,255,255,.012);transition:.18s}
@@ -51643,10 +51662,99 @@ linear-gradient(180deg,#06131f,#05111b);background-size:20px 20px,20px 20px,auto
  #roadtoace .ace316kEffect,#roadtoace .ace316kSynergy{padding:6px}
  #roadtoace .ace316kStatus{background:#071a27;border:1px solid rgba(255,255,255,.05)}
 }
+
+/* 316M: special nodes have their own identity instead of all reading as "green owned". */
+#roadtoace .ace316kNode.trait.owned .ace316kOrb{
+ border-color:#49c7e8;background:linear-gradient(145deg,#092b3a,#08202d);color:#a9efff;
+ box-shadow:0 0 0 5px rgba(73,199,232,.035),0 0 18px rgba(73,199,232,.18)
+}
+#roadtoace .ace316kNode.specialization.owned .ace316kOrb{
+ border-color:#9b72ee;background:linear-gradient(145deg,#26184b,#15112d);color:#eadfff;
+ box-shadow:0 0 0 5px rgba(155,114,238,.045),0 0 22px rgba(137,91,228,.22)
+}
+#roadtoace .ace316kNode.playstyle.owned .ace316kOrb{
+ border-color:#f0b75b;background:radial-gradient(circle,#4a3013,#20170d 70%);color:#ffe4a6;
+ box-shadow:0 0 0 6px rgba(240,183,91,.04),0 0 24px rgba(232,163,59,.20)
+}
+#roadtoace .ace316kNode.hybrid.owned .ace316kOrb{
+ border-color:#db73e9;background:linear-gradient(145deg,#39163f,#1d1128);color:#ffd8ff;
+ box-shadow:0 0 0 6px rgba(219,115,233,.04),0 0 24px rgba(207,91,225,.20)
+}
+#roadtoace .ace316kNode.ace_plus.owned .ace316kOrb{
+ border-color:#f1d06d;background:radial-gradient(circle,#51420f,#211c0d 70%);color:#fff1a8;
+ box-shadow:0 0 0 6px rgba(241,208,109,.045),0 0 28px rgba(236,196,74,.24)
+}
+#roadtoace .ace316kLines path.trait.owned{stroke:#43bad8;filter:drop-shadow(0 0 3px rgba(67,186,216,.35))}
+#roadtoace .ace316kLines path.specialization.owned{stroke:#8d68db;filter:drop-shadow(0 0 4px rgba(141,104,219,.40))}
+#roadtoace .ace316kLines path.playstyle.owned{stroke:#dba653;filter:drop-shadow(0 0 4px rgba(219,166,83,.36))}
+#roadtoace .ace316kLines path.hybrid.owned{stroke:#ca69d8;filter:drop-shadow(0 0 4px rgba(202,105,216,.38))}
+#roadtoace .ace316kLines path.ace_plus.owned{stroke:#e3c45e;filter:drop-shadow(0 0 5px rgba(227,196,94,.42))}
+#roadtoace .ace316kNode.trait>small{color:#6fbdd0}
+#roadtoace .ace316kNode.specialization>small{color:#a68bdd}
+#roadtoace .ace316kNode.playstyle>small{color:#d5aa68}
+#roadtoace .ace316kNode.hybrid>small{color:#c987d4}
+#roadtoace .ace316kNode.ace_plus>small{color:#d9c370}
+
+/* Small visual "plates" behind major milestones so the tree feels authored rather than empty. */
+#roadtoace .ace316kNode.specialization:before,
+#roadtoace .ace316kNode.playstyle:before,
+#roadtoace .ace316kNode.hybrid:before,
+#roadtoace .ace316kNode.ace_plus:before{
+ content:"";position:absolute;z-index:-1;left:50%;top:23px;width:78px;height:78px;transform:translate(-50%,-50%) rotate(45deg);
+ border:1px solid rgba(142,105,220,.075);background:rgba(83,53,143,.025);border-radius:15px
+}
+#roadtoace .ace316kNode.playstyle:before{border-color:rgba(224,170,76,.08);background:rgba(151,102,30,.025)}
+#roadtoace .ace316kNode.hybrid:before{border-color:rgba(205,103,220,.08);background:rgba(140,55,151,.025)}
+#roadtoace .ace316kNode.ace_plus:before{border-color:rgba(232,201,91,.09);background:rgba(158,131,39,.028)}
 </style>
-<script id="ace316l-rpg-skill-tree-build">
-window.ACE_SKILL_TREE_RPG_BUILD="B21.36.316L";
-window.ACE_PROJECT_BUILD="B21.36.316L";
+<style id="ace316m-player-attributes-fold-css">
+#roadtoace .ace316mAttributesPanel{padding:0!important;overflow:hidden}
+#roadtoace .ace316mAttributesFold>summary,
+#roadtoace .ace316mQuickProfile>summary{list-style:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#roadtoace .ace316mAttributesFold>summary::-webkit-details-marker,
+#roadtoace .ace316mQuickProfile>summary::-webkit-details-marker{display:none}
+#roadtoace .ace316mAttributesFold>summary{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px}
+#roadtoace .ace316mAttributesFold>summary small{display:block;color:#6f91a6;font-size:5px;font-weight:1000;letter-spacing:.11em}
+#roadtoace .ace316mAttributesFold>summary h2{margin:2px 0 0;font-size:15px}
+#roadtoace .ace316mAttributesFold>summary p{margin:3px 0 0;color:#658093;font-size:5.5px}
+#roadtoace .ace316mAttrSummaryRight{display:grid;grid-template-columns:auto auto;align-items:center;gap:5px;text-align:right}
+#roadtoace .ace316mAttrSummaryRight>b{grid-column:1/3;color:#69c8f8;font-size:7px}
+#roadtoace .ace316mAttrSummaryRight span{color:#8f78c6;font-size:4.5px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace316mAttrSummaryRight i{font-style:normal;color:#8f78c6;font-size:10px;transition:transform .2s}
+#roadtoace .ace316mAttributesFold[open] .ace316mAttrSummaryRight i{transform:rotate(180deg)}
+#roadtoace .ace316mAttributesFold[open] .ace316mFoldLabel{font-size:0}
+#roadtoace .ace316mAttributesFold[open] .ace316mFoldLabel:after{content:"HIDE";font-size:4.5px}
+#roadtoace .ace316mAttributesBody{padding:0 11px 11px;border-top:1px solid rgba(101,191,239,.07)}
+
+#roadtoace .ace316mQuickProfile{margin-top:7px;border:1px solid rgba(91,171,218,.09);border-radius:10px;background:rgba(5,17,27,.48);overflow:hidden}
+#roadtoace .ace316mQuickProfile>summary{min-height:34px;display:flex;align-items:center;gap:7px;padding:0 9px;color:#7897aa}
+#roadtoace .ace316mQuickProfile>summary span{font-size:5px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace316mQuickProfile>summary b{margin-left:auto;color:#60b8e8;font-size:4.5px}
+#roadtoace .ace316mQuickProfile>summary i{font-style:normal;font-size:9px;transition:transform .2s}
+#roadtoace .ace316mQuickProfile[open]>summary i{transform:rotate(180deg)}
+#roadtoace .ace316mQuickProfileBody{padding:2px 7px 7px}
+
+@media(max-width:760px){
+  /* Phone starts compact: player tabs are reachable without a huge first swipe. */
+  #roadtoace .ace316mQuickProfile:not([open]){margin-bottom:6px}
+  #roadtoace .ace316mQuickProfile:not([open]) .ace316mQuickProfileBody{display:none}
+  #roadtoace .ace316mAttributesFold:not([open]){min-height:62px}
+  #roadtoace .ace316mAttributesFold[open] .rta93AttributeGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:4px!important
+  }
+  #roadtoace .ace316mAttributesFold[open] .rta93AttributeGrid>div{
+    min-height:34px!important;padding:6px 7px!important
+  }
+  #roadtoace .ace316mAttributesFold[open] .rta93StrengthRow{margin-top:5px!important}
+  #roadtoace .rta93Player{scroll-margin-top:56px}
+}
+</style>
+
+<script id="ace316m-skill-tree-player-ui-build">
+window.ACE_SKILL_TREE_RPG_BUILD="B21.36.316M";
+window.ACE_PLAYER_ATTRIBUTES_FOLD="B21.36.316M";
+window.ACE_PROJECT_BUILD="B21.36.316M";
 </script>
 
 </body>
