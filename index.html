@@ -1156,7 +1156,7 @@ button{font:inherit}.app{min-height:100dvh;background:radial-gradient(circle at 
 </div>
 <div class="vdsSquadFooter aceSquadFooter">
 <div><span id="utSquadStatus">Open packs to build your squad.</span><small id="utUniqueCount">0 UNIQUE</small></div>
-<button class="aceSquadPlayBtn" id="aceUTPlayFromSquad" type="button"><span>▶</span><b>PLAY MATCH</b><small>TAKE THIS SIX ON COURT</small></button>
+<button class="aceSquadPlayBtn" id="aceUTPlayFromSquad" type="button"><span>▶</span><b>PLAY MATCH</b></button>
 </div>
 </div>
 <div class="vdsPackPanel vdsPackPanelPremium">
@@ -10353,12 +10353,12 @@ function renderPostMatchDecision(){
           <button class="postMatchChoiceBtn" type="button" onclick="localPostMatchAction('rematch')">
             <span class="postMatchChoiceIcon">↻</span>
             <span class="postMatchChoiceName">REMATCH · SAME TEAMS</span>
-            <span class="postMatchChoiceDesc">Keep both lineups and immediately play another match.</span>
+            
           </button>
           <button class="postMatchChoiceBtn" type="button" onclick="localPostMatchAction('draft')">
             <span class="postMatchChoiceIcon">✦</span>
             <span class="postMatchChoiceName">DRAFT AGAIN</span>
-            <span class="postMatchChoiceDesc">Return to the draft setup and build new teams.</span>
+            
           </button>
         </div>
       </div>`;
@@ -10382,13 +10382,13 @@ function renderPostMatchDecision(){
           <button class="postMatchChoiceBtn" type="button" onclick="aceUTOnlineFindNewOpponent()">
             <span class="postMatchChoiceIcon">⌕</span>
             <span class="postMatchChoiceName">FIND NEW OPPONENT</span>
-            <span class="postMatchChoiceDesc">Leave this lobby cleanly and immediately search for another online manager.</span>
+            
           </button>
 
           <button class="postMatchChoiceBtn aceUTLeaveLobbyBtn" type="button" onclick="aceUTOnlineLeaveLobby()">
             <span class="postMatchChoiceIcon">←</span>
             <span class="postMatchChoiceName">LEAVE LOBBY</span>
-            <span class="postMatchChoiceDesc">Return to Ultimate Team. Your opponent is released from this room too.</span>
+            
           </button>
         </div>
 
@@ -21941,7 +21941,7 @@ function vdsRenderUltimateHubHome(){
             <span>⬡</span><b>MANAGE SQUAD</b><small>${filled.length}/6 STARTERS SET</small>
           </button>
           <button class="aceUTHomeGhost" type="button" onclick="aceUTOpenMatchFlow()">
-            <span>▶</span><b>PLAY MATCH</b><small>TAKE YOUR TEAM ON COURT</small>
+            <span>▶</span><b>PLAY MATCH</b>
           </button>
         </div>
 
@@ -39927,7 +39927,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <div class="ace252GuideCopy"><small>CAREER TUTORIAL · 3 OF 3</small><h2>Play your first fixture.</h2><p>Choose Key Moments or Sim Match.</p></div>
         <span class="ace252GuideArrow">↓</span>
       </section>`):""}
-      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>COACH'S OBJECTIVE</small><h2>${esc(playerTarget)}</h2><p>${esc(coachNote)}</p></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b><small>${status==="BENCH"?"Coach may send you on.":status==="ROTATION"?"Key moments only.":"Control key moments."}</small></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b><small>Sim to full-time.</small></span></button></aside></section>
+      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>COACH'S OBJECTIVE</small><h2>${esc(playerTarget)}</h2><p>${esc(coachNote)}</p></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
     </main>`;
   }
 
@@ -47330,7 +47330,7 @@ height:20px!important;} #roadtoace .rta92TableCard .rta62ClubCell b{min-width:0!
     return `<main class="rta93Match">
       <section class="rta93MatchHero ace241MatchHero"><div class="rta93MatchTop ace241MatchTop"><small>NEXT FIXTURE · MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)} · ${esc(leagueName)}</small><span>${training}/2 training · ${rank?`league #${rank}`:"season"}</span></div><div class="ace241MatchBanner"><article class="ace241Team home">${rta77ClubLogo(c.club_name,"lg")}<small>HOME</small><h1>${esc(c.club_name)}</h1><p>${esc(c.squad_role)} · ${Number(c.overall)} OVR</p></article><div class="ace241Center"><small>NEXT MATCH</small><strong>VS</strong><p>${esc(playerTarget)}</p></div><article class="ace241Team away">${rta77ClubLogo(opp,"lg")}<small>AWAY</small><h1>${esc(opp)}</h1><p>${esc(coach)} · OPPOSITION</p></article></div><div class="ace241MatchChips"><span>${ready}% READY</span><span>${esc(status)}</span><span>${rank?`LEAGUE #${rank}`:`MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)}`}</span></div></section>
       <section class="rta93MatchStatus ${rta88SelectionTone(status)}"><div><small>TEAM SELECTION</small><h2>${esc(rta88SelectionTitle(status))}</h2><p>${esc(story)}</p></div><div class="rta93MatchStatusMeta"><span><b>${ready}%</b>READY</span><span><b>#${Number(sel.rank||1)}</b>DEPTH</span><span><b>${Number(sel.selection_score||0).toFixed(1)}</b>SELECT</span></div></section>
-      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b><small>${status==="BENCH"?"The match advances until the coach sends you on.":status==="ROTATION"?"Fewer moments. Every touch matters.":"Control the important volleyball moments."}</small></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b><small>Sim the role the coach selected for you.</small></span></button></aside></section>
+      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
     </main>`;
   };
   window.ACE_MATCHDAY_REDESIGN_JS_BUILD='B21.36.241';
@@ -47364,7 +47364,7 @@ height:20px!important;} #roadtoace .rta92TableCard .rta62ClubCell b{min-width:0!
         <div class="ace244MatchFooter"><span class="ace244MatchPill">${ready}% READY</span><span class="ace244MatchPill">${esc(status)}</span><span class="ace244MatchPill">${rank?`LEAGUE #${rank}`:`MATCHDAY ${Math.min(14,Number(c.season_match||0)+1)}`}</span></div>
       </section>
       <section class="rta93MatchStatus ${rta88SelectionTone(status)}"><div><small>TEAM SELECTION</small><h2>${esc(rta88SelectionTitle(status))}</h2><p>${esc(story)}</p></div><div class="rta93MatchStatusMeta"><span><b>${ready}%</b>READY</span><span><b>#${Number(sel.rank||1)}</b>DEPTH</span><span><b>${Number(sel.selection_score||0).toFixed(1)}</b>SELECT</span></div></section>
-      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b><small>${status==="BENCH"?"The match advances until the coach sends you on.":status==="ROTATION"?"Fewer moments. Every touch matters.":"Control the important volleyball moments."}</small></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b><small>Sim the role the coach selected for you.</small></span></button></aside></section>
+      <section class="rta93MatchActionArea"><article class="rta93CoachBrief"><small>${esc(coach.toUpperCase())} · YOUR JOB</small><h2>${esc(playerTarget)}</h2><p>${esc(coachBrief(c))}</p><span>${esc(sel.entry_message||"Be ready for your role.")}</span></article><aside class="rta93MatchButtons"><button class="primary" data-rta62-key><i>▶</i><span><b>${esc(actionLabel)}</b></span></button><button data-rta62-sim><i>»</i><span><b>SIM MATCH</b></span></button></aside></section>
     </main>`;
   };
   window.ACE_MATCHDAY_BANNER_REMAKE_BUILD='B21.36.293';
@@ -50107,7 +50107,7 @@ function results(w){
  return a.map(r=>`<div class="aceIntlResultRow ${r.won?'':'loss'}"><strong>${r.won?'W':'L'}</strong><div><small>${esc(r.stage||'GROUP')} · ${esc(r.approach)}</small><b>${esc(r.opponent)}</b></div><span>${Number(r.sets_for)}–${Number(r.sets_against)}</span></div>`).join('');
 }
 function approachButtons(stage){
- return `<div class="ace311cMatchActions"><button class="aceIntlPrimary ace311cPlay" data-intl-play><b>▶ PLAY MATCH</b><span>Take your Career player onto court. Your performance affects the result.</span></button><button class="ace311cSim" data-intl-match="TACTICAL"><b>SIM MATCH</b><span>Let the national team handle it.</span></button></div><div class="aceIntlStatus">${stage==='FINAL'?'Play for the trophy — every key moment matters.':'Play the match or simulate it.'}</div>`;
+ return `<div class="ace311cMatchActions"><button class="aceIntlPrimary ace311cPlay" data-intl-play><b>▶ PLAY MATCH</b></button><button class="ace311cSim" data-intl-match="TACTICAL"><b>SIM MATCH</b></button></div>`;
 }
 function path(stage){
  const order=['CAMP','GROUP','SEMIFINAL','FINAL','COMPLETE'],i=Math.max(0,order.indexOf(stage));
@@ -50636,7 +50636,7 @@ window.ACE_PROJECT_BUILD='B21.36.315F';
 window.ACE_OFFSEASON_ORDER_315F={selected:'INTERNATIONAL_THEN_CONTRACT_THEN_PRESEASON',notSelected:'CONTRACT_THEN_PRESEASON'};
 </script>
 
-<!-- PROJECT ACE B21.36.315K · SINGLE INTERNATIONAL RENDERER · NO LEGACY SCREEN · NO INTL OBSERVERS -->
+<!-- PROJECT ACE B21.36.315L · SINGLE INTERNATIONAL RENDERER · NO LEGACY SCREEN · NO INTL OBSERVERS -->
 <style id="ace315h-international-ui-css">
 /* 315H: one international presentation layer. No cloned legacy screens. */
 #roadtoace .aceIntlHubHero{padding:9px 11px!important;margin:0 0 8px!important;border-radius:12px!important;background:linear-gradient(145deg,rgba(9,31,48,.94),rgba(5,17,28,.96))!important}
@@ -50711,10 +50711,10 @@ function queue(){if(frame)return;frame=requestAnimationFrame(()=>requestAnimatio
 /* Hook the existing RTA renderer instead of adding another MutationObserver. */
 const baseRender=window.__ACE_RTA_RENDER;if(typeof baseRender==='function'&&!baseRender.__ace315hWrapped){const wrapped=function(...args){const out=baseRender.apply(this,args);queue();return out};wrapped.__ace315hWrapped=true;window.__ACE_RTA_RENDER=wrapped}
 document.addEventListener('click',e=>{if(e.target.closest('#roadtoace'))setTimeout(queue,0)},true);window.addEventListener('pageshow',queue);window.addEventListener('ace:career-nationality-ready',queue);setTimeout(queue,100);
-window.ACE_PROJECT_BUILD='B21.36.315K';window.ACE_INTERNATIONAL_UI_315H={flag,open:()=>{const h=road()?.querySelector('.aceV77Intl');if(h)openModal(h)},close:closeModal,activeInternational};
+window.ACE_PROJECT_BUILD='B21.36.315L';window.ACE_INTERNATIONAL_UI_315H={flag,open:()=>{const h=road()?.querySelector('.aceV77Intl');if(h)openModal(h)},close:closeModal,activeInternational};
 })();
 </script>
-<script id="ace315h-build-marker">window.ACE_PROJECT_BUILD='B21.36.315K';window.ACE_OFFSEASON_ORDER_315H='INTERNATIONAL_BEFORE_CONTRACT';window.ACE_INTERNATIONAL_MATCH_UI_315H=true;</script>
+<script id="ace315h-build-marker">window.ACE_PROJECT_BUILD='B21.36.315L';window.ACE_OFFSEASON_ORDER_315H='INTERNATIONAL_BEFORE_CONTRACT';window.ACE_INTERNATIONAL_MATCH_UI_315H=true;</script>
 
 
 <style id="ace315k-single-intl-source">
