@@ -40315,63 +40315,158 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return t.slice(0,2).map(x=>`◆ ${x.name}${x.trigger?` · ${String(x.trigger).trim()}`:""}`).join("  ");
   }
 
-  function ace315aIdentityHTML(c){
-    const pos=String(c.position||"OH").toUpperCase(),paths=ACE_ST2_PATH_META[pos]||{},primary=ace315aPrimary(),secondary=ace315aSecondary();
-    const active=String(ACE_ST2_ACTIVE_PATH||"");
-    const pName=primary?(paths[primary]?.[0]||pretty(primary)):"NOT COMMITTED";
-    const sName=secondary?(paths[secondary]?.[0]||pretty(secondary)):"NOT CHOSEN";
-    const canPrimary=!primary&&active&&active!=="HYBRID";
-    const canSecondary=!!primary&&!secondary&&active&&active!=="HYBRID"&&active!==primary;
-    const ace=S.skillTree?.ace_plus||{},rank=Number(ace.rank||0),wins=Number(ace.wins||0),next=ace.next_wins==null?null:Number(ace.next_wins),power=ace.power;
-    const rank1=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(n=>n.branch===primary&&String(n.type||"")==="ACE_PLUS_1");
-    const powerName=power?.name||rank1?.effect_meta?.power_name||"ACE+ POWER";
-    const overall=Number(c.overall||0),winPct=next?Math.min(100,Math.round(wins/next*100)):100,ovrPct=Math.min(100,overall);
-    return `<section class="ace315aIdentity">
-      <div class="ace315aIdentityHead"><div><small>PLAYER IDENTITY</small><h3>${primary?esc(pName):"Choose who you become."}</h3><p>${primary?`Your <b>${esc(pName)}</b> path is permanent. ${secondary?`<b>${esc(sName)}</b> is your secondary development line.`:"Choose one secondary line for deeper cross-training."}`:"Explore the foundation of every path, then commit before the first major Trait."}</p></div><span>SKILL TREE 3.1</span></div>
-      <div class="ace315aIdentityGrid">
-        <article class="primary"><small>★ PRIMARY ARCHETYPE</small><b>${esc(pName)}</b><em>${primary?"FULL PATH · SIGNATURE · ACE+":"COMMIT AT MAJOR DEVELOPMENT"}</em></article>
-        <article><small>◇ SECONDARY PATH</small><b>${esc(sName)}</b><em>${secondary?"DEVELOP TO TIER 7 · NO FINAL PLAYSTYLE":"ONE PATH · UP TO TIER 7"}</em></article>
-        <article><small>OTHER PATHS</small><b>FOUNDATIONS</b><em>DEVELOP TO TIER 3 ONLY</em></article>
-      </div>
-      ${canPrimary?`<button class="ace315aCommit primary" type="button" data-ace315a-commit-primary="${esc(active)}">COMMIT TO ${esc(paths[active]?.[0]||pretty(active))} →</button>`:""}
-      ${canSecondary?`<button class="ace315aCommit" type="button" data-ace315a-commit-secondary="${esc(active)}">MAKE ${esc(paths[active]?.[0]||pretty(active))} MY SECONDARY →</button>`:""}
-      ${primary?`<div class="ace315aAcePlus ${rank?"unlocked":"locked"}">
-        <div class="ace315aAceMark">♠</div><div class="ace315aAceCopy"><small>${rank?`ACE+ ${ace315aRoman(rank)} ACTIVE`:"ACE+ · INTERNATIONAL MASTERY"}</small><h3>${esc(powerName)}</h3><p>${rank?`Mastery Rank ${rank}. Specialist attribute ceiling: <b>${Number(power?.attribute_cap||[99,101,103,105][rank])}</b>.`:"Reach 100 OVR, master your primary archetype and win internationally to unlock your endgame power."}</p></div>
-        <div class="ace315aAceReq"><div><span>OVR</span><b>${overall}/100</b><i><em style="width:${ovrPct}%"></em></i></div><div><span>INT'L WINS</span><b>${wins}${next?`/${next}`:" · MASTERED"}</b><i><em style="width:${winPct}%"></em></i></div></div>
-      </div>`:""}
-    </section>`;
+  function ace316gArchetypeTagline(branch){
+    return ({
+      TERMINATOR:"POWER · PRECISION · FINISH",
+      GENIUS:"CREATIVITY · TOUCH · SOLUTIONS",
+      DEEP_COURT_GUARDIAN:"CONTROL · COVERAGE · TRANSITION",
+      LITTLE_GIANT:"SPEED · ELEVATION · TIMING",
+      JUGGERNAUT:"FORCE · PRESSURE · TERMINATION",
+      BLOCK_HUNTER:"HANDS · SEAMS · PUNISHMENT",
+      GREAT_WALL:"DISCIPLINE · PRESS · SHUTDOWN",
+      RISING_DRAGON:"TRANSITION · HEIGHT · EXPLOSION",
+      MAESTRO:"TEMPO · CONTROL · CONNECTION",
+      KYOKA_SUIGETSU:"DISGUISE · PATIENCE · DECEPTION",
+      KINGS_GAMBIT:"THREAT · COURAGE · SECOND BALL",
+      LIMITLESS:"RANGE · RECOVERY · CREATION",
+      ORACLE:"READ · ANTICIPATE · ARRIVE",
+      TITAN:"SIZE · HANDS · CONTROL",
+      FIRST_TEMPO:"SPEED · CONNECTION · FINISH",
+      PHANTOM:"ROUTES · DECEPTION · SPACE",
+      ANCHOR:"PLATFORM · STABILITY · PRESSURE",
+      FLOOR_HOUND:"RANGE · RECOVERY · RELENTLESS",
+      SHARINGAN:"READ · RECOGNISE · REACT",
+      PLAYMAKER:"CONTROL · SECOND BALL · CREATE",
+      HYBRID:"PRIMARY × SECONDARY · ONE BUILD"
+    })[String(branch||"").toUpperCase()]||"BUILD YOUR PLAYER · DEFINE YOUR STYLE";
+  }
+  function ace316gStageData(c,all,owned,primary,secondary){
+    const pnodes=all.filter(n=>n.branch===primary);
+    const count=(fn)=>pnodes.filter(fn).length;
+    const got=(fn)=>pnodes.filter(n=>fn(n)&&owned.has(n.id)).length;
+    const fT=count(n=>Number(n.tier)<=3),fG=got(n=>Number(n.tier)<=3);
+    const cT=count(n=>Number(n.tier)>=4&&Number(n.tier)<=7&&aceSt3NodeType(n)!=="SPECIALIZATION"),cG=got(n=>Number(n.tier)>=4&&Number(n.tier)<=7&&aceSt3NodeType(n)!=="SPECIALIZATION");
+    const specs=pnodes.filter(n=>aceSt3NodeType(n)==="SPECIALIZATION"),specG=specs.filter(n=>owned.has(n.id)).length;
+    const sigs=pnodes.filter(n=>aceSt3NodeType(n)==="PLAYSTYLE"),sigG=sigs.filter(n=>owned.has(n.id)).length;
+    const hybrids=all.filter(n=>n.branch==="HYBRID"),hyG=hybrids.filter(n=>owned.has(n.id)).length;
+    const ace=pnodes.filter(n=>String(aceSt3NodeType(n)).startsWith("ACE_PLUS")),aceG=ace.filter(n=>owned.has(n.id)).length;
+    const mk=(label,got,total,icon)=>({label,got,total,icon,done:total>0&&got>=total,active:total>0&&got>0&&got<total});
+    return [
+      mk("FOUNDATION",fG,fT,"●"),
+      mk("CORE",cG,cT,"◆"),
+      mk("SPECIALISE",specG,Math.min(1,specs.length),"◇"),
+      mk("SIGNATURE",sigG,Math.min(1,sigs.length),"★"),
+      mk("HYBRID",hyG,secondary?Math.min(1,hybrids.length):1,"△"),
+      mk("ACE+",aceG,Math.min(3,ace.length),"♠")
+    ];
+  }
+  function ace316gBuildCard(label,name,sub,state=""){
+    return `<article class="ace316gBuildCard ${esc(state)}"><small>${esc(label)}</small><b>${esc(name)}</b><span>${esc(sub)}</span></article>`;
   }
   function skillTreeHTML(c){
     const pos=String(c.position||"OH").toUpperCase();
     const paths=ACE_ST2_PATH_META[pos]||ACE_ST2_PATH_META.OH;
     const all=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).filter(n=>String(n.position||"").toUpperCase()===pos);
-    if(!all.length)return `<section class="aceSt2Shell"><header class="aceSt2Header"><div><small>SKILL TREE 3.0</small><h2>Loading development...</h2><p>The server is loading your position-specific build.</p></div></header><button class="rta62Btn" data-rta67-tree-retry>RETRY</button></section>`;
+    if(!all.length)return `<section class="ace316gTreePage"><header class="ace316gTop"><button type="button" data-ace316g-skill-back>‹ PLAYER</button><div><small>PLAYER DEVELOPMENT</small><h1>SKILL TREE</h1></div><div class="ace316gSp"><b>${Number(c.skill_points||0)}</b><span>SP</span></div></header><div class="ace316gLoading"><b>Loading your build…</b><button class="rta62Btn" data-rta67-tree-retry>RETRY</button></div></section>`;
+
     const keys=Object.keys(paths).filter(k=>all.some(n=>n.branch===k));
-    if(!ACE_ST2_ACTIVE_PATH||!paths[ACE_ST2_ACTIVE_PATH]||!keys.includes(ACE_ST2_ACTIVE_PATH))ACE_ST2_ACTIVE_PATH=keys[0];
     const owned=skillUnlockedSet(),sp=Math.max(0,Number(S.skillTree?.skill_points??c.skill_points??0));
-    const pathNodes=all.filter(n=>n.branch===ACE_ST2_ACTIVE_PATH).sort((a,b)=>a.tier-b.tier||String(a.id).localeCompare(String(b.id)));
-    const pm=paths[ACE_ST2_ACTIVE_PATH],prog=aceSt2PathProgress(pathNodes,owned);
-    const coreKeys=keys.filter(k=>k!=="HYBRID");
-    const primary=coreKeys.map(k=>[k,aceSt2PathProgress(all.filter(n=>n.branch===k),owned)]).sort((a,b)=>b[1].got-a[1].got)[0];
-    const nodeHtml=pathNodes.map((n,i)=>{
-      const st=skillNodeState(n,c),cls=st.owned?"owned":st.available?"available":"locked",type=aceSt3NodeType(n);
+    const primary=ace315aPrimary(),secondary=ace315aSecondary();
+    if(!ACE_ST2_ACTIVE_PATH||!keys.includes(ACE_ST2_ACTIVE_PATH)){
+      ACE_ST2_ACTIVE_PATH=(primary&&keys.includes(primary))?primary:keys.find(k=>k!=="HYBRID")||keys[0];
+    }
+    const active=ACE_ST2_ACTIVE_PATH;
+    const pathNodes=all.filter(n=>n.branch===active).sort((a,b)=>a.tier-b.tier||String(a.id).localeCompare(String(b.id)));
+    const pm=paths[active]||[pretty(active),"✦"];
+    const prog=aceSt2PathProgress(pathNodes,owned);
+    const pName=primary?(paths[primary]?.[0]||pretty(primary)):"UNCOMMITTED";
+    const sName=secondary?(paths[secondary]?.[0]||pretty(secondary)):"NOT CHOSEN";
+    const hybridNode=all.find(n=>n.branch==="HYBRID");
+    const hybridName=hybridNode?.name||(primary&&secondary?"HYBRID UNLOCKED LATER":"LOCKED");
+    const hybridOwned=!!hybridNode&&owned.has(hybridNode.id);
+    const ace=S.skillTree?.ace_plus||{},aceRank=Number(ace.rank||0),power=ace.power;
+    const stages=ace316gStageData(c,all,owned,primary,secondary);
+    const canPrimary=!primary&&active&&active!=="HYBRID";
+    const canSecondary=!!primary&&!secondary&&active&&active!=="HYBRID"&&active!==primary;
+
+    const nodeStates=pathNodes.map(n=>[n,skillNodeState(n,c)]);
+    const nextPair=nodeStates.find(([n,st])=>!st.owned&&st.available)||nodeStates.find(([n,st])=>!st.owned);
+    const nextNode=nextPair?.[0],nextState=nextPair?.[1];
+    const nextLabel=nextNode?aceSt3NodeType(nextNode):"PATH COMPLETE";
+    const nextReason=nextNode?(nextState?.available?`${Number(nextNode.cost||0)} SP · READY TO UNLOCK`:skillGateLabel(nextNode,c,nextState)):"ALL CURRENT NODES OWNED";
+
+    const nodeHtml=nodeStates.map(([n,st],i)=>{
+      const cls=st.owned?"owned":st.available?"available":"locked",type=aceSt3NodeType(n);
       const kind=type.startsWith("ACE_PLUS")?"♠":type==="PLAYSTYLE"||type==="HYBRID"?"★":type==="SPECIALIZATION"?"◇":type==="TRAIT"?"◆":"●";
       const effects=skillEffectsLabel(n.effects),meta=n.effect_meta||{};
-      const abilityType=type==="SPECIALIZATION"?"SPECIALIZATION · CHOOSE 1":type==="HYBRID"?"HYBRID SIGNATURE":type==="PLAYSTYLE"?"SIGNATURE PLAYSTYLE":type==="TRAIT"?"TRAIT":type.startsWith("ACE_PLUS")?`ACE+ ${ace315aRoman(n.effect_meta?.power_rank)}`:`TIER ${n.tier}`;
+      const abilityType=type==="SPECIALIZATION"?"SPECIALISATION · CHOOSE 1":type==="HYBRID"?"HYBRID SIGNATURE":type==="PLAYSTYLE"?"SIGNATURE PLAYSTYLE":type==="TRAIT"?"TRAIT":type.startsWith("ACE_PLUS")?`ACE+ ${ace315aRoman(n.effect_meta?.power_rank)}`:`TIER ${n.tier}`;
       const mechanicText=String(meta.mechanic_text||"");
       const mechanicLabel=String(meta.mechanic_label||(type==="SPECIALIZATION"?"BUILD CHOICE":type==="HYBRID"?"SYNERGY":""));
       const mechanic=(["TRAIT","PLAYSTYLE","HYBRID","SPECIALIZATION"].includes(type)||type.startsWith("ACE_PLUS"))
-        ?`<strong class="aceSt3Mechanic ace316eMechanic">${mechanicLabel?`<i>${esc(mechanicLabel)}</i>`:""}${mechanicText?`<span>${esc(mechanicText)}</span>`:""}</strong>`
-        :(effects!=="Special skill"?`<strong>${esc(effects)}</strong>`:"");
-      return `<div class="aceSt2Step ${cls} ${type.toLowerCase()}">${i?'<i class="aceSt2Line"></i>':""}<button type="button" class="aceSt2Node" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="aceSt2Kind">${kind}</span><div><small>${esc(abilityType)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${mechanic}</div><mark>${st.owned?"✓ OWNED":st.available?`${n.cost} SP · UNLOCK`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
+        ?`<strong class="ace316gMechanic">${mechanicLabel?`<i>${esc(mechanicLabel)}</i>`:""}${mechanicText?`<span>${esc(mechanicText)}</span>`:""}</strong>`
+        :(effects!=="Special skill"?`<strong class="ace316gStatEffect">${esc(effects)}</strong>`:"");
+      return `<div class="ace316gNodeWrap ${cls} ${type.toLowerCase()}">${i?'<i class="ace316gLine"></i>':""}<button type="button" class="ace316gNode" data-rta67-node="${esc(n.id)}" ${st.available?"":"disabled"}><span class="ace316gNodeIcon">${kind}</span><div class="ace316gNodeCopy"><small>${esc(abilityType)}</small><b>${esc(n.name)}</b><em>${esc(n.description)}</em>${mechanic}</div><mark>${st.owned?"OWNED ✓":st.available?`${n.cost} SP`:`🔒 ${skillGateLabel(n,c,st)}`}</mark></button></div>`;
     }).join("");
-    return `<section class="aceSt2Shell">
-      <header class="aceSt2Header"><div><small>SKILL TREE 3.2 · ${esc(posLabel(pos))}</small><h2>${esc(pm[0])}</h2><p>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"COMBINE TWO DEVELOPED ARCHETYPES":primary?.[1]?.got?`PRIMARY BUILD · ${esc(paths[primary[0]][0])}`:"CHOOSE THE PLAYER YOU WANT TO BECOME"}</p></div><div class="aceSt2Sp"><b>${sp}</b><span>SP</span></div></header>
-      ${ace315aIdentityHTML(c)}
-      <nav class="aceSt2Tabs">${keys.map(k=>{const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);return `<button type="button" data-ace-st2-path="${k}" class="${k===ACE_ST2_ACTIVE_PATH?"active":""}"><i>${paths[k][1]}</i><span>${esc(paths[k][0])}</span><small>${pr.pct}%</small></button>`}).join("")}</nav>
-      <div class="aceSt2PathHero"><div class="aceSt2HeroIcon">${pm[1]}</div><div><small>${ACE_ST2_ACTIVE_PATH==="HYBRID"?"CROSS-PATH MASTERY":"ARCHETYPE PATH"}</small><h3>${esc(pm[0])}</h3><p>${prog.got}/${prog.total} nodes · ${prog.pct}% developed</p></div><div class="aceSt2Meter"><i style="width:${prog.pct}%"></i></div></div>
-      <div class="aceSt2Map">${nodeHtml}</div>
-      <footer class="aceSt2Footer"><span>● ATTRIBUTE · 1–2 SP</span><span>◆ TRAIT · BUILD MECHANIC</span><span>◇ SPECIALIZATION · CHOOSE 1</span><span>★ SIGNATURE / HYBRID</span><span>♠ ACE+ · INTERNATIONAL MASTERY</span></footer>
+
+    return `<section class="ace316gTreePage">
+      <header class="ace316gTop">
+        <button type="button" class="ace316gBack" data-ace316g-skill-back>‹ <span>PLAYER</span></button>
+        <div class="ace316gTitle"><small>${esc(posLabel(pos))} DEVELOPMENT</small><h1>SKILL TREE</h1></div>
+        <div class="ace316gSp"><b>${sp}</b><span>SP</span></div>
+      </header>
+
+      <section class="ace316gHero">
+        <div class="ace316gHeroCopy">
+          <small>${primary?"PRIMARY ARCHETYPE":"BUILD YOUR IDENTITY"}</small>
+          <h2>${esc(primary?pName:"CHOOSE YOUR PATH")}</h2>
+          <b>${esc(ace316gArchetypeTagline(primary||active))}</b>
+          <p>${primary?`Your primary path defines the player. Your secondary adds another dimension without replacing it.`:"Explore each archetype, develop its foundations, then commit to the identity you want to carry through your career."}</p>
+        </div>
+        <div class="ace316gHeroMark"><span>${esc(pos)}</span><b>${Number(c.overall||0)}</b><small>OVR</small></div>
+      </section>
+
+      <section class="ace316gBuild">
+        <div class="ace316gSectionHead"><div><small>YOUR BUILD</small><h3>${primary?"IDENTITY LOCKED IN":"IDENTITY IN PROGRESS"}</h3></div><span>${aceRank?`ACE+ ${ace315aRoman(aceRank)}`:"CAREER BUILD"}</span></div>
+        <div class="ace316gBuildGrid">
+          ${ace316gBuildCard("★ PRIMARY",pName,primary?"FULL PATH · SIGNATURE · ACE+":"CHOOSE AFTER FOUNDATION",primary?"primary":"empty")}
+          ${ace316gBuildCard("◇ SECONDARY",sName,secondary?"DEVELOP TO TIER 7":"ONE SUPPORTING ARCHETYPE",secondary?"secondary":"empty")}
+          ${ace316gBuildCard("△ HYBRID",hybridName,hybridOwned?"ACTIVE SYNERGY":primary&&secondary?"DEVELOP BOTH PATHS TO UNLOCK":"PRIMARY + SECONDARY REQUIRED",hybridOwned?"hybrid":"locked")}
+        </div>
+      </section>
+
+      <section class="ace316gProgress">
+        <div class="ace316gSectionHead"><div><small>BUILD PROGRESSION</small><h3>${esc(primary?pName:pm[0])}</h3></div>${power?.name?`<span>${esc(power.name)}</span>`:""}</div>
+        <div class="ace316gRail">${stages.map((x,i)=>`<div class="${x.done?"done":x.active?"active":""}"><i>${x.icon}</i><b>${x.label}</b><small>${x.got}/${x.total}</small>${i<stages.length-1?'<em></em>':""}</div>`).join("")}</div>
+      </section>
+
+      <section class="ace316gPaths">
+        <div class="ace316gSectionHead"><div><small>ARCHETYPES</small><h3>CHOOSE A PATH TO VIEW</h3></div><span>${keys.length} PATHS</span></div>
+        <nav class="ace316gPathGrid">${keys.map(k=>{
+          const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);
+          const state=k===primary?"PRIMARY":k===secondary?"SECONDARY":k==="HYBRID"?"HYBRID":"FOUNDATION";
+          return `<button type="button" data-ace-st2-path="${esc(k)}" class="${k===active?"active":""} ${k===primary?"primary":""} ${k===secondary?"secondary":""}"><i>${paths[k][1]}</i><span><small>${state}</small><b>${esc(paths[k][0])}</b><em>${pr.got}/${pr.total} NODES</em></span><mark>${pr.pct}%</mark></button>`;
+        }).join("")}</nav>
+      </section>
+
+      <section class="ace316gSelected">
+        <div class="ace316gSelectedHead">
+          <div class="ace316gSelectedIcon">${pm[1]}</div>
+          <div><small>${active==="HYBRID"?"HYBRID DEVELOPMENT":active===primary?"PRIMARY PATH":active===secondary?"SECONDARY PATH":"FOUNDATION PATH"}</small><h2>${esc(pm[0])}</h2><p>${esc(ace316gArchetypeTagline(active))}</p></div>
+          <div class="ace316gPathPct"><b>${prog.pct}%</b><span>DEVELOPED</span></div>
+        </div>
+        <div class="ace316gSelectedMeter"><i style="width:${prog.pct}%"></i></div>
+        ${canPrimary?`<button class="ace316gCommit primary" type="button" data-ace315a-commit-primary="${esc(active)}">MAKE ${esc(pm[0])} MY PRIMARY ARCHETYPE →</button>`:""}
+        ${canSecondary?`<button class="ace316gCommit" type="button" data-ace315a-commit-secondary="${esc(active)}">MAKE ${esc(pm[0])} MY SECONDARY PATH →</button>`:""}
+      </section>
+
+      ${nextNode?`<section class="ace316gNext"><div class="ace316gNextIcon">✦</div><div><small>NEXT MILESTONE · ${esc(nextLabel)}</small><b>${esc(nextNode.name)}</b><span>${esc(nextReason)}</span></div><button type="button" data-ace316g-jump-tree>VIEW ↓</button></section>`:""}
+
+      <section class="ace316gTree">
+        <div class="ace316gSectionHead"><div><small>FULL PATH</small><h3>${esc(pm[0].toUpperCase())}</h3></div><span>${prog.got}/${prog.total} OWNED</span></div>
+        <div class="ace316gMap" id="ace316gMap">${nodeHtml}</div>
+      </section>
+
+      <footer class="ace316gLegend"><span>● ATTRIBUTE</span><span>◆ TRAIT</span><span>◇ SPECIALISATION</span><span>★ SIGNATURE</span><span>♠ ACE+</span></footer>
     </section>`;
   }
 
@@ -40381,6 +40476,12 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     e.preventDefault();e.stopPropagation();
     ACE_ST2_ACTIVE_PATH=String(b.getAttribute("data-ace-st2-path")||"");
     render();
+  });
+  document.addEventListener("click",function(e){
+    const back=e.target?.closest?.("[data-ace316g-skill-back]");
+    if(back){e.preventDefault();e.stopPropagation();S.playerPanel="attributes";S.view="player";render();return}
+    const jump=e.target?.closest?.("[data-ace316g-jump-tree]");
+    if(jump){e.preventDefault();e.stopPropagation();q("#ace316gMap")?.scrollIntoView?.({behavior:"smooth",block:"start"});return}
   });
   async function unlockSkillNode(node,btn){
     if(S.busy)return;S.busy=true;if(btn)btn.disabled=true;
@@ -40449,6 +40550,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
 
   function playerView(c){
+    if(S.playerPanel==="tree")return `<main class="ace316gSkillPage">${skillTreeHTML(c)}</main>`;
     const xp=xpProgress(c),rp=roleProgress(c),rep=repProgress(c),gains=rta93PlayerGains(c);
     return `<main class="rta93Player">
       <section class="rta93PlayerHero"><div class="rta93PlayerCardStage">${careerCardHTML(c)}</div><div class="rta93PlayerIdentity"><small>YOUR PLAYER</small><div class="rta93PlayerName"><h1>${esc(c.player_name)}</h1><strong>${Number(c.overall)}<span>OVR</span></strong></div><p>${esc(c.squad_role)} · ${esc(posLabel(c.position))} · #${Number(c.jersey_number)} · ${Number(c.height_cm)}cm · ${esc(c.nationality||"England")}</p>${rta217PlayerRadarHTML(c)}${rta93CompactAttributeRows(c,gains)}<div class="rta180MetaLine"><span>LEVEL <b>${Number(c.level||1)}</b></span><span>SP <b>${Number(c.skill_points||0)}</b></span><span>TRUST <b>${Number(c.coach_trust||0)}</b></span><span>REP <b>${Number(c.reputation||0)}</b></span></div><div class="rta93PlayerProgress"><div><span>XP</span><b>${xp.xp}/${xp.need}</b><i><em style="width:${xp.pct}%"></em></i></div><div><span>NEXT ROLE</span><b>${esc(rp.next||c.squad_role)}</b><i><em style="width:${rp.pct}%"></em></i></div><div><span>REPUTATION</span><b>${esc(rep.label)}</b><i><em style="width:${rep.pct}%"></em></i></div></div><div class="rta93PlayerActions"><button class="primary" data-rta93-player-panel="tree" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'tree')">DEVELOP PLAYER →</button><button data-rta83-open-card-studio>EDIT CARD</button></div></div></section>
@@ -50894,17 +50996,15 @@ window.ACE_CAREER_BASELINE_CLEANUP_314D=true;
 
 
 
-<style id="ace-b21-36-315a-identity-aceplus">
-#roadtoace .ace315aIdentity{margin:12px 0 16px;padding:15px;border:1px solid rgba(140,103,255,.22);border-radius:17px;background:linear-gradient(145deg,rgba(124,85,255,.085),rgba(7,12,24,.94))}
-#roadtoace .ace315aIdentityHead{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}#roadtoace .ace315aIdentityHead small{color:#a58cff;font-size:8px;font-weight:1000;letter-spacing:.15em}#roadtoace .ace315aIdentityHead h3{margin:4px 0 3px;color:#fff;font-size:18px}#roadtoace .ace315aIdentityHead p{margin:0;max-width:650px;color:#8f9caf;font-size:10px;line-height:1.5}#roadtoace .ace315aIdentityHead>span{padding:6px 9px;border:1px solid rgba(165,140,255,.22);border-radius:999px;color:#c8bbff;font-size:8px;font-weight:1000;white-space:nowrap}
-#roadtoace .ace315aIdentityGrid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:7px;margin-top:12px}#roadtoace .ace315aIdentityGrid article{padding:11px;border:1px solid rgba(255,255,255,.065);border-radius:11px;background:rgba(255,255,255,.024)}#roadtoace .ace315aIdentityGrid article.primary{border-color:rgba(157,121,255,.28);background:rgba(132,86,255,.06)}#roadtoace .ace315aIdentityGrid small{display:block;color:#718197;font-size:7px;font-weight:1000;letter-spacing:.1em}#roadtoace .ace315aIdentityGrid b{display:block;margin:4px 0;color:#fff;font-size:12px}#roadtoace .ace315aIdentityGrid em{display:block;color:#7e8b9c;font-style:normal;font-size:7px;font-weight:900}
-#roadtoace .ace315aCommit{width:100%;margin-top:8px;min-height:42px;border:1px solid rgba(116,202,255,.25);border-radius:10px;background:rgba(71,151,214,.08);color:#dff4ff;font-size:9px;font-weight:1000;letter-spacing:.07em}#roadtoace .ace315aCommit.primary{border-color:rgba(158,115,255,.42);background:linear-gradient(90deg,rgba(126,74,231,.17),rgba(76,133,231,.11));color:#fff}
-#roadtoace .ace315aAcePlus{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(210px,.8fr);gap:12px;align-items:center;margin-top:11px;padding:13px;border-radius:13px;border:1px solid rgba(198,135,255,.20);background:radial-gradient(circle at 0 50%,rgba(183,100,255,.12),transparent 32%),rgba(4,8,18,.62)}#roadtoace .ace315aAcePlus.unlocked{border-color:rgba(217,169,255,.40);box-shadow:inset 0 0 30px rgba(149,82,255,.05)}#roadtoace .ace315aAceMark{display:grid;place-items:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(145deg,#7041ad,#32205d);color:#f2dcff;font-size:24px;box-shadow:0 0 22px rgba(181,103,255,.16)}#roadtoace .ace315aAceCopy small{color:#c68cff;font-size:7px;font-weight:1000;letter-spacing:.14em}#roadtoace .ace315aAceCopy h3{margin:3px 0;color:#fff;font-size:15px}#roadtoace .ace315aAceCopy p{margin:0;color:#8290a3;font-size:9px;line-height:1.45}#roadtoace .ace315aAceReq{display:grid;gap:7px}#roadtoace .ace315aAceReq>div{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:7px}#roadtoace .ace315aAceReq span{color:#708097;font-size:7px;font-weight:1000}#roadtoace .ace315aAceReq b{justify-self:end;color:#dfe8f5;font-size:9px}#roadtoace .ace315aAceReq i{grid-column:1/-1;height:4px;border-radius:999px;background:rgba(255,255,255,.055);overflow:hidden}#roadtoace .ace315aAceReq em{display:block;height:100%;background:linear-gradient(90deg,#8d5cff,#d58aff)}
-#roadtoace .aceSt2Step.ace_plus_1 .aceSt2Node,#roadtoace .aceSt2Step.ace_plus_2 .aceSt2Node,#roadtoace .aceSt2Step.ace_plus_3 .aceSt2Node{border-color:rgba(197,126,255,.27);background:radial-gradient(circle at 0 50%,rgba(166,86,255,.08),transparent 32%),rgba(8,12,24,.94)}#roadtoace .aceSt2Step.ace_plus_1 .aceSt2Kind,#roadtoace .aceSt2Step.ace_plus_2 .aceSt2Kind,#roadtoace .aceSt2Step.ace_plus_3 .aceSt2Kind{color:#d7a6ff}
+<style id="ace-b21-36-315a-aceplus-runtime">
+#roadtoace .aceSt2Step.ace_plus_1 .aceSt2Node,#roadtoace .aceSt2Step.ace_plus_2 .aceSt2Node,#roadtoace .aceSt2Step.ace_plus_3 .aceSt2Node{border-color:rgba(197,126,255,.27);background:radial-gradient(circle at 0 50%,rgba(166,86,255,.08),transparent 32%),rgba(8,12,24,.94)}
+#roadtoace .aceSt2Step.ace_plus_1 .aceSt2Kind,#roadtoace .aceSt2Step.ace_plus_2 .aceSt2Kind,#roadtoace .aceSt2Step.ace_plus_3 .aceSt2Kind{color:#d7a6ff}
 #roadtoace .ace315aPowerBadge{display:inline-block;margin-top:5px;padding:4px 7px;border:1px solid rgba(211,151,255,.28);border-radius:999px;background:rgba(143,78,226,.11);color:#e2bfff;font-size:7px;font-weight:1000;letter-spacing:.08em}
-@media(max-width:700px){#roadtoace .ace315aIdentity{padding:11px}#roadtoace .ace315aIdentityHead{display:block}#roadtoace .ace315aIdentityHead>span{display:inline-block;margin-top:8px}#roadtoace .ace315aIdentityGrid{grid-template-columns:1fr}#roadtoace .ace315aAcePlus{grid-template-columns:auto 1fr}#roadtoace .ace315aAceReq{grid-column:1/-1}}
-
-#roadtoace .ace315aMasteryGain{display:flex;gap:10px;align-items:center;margin:10px 0;padding:11px;border:1px solid rgba(206,144,255,.30);border-radius:11px;background:rgba(141,77,225,.08)}#roadtoace .ace315aMasteryGain>i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#402363;color:#e4bfff;font-style:normal;font-size:18px}#roadtoace .ace315aMasteryGain small{display:block;color:#bd82ef;font-size:7px;font-weight:1000;letter-spacing:.12em}#roadtoace .ace315aMasteryGain b{display:block;margin:2px 0;color:#fff;font-size:12px}#roadtoace .ace315aMasteryGain span{color:#8290a3;font-size:8px}
+#roadtoace .ace315aMasteryGain{display:flex;gap:10px;align-items:center;margin:10px 0;padding:11px;border:1px solid rgba(206,144,255,.30);border-radius:11px;background:rgba(141,77,225,.08)}
+#roadtoace .ace315aMasteryGain>i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#402363;color:#e4bfff;font-style:normal;font-size:18px}
+#roadtoace .ace315aMasteryGain small{display:block;color:#bd82ef;font-size:7px;font-weight:1000;letter-spacing:.12em}
+#roadtoace .ace315aMasteryGain b{display:block;margin:2px 0;color:#fff;font-size:12px}
+#roadtoace .ace315aMasteryGain span{color:#8290a3;font-size:8px}
 </style>
 <script id="ace-b21-36-315a-build">window.ACE_PROJECT_BUILD="B21.36.315B";window.ACE_SKILL_TREE_IDENTITY_LOCK=true;window.ACE_PLUS_MASTERY=true;</script>
 
@@ -51214,6 +51314,56 @@ window.ACE_PROJECT_BUILD="B21.36.316E";
 <script id="ace316f-blocking-build">
 window.ACE_BLOCKING_2_BUILD="B21.36.316F";
 window.ACE_PROJECT_BUILD="B21.36.316F";
+</script>
+
+
+<style id="ace316g-skill-page-css">
+#roadtoace .ace316gSkillPage{width:100%;max-width:none;margin:0;padding:0 0 24px;color:#eaf6ff}
+#roadtoace .ace316gTreePage{width:min(1180px,calc(100% - 28px));margin:0 auto;display:grid;gap:12px}
+#roadtoace .ace316gTop{position:sticky;top:0;z-index:80;display:grid;grid-template-columns:100px 1fr 78px;align-items:center;gap:10px;padding:12px 2px 10px;background:linear-gradient(180deg,#04101a 76%,rgba(4,16,26,.94) 88%,transparent);backdrop-filter:blur(10px)}
+#roadtoace .ace316gBack{justify-self:start;min-height:38px;padding:0 11px;border:1px solid rgba(108,190,242,.16);border-radius:11px;background:#071824;color:#9ccfe9;font-size:8px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace316gTitle{text-align:center}#roadtoace .ace316gTitle small{display:block;color:#66879d;font-size:7px;font-weight:1000;letter-spacing:.16em}#roadtoace .ace316gTitle h1{margin:2px 0 0;font-size:22px;line-height:1;letter-spacing:.03em}
+#roadtoace .ace316gSp{justify-self:end;display:grid;grid-template-columns:auto auto;align-items:baseline;gap:5px;min-width:68px;padding:8px 10px;border:1px solid rgba(79,181,244,.24);border-radius:13px;background:#071b2b;text-align:center}#roadtoace .ace316gSp b{font-size:21px}#roadtoace .ace316gSp span{color:#63bdf1;font-size:7px;font-weight:1000}
+#roadtoace .ace316gHero{position:relative;min-height:190px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:20px;padding:24px 26px;overflow:hidden;border:1px solid rgba(72,176,240,.18);border-radius:20px;background:radial-gradient(circle at 85% 20%,rgba(56,152,230,.20),transparent 29%),radial-gradient(circle at 8% 100%,rgba(111,67,220,.13),transparent 31%),linear-gradient(135deg,#071a2a,#040b14)}
+#roadtoace .ace316gHero:after{content:"";position:absolute;right:13%;top:-55%;width:220px;height:340px;border:1px solid rgba(89,184,241,.10);transform:rotate(28deg);box-shadow:0 0 0 34px rgba(70,162,222,.025),0 0 0 68px rgba(70,162,222,.018)}
+#roadtoace .ace316gHeroCopy{position:relative;z-index:2;max-width:680px}.ace316gHeroCopy>small{color:#55baf5;font-size:8px;font-weight:1000;letter-spacing:.17em}.ace316gHeroCopy h2{margin:7px 0 2px;font-size:38px;line-height:.95}.ace316gHeroCopy>b{display:block;color:#8db9d5;font-size:9px;letter-spacing:.16em}.ace316gHeroCopy p{max-width:600px;margin:14px 0 0;color:#819aab;font-size:10px;line-height:1.55}
+#roadtoace .ace316gHeroMark{position:relative;z-index:3;width:112px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(87,187,248,.28);border-radius:50%;background:radial-gradient(circle,#0c2b43,#06121d 68%);box-shadow:0 0 34px rgba(61,164,229,.12)}.ace316gHeroMark span{color:#5fc2fb;font-size:8px;font-weight:1000;letter-spacing:.12em}.ace316gHeroMark b{font-size:37px;line-height:1}.ace316gHeroMark small{color:#7994a5;font-size:6px;font-weight:1000}
+#roadtoace .ace316gBuild,#roadtoace .ace316gProgress,#roadtoace .ace316gPaths,#roadtoace .ace316gTree{padding:15px;border:1px solid rgba(255,255,255,.065);border-radius:17px;background:#06131f}
+#roadtoace .ace316gSectionHead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:11px}.ace316gSectionHead small{display:block;color:#66879d;font-size:7px;font-weight:1000;letter-spacing:.15em}.ace316gSectionHead h3{margin:3px 0 0;font-size:14px}.ace316gSectionHead>span{padding:5px 8px;border:1px solid rgba(94,183,238,.12);border-radius:999px;color:#7caac6;font-size:6px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace316gBuildGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ace316gBuildCard{min-width:0;padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:#081824}.ace316gBuildCard small{display:block;color:#6f879a;font-size:7px;font-weight:1000;letter-spacing:.11em}.ace316gBuildCard b{display:block;margin:5px 0 3px;color:#edf7fc;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace316gBuildCard span{display:block;color:#718a9c;font-size:7px;font-weight:850}.ace316gBuildCard.primary{border-color:rgba(68,177,244,.30);background:linear-gradient(135deg,rgba(42,139,205,.16),#081824)}.ace316gBuildCard.secondary{border-color:rgba(151,112,241,.20)}.ace316gBuildCard.hybrid{border-color:rgba(221,181,82,.24);background:linear-gradient(135deg,rgba(184,138,44,.08),#081824)}.ace316gBuildCard.locked{opacity:.58}
+#roadtoace .ace316gRail{display:grid;grid-template-columns:repeat(6,1fr);gap:0}.ace316gRail>div{position:relative;min-width:0;text-align:center;padding:3px 2px}.ace316gRail i{position:relative;z-index:2;width:38px;height:38px;margin:auto;display:grid;place-items:center;border:2px solid #34536a;border-radius:50%;background:#091b29;color:#68869a;font-style:normal;font-size:12px}.ace316gRail b{display:block;margin-top:6px;color:#6f8798;font-size:6.5px;letter-spacing:.06em}.ace316gRail small{display:block;margin-top:2px;color:#526c7e;font-size:6px}.ace316gRail em{position:absolute;z-index:1;left:50%;top:21px;width:100%;height:2px;background:#1b3548}.ace316gRail>div.done i{border-color:#51d59b;color:#9bf0c6;background:#0a352b;box-shadow:0 0 16px rgba(65,205,143,.10)}.ace316gRail>div.done b{color:#9bcdb8}.ace316gRail>div.done em{background:#3ba77b}.ace316gRail>div.active i{border-color:#5abcf6;color:#c3eaff;box-shadow:0 0 17px rgba(74,177,239,.14)}
+#roadtoace .ace316gPathGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.ace316gPathGrid button{min-width:0;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px;border:1px solid rgba(255,255,255,.055);border-radius:12px;background:#071722;color:#d9e8f1;text-align:left}.ace316gPathGrid button>i{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:#0c2638;color:#7ccbf5;font-style:normal;font-size:17px}.ace316gPathGrid button span{min-width:0}.ace316gPathGrid button span small{display:block;color:#607d91;font-size:5.5px;font-weight:1000;letter-spacing:.08em}.ace316gPathGrid button span b{display:block;margin-top:2px;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace316gPathGrid button span em{display:block;margin-top:2px;color:#5f7788;font-size:5.5px;font-style:normal}.ace316gPathGrid button>mark{background:none;color:#668497;font-size:7px;font-weight:1000}.ace316gPathGrid button.active{border-color:rgba(74,183,247,.46);background:linear-gradient(135deg,rgba(42,139,205,.18),#071722);box-shadow:inset 0 -2px #54baf4}.ace316gPathGrid button.primary span small{color:#57bff8}.ace316gPathGrid button.secondary span small{color:#aa91f0}
+#roadtoace .ace316gSelected{padding:15px;border:1px solid rgba(74,180,242,.16);border-radius:17px;background:linear-gradient(90deg,rgba(37,128,190,.12),rgba(5,17,28,.98))}.ace316gSelectedHead{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:12px;align-items:center}.ace316gSelectedIcon{width:52px;height:52px;display:grid;place-items:center;border-radius:14px;background:#0b2a3f;color:#79cef9;font-size:26px}.ace316gSelectedHead small{color:#64b9e8;font-size:7px;font-weight:1000;letter-spacing:.13em}.ace316gSelectedHead h2{margin:3px 0 1px;font-size:19px}.ace316gSelectedHead p{margin:0;color:#6f8ca0;font-size:7px;font-weight:900;letter-spacing:.1em}.ace316gPathPct{text-align:right}.ace316gPathPct b{display:block;font-size:20px}.ace316gPathPct span{color:#637f91;font-size:5.5px;font-weight:1000}.ace316gSelectedMeter{height:4px;margin-top:11px;border-radius:99px;background:#102332;overflow:hidden}.ace316gSelectedMeter i{display:block;height:100%;background:linear-gradient(90deg,#45aeea,#8c70ed)}
+#roadtoace .ace316gCommit{width:100%;min-height:42px;margin-top:9px;border:1px solid rgba(116,202,255,.25);border-radius:10px;background:rgba(71,151,214,.08);color:#dff4ff;font-size:8px;font-weight:1000;letter-spacing:.06em}.ace316gCommit.primary{border-color:rgba(82,183,247,.38);background:linear-gradient(90deg,rgba(42,145,214,.20),rgba(103,78,220,.10))}
+#roadtoace .ace316gNext{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:11px;padding:13px 15px;border:1px solid rgba(132,91,235,.24);border-radius:15px;background:linear-gradient(90deg,rgba(96,57,185,.15),rgba(7,18,30,.96))}.ace316gNextIcon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#211849;color:#c6b0ff;font-size:18px}.ace316gNext small{display:block;color:#a78ee9;font-size:6.5px;font-weight:1000;letter-spacing:.12em}.ace316gNext b{display:block;margin:3px 0;color:#fff;font-size:12px}.ace316gNext span{color:#718a9d;font-size:7px}.ace316gNext button{min-height:36px;padding:0 11px;border:1px solid rgba(153,113,241,.28);border-radius:9px;background:#21164b;color:#d9caff;font-size:7px;font-weight:1000}
+#roadtoace .ace316gMap{position:relative;width:min(650px,100%);margin:0 auto;padding:3px 0 5px}.ace316gNodeWrap{position:relative;padding-bottom:8px}.ace316gLine{position:absolute;left:24px;top:-9px;width:2px;height:12px;background:#24465d}.ace316gNode{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px;border:1px solid rgba(255,255,255,.065);border-radius:12px;background:#081824;color:#e4f1f7;text-align:left}.ace316gNodeIcon{width:34px;height:34px;display:grid;place-items:center;border:2px solid #3c5d72;border-radius:50%;background:#0b2232;color:#8aa9bb;font-size:12px}.ace316gNodeCopy{min-width:0}.ace316gNodeCopy>small{display:block;color:#66879c;font-size:6px;font-weight:1000;letter-spacing:.1em}.ace316gNodeCopy>b{display:block;margin-top:2px;font-size:11px}.ace316gNodeCopy>em{display:block;margin-top:3px;color:#7893a5;font-size:7px;font-style:normal;line-height:1.35}.ace316gNode mark{padding:5px 7px;border-radius:8px;background:rgba(255,255,255,.04);color:#6f8a9b;font-size:6px;font-weight:1000;white-space:nowrap}.ace316gNodeWrap.available .ace316gNode{border-color:rgba(77,183,247,.48);box-shadow:0 0 18px rgba(53,151,215,.07)}.ace316gNodeWrap.available .ace316gNodeIcon{border-color:#65c3fb;color:#c3eaff}.ace316gNodeWrap.available mark{background:#145c8c;color:#e9f8ff}.ace316gNodeWrap.owned .ace316gNode{border-color:rgba(89,217,153,.26)}.ace316gNodeWrap.owned .ace316gNodeIcon{border-color:#58d394;color:#a4efc8}.ace316gNodeWrap.owned mark{color:#73dca4}.ace316gNodeWrap.locked{opacity:.52}.ace316gNodeWrap.playstyle .ace316gNode,.ace316gNodeWrap.hybrid .ace316gNode{background:linear-gradient(90deg,rgba(102,69,181,.12),#081824)}.ace316gNodeWrap.specialization .ace316gNode{border-color:rgba(187,126,255,.20)}
+#roadtoace .ace316gMechanic{display:grid;gap:2px;margin-top:6px;padding:6px 7px;border-radius:8px;background:#06131e}.ace316gMechanic i{color:#69c2f1;font-size:5.5px;font-style:normal;font-weight:1000;letter-spacing:.09em}.ace316gMechanic span{color:#8ea8b8;font-size:6.5px;line-height:1.35}.ace316gStatEffect{display:block;margin-top:5px;color:#8bc9e8;font-size:6.5px}
+#roadtoace .ace316gLegend{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;padding:3px 0 7px;color:#58758a;font-size:6px;font-weight:1000}
+#roadtoace .ace316gLoading{min-height:340px;display:grid;place-items:center;align-content:center;gap:12px;border:1px solid rgba(255,255,255,.06);border-radius:18px;background:#06131f;color:#8fa8b8}
+
+@media(max-width:760px){
+ #roadtoace .ace316gSkillPage{padding-bottom:92px}
+ #roadtoace .ace316gTreePage{width:calc(100% - 12px);gap:8px}
+ #roadtoace .ace316gTop{grid-template-columns:66px 1fr 56px;padding:8px 0 7px}
+ #roadtoace .ace316gBack{min-height:34px;padding:0 8px;font-size:7px}.ace316gBack span{display:none}
+ #roadtoace .ace316gTitle small{font-size:5.5px}.ace316gTitle h1{font-size:18px}
+ #roadtoace .ace316gSp{min-width:52px;padding:6px 7px}.ace316gSp b{font-size:17px}.ace316gSp span{font-size:5.5px}
+ #roadtoace .ace316gHero{min-height:132px;padding:15px;border-radius:15px;gap:8px}.ace316gHeroCopy h2{font-size:27px}.ace316gHeroCopy>b{font-size:6px}.ace316gHeroCopy p{margin-top:9px;font-size:7px;line-height:1.4}.ace316gHeroMark{width:75px;height:75px}.ace316gHeroMark b{font-size:26px}.ace316gHeroMark span{font-size:6px}
+ #roadtoace .ace316gBuild,#roadtoace .ace316gProgress,#roadtoace .ace316gPaths,#roadtoace .ace316gTree{padding:10px;border-radius:13px}
+ #roadtoace .ace316gSectionHead{margin-bottom:7px}.ace316gSectionHead small{font-size:5.5px}.ace316gSectionHead h3{font-size:10px}.ace316gSectionHead>span{font-size:5px}
+ #roadtoace .ace316gBuildGrid{grid-template-columns:1fr 1fr;gap:5px}.ace316gBuildCard{padding:8px}.ace316gBuildCard:nth-child(3){grid-column:1/-1}.ace316gBuildCard small{font-size:5.5px}.ace316gBuildCard b{font-size:9px}.ace316gBuildCard span{font-size:5.5px}
+ #roadtoace .ace316gRail{overflow-x:auto;padding-bottom:2px}.ace316gRail>div{min-width:66px}.ace316gRail i{width:30px;height:30px;font-size:9px}.ace316gRail em{top:17px}.ace316gRail b{font-size:5px}.ace316gRail small{font-size:5px}
+ #roadtoace .ace316gPathGrid{grid-template-columns:1fr 1fr;gap:5px}.ace316gPathGrid button{grid-template-columns:30px minmax(0,1fr) auto;padding:7px;gap:6px}.ace316gPathGrid button>i{width:29px;height:29px;font-size:13px}.ace316gPathGrid button span b{font-size:7px}.ace316gPathGrid button span small,.ace316gPathGrid button span em{font-size:4.8px}.ace316gPathGrid button>mark{font-size:5.5px}
+ #roadtoace .ace316gSelected{padding:10px;border-radius:13px}.ace316gSelectedHead{grid-template-columns:39px minmax(0,1fr) auto;gap:7px}.ace316gSelectedIcon{width:38px;height:38px;border-radius:10px;font-size:18px}.ace316gSelectedHead small{font-size:5px}.ace316gSelectedHead h2{font-size:13px}.ace316gSelectedHead p{font-size:5px}.ace316gPathPct b{font-size:14px}.ace316gPathPct span{font-size:4.5px}
+ #roadtoace .ace316gNext{grid-template-columns:34px minmax(0,1fr) auto;padding:9px;gap:7px}.ace316gNextIcon{width:32px;height:32px}.ace316gNext small{font-size:5px}.ace316gNext b{font-size:9px}.ace316gNext span{font-size:5.5px}.ace316gNext button{min-height:31px;padding:0 8px;font-size:5.5px}
+ #roadtoace .ace316gMap{width:100%}.ace316gNodeWrap{padding-bottom:6px}.ace316gLine{left:18px;top:-6px;height:9px}.ace316gNode{grid-template-columns:29px minmax(0,1fr);gap:7px;padding:8px}.ace316gNodeIcon{width:27px;height:27px;font-size:9px}.ace316gNodeCopy>small{font-size:5px}.ace316gNodeCopy>b{font-size:8px}.ace316gNodeCopy>em{font-size:5.8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ace316gNode mark{grid-column:2;justify-self:start;margin-top:-2px;padding:3px 5px;font-size:5px}.ace316gMechanic{margin-top:4px;padding:5px}.ace316gMechanic i{font-size:4.8px}.ace316gMechanic span{font-size:5.4px}
+ #roadtoace .ace316gLegend{gap:7px;font-size:5px}
+}
+</style>
+
+<script id="ace316g-skill-page-build">
+window.ACE_SKILL_TREE_PAGE_BUILD="B21.36.316G";
+window.ACE_PROJECT_BUILD="B21.36.316G";
 </script>
 
 </body>
