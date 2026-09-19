@@ -46403,6 +46403,123 @@ function renderAttackKeyOverlay(){
   window.ACE_UT_DESKTOP_LEFT_RAIL=true;
   window.ACE_RTA_MOBILE_COMPASS=true;
   window.aceRoadToAceReload=()=>loadState({silent:false});
+  /* B21.36.325 — IMPORTANT: this patch lives INSIDE the RTA closure.
+     324's visual overrides were appended outside this closure, so they could not
+     replace the live local renderDynamicReceiveTrainingOverlay / setting renderer.
+     This is the actual renderer used by Training + Career Key Moments. */
+  function ace325ActorMarkup(role=""){
+    return `<i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i><b class="ace324Pos">${esc(role)}</b>`;
+  }
+  function ace325SkillPlayerMarkup(mode){
+    const m=String(mode||"").toLowerCase(),arms=m==="setting"?"ace324SetArms":"ace324PlatformArms";
+    return `<div class="rta102SkillPlayer ace324SkillActor ${m}" id="rta102SkillPlayer" style="left:${skillPlayer.x*100}%;top:${skillPlayer.y*100}%"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i><i class="${arms}"></i><b class="ace324You">YOU</b></div>`;
+  }
+  function ace325ReceiveScene(rep){
+    return `<div class="rta102SkillCourt receive ace318ReceiveCourt ace319ReceiveCourt ace324ReceiveCourt" id="rta102SkillCourt">
+      <div class="aceHitStands"></div><div class="aceHitCourt"></div><div class="aceHitNet"></div>
+      <div class="rta102Server ace324ServerActor"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i><b>SERVER</b></div>
+      <div class="ace318ReceiveSetterTarget ace319ReceiveSetterTarget" id="ace319SetterTarget"><i></i><span>SETTER</span></div>
+      <div class="ace319PassGuide" id="ace319PassGuide"><i class="desired" id="ace319DesiredLine"></i><i class="actual" id="ace319AimLine"></i><b id="ace319AimCue">PASS TO SETTER</b></div>
+      <div class="rta102Landing" id="rta102Landing"></div><div class="rta102Trail" id="rta102Trail"></div><div class="rta102SkillBall" id="rta102SkillBall"></div>
+      ${ace325SkillPlayerMarkup("receive")}
+      <div class="ace318ReceiveRead" id="ace318ReceiveRead"><small>SERVER CONTACT</small><b>TRACK THE FLIGHT</b></div>
+      <div class="aceHitScenario">FIRST CONTACT · ${esc(String(rep?.ball_type||"SERVE").toUpperCase())}</div>
+      <div class="rta102SkillPrompt" id="rta102SkillPrompt">READ THE SERVE</div>
+      ${rta102IsTouch()?`<div class="rta102TouchHint">DRAG TO MOVE</div>`:rta102KeyHUD()}
+    </div>`;
+  }
+  function ace325SettingScene(rep,target){
+    const meta=rta95SetterOptionMeta(target||"QUICK"),n=Number(rep?.rep_no||S.training?.rep_no||S.key?.moment_no||1),passLeft=n%2===0,px=passLeft?.24:.76;
+    return `<div class="rta102SkillCourt setting ace320UnifiedCourt ace320SettingCourt ace324SettingCourt" id="rta102SkillCourt">
+      <div class="aceHitStands"></div><div class="aceHitCourt"></div><div class="aceHitNet"></div>
+      <div class="rta102SetTargets ace324SetTargets">
+        <span class="ace324SetTarget oh ${target==="OH"?"hot":""}">${ace325ActorMarkup("OH")}</span>
+        <span class="ace324SetTarget quick ${target==="QUICK"?"hot":""}">${ace325ActorMarkup("M")}</span>
+        <span class="ace324SetTarget op ${target==="OP"?"hot":""}">${ace325ActorMarkup("OP")}</span>
+        <span class="ace324SetTarget pipe ${target==="PIPE"?"hot":""}">${ace325ActorMarkup("PIPE")}</span>
+      </div>
+      <div class="ace324Passer" style="left:${px*100}%;top:83%">${ace325ActorMarkup("PASS")}</div>
+      <div class="ace320SetGuide" id="ace320SetGuide"><i class="desired" id="ace320SetDesiredLine"></i><i class="actual" id="ace320SetAimLine"></i><b id="ace320SetAimCue">FLICK TO ${esc(meta.label)}</b></div>
+      <div class="rta102Landing" id="rta102Landing"></div><div class="rta102Trail" id="rta102Trail"></div><div class="rta102SkillBall" id="rta102SkillBall"></div>
+      ${ace325SkillPlayerMarkup("setting")}
+      <div class="rta102SetCall ace320SetCall"><small>SECOND CONTACT</small><b>SET ${esc(meta.label)}</b></div>
+      <div class="aceHitScenario">PASS FROM YOUR TEAM</div>
+      <div class="rta102SkillPrompt" id="rta102SkillPrompt">MOVE UNDER THE PASS</div>
+      ${rta102IsTouch()?`<div class="rta102TouchHint">DRAG TO MOVE</div>`:rta102KeyHUD()}
+    </div>`;
+  }
+  function ace325Progress(total,done){return `<div class="rta62Progress aceHitProgress">${Array.from({length:Number(total||8)},(_,i)=>`<i class="${i<Number(done||0)?"done":""}"></i>`).join("")}</div>`}
+  function ace325ReceivePanel(total,done,feedback,match=false){
+    return `<aside class="aceHitPanel ace324TechPanel">
+      <div class="aceHitIntro"><small>${match?"MATCH FIRST CONTACT":"FIRST CONTACT · SERVE RECEIVE"}</small><b>Own the pass.</b><span>Read the flight, move behind it, contact cleanly, then aim to the setter.</span></div>
+      ${ace321PlaystyleChip("RECEIVE")}
+      <div class="aceHitStage active"><div class="aceHitStageTitle">READ · MOVE · PLATFORM · AIM</div><div class="ace318ReceiveStage"><span class="active">1 · READ</span><span>2 · MOVE</span><span>3 · CONTACT</span><span>4 · AIM</span></div><div class="aceHitHelp">${rta102IsTouch()?"Drag to the ball · tap contact · swipe to setter":"Move with WASD/arrows · Space contact · combine keys to aim"}</div></div>
+      <button type="button" class="aceHitAction rta102ContactBtn ace318ReceiveContact" data-rta102-contact><span>👐</span><b>PLATFORM CONTACT</b><small>THEN AIM</small></button>
+      ${ace325Progress(total,done)}
+      <div class="aceHitFooter rta102RepFeedback ${feedback?(feedback.good?"good":"bad"):""}">${esc(feedback?.text||"Get behind the serve, platform it, then send the pass to the setter.")}</div>
+    </aside>`;
+  }
+  function ace325SettingPanel(total,done,target,feedback,match=false){
+    const meta=rta95SetterOptionMeta(target||"QUICK");
+    return `<aside class="aceHitPanel ace324TechPanel">
+      <div class="aceHitIntro"><small>${match?"MATCH SECOND CONTACT":"SECOND CONTACT · SETTING"}</small><b>Run the offence.</b><span>The pass comes from your side. Get underneath it, contact, then flick towards your hitter.</span></div>
+      ${ace321PlaystyleChip("SETTING")}
+      <div class="aceHitStage active"><div class="aceHitStageTitle">MOVE · CONTACT · AIM</div><div class="ace320TechStage ace320SettingStage"><span class="active">1 · READ</span><span>2 · MOVE</span><span>3 · CONTACT</span><span>4 · AIM</span></div><div class="aceHitHelp">${rta102IsTouch()?`Move under the pass · tap contact · flick to ${esc(meta.label)}`:"Move with WASD/arrows · Space contact · use combined directions to set"}</div></div>
+      <button type="button" class="aceHitAction rta102ContactBtn setting ace320SettingContact" data-rta102-contact><span>◇</span><b>SET CONTACT</b><small>THEN FLICK</small></button>
+      ${ace325Progress(total,done)}
+      <div class="aceHitFooter rta102RepFeedback ${feedback?(feedback.good?"good":"bad"):""}">${esc(feedback?.text||`Track your teammate's pass → contact → flick the set to ${meta.label}.`)}</div>
+    </aside>`;
+  }
+
+  /* Replace the LIVE closure-scoped scene factories/renderers. */
+  rta102SkillPlayerMarkup=ace325SkillPlayerMarkup;
+  rta102ReceiveScene=ace325ReceiveScene;
+  rta102SettingScene=ace325SettingScene;
+
+  const ace325PrepareBase=rta102PrepareSkillRep;
+  rta102PrepareSkillRep=function(mode,rep,target=""){
+    ace325PrepareBase(mode,rep,target);
+    if(String(mode||"").toUpperCase()==="SETTING"){
+      const n=Number(rep?.rep_no||S.training?.rep_no||S.key?.moment_no||1);
+      skillStartBall={x:(n%2===0?.24:.76),y:.82};
+      const ball=q("#rta102SkillBall");if(ball){ball.style.left=(skillStartBall.x*100)+"%";ball.style.top=(skillStartBall.y*100)+"%"}
+    }
+  };
+
+  renderDynamicReceiveTrainingOverlay=function(){
+    const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();
+    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell ace325LiveTechShell">${overlayTop(`SERVE RECEIVE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,"READ · MOVE · PLATFORM · AIM")}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${ace325ReceiveScene(rep)}</div>${ace325ReceivePanel(d.total_reps,Number(d.rep_no)-1,S.feedback,false)}</div></div>`,"training");
+    rta102PrepareSkillRep("RECEIVE",rep);requestAnimationFrame(()=>q(".rta102Server")?.classList.add("ace318Serving"));
+  };
+  renderSettingTrainingOverlay=function(){
+    const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();const target=rta95TrainingSetterTarget(rep);
+    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell ace325LiveTechShell">${overlayTop(`SETTING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,"MOVE · CONTACT · AIM")}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${ace325SettingScene(rep,target)}</div>${ace325SettingPanel(d.total_reps,Number(d.rep_no)-1,target,S.feedback,false)}</div></div>`,"training");
+    rta102PrepareSkillRep("SETTING",rep,target);
+  };
+
+  function ace325KeySetTargets(options){
+    const opts=(options||[]).map(o=>String(typeof o==="string"?o:o.id||"").toUpperCase()).filter(Boolean);
+    return `<div class="ace321KeySetTargets ace324SetTargets">${opts.map(id=>{const p=ace321SetPoint(id),meta=rta95SetterOptionMeta(id),action=["DUMP","FAKE"].includes(id);if(action)return `<span class="ace324SetActionRing" data-ace321-set-target="${esc(id)}" style="left:${p.x*100}%;top:${p.y*100}%">${esc(meta.short)}</span>`;const cls=id==="OH"||id==="SAFE"?"oh":id==="QUICK"?"quick":id==="OP"?"op":"pipe";return `<span class="ace324SetTarget ${cls}" data-ace321-set-target="${esc(id)}" style="left:${p.x*100}%;top:${p.y*100}%">${ace325ActorMarkup(meta.short||id)}</span>`}).join("")}</div>`;
+  }
+  function ace325SettingKeyScene(rep,options){
+    const base=ace325SettingScene(rep,"");
+    return base.replace('<div class="rta102SetTargets ace324SetTargets">','<div class="rta102SetTargets ace324SetTargets ace321HideDefaultTargets">').replace('<div class="ace320SetGuide"',`${ace325KeySetTargets(options)}<div class="ace320SetGuide"`);
+  }
+  renderLiberoKeyOverlay=function(type){
+    const d=S.key,m=d?.moment;if(!d||!m){closeOverlay();return}cleanupRaf();const rep=ace321ReceiveMomentRep(m,d);ace321KeyRep=rep;ace321KeyMode="RECEIVE";ace321KeyMeta={best:rta97ReadBestFromCue("RECEIVE",m.cue)||"CENTRE",options:Array.isArray(m.options)?m.options:[]};
+    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell ace325LiveTechShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)} · RECEIVE`)}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${ace325ReceiveScene(rep)}</div>${ace325ReceivePanel(d.total_moments,Number(d.moment_no)-1,S.feedback,true)}</div></div>`,"key");
+    rta102PrepareSkillRep("RECEIVE",rep);requestAnimationFrame(()=>q(".rta102Server")?.classList.add("ace318Serving"));
+  };
+  renderSetterKeyOverlay=function(){
+    const d=S.key,m=d?.moment;if(!d||!m){closeOverlay();return}cleanupRaf();const opts=Array.isArray(m.options)?m.options:[],rep=ace321SettingMomentRep(m,d),read=rta95SetterSceneRead(m);ace321KeyRep=rep;ace321KeyMode="SETTING";ace321KeyMeta={options:opts,read};const target=String((opts[0]&&((typeof opts[0]==="string")?opts[0]:opts[0].id))||"QUICK").toUpperCase();
+    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell ace325LiveTechShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)} · SETTING`)}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${ace325SettingKeyScene(rep,opts)}</div>${ace325SettingPanel(d.total_moments,Number(d.moment_no)-1,target,S.feedback,true)}</div></div>`,"key");
+    rta102PrepareSkillRep("SETTING",rep,"");
+  };
+
+  window.ACE_PROJECT_BUILD="B21.36.325";
+  window.ACE_RECEIVE_LIVE_RENDER_SCOPE_FIX="B21.36.325";
+  window.ACE_SETTING_LIVE_RENDER_SCOPE_FIX="B21.36.325";
+
 })();
 
 
@@ -52860,114 +52977,9 @@ window.ACE_BLOCKING_VISUAL_REBUILD="B21.36.323";
  #rta62Overlay:is([data-kind="training"],[data-kind="key"]) .ace324TechScene .ace318ReceiveRead{font-size:6px!important}
 }
 </style>
-<script id="ace324-receive-setting-rebuild-script">
-(function(){
-  function actorMarkup(role="",hot=false){
-    return `<i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i><b class="ace324Pos">${esc(role)}</b>`;
-  }
-  rta102SkillPlayerMarkup=function(mode){
-    const m=String(mode||"").toLowerCase(),arms=m==="setting"?"ace324SetArms":"ace324PlatformArms";
-    return `<div class="rta102SkillPlayer ace324SkillActor ${m}" id="rta102SkillPlayer" style="left:${skillPlayer.x*100}%;top:${skillPlayer.y*100}%"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i><i class="${arms}"></i><b class="ace324You">YOU</b></div>`;
-  };
-  rta102ReceiveScene=function(rep){
-    return `<div class="rta102SkillCourt receive ace318ReceiveCourt ace319ReceiveCourt ace324ReceiveCourt" id="rta102SkillCourt">
-      <div class="aceHitStands"></div><div class="aceHitCourt"></div><div class="aceHitNet"></div>
-      <div class="rta102Server ace324ServerActor"><i class="aceHitHead"></i><i class="aceHitTorso"></i><i class="aceHitLegs"></i><b>SERVER</b></div>
-      <div class="ace318ReceiveSetterTarget ace319ReceiveSetterTarget" id="ace319SetterTarget"><i></i><span>SETTER</span></div>
-      <div class="ace319PassGuide" id="ace319PassGuide"><i class="desired" id="ace319DesiredLine"></i><i class="actual" id="ace319AimLine"></i><b id="ace319AimCue">PASS TO SETTER</b></div>
-      <div class="rta102Landing" id="rta102Landing"></div><div class="rta102Trail" id="rta102Trail"></div><div class="rta102SkillBall" id="rta102SkillBall"></div>
-      ${rta102SkillPlayerMarkup("receive")}
-      <div class="ace318ReceiveRead" id="ace318ReceiveRead"><small>SERVER CONTACT</small><b>TRACK THE FLIGHT</b></div>
-      <div class="aceHitScenario">FIRST CONTACT · ${esc(String(rep?.ball_type||"SERVE").toUpperCase())}</div>
-      <div class="rta102SkillPrompt" id="rta102SkillPrompt">READ THE SERVE</div>
-      ${rta102IsTouch()?`<div class="rta102TouchHint">DRAG TO MOVE</div>`:rta102KeyHUD()}
-    </div>`;
-  };
-  rta102SettingScene=function(rep,target){
-    const meta=rta95SetterOptionMeta(target),n=Number(rep?.rep_no||S.training?.rep_no||1),passLeft=n%2===0,px=passLeft ? .24 : .76;
-    return `<div class="rta102SkillCourt setting ace320UnifiedCourt ace320SettingCourt ace324SettingCourt" id="rta102SkillCourt">
-      <div class="aceHitStands"></div><div class="aceHitCourt"></div><div class="aceHitNet"></div>
-      <div class="rta102SetTargets ace324SetTargets">
-        <span class="ace324SetTarget oh ${target==="OH"?"hot":""}">${actorMarkup("OH")}</span>
-        <span class="ace324SetTarget quick ${target==="QUICK"?"hot":""}">${actorMarkup("M")}</span>
-        <span class="ace324SetTarget op ${target==="OP"?"hot":""}">${actorMarkup("OP")}</span>
-        <span class="ace324SetTarget pipe ${target==="PIPE"?"hot":""}">${actorMarkup("PIPE")}</span>
-      </div>
-      <div class="ace324Passer" style="left:${px*100}%;top:83%">${actorMarkup("PASS")}</div>
-      <div class="ace320SetGuide" id="ace320SetGuide"><i class="desired" id="ace320SetDesiredLine"></i><i class="actual" id="ace320SetAimLine"></i><b id="ace320SetAimCue">FLICK TO ${esc(meta.label)}</b></div>
-      <div class="rta102Landing" id="rta102Landing"></div><div class="rta102Trail" id="rta102Trail"></div><div class="rta102SkillBall" id="rta102SkillBall"></div>
-      ${rta102SkillPlayerMarkup("setting")}
-      <div class="rta102SetCall ace320SetCall"><small>SECOND CONTACT</small><b>SET ${esc(meta.label)}</b></div>
-      <div class="aceHitScenario">PASS FROM YOUR TEAM</div>
-      <div class="rta102SkillPrompt" id="rta102SkillPrompt">MOVE UNDER THE PASS</div>
-      ${rta102IsTouch()?`<div class="rta102TouchHint">DRAG TO MOVE</div>`:rta102KeyHUD()}
-    </div>`;
-  };
-  const ace324BasePrepare=rta102PrepareSkillRep;
-  rta102PrepareSkillRep=function(mode,rep,target=""){
-    ace324BasePrepare(mode,rep,target);
-    if(String(mode||"").toUpperCase()==="SETTING"){
-      const n=Number(rep?.rep_no||S.training?.rep_no||S.key?.moment_no||1);
-      skillStartBall={x:(n%2===0 ? .24 : .76),y:.82};
-    }
-  };
-  function progress(total,done){return `<div class="rta62Progress aceHitProgress">${Array.from({length:Number(total||8)},(_,i)=>`<i class="${i<Number(done||0)?"done":""}"></i>`).join("")}</div>`}
-  function receivePanel(total,done,feedback,match=false){
-    return `<aside class="aceHitPanel ace324TechPanel">
-      <div class="aceHitIntro"><small>${match?"MATCH FIRST CONTACT":"FIRST CONTACT · SERVE RECEIVE"}</small><b>Own the pass.</b><span>Read the flight, move behind it, contact cleanly, then aim to the setter.</span></div>
-      ${ace321PlaystyleChip("RECEIVE")}
-      <div class="aceHitStage active"><div class="aceHitStageTitle">READ · MOVE · PLATFORM · AIM</div><div class="ace318ReceiveStage"><span class="active">1 · READ</span><span>2 · MOVE</span><span>3 · CONTACT</span><span>4 · AIM</span></div><div class="aceHitHelp">${rta102IsTouch()?"Drag to the ball · tap contact · swipe to setter":"Move with WASD/arrows · Space contact · combine keys to aim"}</div></div>
-      <button type="button" class="aceHitAction rta102ContactBtn ace318ReceiveContact" data-rta102-contact><span>👐</span><b>PLATFORM CONTACT</b><small>THEN AIM</small></button>
-      ${progress(total,done)}
-      <div class="aceHitFooter rta102RepFeedback ${feedback?(feedback.good?"good":"bad"):""}">${esc(feedback?.text||"Get behind the serve, platform it, then send the pass to the setter.")}</div>
-    </aside>`;
-  }
-  function settingPanel(total,done,target,feedback,match=false){
-    const meta=rta95SetterOptionMeta(target||"QUICK");
-    return `<aside class="aceHitPanel ace324TechPanel">
-      <div class="aceHitIntro"><small>${match?"MATCH SECOND CONTACT":"SECOND CONTACT · SETTING"}</small><b>Run the offence.</b><span>The pass comes from your side. Get underneath it, contact, then flick towards your hitter.</span></div>
-      ${ace321PlaystyleChip("SETTING")}
-      <div class="aceHitStage active"><div class="aceHitStageTitle">MOVE · CONTACT · AIM</div><div class="ace320TechStage ace320SettingStage"><span class="active">1 · READ</span><span>2 · MOVE</span><span>3 · CONTACT</span><span>4 · AIM</span></div><div class="aceHitHelp">${rta102IsTouch()?`Move under the pass · tap contact · flick to ${esc(meta.label)}`:"Move with WASD/arrows · Space contact · use combined directions to set"}</div></div>
-      <button type="button" class="aceHitAction rta102ContactBtn setting ace320SettingContact" data-rta102-contact><span>◇</span><b>SET CONTACT</b><small>THEN FLICK</small></button>
-      ${progress(total,done)}
-      <div class="aceHitFooter rta102RepFeedback ${feedback?(feedback.good?"good":"bad"):""}">${esc(feedback?.text||`Track your teammate's pass → contact → flick the set to ${meta.label}.`)}</div>
-    </aside>`;
-  }
-  renderDynamicReceiveTrainingOverlay=function(){
-    const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();
-    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell">${overlayTop(`SERVE RECEIVE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,"READ · MOVE · PLATFORM · AIM")}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${rta102ReceiveScene(rep)}</div>${receivePanel(d.total_reps,Number(d.rep_no)-1,S.feedback,false)}</div></div>`,"training");
-    rta102PrepareSkillRep("RECEIVE",rep);requestAnimationFrame(()=>q(".rta102Server")?.classList.add("ace318Serving"));
-  };
-  renderSettingTrainingOverlay=function(){
-    const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}cleanupRaf();const target=rta95TrainingSetterTarget(rep);
-    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell">${overlayTop(`SETTING · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,"MOVE · CONTACT · AIM")}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${rta102SettingScene(rep,target)}</div>${settingPanel(d.total_reps,Number(d.rep_no)-1,target,S.feedback,false)}</div></div>`,"training");
-    rta102PrepareSkillRep("SETTING",rep,target);
-  };
-  ace321KeySetTargets=function(options){
-    const opts=(options||[]).map(o=>String(typeof o==="string"?o:o.id||"").toUpperCase()).filter(Boolean);
-    return `<div class="ace321KeySetTargets ace324SetTargets">${opts.map(id=>{const p=ace321SetPoint(id),meta=rta95SetterOptionMeta(id),action=["DUMP","FAKE"].includes(id);if(action)return `<span class="ace324SetActionRing" data-ace321-set-target="${esc(id)}" style="left:${p.x*100}%;top:${p.y*100}%">${esc(meta.short)}</span>`;const cls=id==="OH"||id==="SAFE"?"oh":id==="QUICK"||id==="FAKE"?"quick":id==="OP"?"op":id==="PIPE"?"pipe":"pipe";return `<span class="ace324SetTarget ${cls}" data-ace321-set-target="${esc(id)}" style="left:${p.x*100}%;top:${p.y*100}%">${actorMarkup(meta.short||id)}</span>`}).join("")}</div>`;
-  };
-  ace321SettingKeyScene=function(rep,options){
-    const base=rta102SettingScene(rep,"");
-    return base.replace('<div class="rta102SetTargets ace324SetTargets">','<div class="rta102SetTargets ace324SetTargets ace321HideDefaultTargets">').replace('<div class="ace320SetGuide"',`${ace321KeySetTargets(options)}<div class="ace320SetGuide"`);
-  };
-  renderLiberoKeyOverlay=function(type){
-    const d=S.key,m=d?.moment;if(!d||!m){closeOverlay();return}cleanupRaf();const rep=ace321ReceiveMomentRep(m,d);ace321KeyRep=rep;ace321KeyMode="RECEIVE";ace321KeyMeta={best:rta97ReadBestFromCue("RECEIVE",m.cue)||"CENTRE",options:Array.isArray(m.options)?m.options:[]};
-    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)} · RECEIVE`)}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${rta102ReceiveScene(rep)}</div>${receivePanel(d.total_moments,Number(d.moment_no)-1,S.feedback,true)}</div></div>`,"key");
-    rta102PrepareSkillRep("RECEIVE",rep);requestAnimationFrame(()=>q(".rta102Server")?.classList.add("ace318Serving"));
-  };
-  renderSetterKeyOverlay=function(){
-    const d=S.key,m=d?.moment;if(!d||!m){closeOverlay();return}cleanupRaf();const opts=Array.isArray(m.options)?m.options:[],rep=ace321SettingMomentRep(m,d),read=rta95SetterSceneRead(m);ace321KeyRep=rep;ace321KeyMode="SETTING";ace321KeyMeta={options:opts,read};
-    const target=String((opts[0]&&((typeof opts[0]==="string")?opts[0]:opts[0].id))||"QUICK").toUpperCase();
-    setOverlay(`<div class="rta62OverlayShell aceHitShell ace324TechShell">${overlayTop(`${d.international?"INTERNATIONAL · ":"KEY MOMENTS · "}${esc(d.opponent)}`,`Moment ${Number(d.moment_no)}/${Number(d.total_moments)} · SETTING`)}<div class="aceHitBody ace324TechBody"><div class="aceHitScene ace324TechScene">${ace321SettingKeyScene(rep,opts)}</div>${settingPanel(d.total_moments,Number(d.moment_no)-1,target,S.feedback,true)}</div></div>`,"key");
-    rta102PrepareSkillRep("SETTING",rep,"");
-  };
-  window.ACE_PROJECT_BUILD="B21.36.324";
-  window.ACE_RECEIVE_VISIBLE_REBUILD="B21.36.324";
-  window.ACE_SETTING_ATTACK_UI_REBUILD="B21.36.324";
-  window.ACE_SETTING_PASS_FROM_OUR_SIDE="B21.36.324";
-})();
-</script>
+<!-- B21.36.325: removed obsolete out-of-scope ace324 renderer override -->
 
+
+<script id="ace325-build-marker">window.ACE_PROJECT_BUILD="B21.36.325";window.ACE_RECEIVE_LIVE_RENDER_SCOPE_FIX="B21.36.325";</script>
 </body>
 </html>
