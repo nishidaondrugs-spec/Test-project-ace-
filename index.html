@@ -38113,20 +38113,93 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("Career request timed out. Try again.")),ms))]);
   }
   let rta119RpcInflight=0,rta119LastRpcName="",rta119LastRpcFinished=0;
+  const rta316ReadInflight=new Map();
+  const rta316ReadOnly=new Set([
+    "vds_rta_get_state_fast","vds_rta_get_state","vds_rta_get_world_update","vds_rta_get_save_slots",
+    "vds_rta_get_skill_tree","vds_rta_get_bonus_skill_milestones","vds_rta_get_selection_state",
+    "vds_rta_get_league_world","vds_rta_get_living_league","vds_rta_get_transfer_market"
+  ]);
+  const rta316RpcStats={calls:0,deduped:0,byName:{}};
   async function rpc(name,args={}){
     const db=mainClient();if(!db)throw new Error("ACE account connection unavailable.");
-    rta119RpcInflight++;rta119LastRpcName=String(name||"");
-    try{
-      const {data,error}=await timeout(db.rpc(name,args));
-      if(error)throw error;
-      return data;
-    }finally{
-      rta119RpcInflight=Math.max(0,rta119RpcInflight-1);
-      rta119LastRpcFinished=performance.now();
+    const rpcName=String(name||"");
+    const readOnly=rta316ReadOnly.has(rpcName);
+    let key="";
+    if(readOnly){
+      try{key=rpcName+":"+JSON.stringify(args||{})}catch(_){key=rpcName}
+      if(rta316ReadInflight.has(key)){rta316RpcStats.deduped++;return rta316ReadInflight.get(key)}
     }
+    const run=(async()=>{
+      rta119RpcInflight++;rta119LastRpcName=rpcName;rta316RpcStats.calls++;
+      const stat=rta316RpcStats.byName[rpcName]||(rta316RpcStats.byName[rpcName]={calls:0,totalMs:0,lastMs:0});
+      stat.calls++;const started=performance.now();
+      try{
+        const {data,error}=await timeout(db.rpc(name,args));
+        if(error)throw error;
+        return data;
+      }finally{
+        const ms=Math.max(0,performance.now()-started);stat.lastMs=Math.round(ms);stat.totalMs+=ms;
+        rta119RpcInflight=Math.max(0,rta119RpcInflight-1);
+        rta119LastRpcFinished=performance.now();
+      }
+    })();
+    if(readOnly&&key)rta316ReadInflight.set(key,run);
+    try{return await run}finally{if(readOnly&&key&&rta316ReadInflight.get(key)===run)rta316ReadInflight.delete(key)}
   }
+  window.ACE_RTA_316_STATS=rta316RpcStats;
   window.ACE_RTA_RPC=rpc;
   window.ACE_RTA_LOAD_STATE=loadState;
+
+  let rta316WorldAt=0,rta316SkillPromise=null,rta316SavePromise=null;
+  function rta316BonusKey(){
+    const c=S.career||{};return [c.season,c.season_match,c.level,c.squad_role,c.career_kills,c.career_blocks,c.career_assists,c.career_digs].join(":");
+  }
+  async function rta316EnsureSkillTree({syncBonus=true,force=false}={}){
+    if(!S.career)return null;
+    if(!force&&S.skillTree)return S.skillTree;
+    if(rta316SkillPromise)return rta316SkillPromise;
+    rta316SkillPromise=(async()=>{
+      if(syncBonus){
+        const key=rta316BonusKey();
+        if(S._rta316BonusKey!==key){
+          try{
+            const bonus=await rpc("vds_rta_sync_bonus_skill_points");
+            S._rta316BonusKey=key;
+            if(Number.isFinite(Number(bonus?.skill_points)))S.career.skill_points=Number(bonus.skill_points);
+            if(Number(bonus?.awarded||0)>0)toast(`+${Number(bonus.awarded)} Skill Point${Number(bonus.awarded)===1?"":"s"} · career milestone`);
+          }catch(err){console.warn("Road to Ace milestone sync unavailable",err)}
+        }
+      }
+      const tree=await rpc("vds_rta_get_skill_tree");
+      S.skillTree=tree;
+      if(Number.isFinite(Number(tree?.skill_points)))S.career.skill_points=Number(tree.skill_points);
+      return tree;
+    })();
+    try{return await rta316SkillPromise}finally{rta316SkillPromise=null}
+  }
+  async function rta316EnsureWorld(force=false){
+    if(!S.career)return null;
+    if(!force&&S.worldUpdate&&(Date.now()-rta316WorldAt)<10000)return S.worldUpdate;
+    const w=await rpc("vds_rta_get_world_update");
+    rta316WorldAt=Date.now();
+    return rta105ApplyWorldUpdate(w);
+  }
+  async function rta316EnsureSaveSlots(){
+    if(rta316SavePromise)return rta316SavePromise;
+    rta316SavePromise=(async()=>{
+      const saves=await rpc("vds_rta_get_save_slots");
+      S.activeSave=Number(saves?.active_slot||1);
+      S.saveSlots=Array.isArray(saves?.slots)?saves.slots:[];
+      return saves;
+    })();
+    try{return await rta316SavePromise}finally{rta316SavePromise=null}
+  }
+  function rta316WarmView(view){
+    const v=String(view||S.view||"home");
+    if(v==="player"&&S.playerPanel==="tree")rta316EnsureSkillTree().then(()=>render()).catch(err=>console.warn("Skill tree lazy load failed",err));
+    if(["home","match","club","agent","career","rankings"].includes(v)&&!S.worldUpdate)rta316EnsureWorld().then(()=>render()).catch(err=>console.warn("World lazy load failed",err));
+  }
+  window.ACE_RTA_316={ensureSkillTree:rta316EnsureSkillTree,ensureWorld:rta316EnsureWorld,ensureSaveSlots:rta316EnsureSaveSlots,stats:rta316RpcStats};
 
   function ensureUi(){
     if(!q("#rta62Overlay")){
@@ -38266,8 +38339,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return w;
   }
   async function rta105RefreshWorld(){
-    const w=await rpc("vds_rta_get_world_update");
-    return rta105ApplyWorldUpdate(w);
+    return rta316EnsureWorld(true);
   }
   function rta105MovementLabel(m){
     const x=String(m||"SAME").toUpperCase();
@@ -38347,7 +38419,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
          If auth or the core Career RPC stalls, fail visibly instead of leaving
          the player on "Loading career…" forever. */
       await permanentSession();
-      const data=await timeout(rpc("vds_rta_get_state"),9000);
+      const data=await timeout(rpc("vds_rta_get_state_fast"),7000);
 
       if(S._loadToken!==loadToken)return;
 
@@ -38389,37 +38461,14 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         let bonusSp=0;
         const jobs=[];
 
-        jobs.push((async()=>{
-          try{
-            const tree=await timeout(rpc("vds_rta_get_skill_tree"),5500);
-            if(S._loadToken!==loadToken)return;
-            S.skillTree=tree;
-            bonusSp=Number(tree?.bonus_awarded||0);
-            if(Number.isFinite(Number(tree?.skill_points)))S.career.skill_points=Number(tree.skill_points);
-          }catch(treeErr){
-            console.warn("Road to Ace skill tree unavailable",treeErr);
-          }
-        })());
-
         if(world){
           jobs.push((async()=>{
             try{
-              const w=await timeout(rpc("vds_rta_get_world_update"),6500);
+              const w=await timeout(rta316EnsureWorld(true),6500);
               if(S._loadToken!==loadToken)return;
               rta105ApplyWorldUpdate(w);
             }catch(worldErr){
               console.warn("Road to Ace world update unavailable",worldErr);
-            }
-          })());
-
-          jobs.push((async()=>{
-            try{
-              const saves=await timeout(rpc("vds_rta_get_save_slots"),5500);
-              if(S._loadToken!==loadToken)return;
-              S.activeSave=Number(saves?.active_slot||1);
-              S.saveSlots=Array.isArray(saves?.slots)?saves.slots:[];
-            }catch(saveErr){
-              console.warn("Road to Ace save slots unavailable",saveErr);
             }
           })());
         }else if(!S.activeKey){
@@ -38472,6 +38521,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       try{window.ace259SyncPageState?.()}catch(_){}
       try{window.ace211RefreshCareerNav?.()}catch(_){}
       try{window.ace221RefreshTrainingUI?.()}catch(_){}
+      try{document.dispatchEvent(new CustomEvent("ace:rta-render",{detail:{view:S.view,season:S.career?.season||0,match:S.career?.season_match||0}}))}catch(_){}
     });
   }
 
@@ -38775,7 +38825,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     </div>`,"mobile-more");
   }
 
-  function showSaveManager(){
+  async function showSaveManager(){
+    try{await rta316EnsureSaveSlots()}catch(err){console.warn("Career save summaries unavailable",err)}
     const slots=careerSaveSlots();
     setOverlay(`<div class="rta62OverlayShell">
       ${overlayTop("ROAD TO ACE","CAREER SAVES")}
@@ -38841,6 +38892,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     if(next==="train"){S.overlay=null;S.feedback=null;}
     if(next==="agent")rta257MarkAgentRead(S.career);
     render();
+    rta316WarmView(next);
     return false;
   };
   function topbar(c){
@@ -40318,7 +40370,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
 
   window.ACE_RTA_PLAYER_PANEL=function(event,id){
     try{event?.preventDefault?.();event?.stopPropagation?.()}catch(_){}
-    S.playerPanel=String(id||"attributes");S.view="player";render();return false;
+    S.playerPanel=String(id||"attributes");S.view="player";render();
+    if(S.playerPanel==="tree")rta316EnsureSkillTree().then(()=>render()).catch(err=>toast(errText(err),"error"));
+    return false;
   };
   function rta93PlayerTabButton(id,label,icon){return `<button type="button" data-rta93-player-panel="${id}" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'${id}')" class="${S.playerPanel===id?"active":""}"><i>${icon}</i><span>${label}</span></button>`;}
   function rta93PlayerPanel(c){
@@ -44884,7 +44938,7 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta101-open-market]")){S.view="career";S.careerPanel="league";S.leaguePanel="market";render();return}
     const leaguePanel=e.target.closest?.("[data-rta100-league-panel]");if(leaguePanel){S.leaguePanel=leaguePanel.dataset.rta100LeaguePanel||"table";S.view="career";S.careerPanel="league";render();return}
     const leaderStat=e.target.closest?.("[data-rta100-leader-stat]");if(leaderStat){S.leaderStat=leaderStat.dataset.rta100LeaderStat||"kills";render();return}
-    const playerPanel=e.target.closest?.("[data-rta93-player-panel]");if(playerPanel){S.playerPanel=playerPanel.dataset.rta93PlayerPanel||"attributes";S.view="player";render();return}
+    const playerPanel=e.target.closest?.("[data-rta93-player-panel]");if(playerPanel){S.playerPanel=playerPanel.dataset.rta93PlayerPanel||"attributes";S.view="player";render();if(S.playerPanel==="tree")rta316EnsureSkillTree().then(()=>render()).catch(err=>toast(errText(err),"error"));return}
     const careerPanel=e.target.closest?.("[data-rta92-career-panel]");if(careerPanel){S.careerPanel=careerPanel.dataset.rta92CareerPanel||"overview";render();return}
     const mobileMoreView=e.target.closest?.("[data-rta85-more-view]");if(mobileMoreView){const v=mobileMoreView.dataset.rta85MoreView;closeOverlay();S.view=v;if(v==="rankings")S.leaderboardLoaded=false;if(v==="agent")rta257MarkAgentRead(S.career);render();return}
     if(e.target.closest?.("[data-rta-rankings-refresh]")){loadCareerLeaderboard(true);return}
@@ -44897,11 +44951,11 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta76-save-manager]")){showSaveManager();return}
     const switchSave=e.target.closest?.("[data-rta76-switch-save]");if(switchSave){switchCareerSave(switchSave.dataset.rta76SwitchSave);return}
     const deleteSave=e.target.closest?.("[data-rta76-delete-save]");if(deleteSave){deleteCareerSave(deleteSave.dataset.rta76DeleteSave);return}
-    const view=e.target.closest?.("[data-rta62-view]");if(view){const next=String(view.dataset.rta62View||"home");S.view=next;if(next==="rankings")S.leaderboardLoaded=false;if(next==="train"){S.overlay=null;S.feedback=null;}if(next==="agent")rta257MarkAgentRead(S.career);render();return}
+    const view=e.target.closest?.("[data-rta62-view]");if(view){const next=String(view.dataset.rta62View||"home");S.view=next;if(next==="rankings")S.leaderboardLoaded=false;if(next==="train"){S.overlay=null;S.feedback=null;}if(next==="agent")rta257MarkAgentRead(S.career);render();rta316WarmView(next);return}
     const pos=e.target.closest?.("[data-rta62-pos]");if(pos){S.createPos=pos.dataset.rta62Pos;renderCreate(q("#rta62Mount"));return}
     if(e.target.closest?.("[data-rta62-retry]")){loadState();return}
     if(e.target.closest?.("[data-rta62-account]")){q("#vdsAccountOpenBtn")?.click();return}
-    if(e.target.closest?.("[data-rta67-tree-retry]")){try{S.skillTree=await rpc("vds_rta_get_skill_tree");if(S.career&&Number.isFinite(Number(S.skillTree?.skill_points)))S.career.skill_points=Number(S.skillTree.skill_points);render()}catch(err){toast(errText(err),"error")}return}
+    if(e.target.closest?.("[data-rta67-tree-retry]")){try{S.skillTree=null;await rta316EnsureSkillTree({force:true});render()}catch(err){toast(errText(err),"error")}return}
     const node=e.target.closest?.("[data-rta67-node]");if(node){unlockSkillNode(node.dataset.rta67Node,node);return}
     const up=e.target.closest?.("[data-rta62-upgrade]");if(up){upgrade(up.dataset.rta62Upgrade,up);return}
     if(e.target.closest?.("[data-rta113-open-physical]")){rta113ShowPhysicalPicker();return}
@@ -45370,6 +45424,7 @@ function renderAttackKeyOverlay(){
   let rta119BusySince=0;
   const rta119BusyWatch=setInterval(()=>{
     try{
+      if(document.visibilityState!=="visible")return;
       if(!S?.busy){rta119BusySince=0;return}
       if(!rta119BusySince){rta119BusySince=performance.now();return}
       if(rta119RpcInflight>0)return;
@@ -49664,7 +49719,7 @@ window.ACE_STATUS={
 let decorationFrame=0;
 function queueDecoration(){if(!decorationFrame)decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decorate();});}
 const decorationPage=document.getElementById('roadtoace');
-if(decorationPage)new MutationObserver(queueDecoration).observe(decorationPage,{childList:true,subtree:true});
+if(decorationPage)document.addEventListener("ace:rta-render",queueDecoration);
 document.addEventListener("click",()=>setTimeout(decorate,0),true);
 window.addEventListener("pageshow",()=>setTimeout(decorate,40));
 setTimeout(decorate,120);
@@ -49738,7 +49793,7 @@ function decorate(){
 let decorationFrame=0;
 function queueDecoration(){if(!decorationFrame)decorationFrame=requestAnimationFrame(()=>{decorationFrame=0;decorate();});}
 const decorationPage=document.getElementById('roadtoace');
-if(decorationPage)new MutationObserver(queueDecoration).observe(decorationPage,{childList:true,subtree:true});
+if(decorationPage)document.addEventListener("ace:rta-render",queueDecoration);
 setTimeout(decorate,100);
 window.ACE_INTL_NATIONALITY_V1={playable:24,profiles:P,sourceSeason:2026};
 window.ACE_PROJECT_BUILD="B21.36.296";
@@ -49829,7 +49884,7 @@ function decorate(){
 }
 document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace311-open]')){e.preventDefault();openChooser();return}if(e.target.closest?.('[data-ace311-intl-card]')){e.preventDefault();try{window.ACE_INTL_CALLUP_V303?.openHub?.()}catch(_){}return}const done=e.target.closest?.('[data-rta62-result-done]');if(done&&career()?.season_complete&&!intlPending())setTimeout(openChooser,160)},true);
 function queue(){if(!frame)frame=requestAnimationFrame(decorate)}
-const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});window.addEventListener('pageshow',queue);setTimeout(queue,180);
+const page=document.getElementById('roadtoace');if(page)document.addEventListener("ace:rta-render",queue);window.addEventListener('pageshow',queue);setTimeout(queue,180);
 window.ACE_OFFSEASON_TRANSFER_V311={open:openChooser,refresh:refreshMarket,pendingInternational:intlPending};window.ACE_PROJECT_BUILD='B21.36.311';
 })();
 </script>
@@ -50285,7 +50340,7 @@ document.addEventListener('click',e=>{const sign=e.target.closest?.('[data-rta62
  }
  const club=sign.dataset.rta62NextSeason||'';document.querySelector('.ace311Backdrop')?.remove();document.body.style.overflow='';acceptClub(club);return}},true);
 document.addEventListener('click',e=>{if(!e.target.closest?.('.ace312Backdrop'))return;if(e.target.closest('.ace312Close')){close();return}if(e.target.closest('[data-ace312-next]')){step=Math.min(3,step+1);render();return}if(e.target.closest('[data-ace312-back]')){step=Math.max(0,step-1);render();return}const f=e.target.closest('[data-ace312-focus]');if(f){focus=String(f.dataset.ace312Focus||'').toUpperCase();render();return}if(e.target.closest('[data-ace312-complete]')){complete();return}if(e.target.closest('[data-ace312-enter]')){close();const s=S();if(s){s.view='home';s.homePanel='week'}try{window.__ACE_RTA_RENDER?.()}catch(_){}return}},true);
-const page=document.getElementById('roadtoace');if(page)new MutationObserver(queue).observe(page,{childList:true,subtree:true});window.addEventListener('pageshow',queue);setTimeout(queue,300);
+const page=document.getElementById('roadtoace');if(page)document.addEventListener("ace:rta-render",queue);window.addEventListener('pageshow',queue);setTimeout(queue,300);
 window.ACE_NEW_CLUB_ARRIVAL_V312={open,decorate:queue};window.ACE_PROJECT_BUILD='B21.36.312';
 })();
 </script>
@@ -50316,7 +50371,7 @@ function decorateResult(){const shell=document.querySelector('.rta102ResultShell
 function decorate(){raf=0;const mount=document.querySelector('#roadtoace #rta62Mount');if(!mount||!C())return;decorateResult();if(!battle){refresh();return}const existing=mount.querySelector('[data-ace313-battle]');const home=null;const overview=mount.querySelector('.rta92OverviewPanel');if(existing)return;if(home){home.insertAdjacentHTML('afterend',cardHTML(battle));return}if(overview){const hero=overview.querySelector('.rta92HeroSummary,.rta92PanelIntro');if(hero)hero.insertAdjacentHTML('afterend',cardHTML(battle));else overview.insertAdjacentHTML('afterbegin',cardHTML(battle))}}
 function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
 document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace313-open-match]')){const s=S();if(!s)return;s.view='match';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(()=>document.querySelector('#roadtoace')?.scrollIntoView({behavior:'smooth',block:'start'}),30)}});
-const road=document.getElementById('roadtoace');if(road)new MutationObserver(queue).observe(road,{childList:true,subtree:true});
+const road=document.getElementById('roadtoace');if(road)document.addEventListener("ace:rta-render",queue);
 window.addEventListener('pageshow',()=>refresh(true));window.addEventListener('online',()=>refresh(true));
 setInterval(()=>{if(document.visibilityState==='visible'&&C()&&sig()!==lastFetch)refresh()},5000);
 window.ACE_SQUAD_BATTLE_V313={refresh:()=>refresh(true),get:()=>battle};window.ACE_PROJECT_BUILD='B21.36.313';queue();setTimeout(()=>refresh(true),900);
@@ -50720,5 +50775,10 @@ window.ACE_PROJECT_BUILD='B21.36.315L';window.ACE_INTERNATIONAL_UI_315H={flag,op
 <style id="ace315k-single-intl-source">
 #roadtoace .aceV77Intl.ace315kIntlRoot>.aceV77Status,#roadtoace .aceV77Intl.ace315kIntlRoot>.aceV77Title,#roadtoace .aceV77Intl.ace315kIntlRoot>.aceV77Depth,#roadtoace .aceV77Intl.ace315kIntlRoot>.aceV77Overview,#roadtoace .aceV77Intl.ace315kIntlRoot>.aceV77Note{display:none!important}
 </style>
+
+<script id="ace-b21-36-316-performance-marker">
+window.ACE_PROJECT_BUILD="B21.36.316";
+window.ACE_RTA_PERFORMANCE_BUILD="B21.36.316";
+</script>
 </body>
 </html>
