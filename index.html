@@ -38037,6 +38037,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       skillRaf=0, skillMode="", skillStart=0, skillLastFrame=0, skillFlight=0, skillDuration=1900,
       skillPlayer={x:.5,y:.79}, skillPassTarget={x:.5,y:.68}, skillStartBall={x:.5,y:.08},
       skillKeys={w:false,a:false,s:false,d:false}, skillLocked=false, skillSetCall="",
+      skillReceivePhase="flight", skillSetterTarget={x:.54,y:.54}, skillReceiveContact=null,
+      skillAimKeys={w:false,a:false,s:false,d:false}, skillAimStart=null, skillAimVec={x:0,y:0}, skillAimTimer=0, skillAimComboTimer=0,
       blockTrainRaf=0, blockTrainStart=0, blockTrainLast=0, blockTrainT=0, blockTrainPos=.5, blockTrainY=.70,
       blockTrainKeys={w:false,a:false,s:false,d:false}, blockTrainLocked=false,
       blockMatchRaf=0, blockMatchStart=0, blockMatchLast=0, blockMatchT=0, blockMatchPos=.5, blockMatchTarget=.5,
@@ -38321,7 +38323,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     if(mlRaf)cancelAnimationFrame(mlRaf);mlRaf=0;
     mlChoice="";mlLocked=false;mlMode="";
     if(skillRaf)cancelAnimationFrame(skillRaf);skillRaf=0;
+    if(skillAimTimer)clearTimeout(skillAimTimer);skillAimTimer=0;
+    if(skillAimComboTimer)clearTimeout(skillAimComboTimer);skillAimComboTimer=0;
     skillMode="";skillFlight=0;skillLocked=false;skillKeys={w:false,a:false,s:false,d:false};
+    skillReceivePhase="flight";skillReceiveContact=null;skillAimKeys={w:false,a:false,s:false,d:false};skillAimStart=null;skillAimVec={x:0,y:0};
     if(blockTrainRaf)cancelAnimationFrame(blockTrainRaf);blockTrainRaf=0;
     blockTrainT=0;blockTrainLocked=false;blockTrainKeys={w:false,a:false,s:false,d:false};
     if(blockMatchRaf)cancelAnimationFrame(blockMatchRaf);blockMatchRaf=0;
@@ -43530,8 +43535,37 @@ function renderAttackKeyOverlay(){
       const r=court.getBoundingClientRect();
       rta102MovePlayerTo((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
     };
-    court.addEventListener("pointerdown",e=>{if(skillLocked)return;move(e);try{court.setPointerCapture(e.pointerId)}catch(_){}},{passive:true});
-    court.addEventListener("pointermove",e=>{if(skillLocked||!(e.buttons||e.pressure>0))return;move(e)},{passive:true});
+    court.addEventListener("pointerdown",e=>{
+      if(skillLocked||e.target.closest?.("[data-rta102-contact]"))return;
+      if(skillMode==="RECEIVE"&&skillReceivePhase==="aim"){
+        skillAimStart={x:e.clientX,y:e.clientY,id:e.pointerId};skillAimVec={x:0,y:0};
+        ace319UpdateAimGuide();
+        try{court.setPointerCapture(e.pointerId)}catch(_){}
+        return;
+      }
+      move(e);try{court.setPointerCapture(e.pointerId)}catch(_){}
+    },{passive:true});
+    court.addEventListener("pointermove",e=>{
+      if(skillLocked)return;
+      if(skillMode==="RECEIVE"&&skillReceivePhase==="aim"&&skillAimStart&&skillAimStart.id===e.pointerId){
+        const dx=e.clientX-skillAimStart.x,dy=e.clientY-skillAimStart.y,mag=Math.hypot(dx,dy);
+        if(mag>2){skillAimVec={x:dx/mag,y:dy/mag,mag};ace319UpdateAimGuide(skillAimVec)}
+        return;
+      }
+      if(!(e.buttons||e.pressure>0))return;move(e)
+    },{passive:true});
+    const finish=e=>{
+      if(skillMode!=="RECEIVE"||skillReceivePhase!=="aim"||!skillAimStart||skillAimStart.id!==e.pointerId)return;
+      const dx=e.clientX-skillAimStart.x,dy=e.clientY-skillAimStart.y,mag=Math.hypot(dx,dy);
+      skillAimStart=null;
+      if(mag<28){
+        const cue=q("#ace319AimCue");if(cue)cue.textContent="SWIPE FARTHER TOWARDS THE SETTER";
+        vibrate(15);return;
+      }
+      ace319FinishReceiveAim({x:dx/mag,y:dy/mag,mag},false);
+    };
+    court.addEventListener("pointerup",finish,{passive:true});
+    court.addEventListener("pointercancel",e=>{if(skillAimStart?.id===e.pointerId)skillAimStart=null},{passive:true});
   }
   function rta102SkillPlayerMarkup(mode){
     return `<div class="rta102SkillPlayer ${String(mode||"").toLowerCase()}" id="rta102SkillPlayer" style="left:${skillPlayer.x*100}%;top:${skillPlayer.y*100}%">
@@ -43541,19 +43575,20 @@ function renderAttackKeyOverlay(){
     </div>`;
   }
   function rta102ReceiveScene(rep){
-    return `<div class="rta102SkillCourt receive ace318ReceiveCourt" id="rta102SkillCourt">
+    return `<div class="rta102SkillCourt receive ace318ReceiveCourt ace319ReceiveCourt" id="rta102SkillCourt">
       <div class="ace318ReceiveAtmosphere"></div>
       <div class="rta102CourtFloor"></div><div class="rta102SkillNet"><i></i></div>
       <div class="rta102Server"><i></i><span></span><b>SERVER</b></div>
-      <div class="ace318ReceiveStage"><span class="active">1 · READ</span><span>2 · MOVE</span><span>3 · PLATFORM</span></div>
-      <div class="ace318ReceiveSetterTarget"><i></i><span>SETTER WINDOW</span></div>
+      <div class="ace318ReceiveStage ace319ReceiveStage"><span class="active">1 · READ</span><span>2 · MOVE</span><span>3 · PLATFORM</span><span>4 · AIM</span></div>
+      <div class="ace318ReceiveSetterTarget ace319ReceiveSetterTarget" id="ace319SetterTarget"><i></i><span>SETTER</span></div>
+      <div class="ace319PassGuide" id="ace319PassGuide"><i class="desired" id="ace319DesiredLine"></i><i class="actual" id="ace319AimLine"></i><b id="ace319AimCue">PASS TO SETTER</b></div>
       <div class="rta102Landing" id="rta102Landing"></div>
       <div class="rta102Trail" id="rta102Trail"></div>
       <div class="rta102SkillBall" id="rta102SkillBall"></div>
       ${rta102SkillPlayerMarkup("receive")}
       <div class="ace318ReceiveRead" id="ace318ReceiveRead"><small>SERVER CONTACT</small><b>TRACK THE FLIGHT</b></div>
       <div class="rta102SkillPrompt" id="rta102SkillPrompt">READ THE SERVE</div>
-      ${rta102IsTouch()?`<div class="rta102TouchHint">DRAG TO MOVE</div>`:rta102KeyHUD()}
+      ${rta102IsTouch()?`<div class="rta102TouchHint ace319TouchHint">DRAG TO MOVE</div>`:rta102KeyHUD()}
     </div>`;
   }
   function rta102SettingScene(rep,target){
@@ -43578,18 +43613,27 @@ function renderAttackKeyOverlay(){
   function rta102PrepareSkillRep(mode,rep,target=""){
     skillMode=String(mode||"").toUpperCase();skillLocked=false;skillFlight=0;
     skillPlayer={x:.5,y:.80};skillKeys={w:false,a:false,s:false,d:false};
+    skillReceivePhase="flight";skillReceiveContact=null;skillAimKeys={w:false,a:false,s:false,d:false};skillAimStart=null;skillAimVec={x:0,y:0};
+    if(skillAimTimer)clearTimeout(skillAimTimer);skillAimTimer=0;
+    if(skillAimComboTimer)clearTimeout(skillAimComboTimer);skillAimComboTimer=0;
     const speed=Math.max(.65,Number(rep?.speed||1));
     const tune=window.ACE221_TUNE?window.ACE221_TUNE(skillMode):null;skillDuration=((skillMode==="RECEIVE"?2050:1900)/speed)*(tune?tune.windowScale:1);
     if(skillMode==="RECEIVE"){
       skillPassTarget={x:clamp(Number(rep?.target_x||.5),.13,.87),y:clamp(Number(rep?.target_y||.72),.46,.88)};
       skillStartBall={x:clamp(.50-Number(rep?.curve||0)*1.8,.30,.70),y:.08};
+      const n=Number(rep?.rep_no||S.training?.rep_no||1);
+      skillSetterTarget={x:clamp(.50+(((n+1)%3)-1)*.11,.36,.64),y:.50+(n%2)*.045};
     }else{
       const n=Number(rep?.rep_no||S.training?.rep_no||1),side=((n%3)-1)*.11;
       skillPassTarget={x:clamp(.50+side+(target==="OH"?-.035:target==="OP"?.035:0),.31,.69),y:.61+(n%2)*.055};
       skillStartBall={x:clamp(.38+(n%2)*.24,.25,.75),y:.09};
       skillSetCall=String(target||"QUICK");
     }
-    requestAnimationFrame(()=>{rta102MovePlayerTo(.5,.80);rta102SetupTouchScene();rta102StartSkillLoop()});
+    requestAnimationFrame(()=>{
+      rta102MovePlayerTo(.5,.80);
+      const st=q("#ace319SetterTarget");if(st){st.style.left=(skillSetterTarget.x*100)+"%";st.style.top=(skillSetterTarget.y*100)+"%"}
+      rta102SetupTouchScene();rta102StartSkillLoop();
+    });
   }
   function rta102StartSkillLoop(){
     if(skillRaf)cancelAnimationFrame(skillRaf);
@@ -43659,66 +43703,155 @@ function renderAttackKeyOverlay(){
     if(t<ideal-.1)return"EARLY";
     return"LATE";
   }
+  function ace319ReceiveContactQuality(t,posErr,ideal){
+    const timingScore=clamp(1-Math.abs(t-ideal)/.22,0,1);
+    const positionScore=clamp(1-posErr/.24,0,1);
+    return clamp(positionScore*.58+timingScore*.42,0,1);
+  }
+  function ace319SetReceiveStage(index){
+    qa(".ace318ReceiveStage span").forEach((el,i)=>el.classList.toggle("active",i===index));
+  }
+  function ace319DesiredAimVector(){
+    const court=q("#rta102SkillCourt"),r=court?.getBoundingClientRect();
+    const dx=(skillSetterTarget.x-skillPlayer.x)*(r?.width||1),dy=(skillSetterTarget.y-skillPlayer.y)*(r?.height||1),m=Math.hypot(dx,dy)||1;
+    return{x:dx/m,y:dy/m,mag:m};
+  }
+  function ace319DirectionLabel(v){
+    const h=v.x>.28?"RIGHT":v.x<-.28?"LEFT":"",vert=v.y<-.28?"UP":v.y>.28?"DOWN":"";
+    return [vert,h].filter(Boolean).join(" + ")||"SETTER";
+  }
+  function ace319PositionGuideLine(el,from,to){
+    const court=q("#rta102SkillCourt");if(!el||!court)return;
+    const r=court.getBoundingClientRect(),sx=from.x*r.width,sy=from.y*r.height,ex=to.x*r.width,ey=to.y*r.height,dx=ex-sx,dy=ey-sy;
+    el.style.left=sx+"px";el.style.top=sy+"px";el.style.width=Math.hypot(dx,dy)+"px";el.style.transform=`rotate(${Math.atan2(dy,dx)*180/Math.PI}deg)`;
+  }
+  function ace319UpdateAimGuide(vec=null){
+    const guide=q("#ace319PassGuide"),desired=q("#ace319DesiredLine"),actual=q("#ace319AimLine"),cue=q("#ace319AimCue");if(!guide)return;
+    guide.classList.toggle("show",skillReceivePhase==="aim");
+    if(skillReceivePhase!=="aim")return;
+    ace319PositionGuideLine(desired,skillPlayer,skillSetterTarget);
+    const need=ace319DesiredAimVector();
+    if(cue)cue.textContent=(rta102IsTouch()?"SWIPE ":"PRESS ")+ace319DirectionLabel(need)+(rta102IsTouch()?" TO SETTER":" · KEYS TOGETHER");
+    if(actual){
+      if(vec&&Math.hypot(Number(vec.x)||0,Number(vec.y)||0)>.01){
+        const court=q("#rta102SkillCourt"),r=court?.getBoundingClientRect(),len=Math.min(140,Math.max(55,Number(vec.mag||90)));
+        const to={x:clamp(skillPlayer.x+(Number(vec.x)||0)*len/(r?.width||1),0,1),y:clamp(skillPlayer.y+(Number(vec.y)||0)*len/(r?.height||1),0,1)};
+        ace319PositionGuideLine(actual,skillPlayer,to);actual.style.opacity="1";
+      }else actual.style.opacity="0";
+    }
+  }
+  function ace319AimQuality(vec){
+    const need=ace319DesiredAimVector(),m=Math.hypot(Number(vec?.x)||0,Number(vec?.y)||0);if(m<.01)return 0;
+    const vx=Number(vec.x)/m,vy=Number(vec.y)/m,dot=clamp(vx*need.x+vy*need.y,-1,1);
+    return clamp((dot-.20)/.80,0,1);
+  }
+  function ace319BeginReceiveAim(t,posErr,label,timing){
+    if(skillReceivePhase!=="flight"||skillLocked)return;
+    if(skillRaf)cancelAnimationFrame(skillRaf);skillRaf=0;
+    skillReceivePhase="aim";skillReceiveContact={t,posErr,label,timing,quality:ace319ReceiveContactQuality(t,posErr,.86)};
+    skillKeys={w:false,a:false,s:false,d:false};skillAimKeys={w:false,a:false,s:false,d:false};rta102SyncKeys();
+    ace319SetReceiveStage(3);
+    const prompt=q("#rta102SkillPrompt"),read=q("#ace318ReceiveRead"),action=q(".ace318ReceiveContact"),hint=q(".ace319TouchHint"),target=q("#ace319SetterTarget"),ball=q("#rta102SkillBall");
+    if(prompt){prompt.textContent=rta102IsTouch()?"SWIPE THE PASS":"AIM THE PASS";prompt.classList.remove("perfect")}
+    if(read){const b=read.querySelector("b"),sm=read.querySelector("small");if(sm)sm.textContent="SECOND PHASE";if(b)b.textContent="SEND IT TO THE SETTER"}
+    if(action){action.disabled=true;action.classList.add("aiming");action.innerHTML=`<span>↗</span><b>${rta102IsTouch()?"SWIPE TO SETTER":"USE DIRECTION KEYS"}</b><small>${rta102IsTouch()?"AIM THE PASS":"COMBINE KEYS FOR DIAGONALS"}</small>`}
+    if(hint)hint.textContent="SWIPE TO SETTER";target?.classList.add("hot");
+    if(ball){ball.style.transition="left 130ms ease,top 130ms ease,transform 130ms ease";ball.style.left=(skillPlayer.x*100)+"%";ball.style.top=((skillPlayer.y-.055)*100)+"%";ball.style.transform="translate(-50%,-50%) scale(.78)"}
+    ace319UpdateAimGuide();
+    if(skillAimTimer)clearTimeout(skillAimTimer);
+    skillAimTimer=setTimeout(()=>ace319FinishReceiveAim({x:0,y:0},true),3000);
+    vibrate(label==="PERFECT"?22:12);
+  }
+  async function ace319SubmitReceive(composite,aimQuality,timedOut=false){
+    if(S.busy||S.overlay!=="training"||!S.training?.rep)return;
+    const rep=S.training.rep;skillLocked=true;skillReceivePhase="submit";
+    if(skillAimTimer)clearTimeout(skillAimTimer);skillAimTimer=0;
+    if(skillAimComboTimer)clearTimeout(skillAimComboTimer);skillAimComboTimer=0;
+    const qTotal=clamp(Number(composite)||0,0,1),tx=clamp(Number(rep.target_x)||.5),ty=clamp(Number(rep.target_y)||.5),tol=Math.max(.04,Number(rep.tolerance)||.18);
+    const dist=tol*(1-qTotal);let px=tx+dist,py=ty;if(px>1)px=tx-dist;if(px<0){px=tx;py=ty+(ty+dist<=1?dist:-dist)}
+    px=clamp(px);py=clamp(py);const timingInput=clamp(.5+((1-qTotal)/2));
+    S.busy=true;
+    try{
+      const d=await rpc("vds_rta_submit_training_rep",{p_x:Number(px.toFixed(4)),p_y:Number(py.toFixed(4)),p_timing:Number(timingInput.toFixed(4))});
+      vibrate(qTotal>=.90?[25,35,25]:d.success?22:[18,28,18]);
+      await new Promise(r=>setTimeout(r,520));
+      if(d.done){S.training=d;showTrainingResult(d);await loadState({silent:true,world:false})}
+      else{
+        S.training=d;
+        const cq=Math.round(Number(skillReceiveContact?.quality||0)*100),aq=Math.round(Number(aimQuality||0)*100);
+        S.feedback={good:!!d.success,text:`${d.outcome} · CONTACT ${cq}% · PASS AIM ${aq}%`};
+        renderTrainingOverlay();
+      }
+    }catch(e){toast(errText(e),"error");skillLocked=false;renderDynamicReceiveTrainingOverlay()}finally{S.busy=false}
+  }
+  async function ace319FinishReceiveAim(vec,timedOut=false){
+    if(skillReceivePhase!=="aim"||skillLocked||S.busy)return;
+    if(skillAimTimer)clearTimeout(skillAimTimer);skillAimTimer=0;
+    const aimQuality=timedOut?0:ace319AimQuality(vec),contactQuality=clamp(Number(skillReceiveContact?.quality)||0,0,1),composite=clamp(contactQuality*.62+aimQuality*.38,0,1);
+    skillReceivePhase="result";skillLocked=true;
+    const prompt=q("#rta102SkillPrompt"),read=q("#ace318ReceiveRead"),guide=q("#ace319PassGuide"),ball=q("#rta102SkillBall"),target=q("#ace319SetterTarget");
+    guide?.classList.remove("show");target?.classList.remove("hot");
+    const title=timedOut?"NO PASS INPUT":composite>=.90?"PERFECT PASS":composite>=.76?"IN SYSTEM":composite>=.58?"PLAYABLE":"SHANK";
+    if(prompt){prompt.textContent=title;prompt.classList.toggle("perfect",composite>=.90)}
+    if(read){const b=read.querySelector("b"),sm=read.querySelector("small");if(sm)sm.textContent="PASS RESULT";if(b)b.textContent=`${Math.round(composite*100)}% · AIM ${Math.round(aimQuality*100)}%`}
+    if(ball){
+      const court=q("#rta102SkillCourt"),r=court?.getBoundingClientRect(),m=Math.hypot(Number(vec?.x)||0,Number(vec?.y)||0)||1,vx=(Number(vec?.x)||0)/m,vy=(Number(vec?.y)||0)/m;
+      const dx=(skillSetterTarget.x-skillPlayer.x)*(r?.width||1),dy=(skillSetterTarget.y-skillPlayer.y)*(r?.height||1),travel=Math.hypot(dx,dy);
+      const ex=timedOut?skillPlayer.x:clamp(skillPlayer.x+vx*travel/(r?.width||1),.06,.94),ey=timedOut?skillPlayer.y-.08:clamp(skillPlayer.y+vy*travel/(r?.height||1),.08,.92);
+      const end=aimQuality>=.90?skillSetterTarget:{x:ex,y:ey};
+      ball.style.transition="left 480ms cubic-bezier(.15,.78,.25,1),top 480ms ease,transform 480ms linear";
+      requestAnimationFrame(()=>{ball.style.left=(end.x*100)+"%";ball.style.top=(end.y*100)+"%";ball.style.transform="translate(-50%,-50%) scale(.56) rotate(300deg)"});
+    }
+    await ace319SubmitReceive(composite,aimQuality,timedOut);
+  }
   async function rta102SkillContact(timedOut=false){
     if(S.busy||S.overlay!=="training"||!S.training?.rep||skillLocked||!skillMode)return;
-    skillLocked=true;if(skillRaf)cancelAnimationFrame(skillRaf);skillRaf=0;
     const rep=S.training.rep,mode=skillMode,t=timedOut?1:skillFlight,ideal=mode==="RECEIVE"?.86:.83;
     const posErr=Math.hypot(skillPlayer.x-skillPassTarget.x,skillPlayer.y-skillPassTarget.y);
     const timing=timedOut?1:clamp(.5+(t-ideal)*2.25,0,1);
-    let px,py;
-    if(mode==="RECEIVE"){
-      px=skillPlayer.x;py=skillPlayer.y;
-    }else{
-      const dx=(skillPlayer.x-skillPassTarget.x)*.72,dy=(skillPlayer.y-skillPassTarget.y)*.55;
-      px=clamp(Number(rep.target_x||.5)+dx,0,1);py=clamp(Number(rep.target_y||.25)+dy,0,1);
-    }
-    const prompt=q("#rta102SkillPrompt"),court=q("#rta102SkillCourt"),player=q("#rta102SkillPlayer");
     const label=timedOut?"MISSED":rta102ContactQualityLabel(t,posErr,ideal);
-    if(prompt){prompt.textContent=label;prompt.classList.toggle("perfect",label==="PERFECT")}
-    court?.classList.add("contact");player?.classList.add("contact");
-    if(mode==="RECEIVE"){
-      const ball=q("#rta102SkillBall"),read=q("#ace318ReceiveRead");
-      if(read){const b=read.querySelector("b"),sm=read.querySelector("small");if(sm)sm.textContent="PLATFORM CONTACT";if(b)b.textContent=label==="PERFECT"?"PERFECT PASS":label;}
-      if(ball){
-        ball.style.transition="left 340ms cubic-bezier(.15,.75,.25,1),top 340ms ease,transform 340ms ease";
-        requestAnimationFrame(()=>{ball.style.left="54%";ball.style.top="54%";ball.style.transform="translate(-50%,-50%) scale(.58) rotate(260deg)"});
-      }
-    }else if(mode==="SETTING"){
-      const ball=q("#rta102SkillBall");
-      const dest={OH:[19,28],QUICK:[50,24],OP:[81,28],PIPE:[50,44]}[skillSetCall]||[50,25];
-      if(ball){
-        ball.style.transition="left 360ms cubic-bezier(.15,.75,.25,1),top 360ms ease,transform 360ms ease";
-        requestAnimationFrame(()=>{ball.style.left=dest[0]+"%";ball.style.top=dest[1]+"%";ball.style.transform="translate(-50%,-50%) scale(.54)"});
-      }
+    if(mode==="RECEIVE"&&!timedOut&&skillReceivePhase==="flight"){
+      ace319BeginReceiveAim(t,posErr,label,timing);return;
     }
+    if(mode==="RECEIVE"){
+      if(skillReceivePhase==="aim")return;
+      if(skillRaf)cancelAnimationFrame(skillRaf);skillRaf=0;
+      const prompt=q("#rta102SkillPrompt"),court=q("#rta102SkillCourt"),player=q("#rta102SkillPlayer"),read=q("#ace318ReceiveRead");
+      if(prompt){prompt.textContent=label;prompt.classList.remove("perfect")}court?.classList.add("contact");player?.classList.add("contact");
+      if(read){const b=read.querySelector("b"),sm=read.querySelector("small");if(sm)sm.textContent="PLATFORM CONTACT";if(b)b.textContent=label}
+      skillReceiveContact={t,posErr,label,timing,quality:0};
+      await ace319SubmitReceive(0,0,true);return;
+    }
+    skillLocked=true;if(skillRaf)cancelAnimationFrame(skillRaf);skillRaf=0;
+    let px,py;
+    const dx=(skillPlayer.x-skillPassTarget.x)*.72,dy=(skillPlayer.y-skillPassTarget.y)*.55;
+    px=clamp(Number(rep.target_x||.5)+dx,0,1);py=clamp(Number(rep.target_y||.25)+dy,0,1);
+    const prompt=q("#rta102SkillPrompt"),court=q("#rta102SkillCourt"),player=q("#rta102SkillPlayer");
+    if(prompt){prompt.textContent=label;prompt.classList.toggle("perfect",label==="PERFECT")}court?.classList.add("contact");player?.classList.add("contact");
+    const ball=q("#rta102SkillBall"),dest={OH:[19,28],QUICK:[50,24],OP:[81,28],PIPE:[50,44]}[skillSetCall]||[50,25];
+    if(ball){ball.style.transition="left 360ms cubic-bezier(.15,.75,.25,1),top 360ms ease,transform 360ms ease";requestAnimationFrame(()=>{ball.style.left=dest[0]+"%";ball.style.top=dest[1]+"%";ball.style.transform="translate(-50%,-50%) scale(.54)"})}
     S.busy=true;
     try{
       const d=await rpc("vds_rta_submit_training_rep",{p_x:Number(px.toFixed(4)),p_y:Number(py.toFixed(4)),p_timing:Number(timing.toFixed(4))});
       vibrate(label==="PERFECT"?[25,35,25]:d.success?22:[18,28,18]);
-      await new Promise(r=>setTimeout(r,mode==="SETTING"?380:220));
+      await new Promise(r=>setTimeout(r,380));
       if(d.done){S.training=d;showTrainingResult(d);await loadState({silent:true,world:false})}
-      else{
-        S.training=d;S.feedback={good:!!d.success,text:`${d.outcome} · ${Math.round(Number(d.quality||0)*100)}%`};
-        renderTrainingOverlay();
-      }
-    }catch(e){
-      toast(errText(e),"error");skillLocked=false;
-      if(mode==="RECEIVE")renderDynamicReceiveTrainingOverlay();else renderSettingTrainingOverlay();
-    }finally{S.busy=false}
+      else{S.training=d;S.feedback={good:!!d.success,text:`${d.outcome} · ${Math.round(Number(d.quality||0)*100)}%`};renderTrainingOverlay()}
+    }catch(e){toast(errText(e),"error");skillLocked=false;renderSettingTrainingOverlay()}finally{S.busy=false}
   }
   function renderDynamicReceiveTrainingOverlay(){
     const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}
     cleanupRaf();
-    setOverlay(`<div class="rta62OverlayShell rta102SkillShell ace318Receive2Shell">${overlayTop(`RECEIVE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,"READ · MOVE · PLATFORM")}
-      <div class="rta102SkillLayout ace318Receive2Layout">
-        <div class="rta102SceneCol ace318Receive2SceneCol">${rta102ReceiveScene(rep)}</div>
-        <aside class="rta102SkillSide ace318Receive2Side">
-          <div class="ace318ReceiveIntro"><small>FIRST CONTACT · ${esc(rep.ball_type||"SERVE")}</small><h2>Own the pass.</h2><p>${esc(rep.cue||"Read the server, beat the ball with your feet, then create a quiet platform to the setter.")}</p></div>
-          <div class="ace318ReceiveSteps"><div><small>1 · READ</small><b>TRACK THE SERVE</b></div><div><small>2 · MOVE</small><b>BEAT THE BALL</b></div><div><small>3 · PLATFORM</small><b>CONTACT IN WINDOW</b></div></div>
-          <div class="rta102ControlLine ace318ReceiveControls"><b>${rta102IsTouch()?"DRAG":"WASD"}</b><span>MOVE</span><i>+</i><b>${rta102IsTouch()?"TAP":"SPACE"}</b><span>CONTACT</span></div>
-          <button type="button" class="rta102ContactBtn ace318ReceiveContact" data-rta102-contact><span>👐</span><b>PLATFORM CONTACT</b><small>PASS TO SETTER</small></button>
+    setOverlay(`<div class="rta62OverlayShell rta102SkillShell ace318Receive2Shell ace319Receive2Shell">${overlayTop(`RECEIVE · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,"READ · MOVE · PLATFORM · AIM")}
+      <div class="rta102SkillLayout ace318Receive2Layout ace319Receive2Layout">
+        <div class="rta102SceneCol ace318Receive2SceneCol ace319Receive2SceneCol">${rta102ReceiveScene(rep)}</div>
+        <aside class="rta102SkillSide ace318Receive2Side ace319Receive2Side">
+          <div class="ace318ReceiveIntro"><small>FIRST CONTACT · ${esc(rep.ball_type||"SERVE")}</small><h2>Own the pass.</h2><p>${esc(rep.cue||"Read the serve, move behind it, platform the ball, then aim the pass into the setter window.")}</p></div>
+          <div class="ace318ReceiveSteps ace319ReceiveSteps"><div><small>1 · READ</small><b>TRACK THE SERVE</b></div><div><small>2 · MOVE</small><b>BEAT THE BALL</b></div><div><small>3 · PLATFORM</small><b>CONTACT</b></div><div><small>4 · AIM</small><b>${rta102IsTouch()?"SWIPE TO SETTER":"DIRECTION KEYS"}</b></div></div>
+          <div class="rta102ControlLine ace318ReceiveControls"><b>${rta102IsTouch()?"DRAG":"WASD"}</b><span>MOVE</span><i>→</i><b>${rta102IsTouch()?"TAP":"SPACE"}</b><span>CONTACT</span><i>→</i><b>${rta102IsTouch()?"SWIPE":"WASD / ARROWS"}</b><span>AIM</span></div>
+          <button type="button" class="rta102ContactBtn ace318ReceiveContact" data-rta102-contact><span>👐</span><b>PLATFORM CONTACT</b><small>THEN AIM THE PASS</small></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_reps||8)},(_,i)=>`<i class="${i<Number(d.rep_no)-1?"done":""}"></i>`).join("")}</div>
-          <div class="rta102RepFeedback ${S.feedback?(S.feedback.good?"good":"bad"):""}">${esc(S.feedback?.text||"Read first. Move into the line of the ball. Contact when the platform window lights up.")}</div>
+          <div class="rta102RepFeedback ${S.feedback?(S.feedback.good?"good":"bad"):""}">${esc(S.feedback?.text||"Read → move → platform contact → aim the pass to the setter.")}</div>
         </aside>
       </div></div>`,"training");
     rta102PrepareSkillRep("RECEIVE",rep);
@@ -45604,15 +45737,32 @@ function renderAttackKeyOverlay(){
     const k=map[raw]||raw;
     if(["w","a","s","d"," "].includes(k)||e.code==="Space")e.preventDefault();
     if(e.code==="Space"||k===" "){
+      if(skillMode==="RECEIVE"&&skillReceivePhase==="aim")return;
       if(!e.repeat)rta102SkillContact(false);
       return;
     }
-    if(["w","a","s","d"].includes(k)){skillKeys[k]=true;rta102SyncKeys()}
+    if(["w","a","s","d"].includes(k)){
+      if(skillMode==="RECEIVE"&&skillReceivePhase==="aim"){
+        skillAimKeys[k]=true;
+        const vx=(skillAimKeys.d?1:0)-(skillAimKeys.a?1:0),vy=(skillAimKeys.s?1:0)-(skillAimKeys.w?1:0),m=Math.hypot(vx,vy);
+        if(m){skillAimVec={x:vx/m,y:vy/m,mag:90};ace319UpdateAimGuide(skillAimVec)}
+        if(skillAimComboTimer)clearTimeout(skillAimComboTimer);
+        skillAimComboTimer=setTimeout(()=>{
+          const x=(skillAimKeys.d?1:0)-(skillAimKeys.a?1:0),y=(skillAimKeys.s?1:0)-(skillAimKeys.w?1:0),mm=Math.hypot(x,y);
+          if(mm&&skillReceivePhase==="aim")ace319FinishReceiveAim({x:x/mm,y:y/mm,mag:90},false);
+        },260);
+        return;
+      }
+      skillKeys[k]=true;rta102SyncKeys();
+    }
   },{passive:false});
   document.addEventListener("keyup",e=>{
     if(!skillMode)return;
     const raw=String(e.key||"").toLowerCase(),map={arrowup:"w",arrowleft:"a",arrowdown:"s",arrowright:"d"},k=map[raw]||raw;
-    if(["w","a","s","d"].includes(k)){skillKeys[k]=false;rta102SyncKeys()}
+    if(["w","a","s","d"].includes(k)){
+      if(skillMode==="RECEIVE"&&skillReceivePhase==="aim"){skillAimKeys[k]=false;return}
+      skillKeys[k]=false;rta102SyncKeys();
+    }
   });
 
   const page=q("#roadtoace");
@@ -51870,7 +52020,40 @@ window.ACE_PROJECT_BUILD="B21.36.316N";
  .ace318ReceiveRead small{font-size:4.6px}.ace318ReceiveRead b{font-size:6.8px}
  .ace318ReceiveSetterTarget{width:46px;height:46px}
 }
+
+/* B21.36.319 — Serve Receive pass-aim phase + in-court mobile controls */
+.ace319ReceiveSteps{grid-template-columns:repeat(4,1fr)!important}
+.ace319ReceiveStage span{padding-left:7px!important;padding-right:7px!important}
+.ace319ReceiveSetterTarget{transition:left .25s ease,top .25s ease,transform .18s ease,box-shadow .18s ease}
+.ace319ReceiveSetterTarget.hot{transform:translate(-50%,-50%) scale(1.13);border-color:rgba(138,221,255,.78)!important;box-shadow:0 0 0 8px rgba(75,181,240,.05),0 0 34px rgba(89,190,246,.26)!important}
+.ace319PassGuide{position:absolute;inset:0;z-index:45;pointer-events:none;opacity:0;transition:opacity .15s ease}
+.ace319PassGuide.show{opacity:1}
+.ace319PassGuide i{position:absolute;height:3px;transform-origin:0 50%;border-radius:999px;pointer-events:none}
+.ace319PassGuide i.desired{height:2px;background:repeating-linear-gradient(90deg,rgba(197,169,255,.72) 0 8px,transparent 8px 14px);filter:drop-shadow(0 0 5px rgba(160,118,244,.30))}
+.ace319PassGuide i.actual{background:linear-gradient(90deg,#6fd0ff,#8ef0b8);box-shadow:0 0 13px rgba(103,210,255,.35);opacity:0}
+.ace319PassGuide i.actual::after,.ace319PassGuide i.desired::after{content:"";position:absolute;right:-2px;top:50%;width:9px;height:9px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:translateY(-50%) rotate(45deg);color:#8fdcff}
+.ace319PassGuide i.desired::after{color:#c5a9ff}
+.ace319PassGuide b{position:absolute;left:50%;bottom:13%;transform:translateX(-50%);min-width:170px;padding:8px 12px;border:1px solid rgba(115,190,245,.24);border-radius:10px;background:rgba(4,10,20,.86);color:#dcefff;text-align:center;font-size:7px;font-weight:1000;letter-spacing:.08em;box-shadow:0 10px 25px rgba(0,0,0,.25)}
+.ace318ReceiveContact.aiming{border-color:rgba(112,205,255,.45)!important;background:radial-gradient(circle at 38% 27%,#173653,#0a1728 69%)!important}
+@media(max-width:760px){
+ #rta62Overlay[data-kind="training"] .ace319Receive2Layout{position:relative!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2SceneCol{flex:1 1 100%!important;height:100%!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side{position:absolute!important;inset:0!important;z-index:80!important;max-height:none!important;overflow:visible!important;padding:0!important;border:0!important;background:transparent!important;pointer-events:none!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .ace318ReceiveIntro,#rta62Overlay[data-kind="training"] .ace319Receive2Side .ace319ReceiveSteps,#rta62Overlay[data-kind="training"] .ace319Receive2Side .ace318ReceiveControls{display:none!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .ace318ReceiveContact{pointer-events:auto!important;position:absolute!important;right:9px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:82px!important;height:82px!important;min-height:82px!important;margin:0!important;z-index:88!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .ace318ReceiveContact>span{font-size:22px!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .ace318ReceiveContact>b{font-size:5.2px!important;max-width:70px}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .ace318ReceiveContact>small{display:none!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .rta62Progress{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(49px + env(safe-area-inset-bottom))!important;height:5px!important;margin:0!important;pointer-events:none!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .rta102RepFeedback{position:absolute!important;left:10px!important;right:101px!important;bottom:calc(9px + env(safe-area-inset-bottom))!important;min-height:32px!important;max-height:36px!important;margin:0!important;padding:6px 7px!important;background:rgba(4,10,18,.84)!important;backdrop-filter:blur(8px);pointer-events:none!important}
+ .ace319PassGuide b{bottom:20%;font-size:6px;min-width:156px;padding:7px 9px}
+ .ace319ReceiveStage{top:2.2%!important;gap:3px!important}
+ .ace319ReceiveStage span{padding:4px 5px!important;font-size:4.9px!important}
+ .ace319ReceiveSetterTarget{width:52px!important;height:52px!important}
+ .ace319TouchHint{bottom:84px!important}
+ #rta62Overlay[data-kind="training"] .ace319Receive2Side .ace318ReceiveContact.aiming{opacity:.78!important}
+}
 </style>
-<script id="ace318-build-marker">window.ACE_RECEIVE_2_BUILD="B21.36.318";window.ACE_ACCOUNT_MODAL_MOBILE_FIX="B21.36.318";window.ACE_PROJECT_BUILD="B21.36.318";</script>
+<script id="ace318-build-marker">window.ACE_RECEIVE_2_BUILD="B21.36.319";window.ACE_ACCOUNT_MODAL_MOBILE_FIX="B21.36.318";window.ACE_PROJECT_BUILD="B21.36.319";</script>
 </body>
 </html>
