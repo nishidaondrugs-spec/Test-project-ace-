@@ -38874,7 +38874,15 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       S.view="home";S.homePanel="week";
       await loadState({silent:false});
       toast(`Career Save ${slot} loaded.`);
-    }catch(e){toast(errText(e),"error")}finally{S.busy=false}
+    }catch(e){
+      const switchBtn=q(`[data-rta76-switch-save="${slot}"]`);
+      if(switchBtn){
+        switchBtn.disabled=false;
+        const info=careerSaveSlots().find(x=>Number(x.slot)===slot);
+        switchBtn.textContent=info?.occupied?"LOAD SAVE →":"USE THIS SLOT →";
+      }
+      toast(errText(e),"error");
+    }finally{S.busy=false}
   }
   async function deleteCareerSave(slot){
     slot=Number(slot);
@@ -51755,6 +51763,11 @@ repeating-linear-gradient(135deg,rgba(255,255,255,.012) 0 1px,transparent 1px 12
 window.ACE_SKILL_TREE_RPG_BUILD="B21.36.316M";
 window.ACE_PLAYER_ATTRIBUTES_FOLD="B21.36.316M";
 window.ACE_PROJECT_BUILD="B21.36.316M";
+</script>
+
+<script id="ace316n-save-switch-recovery-build">
+window.ACE_SAVE_SWITCH_COMPAT_BUILD="B21.36.316N";
+window.ACE_PROJECT_BUILD="B21.36.316N";
 </script>
 
 </body>
