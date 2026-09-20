@@ -40053,14 +40053,85 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return {months,current,monthIndex,major,events,complete,selection:sel,teaser};
   }
   function aceV74HomeCalendar(c){
-    const m=aceV74CalendarModel(c),expanded=!!window.ACE_V74_CALENDAR_OPEN;
-    const seasonMonths=m.months.map((x,i)=>`<span class="${i===m.monthIndex?"now":i<m.monthIndex?"past":""}">${x}</span>`).join("");
-    const dots=m.events.map((e,i)=>`<div class="aceV74Event ${e.state} ${e.intl?"intl":""}"><i>${e.state==="done"?"✓":e.intl?"◆":"•"}</i><span>${e.label}</span>${i===1&&!m.complete?"<em>TODAY</em>":""}</div>`).join("");
-    return `<section class="aceV74Calendar ${expanded?"open":""}">
-      <button type="button" class="aceV74Next" onclick="return window.ACE_V74_TOGGLE_CALENDAR(event)"><div><small>${esc(m.major.tag)} · SEASON ${Number(c.season||1)}</small><b>${esc(m.major.title)}</b><span>${esc(m.major.meta)}</span></div><em>${expanded?"−":"+"}</em></button>
-      <div class="aceV74Five">${dots}</div>
-      <div class="aceV74Teaser"><span>◆</span><div><small>INTERNATIONAL WINDOW</small><b>${esc(m.teaser)}</b></div></div>
-      ${expanded?`<div class="aceV74Expanded"><div class="aceV74Months">${seasonMonths}</div><div class="aceV74SeasonBands"><span class="club">CLUB SEASON · OCT—MAY</span><span class="intl">INTERNATIONAL · JUN—SEP</span></div>${aceV76SelectionReport(c)}<p>The international world continues whether you make the squad or not. Selected players enter camp and VNL; reserves can receive emergency call-ups; unselected players move into recovery, development and pre-season.</p></div>`:""}
+    const k=(S.league?.calendar||c?.calendar_state||{});
+    const cfg=k.config||{};
+    const expanded=!!window.ACE_V74_CALENDAR_OPEN;
+    const leagueName=String(S.league?.league_name||c?.league_code||'CURRENT LEAGUE');
+    const identity=String(k.calendar_identity||'League-specific career year');
+    const mode=String(k.mode||'LEGACY').toUpperCase();
+    const reg=Number(k.regular_resolved??Math.min(14,Number(c?.season_match||0)));
+    const total=Number(k.regular_matches||14);
+    const feat=Number(k.featured_played??Math.min(14,Number(c?.season_match||0)));
+    const featTotal=Number(k.featured_regular_matches||14);
+    const start=Number(k.season_start_month||cfg.season_start_month||10);
+    const regEnd=Number(k.regular_end_month||cfg.regular_end_month||4);
+    const end=Number(k.season_end_month||cfg.season_end_month||5);
+    const cup=String(k.cup_name||cfg.cup_name||'').trim();
+    const postKind=String(k.postseason_kind||cfg.postseason_kind||'NONE').toUpperCase();
+    const goal=String(k.postseason_goal||cfg.postseason_goal||'TITLE').toUpperCase();
+    const phase=String(k.phase||'REGULAR').toUpperCase();
+    const transfer=(S.office?.transfer_window||k.transfer_window||{});
+    const oly=Number(c?.season||0)>0&&Number(c.season)%4===0;
+    const intl=c?.international_window||{};
+    const intlSame=Number(intl.season||0)===Number(c?.season||0);
+    const intlStage=intlSame?String(intl.stage||'').toUpperCase():'';
+    const MON=['','JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const mon=n=>MON[Math.max(1,Math.min(12,Number(n)||1))];
+    const prev=n=>Number(n)===1?12:Number(n)-1;
+    const range=(a,b)=>`${mon(a)}${Number(a)===Number(b)?'':`–${mon(b)}`}`;
+    const postLabel=postKind==='NONE'?'TABLE FINISH':goal==='PROMOTION'?'PROMOTION STAGE':postKind==='TURKEY_SPLIT'?'CHAMPIONSHIP / PLACEMENT':postKind.replaceAll('_',' ');
+    const inPre=String(c?.preseason_state?.status||'').toUpperCase()==='ARRIVAL'||phase==='PRESEASON';
+    const current=inPre?'PRE-SEASON · ARRIVAL'
+      :c?.season_complete
+        ?(intlStage&&intlStage!=='COMPLETE'?`${oly?'OLYMPIC GAMES':'INTERNATIONAL DUTY'} · ${intlStage}`:(intlStage==='COMPLETE'?'TRANSFER WINDOW':'CLUB SEASON COMPLETE'))
+        :String(k.event_label||k.current_event||phase||'REGULAR SEASON').replaceAll('_',' ');
+    const stateFor=id=>{
+      if(id==='PRE')return (reg>0||String(c?.preseason_state?.status||'').toUpperCase()==='COMPLETE')?'done':inPre?'now':'';
+      if(id==='REG')return phase==='REGULAR'&&!inPre?'now':['CUP','POSTSEASON','COMPLETE'].includes(phase)?'done':'';
+      if(id==='CUP')return phase==='CUP'?'now':(k.cup_won===true||k.cup_alive===false)?'done':'';
+      if(id==='POST')return phase==='POSTSEASON'?'now':phase==='COMPLETE'?'done':'';
+      if(id==='INTL')return c?.season_complete&&intlStage&&intlStage!=='COMPLETE'?'now':intlStage==='COMPLETE'?'done':'';
+      if(id==='MOVE')return transfer?.can_move?'now':'';
+      return '';
+    };
+    const phases=[
+      {id:'PRE',m:mon(prev(start)),t:'PRE-SEASON',d:'Squad role · preparation'},
+      {id:'REG',m:range(start,regEnd),t:'REGULAR SEASON',d:mode==='ENGINE'?`${reg}/${total} fixtures · ${feat}/${featTotal} featured`:`${Math.min(14,Number(c?.season_match||0))}/14 protected legacy matches`},
+      ...(cup?[{id:'CUP',m:'PARALLEL',t:cup,d:k.cup_won?'Cup won':k.cup_alive===false?'Cup run complete':'Cup rounds inside this league year'}]:[]),
+      {id:'POST',m:range(regEnd,end),t:postLabel,d:postKind==='NONE'?'Final table decides the season':String(k.event_label||'Qualification decides your route')},
+      {id:'INTL',m:'AFTER CLUB',t:oly?'OLYMPIC / NATIONAL TEAM':'INTERNATIONAL',d:oly?'Olympics / national duty':'National-team window'},
+      {id:'MOVE',m:'REGISTRATION',t:String(transfer?.label||'TRANSFER WINDOW'),d:String(transfer?.reason||'Move availability follows league registration rules')}
+    ];
+    const body=expanded?`
+      <div class="ace357VisibleCalendarBody">
+        <div class="ace357VisibleIdentity">
+          <div><small>THIS LEAGUE'S SEASON MODEL</small><b>${esc(identity)}</b></div>
+          <span>${esc(String(c?.league_code||leagueName))}</span>
+        </div>
+        <div class="ace357VisiblePhases">
+          ${phases.map(p=>`<article class="${stateFor(p.id)} ${p.id==='CUP'?'cup':''} ${p.id==='INTL'?'intl':''}">
+            <small>${esc(p.m)}</small><b>${esc(p.t)}</b><span>${esc(p.d)}</span>
+          </article>`).join('')}
+        </div>
+        <div class="ace357VisibleFacts">
+          <div><small>LEAGUE FIXTURES</small><b>${reg} / ${total}</b></div>
+          <div><small>FEATURED</small><b>${feat} / ${featTotal}</b></div>
+          <div><small>CURRENT</small><b>${esc(current)}</b></div>
+          <div><small>TRANSFER STATUS</small><b>${esc(transfer?.can_move?'OPEN':String(transfer?.state||'LOCKED').replaceAll('_',' '))}</b></div>
+        </div>
+        ${mode==='LEGACY'?`<div class="ace357VisibleMigration">SAVE-SAFE · Finish this already-started 14-match season normally. From the next season, ${esc(leagueName)} follows its league-specific calendar.</div>`:''}
+      </div>`:'';
+    return `<section class="aceV74Calendar ace357VisibleLeagueCalendar ${expanded?'open':''}">
+      <button type="button" class="aceV74Next ace357VisibleCalendarToggle" onclick="return window.ACE_V74_TOGGLE_CALENDAR(event)" aria-expanded="${expanded?'true':'false'}">
+        <span class="ace357VisibleCalendarIcon">▦</span>
+        <div>
+          <small>CAREER CALENDAR · ${esc(leagueName)}</small>
+          <b>${esc(current)}</b>
+          <span>Season ${Number(c?.season||1)} · ${reg}/${total} league fixtures · ${esc(identity)}</span>
+        </div>
+        <em>${expanded?'−':'⌄'}</em>
+      </button>
+      ${body}
     </section>`;
   }
   window.ACE_V74_TOGGLE_CALENDAR=function(ev){try{ev?.preventDefault?.();ev?.stopPropagation?.()}catch(_){}window.ACE_V74_CALENDAR_OPEN=!window.ACE_V74_CALENDAR_OPEN;try{window.__ACE_RTA_RENDER?.()}catch(_){}return false;};
@@ -54583,396 +54654,101 @@ window.ACE_PROJECT_BUILD='B21.36.354';
 <script id="ace354-build-marker">window.ACE_PROJECT_BUILD='B21.36.354';window.ACE_OLYMPIC_CYCLE_BUILD='B21.36.354';</script>
 
 
-<!-- PROJECT ACE B21.36.357 · CAREER CALENDAR DROPDOWN -->
-<style id="ace357-calendar-dropdown-style">
-#roadtoace .ace356Calendar.ace357CalendarDropdown{
-  margin:0 0 12px!important;
-  padding:0!important;
+<style id="ace358-visible-league-calendar-style">
+/* B21.36.358 — actual visible Career calendar dropdown */
+#roadtoace .ace357VisibleLeagueCalendar{
+  margin:10px 0 12px!important;padding:0!important;
+  border:1px solid rgba(92,160,205,.12)!important;border-radius:14px!important;
+  background:linear-gradient(180deg,rgba(7,20,32,.94),rgba(4,13,22,.96))!important;
   overflow:hidden!important;
-  border:1px solid rgba(94,160,204,.13)!important;
-  border-radius:14px!important;
-  background:linear-gradient(180deg,rgba(8,23,35,.96),rgba(5,15,24,.97))!important;
-  box-shadow:0 12px 28px rgba(0,0,0,.14)!important;
 }
-#roadtoace .ace357CalendarToggle{
-  appearance:none;
-  -webkit-appearance:none;
-  width:100%;
-  min-height:58px;
-  display:grid;
-  grid-template-columns:32px minmax(0,1fr) auto 18px;
-  gap:9px;
-  align-items:center;
-  padding:10px 12px;
-  border:0;
-  border-radius:0;
-  background:
-    radial-gradient(circle at 84% 12%,rgba(67,157,211,.09),transparent 35%),
-    transparent;
-  color:#edf8fd;
-  text-align:left;
-  cursor:pointer;
+#roadtoace .ace357VisibleCalendarToggle{
+  width:100%;min-height:58px!important;padding:9px 11px!important;
+  display:grid!important;grid-template-columns:30px minmax(0,1fr) 20px!important;
+  align-items:center!important;gap:9px!important;border:0!important;background:transparent!important;
 }
-#roadtoace .ace357CalendarToggle:active{background-color:rgba(63,145,196,.055)}
-#roadtoace .ace357CalendarIcon{
-  width:30px;height:30px;border-radius:9px;
-  display:grid;place-items:center;
-  border:1px solid rgba(91,169,218,.16);
-  background:rgba(48,119,163,.10);
-  color:#8bc8e7;font-size:15px;
+#roadtoace .ace357VisibleCalendarIcon{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  color:#82c3e5;background:rgba(53,130,178,.10);border:1px solid rgba(92,171,220,.15);
+  font-size:14px
 }
-#roadtoace .ace357CalendarCopy{min-width:0}
-#roadtoace .ace357CalendarCopy small{
-  display:block;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:#658da4;font-size:5.8px;font-weight:1000;letter-spacing:.12em;
+#roadtoace .ace357VisibleCalendarToggle small{
+  color:#658ba1!important;font-size:6px!important;font-weight:1000!important;letter-spacing:.11em!important
 }
-#roadtoace .ace357CalendarCopy b{
-  display:block;
-  margin-top:2px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:#e9f6fc;font-size:9.5px;line-height:1.2;
+#roadtoace .ace357VisibleCalendarToggle b{
+  margin-top:3px!important;color:#ecf7fc!important;font-size:12px!important;line-height:1.15!important
 }
-#roadtoace .ace357CalendarCopy span{
-  display:block;
-  margin-top:2px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:#6c8290;font-size:6.3px;line-height:1.2;
+#roadtoace .ace357VisibleCalendarToggle span:not(.ace357VisibleCalendarIcon){
+  margin-top:3px!important;color:#657986!important;font-size:6.5px!important;line-height:1.25!important
 }
-#roadtoace .ace357CalendarStatus{
-  max-width:115px;
-  padding:5px 7px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  border:1px solid rgba(92,177,224,.13);
-  border-radius:999px;
-  background:rgba(36,100,139,.08);
-  color:#8fc5e0;
-  font-size:5.5px;font-weight:1000;letter-spacing:.06em;
+#roadtoace .ace357VisibleCalendarToggle>em{
+  padding:0!important;color:#7896a7!important;font-size:16px!important
 }
-#roadtoace .ace357CalendarChevron{
-  color:#7e9aaa;font-size:12px;font-weight:1000;
-  transition:transform .18s ease;
+#roadtoace .ace357VisibleCalendarBody{padding:0 11px 11px;border-top:1px solid rgba(255,255,255,.045)}
+#roadtoace .ace357VisibleIdentity{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 1px 7px
 }
-#roadtoace .ace357CalendarToggle[aria-expanded="true"] .ace357CalendarChevron{transform:rotate(180deg)}
-#roadtoace .ace357CalendarBody{
-  padding:0 12px 12px;
-  border-top:1px solid rgba(255,255,255,.045);
+#roadtoace .ace357VisibleIdentity small{display:block;color:#587384;font-size:5.5px;font-weight:1000;letter-spacing:.10em}
+#roadtoace .ace357VisibleIdentity b{display:block;margin-top:2px;color:#b9ced9;font-size:7.5px}
+#roadtoace .ace357VisibleIdentity>span{
+  max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#7892a0;font-size:5.5px;font-weight:900;padding:4px 6px;border:1px solid rgba(255,255,255,.055);border-radius:999px
 }
-#roadtoace .ace357CalendarBody[hidden]{display:none!important}
-#roadtoace .ace357IdentityRow{
-  display:flex;justify-content:space-between;gap:8px;align-items:flex-start;
-  padding:10px 1px 8px;
+#roadtoace .ace357VisiblePhases{
+  display:flex;gap:5px;overflow-x:auto;padding:1px 0 4px;scrollbar-width:none
 }
-#roadtoace .ace357IdentityRow div{min-width:0}
-#roadtoace .ace357IdentityRow small{
-  display:block;color:#5d7989;font-size:5.5px;font-weight:1000;letter-spacing:.09em
+#roadtoace .ace357VisiblePhases::-webkit-scrollbar{display:none}
+#roadtoace .ace357VisiblePhases article{
+  flex:1 0 104px;min-height:62px;padding:8px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.045);background:#07131d
 }
-#roadtoace .ace357IdentityRow b{
-  display:block;margin-top:3px;color:#cfe6f2;font-size:8px;line-height:1.25
+#roadtoace .ace357VisiblePhases article small{display:block;color:#506b7b;font-size:5px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace357VisiblePhases article b{display:block;margin-top:4px;color:#8ea3af;font-size:7px;line-height:1.15}
+#roadtoace .ace357VisiblePhases article span{display:block;margin-top:3px;color:#5f7481;font-size:5.5px;line-height:1.25}
+#roadtoace .ace357VisiblePhases article.now{border-color:rgba(84,168,218,.28);background:rgba(41,111,153,.12)}
+#roadtoace .ace357VisiblePhases article.now b{color:#e3f3fa}
+#roadtoace .ace357VisiblePhases article.done{opacity:.72}
+#roadtoace .ace357VisiblePhases article.cup{border-color:rgba(216,177,73,.12)}
+#roadtoace .ace357VisiblePhases article.intl{border-color:rgba(82,190,183,.12)}
+#roadtoace .ace357VisibleFacts{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:5px
 }
-#roadtoace .ace357IdentityRow em{
-  flex:0 0 auto;
-  max-width:46%;
-  padding:5px 7px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.055);
-  background:rgba(255,255,255,.025);
-  color:#7792a1;font-size:5.4px;font-style:normal;font-weight:900;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+#roadtoace .ace357VisibleFacts>div{
+  min-width:0;padding:7px;border:1px solid rgba(255,255,255,.04);border-radius:8px;background:rgba(255,255,255,.018)
 }
-#roadtoace .ace357LeagueRhythm{
-  display:flex;
-  gap:5px;
-  overflow-x:auto;
-  overscroll-behavior-x:contain;
-  scrollbar-width:none;
-  padding:1px 0 4px;
+#roadtoace .ace357VisibleFacts small{display:block;color:#567080;font-size:4.8px;font-weight:1000;letter-spacing:.07em}
+#roadtoace .ace357VisibleFacts b{
+  display:block;margin-top:3px;color:#a9c0cc;font-size:6.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
-#roadtoace .ace357LeagueRhythm::-webkit-scrollbar{display:none}
-#roadtoace .ace357RhythmItem{
-  flex:1 0 104px;
-  min-height:61px;
-  padding:8px;
-  border:1px solid rgba(255,255,255,.045);
-  border-radius:10px;
-  background:#07131d;
+#roadtoace .ace357VisibleMigration{
+  margin-top:6px;padding:7px 8px;border:1px solid rgba(214,176,72,.11);border-radius:8px;
+  background:rgba(111,83,18,.055);color:#a38e55;font-size:5.7px;line-height:1.35;font-weight:800
 }
-#roadtoace .ace357RhythmItem small{
-  display:block;color:#516c7b;font-size:5.2px;font-weight:1000;letter-spacing:.08em
+
+/* Same clean dropdown behaviour if the newer overview-panel renderer is the active path. */
+#roadtoace .ace357EngineLeagueCalendar{padding:0!important;overflow:hidden!important}
+#roadtoace .ace357EngineCalendarToggle{
+  width:100%;min-height:58px;padding:10px 12px;border:0;background:transparent;color:#edf8fd;
+  display:grid;grid-template-columns:minmax(0,1fr) auto 18px;gap:9px;align-items:center;text-align:left;cursor:pointer
 }
-#roadtoace .ace357RhythmItem b{
-  display:block;margin-top:4px;color:#8aa0ad;font-size:7.4px;line-height:1.2
-}
-#roadtoace .ace357RhythmItem span{
-  display:block;margin-top:3px;color:#5c7280;font-size:5.7px;line-height:1.25
-}
-#roadtoace .ace357RhythmItem.current{
-  border-color:rgba(91,169,218,.27);
-  background:linear-gradient(145deg,rgba(48,119,163,.15),rgba(8,24,36,.95));
-}
-#roadtoace .ace357RhythmItem.current small{color:#6fb8dc}
-#roadtoace .ace357RhythmItem.current b{color:#e3f2f8}
-#roadtoace .ace357RhythmItem.cup{
-  border-color:rgba(215,173,75,.13);
-  background:linear-gradient(145deg,rgba(112,82,17,.07),rgba(8,20,29,.95));
-}
-#roadtoace .ace357RhythmItem.cup b{color:#cdb168}
-#roadtoace .ace357RhythmItem.intl{
-  border-color:rgba(91,204,197,.13);
-  background:linear-gradient(145deg,rgba(30,105,101,.07),rgba(8,20,29,.95));
-}
-#roadtoace .ace357RhythmItem.intl b{color:#89c8c3}
-#roadtoace .ace357CalendarFacts{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:5px;
-  margin-top:6px;
-}
-#roadtoace .ace357CalendarFact{
-  min-width:0;
-  padding:8px;
-  border:1px solid rgba(255,255,255,.045);
-  border-radius:9px;
-  background:rgba(255,255,255,.022);
-}
-#roadtoace .ace357CalendarFact small{
-  display:block;color:#587181;font-size:5px;font-weight:1000;letter-spacing:.06em
-}
-#roadtoace .ace357CalendarFact b{
-  display:block;margin-top:3px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:#a7bfcc;font-size:7px
-}
-#roadtoace .ace357CalendarNote{
-  margin-top:6px;padding:7px 8px;
-  border:1px solid rgba(217,181,72,.11);
-  border-radius:8px;
-  background:rgba(112,82,14,.055);
-  color:#a9965e;font-size:5.8px;line-height:1.35;font-weight:800;
-}
-#roadtoace .ace357CalendarNote.engine{
-  border-color:rgba(89,167,211,.09);
-  background:rgba(50,119,157,.045);
-  color:#668fa6;
-}
+#roadtoace .ace357EngineCalendarToggle small{display:block;color:#6790a7;font-size:5.8px;font-weight:1000;letter-spacing:.11em}
+#roadtoace .ace357EngineCalendarToggle b{display:block;margin-top:3px;color:#edf8fd;font-size:10px}
+#roadtoace .ace357EngineCalendarToggle span{display:block;margin-top:2px;color:#687e8b;font-size:6px}
+#roadtoace .ace357EngineCalendarToggle em{font-style:normal;color:#7895a6;font-size:15px}
+#roadtoace .ace357EngineDropBody{padding:0 12px 12px;border-top:1px solid rgba(255,255,255,.045)}
+
 @media(max-width:760px){
-  #roadtoace .ace356Calendar.ace357CalendarDropdown{margin-left:7px!important;margin-right:7px!important}
-  #roadtoace .ace357CalendarToggle{grid-template-columns:29px minmax(0,1fr) 16px;padding:9px 10px}
-  #roadtoace .ace357CalendarStatus{display:none}
-  #roadtoace .ace357CalendarBody{padding:0 10px 10px}
-  #roadtoace .ace357CalendarFacts{grid-template-columns:repeat(2,minmax(0,1fr))}
-  #roadtoace .ace357RhythmItem{flex-basis:100px}
+  #roadtoace .ace357VisibleLeagueCalendar{margin:7px 10px 9px!important}
+  #roadtoace .ace357VisibleFacts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #roadtoace .ace357VisiblePhases article{flex-basis:98px}
+  #roadtoace .ace357VisibleCalendarToggle{min-height:54px!important}
 }
 </style>
-
-<script id="ace357-calendar-dropdown-script">
-(()=>{
-'use strict';
-
-const BUILD='B21.36.357';
-const S=()=>window.__ACE_RTA_STATE||{};
-const C=()=>S().career||null;
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const MON=['','JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-
-function cal(){
-  const s=S(),c=C();
-  return (s.league&&s.league.calendar&&typeof s.league.calendar==='object'?s.league.calendar:null)
-    ||(c&&c.calendar_state&&typeof c.calendar_state==='object'?c.calendar_state:null)
-    ||{};
-}
-function transfer(){
-  const s=S(),k=cal();
-  return (s.office&&s.office.transfer_window)
-    ||(k&&k.transfer_window)
-    ||{};
-}
-function mon(n){
-  n=Number(n)||0;
-  return MON[n]||`M${n||'?'}`;
-}
-function monthRange(a,b){
-  a=Number(a)||10;b=Number(b)||5;
-  return a===b?mon(a):`${mon(a)}–${mon(b)}`;
-}
-function leagueName(){
-  const s=S(),c=C();
-  return String(s.league?.league_name||s.pathway?.current?.league_name||c?.league_name||c?.league_code||'CURRENT LEAGUE');
-}
-function leagueCode(){
-  const s=S(),c=C();
-  return String(s.league?.league_code||s.pathway?.current?.league_code||c?.league_code||'');
-}
-function mode(k){return String(k?.mode||'ENGINE').toUpperCase()}
-function phase(k,c){
-  if(String(c?.preseason_state?.status||'').toUpperCase()==='ARRIVAL')return 'PRESEASON';
-  return String(k?.phase||((c?.season_complete)?'COMPLETE':'LEGACY')).toUpperCase();
-}
-function eventLabel(k,c){
-  const raw=String(k?.event_label||k?.current_event||'').trim();
-  if(raw)return raw.replaceAll('_',' ');
-  const p=phase(k,c);
-  return ({
-    PRESEASON:'PRE-SEASON',
-    REGULAR:'REGULAR SEASON',
-    CUP:'CUP',
-    POSTSEASON:'POSTSEASON',
-    COMPLETE:'SEASON COMPLETE',
-    LEGACY:'LEGACY SEASON'
-  })[p]||'CLUB SEASON';
-}
-function intlLabel(c){
-  const w=c?.international_window||{};
-  const same=Number(w.season||0)===Number(c?.season||0);
-  if(!same||!w.stage)return '';
-  const olympic=Number(c?.season||0)>0&&Number(c.season)%4===0;
-  return `${olympic?'OLYMPICS':'INTERNATIONAL'} · ${String(w.stage).replaceAll('_',' ')}`;
-}
-function phaseCurrent(id,k,c,w){
-  const p=phase(k,c);
-  if(id==='PRE')return p==='PRESEASON';
-  if(id==='REG')return p==='REGULAR'||p==='LEGACY';
-  if(id==='CUP')return p==='CUP';
-  if(id==='POST')return p==='POSTSEASON';
-  if(id==='INTL')return !!intlLabel(c)&&!!c?.season_complete;
-  if(id==='MOVE')return !!w?.can_move||['OPEN','OFFSEASON','MAIN_WINDOW'].includes(String(w?.state||'').toUpperCase());
-  return false;
-}
-function rhythm(k,c){
-  const w=transfer();
-  const start=Number(k.season_start_month||10);
-  const end=Number(k.season_end_month||5);
-  const total=Math.max(1,Number(k.regular_matches||14)||14);
-  const cup=String(k.cup_name||'').trim();
-  const post=String(k.postseason_kind||'NONE').replaceAll('_',' ');
-  const intl=intlLabel(c);
-  const rows=[
-    {id:'PRE',m:`BEFORE ${mon(start)}`,t:'Pre-season',d:'Arrival · squad preparation'},
-    {id:'REG',m:monthRange(start,end),t:'League',d:`${total} regular-season fixtures`}
-  ];
-  if(cup)rows.push({id:'CUP',m:'IN-SEASON',t:cup,d:'Cup dates follow this league calendar',cls:'cup'});
-  if(post&&post!=='NONE')rows.push({id:'POST',m:`BY ${mon(end)}`,t:post,d:String(k.event_label||'Qualification decides postseason route')});
-  if(intl)rows.push({id:'INTL',m:'AFTER CLUB',t:intl,d:'National-team calendar',cls:'intl'});
-  rows.push({id:'MOVE',m:'REGISTRATION',t:String(w.label||'Transfer window'),d:String(w.reason||'Availability follows league registration rules')});
-  return rows.map(r=>({...r,current:phaseCurrent(r.id,k,c,w)}));
-}
-function summary(k,c){
-  const total=Math.max(1,Number(k.regular_matches||14)||14);
-  const reg=Math.max(0,Number(k.regular_resolved??c?.season_match??0)||0);
-  const featTotal=Math.max(1,Number(k.featured_regular_matches||Math.min(total,14))||14);
-  const feat=Math.max(0,Number(k.featured_played??Math.min(Number(c?.season_match||0),featTotal))||0);
-  const current=eventLabel(k,c);
-  return {total,reg,featTotal,feat,current};
-}
-function makeHTML(k,c,isOpen){
-  const q=summary(k,c);
-  const rows=rhythm(k,c);
-  const identity=String(k.calendar_identity||'LEAGUE-SPECIFIC CAREER YEAR');
-  const code=leagueCode();
-  const isLegacy=mode(k)==='LEGACY';
-  const season=Number(c?.season||1);
-  const currentIntl=intlLabel(c);
-  const current=currentIntl&&c?.season_complete?currentIntl:q.current;
-  const status=isLegacy?'LEGACY-SAFE':(Number(c?.season||0)>0&&Number(c.season)%4===0?'OLYMPIC YEAR':'LEAGUE CALENDAR');
-  const facts=[
-    ['LEAGUE FIXTURES',`${q.reg} / ${q.total}`],
-    ['FEATURED MATCHES',`${q.feat} / ${q.featTotal}`],
-    ['CURRENT',current]
-  ];
-  const openText=isOpen?'Hide calendar':'Open calendar';
-  return `
-    <button type="button" class="ace357CalendarToggle" data-ace357-calendar-toggle aria-expanded="${isOpen?'true':'false'}" aria-label="${esc(openText)}">
-      <span class="ace357CalendarIcon" aria-hidden="true">▦</span>
-      <span class="ace357CalendarCopy">
-        <small>CAREER CALENDAR · ${esc(leagueName())}</small>
-        <b>${esc(current)}</b>
-        <span>Season ${season} · ${q.reg}/${q.total} league fixtures</span>
-      </span>
-      <span class="ace357CalendarStatus">${esc(status)}</span>
-      <span class="ace357CalendarChevron" aria-hidden="true">⌄</span>
-    </button>
-    <div class="ace357CalendarBody" data-ace357-calendar-body ${isOpen?'':'hidden'}>
-      <div class="ace357IdentityRow">
-        <div><small>THIS LEAGUE'S SEASON MODEL</small><b>${esc(identity)}</b></div>
-        <em>${esc(code||leagueName())}</em>
-      </div>
-      <div class="ace357LeagueRhythm">
-        ${rows.map(r=>`<article class="ace357RhythmItem ${r.current?'current':''} ${r.cls||''}">
-          <small>${esc(r.m)}</small><b>${esc(r.t)}</b><span>${esc(r.d)}</span>
-        </article>`).join('')}
-      </div>
-      <div class="ace357CalendarFacts">
-        ${facts.map(([a,b])=>`<div class="ace357CalendarFact"><small>${esc(a)}</small><b>${esc(b)}</b></div>`).join('')}
-      </div>
-      <div class="ace357CalendarNote ${isLegacy?'':'engine'}">${
-        isLegacy
-          ? `SAVE-SAFE MIGRATION · This already-started 14-match season is not being stretched. Finish it normally; ${esc(leagueName())} uses its researched league calendar from the next season.`
-          : `LEAGUE-SPECIFIC · Dates, fixture count, cup, postseason and transfer availability are read from ${esc(leagueName())}'s Career calendar state rather than one universal schedule.`
-      }</div>
-    </div>`;
-}
-function upgrade(){
-  const c=C(),k=cal();
-  if(!c)return;
-  const root=document.querySelector('#roadtoace .rta92OverviewPanel');
-  const node=root?.querySelector('.ace356Calendar');
-  if(!node)return;
-
-  const sourceSig=String(node.dataset.ace356Sig||'');
-  const renderSig=JSON.stringify([
-    sourceSig,c.season,c.season_match,c.season_complete,
-    k.phase,k.event_label,k.current_event,k.regular_resolved,k.regular_matches,
-    k.featured_played,k.featured_regular_matches,k.cup_name,k.postseason_kind,
-    k.calendar_identity,k.season_start_month,k.season_end_month,
-    transfer()?.state,transfer()?.label,transfer()?.can_move,
-    c?.international_window?.season,c?.international_window?.stage
-  ]);
-
-  if(node.classList.contains('ace357CalendarDropdown')&&node.dataset.ace357Sig===renderSig)return;
-
-  const isOpen=!!window.__ACE357_CALENDAR_OPEN;
-  node.classList.add('ace357CalendarDropdown');
-  node.dataset.ace357Sig=renderSig;
-  node.innerHTML=makeHTML(k,c,isOpen);
-}
-function queue(delay=0){
-  setTimeout(()=>requestAnimationFrame(()=>requestAnimationFrame(upgrade)),delay);
-}
-document.addEventListener('click',e=>{
-  const t=e.target.closest?.('[data-ace357-calendar-toggle]');
-  if(t){
-    e.preventDefault();
-    e.stopPropagation();
-    window.__ACE357_CALENDAR_OPEN=!window.__ACE357_CALENDAR_OPEN;
-    const body=t.closest('.ace357CalendarDropdown')?.querySelector('[data-ace357-calendar-body]');
-    t.setAttribute('aria-expanded',window.__ACE357_CALENDAR_OPEN?'true':'false');
-    t.setAttribute('aria-label',window.__ACE357_CALENDAR_OPEN?'Hide calendar':'Open calendar');
-    if(body)body.hidden=!window.__ACE357_CALENDAR_OPEN;
-    return;
-  }
-  queue(45);
-},true);
-
-document.addEventListener('ace:rta-render',()=>queue(20));
-window.addEventListener('pageshow',()=>queue(30));
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',()=>queue(80),{once:true});
-}else{
-  queue(80);
-}
-
-window.ACE_CAREER_CALENDAR_DROPDOWN_V357={decorateNow:upgrade,getState:cal};
-window.ACE_PROJECT_BUILD=BUILD;
-window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
-window.ACE_CAREER_CALENDAR_BUILD=BUILD;
-})();
+<script id="ace358-visible-calendar-marker">
+window.ACE_PROJECT_BUILD='B21.36.358';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.358';
+window.ACE_VISIBLE_LEAGUE_CALENDAR_BUILD='B21.36.358';
 </script>
-<script id="ace357-final-build-marker">
-window.ACE_PROJECT_BUILD='B21.36.357';
-window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.357';
-window.ACE_CAREER_CALENDAR_BUILD='B21.36.357';
-window.ACE_CAREER_CALENDAR_DROPDOWN=true;
-</script>
-
 
 </body>
 
@@ -55656,8 +55432,27 @@ function phaseState(key,c,k){
   return '';
 }
 function calendarHTML(c,k){
-  const mode=String(k.mode||'LEGACY').toUpperCase(),cfg=k.config||{},reg=Number(k.regular_resolved??Math.min(14,Number(c.season_match||0))),total=Number(k.regular_matches||14),feat=Number(k.featured_played??Math.min(14,Number(c.season_match||0))),featTotal=Number(k.featured_regular_matches||14),auto=Math.max(0,reg-feat),start=Number(k.season_start_month||cfg.season_start_month||10),regEnd=Number(k.regular_end_month||cfg.regular_end_month||4),end=Number(k.season_end_month||cfg.season_end_month||5),cup=String(k.cup_name||cfg.cup_name||''),postKind=String(k.postseason_kind||cfg.postseason_kind||'NONE').toUpperCase(),goal=String(k.postseason_goal||cfg.postseason_goal||'TITLE').toUpperCase(),phase=String(k.phase||'').toUpperCase(),oly=olympicYear(c),intl=c.international_window||{},intlSame=Number(intl.season||0)===Number(c.season||0),intlStage=intlSame?String(intl.stage||'').toUpperCase():'',intlLabel=oly?'OLYMPIC / NATIONAL TEAM':'INTERNATIONAL / OFF-SEASON';
-  const postLabel=postKind==='NONE'?'TABLE FINISH':goal==='PROMOTION'?'PROMOTION STAGE':postKind==='TURKEY_SPLIT'?'CHAMPIONSHIP / PLACEMENT':'POSTSEASON';
+  const mode=String(k.mode||'LEGACY').toUpperCase(),cfg=k.config||{},
+    reg=Number(k.regular_resolved??Math.min(14,Number(c.season_match||0))),
+    total=Number(k.regular_matches||14),
+    feat=Number(k.featured_played??Math.min(14,Number(c.season_match||0))),
+    featTotal=Number(k.featured_regular_matches||14),
+    auto=Math.max(0,reg-feat),
+    start=Number(k.season_start_month||cfg.season_start_month||10),
+    regEnd=Number(k.regular_end_month||cfg.regular_end_month||4),
+    end=Number(k.season_end_month||cfg.season_end_month||5),
+    cup=String(k.cup_name||cfg.cup_name||''),
+    postKind=String(k.postseason_kind||cfg.postseason_kind||'NONE').toUpperCase(),
+    goal=String(k.postseason_goal||cfg.postseason_goal||'TITLE').toUpperCase(),
+    phase=String(k.phase||'').toUpperCase(),
+    oly=olympicYear(c),
+    intl=c.international_window||{},
+    intlSame=Number(intl.season||0)===Number(c.season||0),
+    intlStage=intlSame?String(intl.stage||'').toUpperCase():'',
+    intlLabel=oly?'OLYMPIC / NATIONAL TEAM':'INTERNATIONAL / OFF-SEASON',
+    expanded=!!window.ACE_V74_CALENDAR_OPEN,
+    transfer=win()||{};
+  const postLabel=postKind==='NONE'?'TABLE FINISH':goal==='PROMOTION'?'PROMOTION STAGE':postKind==='TURKEY_SPLIT'?'CHAMPIONSHIP / PLACEMENT':postKind.replaceAll('_',' ');
   const phases=[
     {id:'PRE',m:month(prevMonth(start)),t:'PRE-SEASON',d:'Squad role · preparation'},
     {id:'REG',m:range(start,regEnd),t:'REGULAR SEASON',d:mode==='ENGINE'?`${reg}/${total} fixtures resolved · ${feat}/${featTotal} featured`:`${Math.min(14,Number(c.season_match||0))}/14 protected legacy matches`},
@@ -55666,10 +55461,21 @@ function calendarHTML(c,k){
     {id:'AFTER',m:'AFTER CLUB',t:intlLabel,d:oly?'Olympics / national duty → transfer window':'National team → transfer window'}
   ];
   const inPre=String(c?.preseason_state?.status||'').toUpperCase()==='ARRIVAL'||phase==='PRESEASON';
-  const current=inPre?'PRE-SEASON · ARRIVAL':c.season_complete?(intlStage&&intlStage!=='COMPLETE'?`${oly?'OLYMPIC GAMES':'INTERNATIONAL DUTY'} · ${intlStage}`:(intlStage==='COMPLETE'?'MAIN TRANSFER WINDOW':'CLUB SEASON COMPLETE')):String(k.event_label||phase||'REGULAR SEASON');
-  const pill=mode==='LEGACY'?'LEGACY-SAFE SEASON':oly?'OLYMPIC YEAR':'LEAGUE CALENDAR';
+  const current=inPre?'PRE-SEASON · ARRIVAL':c.season_complete?(intlStage&&intlStage!=='COMPLETE'?`${oly?'OLYMPIC GAMES':'INTERNATIONAL DUTY'} · ${intlStage}`:(intlStage==='COMPLETE'?'MAIN TRANSFER WINDOW':'CLUB SEASON COMPLETE')):String(k.event_label||phase||'REGULAR SEASON').replaceAll('_',' ');
+  const pill=mode==='LEGACY'?'LEGACY-SAFE':oly?'OLYMPIC YEAR':'LEAGUE CALENDAR';
   const pclass=mode==='LEGACY'?'legacy':oly?'olympic':'';
-  return `<section class="ace356Calendar" data-ace356-sig="${esc([c.season,c.season_match,c.season_complete,phase,reg,total,feat,featTotal,current].join('|'))}"><div class="ace356CalendarHead"><div><small>CAREER CALENDAR · ${esc(S().league?.league_name||c.league_code||'CURRENT LEAGUE')}</small><h3>Season ${Number(c.season||1)} · ${esc(k.calendar_identity||'League-specific career year')}</h3><p>${mode==='LEGACY'?'Your current in-progress season keeps its original 14-match rules. The researched league calendar starts next season.':'Featured fixtures are playable; background league fixtures resolve between them so the real season can feel long without becoming repetitive.'}</p></div><span class="ace356CalendarPill ${pclass}">${pill}</span></div><div class="ace356CalendarTrack">${phases.map(p=>`<article class="ace356Phase ${phaseState(p.id,c,k)} ${oly&&p.id==='AFTER'?'olympic':''}"><small>${esc(p.m)}</small><b>${esc(p.t)}</b><span>${esc(p.d)}</span></article>`).join('')}</div><div class="ace356CalendarStats"><div><small>LEAGUE FIXTURES</small><b>${reg} / ${total}</b></div><div><small>FEATURED MATCHES</small><b>${feat} / ${featTotal}</b></div><div><small>BACKGROUND RESULTS</small><b>${mode==='ENGINE'?auto:'—'}</b></div><div><small>CURRENT COMPETITION</small><b>${esc(String(k.current_event||phase||'LEAGUE').replaceAll('_',' '))}</b></div></div><div class="ace356CalendarNow"><span>WHERE YOU ARE NOW</span><b>${esc(current)}</b></div>${mode==='LEGACY'?`<div class="ace356CalendarNote">SAFE MIGRATION · We are not stretching an already-started 14-match season. Finish this season normally; your next year will use ${esc(S().league?.league_name||c.league_code||'this league')}’s new calendar.</div>`:''}</section>`;
+  const body=expanded?`<div class="ace357EngineDropBody">
+    <div class="ace356CalendarTrack">${phases.map(p=>`<article class="ace356Phase ${phaseState(p.id,c,k)} ${oly&&p.id==='AFTER'?'olympic':''}"><small>${esc(p.m)}</small><b>${esc(p.t)}</b><span>${esc(p.d)}</span></article>`).join('')}</div>
+    <div class="ace356CalendarStats"><div><small>LEAGUE FIXTURES</small><b>${reg} / ${total}</b></div><div><small>FEATURED MATCHES</small><b>${feat} / ${featTotal}</b></div><div><small>BACKGROUND RESULTS</small><b>${mode==='ENGINE'?auto:'—'}</b></div><div><small>TRANSFER</small><b>${esc(transfer.can_move?'OPEN':String(transfer.state||'LOCKED').replaceAll('_',' '))}</b></div></div>
+    <div class="ace356CalendarNow"><span>WHERE YOU ARE NOW</span><b>${esc(current)}</b></div>
+    ${mode==='LEGACY'?`<div class="ace356CalendarNote">SAFE MIGRATION · Finish this already-started 14-match season normally; next season uses ${esc(S().league?.league_name||c.league_code||'this league')}’s league-specific calendar.</div>`:''}
+  </div>`:'';
+  return `<section class="ace356Calendar ace357EngineLeagueCalendar ${expanded?'open':''}" data-ace356-sig="${esc([c.season,c.season_match,c.season_complete,phase,reg,total,feat,featTotal,current,expanded].join('|'))}">
+    <button type="button" class="ace357EngineCalendarToggle" onclick="return window.ACE_V74_TOGGLE_CALENDAR(event)" aria-expanded="${expanded?'true':'false'}">
+      <div><small>CAREER CALENDAR · ${esc(S().league?.league_name||c.league_code||'CURRENT LEAGUE')}</small><b>${esc(current)}</b><span>Season ${Number(c.season||1)} · ${reg}/${total} fixtures · ${esc(k.calendar_identity||'League-specific career year')}</span></div>
+      <strong class="ace356CalendarPill ${pclass}">${pill}</strong><em>${expanded?'−':'⌄'}</em>
+    </button>${body}
+  </section>`;
 }
 function decorateCalendar(){
   const c=C(),k=cal(),root=document.querySelector('#roadtoace .rta92OverviewPanel');if(!c||!root)return;
