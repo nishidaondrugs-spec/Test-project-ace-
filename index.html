@@ -39831,6 +39831,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const clubName=String(c.club_name||"ACE Academy");
     const nextOpp=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||"Opponent");
     const position=({OH:"OUTSIDE HITTER",OP:"OPPOSITE",M:"MIDDLE BLOCKER",S:"SETTER",L:"LIBERO"}[String(c.position||"OH").toUpperCase()]||posLabel(c.position)||"PLAYER");
+    const positionCode=String(c.position||"OH").toUpperCase();
     const role=String(c.squad_role||S.selection?.user?.selection_status||"BENCH").toUpperCase();
     const played=Number(c.season_match||0),firstMatch=Number(c.season||1)===1&&played===0,needsFirstTraining=firstMatch&&used===0,firstTrainingDone=firstMatch&&used>=1,seasonPct=Math.max(0,Math.min(100,Math.round((played/14)*100)));
     const rp=roleProgress(c),unreadInbox=rta257UnreadInbox(c),inboxBadge=unreadInbox.length?String(unreadInbox.length):"";
@@ -39917,9 +39918,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     }
 
     return `<main class="rta227CareerHome rta229CareerPulseHome ${firstMatch?"ace252FirstMatchHome":""} ${needsFirstTraining?"ace253NeedsTraining":firstTrainingDone?"ace253ReadyForMatch":""}">
-      <header class="ace227CareerIdentity">
-        <div><h1>${esc(c.player_name||"YOUR PLAYER")}</h1><span>${esc(position)}</span></div>
-        <small>${esc(clubName)} · ${esc(role)} · SEASON ${Number(c.season||1)}</small>
+      <header class="ace227CareerIdentity ace362CareerNameBar">
+        <div class="ace362NameLead"><h1>${esc(c.player_name||"YOUR PLAYER")}</h1><span>${esc(positionCode)}</span></div>
+        <small>${esc(clubName)}</small>
       </header>
       <section class="ace246HomeFixtureZone">
         <button type="button" class="ace234MobileFixtureStrip ${S.activeKey?"ace330NoticeRed":""}" data-rta62-view="match" onclick="return window.ACE_RTA_NAV(event,'match')">
@@ -54882,6 +54883,153 @@ window.ACE_VISIBLE_LEAGUE_CALENDAR_BUILD='B21.36.359';
 @media(max-width:760px){#rta62Overlay .ace361DemoBadge{top:calc(env(safe-area-inset-top) + 51px)}#rta62Overlay .ace361DemoBadge b{display:none}#rta62Overlay .ace361DemoDock{grid-template-columns:1fr auto;width:calc(100vw - 14px);padding:9px 9px;border-radius:13px;bottom:max(7px,env(safe-area-inset-bottom))}#rta62Overlay .ace361DemoDock span{display:none}#rta62Overlay .ace361DemoButton{min-height:44px;padding:0 12px}#rta62Overlay.ace361ExactGuide .rta94ActionPanel,#rta62Overlay.ace361ExactGuide .rta102SkillSide,#rta62Overlay.ace361ExactGuide .aceHitPanel,#rta62Overlay.ace361ExactGuide .aceServeV5Panel,#rta62Overlay.ace361ExactGuide .aceBlockV2Panel,#rta62Overlay.ace361ExactGuide .aceDef42-panel,#rta62Overlay.ace361ExactGuide .rta218DrillSide{padding-bottom:74px!important}}
 </style>
 <script id="ace361-build-marker">window.ACE_PROJECT_BUILD='B21.36.361';window.ACE_EXACT_GAMEPLAY_DRILL_GUIDES=true;</script>
+
+
+<!-- PROJECT ACE B21.36.362 · MOBILE CAREER NAME BAR -->
+<style id="ace362-mobile-career-name-bar">
+@media(max-width:760px){
+  /* Player identity becomes a thin top bar, not another card. */
+  #roadtoace .rta229CareerPulseHome .ace227CareerIdentity.ace362CareerNameBar{
+    position:relative!important;
+    width:auto!important;
+    min-height:42px!important;
+    height:42px!important;
+    margin:0 -8px 2px!important;
+    padding:0 94px 0 12px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:10px!important;
+    border:0!important;
+    border-bottom:1px solid rgba(151,126,245,.14)!important;
+    border-radius:0!important;
+    background:
+      radial-gradient(circle at 14% 0,rgba(108,91,220,.10),transparent 34%),
+      linear-gradient(90deg,rgba(8,16,28,.94),rgba(8,17,29,.82))!important;
+    box-shadow:none!important;
+    overflow:visible!important;
+    flex:0 0 42px!important;
+    box-sizing:border-box!important;
+  }
+  #roadtoace .ace362CareerNameBar .ace362NameLead{
+    min-width:0!important;
+    display:flex!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+    gap:7px!important;
+  }
+  #roadtoace .ace362CareerNameBar h1{
+    min-width:0!important;
+    max-width:44vw!important;
+    margin:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#f3f8fc!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:17px!important;
+    line-height:1!important;
+    font-weight:1000!important;
+    letter-spacing:-.025em!important;
+  }
+  #roadtoace .ace362CareerNameBar .ace362NameLead>span{
+    flex:0 0 auto!important;
+    min-width:27px!important;
+    padding:4px 6px!important;
+    display:grid!important;
+    place-items:center!important;
+    border:1px solid rgba(155,132,243,.18)!important;
+    border-radius:999px!important;
+    background:rgba(126,94,216,.09)!important;
+    color:#c9bbff!important;
+    font-size:5.8px!important;
+    font-weight:1000!important;
+    line-height:1!important;
+    letter-spacing:.10em!important;
+    white-space:nowrap!important;
+  }
+  #roadtoace .ace362CareerNameBar>small{
+    min-width:0!important;
+    max-width:29vw!important;
+    margin:0!important;
+    display:block!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#71869a!important;
+    font-size:6px!important;
+    font-weight:1000!important;
+    line-height:1!important;
+    letter-spacing:.055em!important;
+    text-align:right!important;
+  }
+
+  /* Compact Beta Grace into the same visual tier instead of a second headline. */
+  body.aceRtaCareerHome .ace348BetaTimer{
+    top:max(7px,env(safe-area-inset-top))!important;
+    right:8px!important;
+    left:auto!important;
+    transform:none!important;
+    min-height:27px!important;
+    max-width:86px!important;
+    padding:4px 6px!important;
+    gap:5px!important;
+    border-radius:999px!important;
+    background:rgba(9,10,18,.90)!important;
+    box-shadow:0 7px 18px rgba(0,0,0,.24),0 0 15px rgba(126,75,201,.06)!important;
+  }
+  body.aceRtaCareerHome .ace348BetaTimer:hover,
+  body.aceRtaCareerHome .ace348BetaTimer:focus-visible{
+    transform:none!important;
+  }
+  body.aceRtaCareerHome .ace348BetaTimer strong,
+  body.aceRtaCareerHome .ace348BetaTimer span{
+    display:none!important;
+  }
+  body.aceRtaCareerHome .ace348BetaTimer:before{
+    content:"BETA";
+    color:#b996e9;
+    font-size:5.2px;
+    font-weight:1000;
+    letter-spacing:.08em;
+  }
+  body.aceRtaCareerHome .ace348BetaTimer .ace348Dot{
+    width:5px!important;
+    height:5px!important;
+  }
+  body.aceRtaCareerHome .ace348BetaTimer em{
+    font-size:5.7px!important;
+    letter-spacing:.035em!important;
+  }
+  body.aceRtaCareerHome .ace348BetaTimer:after{
+    width:14px!important;
+    height:14px!important;
+    font-size:6px!important;
+  }
+
+  /* Pull the next-match area up after removing the old tall identity block. */
+  #roadtoace .rta229CareerPulseHome .ace246HomeFixtureZone{
+    padding-top:4px!important;
+  }
+}
+@media(max-width:390px){
+  #roadtoace .rta229CareerPulseHome .ace227CareerIdentity.ace362CareerNameBar{
+    min-height:39px!important;
+    height:39px!important;
+    flex-basis:39px!important;
+    padding-left:10px!important;
+    padding-right:88px!important;
+  }
+  #roadtoace .ace362CareerNameBar h1{font-size:16px!important;max-width:42vw!important}
+  #roadtoace .ace362CareerNameBar>small{font-size:5.5px!important;max-width:26vw!important}
+}
+</style>
+<script id="ace362-mobile-career-name-bar-marker">
+window.ACE_PROJECT_BUILD='B21.36.362';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.362';
+window.ACE_MOBILE_NAME_BAR_BUILD='B21.36.362';
+</script>
+
 </body>
 
 <script id="ace334-final-build-marker">window.ACE_SKILL_LEGACY_AUTO_COMMIT="B21.36.334";window.ACE_PROJECT_BUILD="B21.36.334";window.ACE_RELEASE_BUILD="B21.36.334";window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.334";</script>
