@@ -40102,6 +40102,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       {id:'INTL',m:'AFTER CLUB',t:oly?'OLYMPIC / NATIONAL TEAM':'INTERNATIONAL',d:oly?'Olympics / national duty':'National-team window'},
       {id:'MOVE',m:'REGISTRATION',t:String(transfer?.label||'TRANSFER WINDOW'),d:String(transfer?.reason||'Move availability follows league registration rules')}
     ];
+    const mini=`<div class="ace357VisibleCalendarMini" aria-hidden="true">${phases.map(p=>`<i class="${stateFor(p.id)} ${p.id==='CUP'?'cup':''} ${p.id==='INTL'?'intl':''}" title="${esc(p.t)}"></i>`).join('')}</div>`;
     const body=expanded?`
       <div class="ace357VisibleCalendarBody">
         <div class="ace357VisibleIdentity">
@@ -40128,6 +40129,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
           <small>CAREER CALENDAR · ${esc(leagueName)}</small>
           <b>${esc(current)}</b>
           <span>Season ${Number(c?.season||1)} · ${reg}/${total} league fixtures · ${esc(identity)}</span>
+          ${mini}
         </div>
         <em>${expanded?'−':'⌄'}</em>
       </button>
@@ -54655,7 +54657,7 @@ window.ACE_PROJECT_BUILD='B21.36.354';
 
 
 <style id="ace358-visible-league-calendar-style">
-/* B21.36.358 — actual visible Career calendar dropdown */
+/* B21.36.359 — actual visible Career calendar dropdown */
 #roadtoace .ace357VisibleLeagueCalendar{
   margin:10px 0 12px!important;padding:0!important;
   border:1px solid rgba(92,160,205,.12)!important;border-radius:14px!important;
@@ -54681,6 +54683,43 @@ window.ACE_PROJECT_BUILD='B21.36.354';
 #roadtoace .ace357VisibleCalendarToggle span:not(.ace357VisibleCalendarIcon){
   margin-top:3px!important;color:#657986!important;font-size:6.5px!important;line-height:1.25!important
 }
+#roadtoace .ace357VisibleCalendarMini,
+#roadtoace .ace357EngineCalendarMini{
+  display:flex;align-items:center;gap:4px;margin-top:7px;width:100%;
+}
+#roadtoace .ace357VisibleCalendarMini i,
+#roadtoace .ace357EngineCalendarMini i{
+  display:block;flex:1 1 0;height:4px;border-radius:999px;background:rgba(255,255,255,.08);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)
+}
+#roadtoace .ace357VisibleCalendarMini i.done,
+#roadtoace .ace357EngineCalendarMini i.done{
+  background:linear-gradient(90deg,rgba(82,175,223,.34),rgba(121,202,239,.52));
+}
+#roadtoace .ace357VisibleCalendarMini i.now,
+#roadtoace .ace357EngineCalendarMini i.now{
+  height:6px;background:linear-gradient(90deg,rgba(118,211,255,.75),rgba(82,160,224,.95));
+  box-shadow:0 0 10px rgba(79,164,220,.28)
+}
+#roadtoace .ace357VisibleCalendarMini i.cup,
+#roadtoace .ace357EngineCalendarMini i.cup{
+  background:rgba(210,173,77,.22)
+}
+#roadtoace .ace357VisibleCalendarMini i.intl,
+#roadtoace .ace357EngineCalendarMini i.olympic,
+#roadtoace .ace357EngineCalendarMini i.intl{
+  background:rgba(80,196,188,.22)
+}
+#roadtoace .ace357VisibleCalendarMini i.cup.done,
+#roadtoace .ace357EngineCalendarMini i.cup.done{background:linear-gradient(90deg,rgba(200,162,68,.35),rgba(229,200,110,.55))}
+#roadtoace .ace357VisibleCalendarMini i.cup.now,
+#roadtoace .ace357EngineCalendarMini i.cup.now{background:linear-gradient(90deg,rgba(232,199,102,.88),rgba(192,149,53,.95));box-shadow:0 0 10px rgba(208,175,83,.24)}
+#roadtoace .ace357VisibleCalendarMini i.intl.done,
+#roadtoace .ace357EngineCalendarMini i.olympic.done,
+#roadtoace .ace357EngineCalendarMini i.intl.done{background:linear-gradient(90deg,rgba(89,183,176,.35),rgba(120,215,207,.54))}
+#roadtoace .ace357VisibleCalendarMini i.intl.now,
+#roadtoace .ace357EngineCalendarMini i.olympic.now,
+#roadtoace .ace357EngineCalendarMini i.intl.now{background:linear-gradient(90deg,rgba(116,228,214,.84),rgba(72,184,177,.96));box-shadow:0 0 10px rgba(75,184,177,.24)}
 #roadtoace .ace357VisibleCalendarToggle>em{
   padding:0!important;color:#7896a7!important;font-size:16px!important
 }
@@ -54745,9 +54784,9 @@ window.ACE_PROJECT_BUILD='B21.36.354';
 }
 </style>
 <script id="ace358-visible-calendar-marker">
-window.ACE_PROJECT_BUILD='B21.36.358';
-window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.358';
-window.ACE_VISIBLE_LEAGUE_CALENDAR_BUILD='B21.36.358';
+window.ACE_PROJECT_BUILD='B21.36.359';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.359';
+window.ACE_VISIBLE_LEAGUE_CALENDAR_BUILD='B21.36.359';
 </script>
 
 </body>
@@ -55464,6 +55503,7 @@ function calendarHTML(c,k){
   const current=inPre?'PRE-SEASON · ARRIVAL':c.season_complete?(intlStage&&intlStage!=='COMPLETE'?`${oly?'OLYMPIC GAMES':'INTERNATIONAL DUTY'} · ${intlStage}`:(intlStage==='COMPLETE'?'MAIN TRANSFER WINDOW':'CLUB SEASON COMPLETE')):String(k.event_label||phase||'REGULAR SEASON').replaceAll('_',' ');
   const pill=mode==='LEGACY'?'LEGACY-SAFE':oly?'OLYMPIC YEAR':'LEAGUE CALENDAR';
   const pclass=mode==='LEGACY'?'legacy':oly?'olympic':'';
+  const mini=`<div class="ace357EngineCalendarMini" aria-hidden="true">${phases.map(p=>`<i class="${phaseState(p.id,c,k)} ${oly&&p.id==='AFTER'?'olympic':''}"></i>`).join('')}</div>`;
   const body=expanded?`<div class="ace357EngineDropBody">
     <div class="ace356CalendarTrack">${phases.map(p=>`<article class="ace356Phase ${phaseState(p.id,c,k)} ${oly&&p.id==='AFTER'?'olympic':''}"><small>${esc(p.m)}</small><b>${esc(p.t)}</b><span>${esc(p.d)}</span></article>`).join('')}</div>
     <div class="ace356CalendarStats"><div><small>LEAGUE FIXTURES</small><b>${reg} / ${total}</b></div><div><small>FEATURED MATCHES</small><b>${feat} / ${featTotal}</b></div><div><small>BACKGROUND RESULTS</small><b>${mode==='ENGINE'?auto:'—'}</b></div><div><small>TRANSFER</small><b>${esc(transfer.can_move?'OPEN':String(transfer.state||'LOCKED').replaceAll('_',' '))}</b></div></div>
@@ -55472,7 +55512,7 @@ function calendarHTML(c,k){
   </div>`:'';
   return `<section class="ace356Calendar ace357EngineLeagueCalendar ${expanded?'open':''}" data-ace356-sig="${esc([c.season,c.season_match,c.season_complete,phase,reg,total,feat,featTotal,current,expanded].join('|'))}">
     <button type="button" class="ace357EngineCalendarToggle" onclick="return window.ACE_V74_TOGGLE_CALENDAR(event)" aria-expanded="${expanded?'true':'false'}">
-      <div><small>CAREER CALENDAR · ${esc(S().league?.league_name||c.league_code||'CURRENT LEAGUE')}</small><b>${esc(current)}</b><span>Season ${Number(c.season||1)} · ${reg}/${total} fixtures · ${esc(k.calendar_identity||'League-specific career year')}</span></div>
+      <div><small>CAREER CALENDAR · ${esc(S().league?.league_name||c.league_code||'CURRENT LEAGUE')}</small><b>${esc(current)}</b><span>Season ${Number(c.season||1)} · ${reg}/${total} fixtures · ${esc(k.calendar_identity||'League-specific career year')}</span>${mini}</div>
       <strong class="ace356CalendarPill ${pclass}">${pill}</strong><em>${expanded?'−':'⌄'}</em>
     </button>${body}
   </section>`;
