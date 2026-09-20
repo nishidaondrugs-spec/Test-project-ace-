@@ -42540,6 +42540,92 @@ document.addEventListener("click",function(e){
 
   /* B21.36.126 — FIRST-TIME TRAINING GUIDES */
   let rta125GuideContinue=null,rta125GuideReplay=false,rta125GuideOpen=false;
+  /* B21.36.361 — EXACT GAMEPLAY DRILL GUIDES
+     The guide is not a separate animation. It renders the real drill UI/engine,
+     locks player input, drives one perfect rep automatically, then loops it. */
+  const rta361Guide={active:false,key:"",replay:false,onContinue:null,saved:null,timers:[],token:0};
+  function rta361Clone(v){try{return structuredClone(v)}catch(_){try{return JSON.parse(JSON.stringify(v))}catch(__){return v}}}
+  function rta361ClearTimers(){rta361Guide.timers.forEach(clearTimeout);rta361Guide.timers=[]}
+  function rta361Later(fn,ms){const token=rta361Guide.token;const id=setTimeout(()=>{if(rta361Guide.active&&token===rta361Guide.token)fn?.()},ms);rta361Guide.timers.push(id);return id}
+  function rta361Sample(key){
+    const K=String(key||"RECEIVE").toUpperCase(),base={done:false,rep_no:1,total_reps:8,errors:0,successful_reps:0};
+    const rep={rep_no:1,difficulty:.46,tolerance:.18,speed:.88,target_x:.5,target_y:.5,curve:0,ball_type:"LIVE REP"};
+    if(K==="RECEIVE")return {...base,focus:"RECEIVE",rep:{...rep,kind:"PLATFORM_RECEIVE",ball_type:"FLOAT SERVE",target_x:.36,target_y:.72,curve:.035,cue:"Read the serve, beat the ball, platform to the setter."}};
+    if(K==="SERVE")return {...base,focus:"SERVE",rep:{...rep,kind:"SERVE_TARGET",ball_type:"JUMP FLOAT",target_x:.76,target_y:.28,cue:"Place the serve into Zone 1."}};
+    if(K==="ATTACK")return {...base,focus:"ATTACK",rep:{...rep,kind:"FIRST_PERSON_ATTACK",ball_type:"HIGH BALL",target_x:.52,target_y:.33,block_scheme:"LINE",block_count:2,defense_zone:"BASE",cue:"Read the line block and finish the open court."}};
+    if(K==="BLOCK")return {...base,focus:"BLOCK",rep:{...rep,kind:"BLOCK_MOVE",ball_type:"OUTSIDE SET",target_x:.73,target_y:.54,cue:"Read the setter, close right, press at contact."}};
+    if(K==="DEFENCE"||K==="DEFENSE")return {...base,focus:"DEFENCE",rep:{...rep,kind:"DIG_REACTION",ball_type:"HARD CROSS",target_x:.72,target_y:.76,cue:"Track the attack, get in range, then dig on time."}};
+    if(K==="SETTING")return {...base,focus:"SETTING",rep:{...rep,kind:"SET_TARGET",ball_type:"PASS",target_x:.20,target_y:.28,cue:"Get under the pass and set the outside hitter."}};
+    const stat=K.replace(/^PHYSICAL_/,"");
+    if(["VERTICAL","REACTION_TIME","SPEED","WORK_RATE"].includes(stat))return {...base,focus:"PHYSICAL",physical_stat:stat,rep:{...rep,kind:"PHYSICAL",physical_stat:stat,target_x:stat==="REACTION_TIME"?.78:.5,target_y:stat==="REACTION_TIME"?.55:.5,cue:"Perfect physical rep."}};
+    return {...base,focus:K,rep};
+  }
+  function rta361Decorate(){
+    const ov=q("#rta62Overlay");if(!ov||!rta361Guide.active)return;
+    ov.classList.add("ace361ExactGuide");
+    const shell=ov.querySelector(".rta62OverlayShell");if(!shell)return;
+    ov.querySelectorAll(".ace361DemoDock,.ace361DemoBadge").forEach(x=>x.remove());
+    const badge=document.createElement("div");badge.className="ace361DemoBadge";badge.innerHTML=`<i></i><span>PERFECT REP PREVIEW</span><b>REAL DRILL · AUTO PLAY</b>`;shell.appendChild(badge);
+    const dock=document.createElement("div");dock.className="ace361DemoDock";dock.innerHTML=`<div><small>HOW TO PLAY</small><b>WATCH THE REAL DRILL</b><span>One perfect rep repeats automatically. Copy the same movement, choice and timing.</span></div><button type="button" class="ace361DemoButton" data-ace361-demo-start>${rta361Guide.replay?"BACK TO DRILL":"START DRILL"} →</button>`;shell.appendChild(dock);
+  }
+  function rta361TweenSkill(x,y,ms=620){
+    const sx=Number(skillPlayer?.x||.5),sy=Number(skillPlayer?.y||.8),t0=performance.now(),token=rta361Guide.token;
+    const step=now=>{if(!rta361Guide.active||token!==rta361Guide.token)return;const p=clamp((now-t0)/ms,0,1),e=p*p*(3-2*p);skillPlayer.x=sx+(x-sx)*e;skillPlayer.y=sy+(y-sy)*e;rta102MovePlayerTo(skillPlayer.x,skillPlayer.y);if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step);
+  }
+  function rta361ScheduleLoop(ms=1250){
+    rta361Later(()=>rta361RenderDemo(),ms);
+  }
+  function rta361WaitFor(test,done,timeout=3200,step=35){
+    const start=performance.now(),token=rta361Guide.token;
+    const poll=()=>{if(!rta361Guide.active||token!==rta361Guide.token)return;if(test()){done?.();return}if(performance.now()-start<timeout)rta361Later(poll,step);else rta361RenderDemo()};poll();
+  }
+  function rta361Autoplay(){
+    if(!rta361Guide.active)return;const K=String(rta361Guide.key||"").toUpperCase(),rep=S.training?.rep||{};
+    if(K==="ATTACK"){
+      rta361Later(()=>{const p=rta242Hit.scenario?.primary;if(!p)return;rta242Stop();rta242Hit.aim=p.aim;rta242Hit.aimLocked=p.aim;const n=q("#aceHitAimNeedle");if(n)n.style.left=(p.aim*100)+"%";rta242Arrow(p.aim);rta242Action()},560);
+      rta361Later(()=>{const p=rta242Hit.scenario?.primary;if(!p)return;rta242Stop();rta242Hit.power=p.p;rta242Hit.powerLocked=p.p;const n=q("#aceHitPowerNeedle");if(n)n.style.left=(p.p*100)+"%";rta242Action()},1160);
+      rta361Later(()=>{rta242Stop();const ct=Number(rta242Hit.scenario?.contactTarget??.5);rta242Hit.contact=ct;rta242Hit.contactLocked=ct;const n=q("#aceHitContactNeedle"),c=q("#aceHitContactCursor");if(n)n.style.left=(ct*100)+"%";if(c)c.style.left=(ct*100)+"%";rta242FinishTraining()},1760);return;
+    }
+    if(K==="SERVE"){
+      rta361Later(()=>{rtaServeV5Stop();rtaServeV5.dir=rtaServeV5.targetDir;const n=q("#aceServeV5DirNeedle");if(n)n.style.left=(rtaServeV5.dir*100)+"%";rtaServeV5LockDirection()},600);
+      rta361Later(()=>{rtaServeV5Stop();rtaServeV5.power=rtaServeV5.targetPower;const f=q("#aceServeV5PowerFill");if(f)f.style.width=(rtaServeV5.power*100)+"%";rtaServeV5LockPower()},1260);
+      rta361Later(()=>{rtaServeV5Stop();rtaServeV5.contact=rtaServeV5.targetContact;const c=q("#aceServeV5ContactCursor"),d=q("#aceServeV5ContactDot");if(c)c.style.left=(rtaServeV5.contact*100)+"%";if(d)d.style.left=(rtaServeV5.contact*100)+"%";rtaServeV5Finish()},1940);return;
+    }
+    if(K==="RECEIVE"){
+      const dur=Math.max(900,Number(skillDuration||1900));rta361Later(()=>rta361TweenSkill(skillPassTarget.x,skillPassTarget.y,Math.min(720,dur*.34)),Math.max(260,dur*.25));
+      rta361Later(()=>{skillPlayer.x=skillPassTarget.x;skillPlayer.y=skillPassTarget.y;rta102MovePlayerTo(skillPlayer.x,skillPlayer.y);skillFlight=.86;rta102SkillContact(false)},Math.max(900,dur*.84));
+      rta361WaitFor(()=>skillReceivePhase==="aim",()=>rta361Later(()=>{const v=ace319DesiredAimVector();ace319FinishReceiveAim({x:v.x,y:v.y},false)},360),Math.max(1800,dur+800));return;
+    }
+    if(K==="SETTING"){
+      const dur=Math.max(900,Number(skillDuration||1800));rta361Later(()=>rta361TweenSkill(skillPassTarget.x,skillPassTarget.y,Math.min(700,dur*.34)),Math.max(240,dur*.23));
+      rta361Later(()=>{skillPlayer.x=skillPassTarget.x;skillPlayer.y=skillPassTarget.y;rta102MovePlayerTo(skillPlayer.x,skillPlayer.y);skillFlight=.83;rta102SkillContact(false)},Math.max(820,dur*.81));
+      rta361WaitFor(()=>skillSetPhase==="aim",()=>rta361Later(()=>{const v=ace320DesiredSetVector();ace320FinishSetAim({x:v.x,y:v.y},false)},360),Math.max(1800,dur+800));return;
+    }
+    if(K==="BLOCK"){
+      const tx=clamp(Number(rep.target_x||.5),.18,.82);rta361Later(()=>{blockTrainPos=tx;rta112MoveBlocker(tx,.70)},760);rta361WaitFor(()=>blockTrainT>=.77,()=>{blockTrainPos=tx;blockTrainT=.79;rta112MoveBlocker(tx,.70);rta112BlockJump(false)},2600);return;
+    }
+    if(K==="DEFENCE"||K==="DEFENSE"){
+      rta361Later(()=>{if(ACEV3D.phase==="ready")aceV3Launch()},450);
+      rta361Later(()=>{const sh=ACEV3D.shot||{x:.72,y:.75};ACEV3D.x=clamp((Number(sh.x)-.18)/.64,.03,.97);ACEV3D.y=clamp((Number(sh.y)-.59)/.34,.08,.98);aceV3Place()},820);
+      rta361WaitFor(()=>ACEV3D.phase==="dig",()=>rta361Later(()=>{ACEV3D.bar=.5;const n=aceV3Q("#aceV3Needle");if(n)n.style.left="50%";aceV3Dig()},240),2600);return;
+    }
+    if(K==="PHYSICAL_REACTION_TIME"){
+      rta361WaitFor(()=>rta218Phys.mode==="REACTION"&&rta218Phys.cueAt>0,()=>rta361Later(()=>rta218DirectionInput(rta218Phys.sequence[0],{touch:rta112IsTouch()}),130),2600);return;
+    }
+    if(K==="PHYSICAL_SPEED"){
+      const step=()=>{if(!rta361Guide.active||rta218Phys.mode!=="SPEED")return;const dir=rta218Phys.sequence[rta218Phys.step];if(!dir)return;rta218DirectionInput(dir,{touch:rta112IsTouch()});if(!physicalLocked)rta361Later(step,230)};rta361WaitFor(()=>rta218Phys.mode==="SPEED"&&rta218Phys.cueAt>0,()=>rta361Later(step,150),2600);return;
+    }
+    if(K==="PHYSICAL_WORK_RATE"){
+      const step=()=>{if(!rta361Guide.active||rta218Phys.mode!=="WORK")return;const dir=rta218Phys.sequence[rta218Phys.step];if(!dir)return;rta218DirectionInput(dir,{touch:rta112IsTouch(),sprint:true});if(!physicalLocked)rta361Later(step,240)};rta361WaitFor(()=>rta218Phys.mode==="WORK"&&rta218Phys.cueAt>0,()=>rta361Later(step,150),2600);return;
+    }
+    if(K==="PHYSICAL_VERTICAL"){
+      const ideals=[.29,.56,.82];let phase=0;const hit=()=>{if(!rta361Guide.active||physicalLocked)return;if(phase>=3)return;const ideal=ideals[phase];if(physicalT>=ideal-.008){physicalT=ideal;rta218VerticalInput();phase++;}if(phase<3)rta361Later(hit,28)};rta361WaitFor(()=>rta218Phys.mode==="VERTICAL",()=>hit(),1200);return;
+    }
+    rta361ScheduleLoop(1200);
+  }
+  function rta361RenderDemo(){
+    if(!rta361Guide.active)return;rta361ClearTimers();rta361Guide.token++;S.busy=false;S.feedback=null;cleanupRaf();renderTrainingOverlay();requestAnimationFrame(()=>requestAnimationFrame(()=>{rta361Decorate();rta361Autoplay()}));
+  }
 
   function rta125GuideAccountKey(){
     return String(vdsAccountSession?.user?.id||"device");
@@ -42703,44 +42789,28 @@ document.addEventListener("click",function(e){
     <button type="button" class="rta125GuideStart" data-rta125-guide-start>${rta125GuideReplay?"BACK TO DRILL":"GOT IT · START DRILL →"}</button>`;
   }
   function rta125ShowGuide(key,{onContinue=null,replay=false}={}){
-    const modal=rta125EnsureGuideModal();
-    rta125GuideContinue=typeof onContinue==="function"?onContinue:null;
-    rta125GuideReplay=!!replay;
-    rta125GuideOpen=true;
-    modal.dataset.guideKey=String(key||"GENERIC").toUpperCase();
-    const content=modal.querySelector("#rta125GuideContent");
-    if(content)content.innerHTML=rta125GuideMarkup(key);
-    modal.classList.add("show");
-    modal.setAttribute("aria-hidden","false");
-    document.body.classList.add("rta125GuideShowing");
+    if(rta361Guide.active)return;
+    const K=String(key||"GENERIC").toUpperCase();
+    rta361Guide.active=true;rta361Guide.key=K;rta361Guide.replay=!!replay;rta361Guide.onContinue=typeof onContinue==="function"?onContinue:null;rta361Guide.token++;
+    rta361Guide.saved={training:S.training? rta361Clone(S.training):null,overlay:S.overlay||null,feedback:S.feedback? rta361Clone(S.feedback):null,busy:!!S.busy};
+    rta125GuideContinue=rta361Guide.onContinue;rta125GuideReplay=!!replay;rta125GuideOpen=true;
+    S.training=replay&&rta361Guide.saved.training?rta361Clone(rta361Guide.saved.training):rta361Sample(K);S.overlay="training";S.feedback=null;S.busy=false;
+    document.getElementById("rta125TrainingGuide")?.classList.remove("show");document.body.classList.remove("rta125GuideShowing");
+    rta361RenderDemo();
   }
   function rta125CloseGuide(markSeen=true){
-    const modal=document.getElementById("rta125TrainingGuide");
-    if(!modal||!rta125GuideOpen)return;
-    const key=modal.dataset.guideKey||"GENERIC";
-    if(markSeen)rta125MarkGuideSeen(key);
-    modal.classList.remove("show");
-    modal.setAttribute("aria-hidden","true");
-    document.body.classList.remove("rta125GuideShowing");
-    const cb=rta125GuideContinue,replay=rta125GuideReplay;
-    rta125GuideContinue=null;rta125GuideReplay=false;rta125GuideOpen=false;
-    if(replay){
-      S.busy=false;
-      requestAnimationFrame(()=>{if(S.overlay==="training"&&S.training?.rep)renderTrainingOverlay()});
-    }else cb?.();
+    if(!rta361Guide.active){const modal=document.getElementById("rta125TrainingGuide");modal?.classList.remove("show");modal?.setAttribute("aria-hidden","true");document.body.classList.remove("rta125GuideShowing");return}
+    const key=rta361Guide.key,cb=rta361Guide.onContinue,replay=rta361Guide.replay,saved=rta361Guide.saved||{};
+    if(markSeen)rta125MarkGuideSeen(key);rta361ClearTimers();rta361Guide.token++;cleanupRaf();aceV3Clear?.();rta218ClearPhysTimers?.();rtaServeV5Stop?.();rta242Stop?.();
+    rta361Guide.active=false;rta361Guide.key="";rta361Guide.replay=false;rta361Guide.onContinue=null;rta361Guide.saved=null;rta125GuideContinue=null;rta125GuideReplay=false;rta125GuideOpen=false;
+    S.training=saved.training||null;S.overlay=saved.overlay||null;S.feedback=saved.feedback||null;S.busy=false;
+    const ov=q("#rta62Overlay");ov?.classList.remove("ace361ExactGuide");
+    if(replay&&S.training?.rep){S.overlay="training";requestAnimationFrame(()=>renderTrainingOverlay())}
+    else{closeOverlay();cb?.()}
   }
-  function rta125MaybeGuide(key,onContinue){
-    if(rta125GuideSeen(key)){onContinue?.();return false}
-    rta125ShowGuide(key,{onContinue,replay:false});
-    return true;
-  }
-  function rta125OpenCurrentGuide(){
-    if(S.busy||S.overlay!=="training"||!S.training)return;
-    const key=rta125CurrentGuideKey();
-    S.busy=true;
-    cleanupRaf();
-    rta125ShowGuide(key,{replay:true});
-  }
+  function rta125MaybeGuide(key,onContinue){if(rta125GuideSeen(key)){onContinue?.();return false}rta125ShowGuide(key,{onContinue,replay:false});return true}
+  function rta125OpenCurrentGuide(){if(S.busy||S.overlay!=="training"||!S.training)return;const key=rta125CurrentGuideKey();cleanupRaf();rta125ShowGuide(key,{replay:true})}
+  document.addEventListener("click",e=>{const b=e.target.closest?.("[data-ace361-demo-start]");if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();rta125CloseGuide(true)},true);
 
   function overlayTop(kicker,title){
     const help=S.overlay==="training"&&S.training?`<button type="button" class="rta125GuideReplay" data-rta125-guide-open>? <span>HOW TO PLAY</span></button>`:"";
@@ -43196,6 +43266,7 @@ document.addEventListener("click",function(e){
     rta242Stop();rta242Hit.busy=true;rta242Hit.phase="flight";const btn=q("#aceHitAction");if(btn)btn.disabled=true;
     rta242Hit.contactLocked=rta242Hit.contact;
     const r=rta242Result();rta242Ball(r);
+    if(rta361Guide.active){rta242Feedback(r,"PERFECT REP");rta361ScheduleLoop(1350);rta242Hit.busy=false;return}
     const rep=S.training?.rep||{},tol=Math.max(.06,Number(rep.tolerance||.16)),spatial=clamp(r.tactical*.72+r.mechanical*.28);
     const dist=(1-spatial)*tol*.98,sign=r.effectiveAim>=rta242Hit.scenario.primary.aim?1:-1;
     const px=clamp(Number(rep.target_x||.5)+dist*sign),py=clamp(Number(rep.target_y||.34)),timing=clamp(.5+(1-r.mechanical)*.5);
@@ -43711,6 +43782,7 @@ function renderAttackKeyOverlay(){
     const timing=rtaServeV5Clamp(.5+contactError*1.05,.5,1);
 
     await rtaServeV5AnimateFlight(rtaServeV5.effectiveX,finalY,contactOffset);
+    if(rta361Guide.active){const flash=q("#aceServeV5Flash");if(flash){flash.querySelector("b").textContent="100%";flash.querySelector("span").textContent="PERFECT SERVE";flash.classList.add("show")}rtaServeV5.busy=false;rta361ScheduleLoop(1250);return}
 
     try{
       const d=await rpc("vds_rta_submit_training_rep",{
@@ -44567,6 +44639,7 @@ function renderAttackKeyOverlay(){
     const qTotal=clamp(Number(composite)||0,0,1),tx=clamp(Number(rep.target_x)||.5),ty=clamp(Number(rep.target_y)||.5),tol=Math.max(.04,Number(rep.tolerance)||.18);
     const dist=tol*(1-qTotal);let px=tx+dist,py=ty;if(px>1)px=tx-dist;if(px<0){px=tx;py=ty+(ty+dist<=1?dist:-dist)}
     px=clamp(px);py=clamp(py);const timingInput=clamp(.5+((1-qTotal)/2));
+    if(rta361Guide.active){skillLocked=true;skillReceivePhase="submit";const p=q("#rta102SkillPrompt");if(p){p.textContent="PERFECT PASS";p.classList.add("perfect")}rta361ScheduleLoop(1200);return}
     S.busy=true;
     try{
       const d=await rpc("vds_rta_submit_training_rep",{p_x:Number(px.toFixed(4)),p_y:Number(py.toFixed(4)),p_timing:Number(timingInput.toFixed(4))});
@@ -44651,7 +44724,7 @@ function renderAttackKeyOverlay(){
     const dx=(skillPlayer.x-skillPassTarget.x)*.72,dy=(skillPlayer.y-skillPassTarget.y)*.55,aimPenalty=(1-clamp(Number(aimQuality)||0,0,1))*tol*.82;
     let px=clamp(Number(rep.target_x||.5)+dx+aimPenalty,0,1),py=clamp(Number(rep.target_y||.25)+dy+aimPenalty*.45,0,1);
     const baseTiming=Number(skillSetContact?.timing??.5),timingInput=clamp(baseTiming+(1-clamp(Number(aimQuality)||0,0,1))*.20,0,1);
-    skillLocked=true;skillSetPhase="submit";if(skillSetAimTimer)clearTimeout(skillSetAimTimer);skillSetAimTimer=0;if(skillSetAimComboTimer)clearTimeout(skillSetAimComboTimer);skillSetAimComboTimer=0;S.busy=true;
+    skillLocked=true;skillSetPhase="submit";if(skillSetAimTimer)clearTimeout(skillSetAimTimer);skillSetAimTimer=0;if(skillSetAimComboTimer)clearTimeout(skillSetAimComboTimer);skillSetAimComboTimer=0;if(rta361Guide.active){const p=q("#rta102SkillPrompt");if(p){p.textContent="PERFECT SET";p.classList.add("perfect")}rta361ScheduleLoop(1200);return}S.busy=true;
     try{
       const d=await rpc("vds_rta_submit_training_rep",{p_x:Number(px.toFixed(4)),p_y:Number(py.toFixed(4)),p_timing:Number(timingInput.toFixed(4))});
       vibrate(qTotal>=.90?[25,35,25]:d.success?22:[18,28,18]);await new Promise(r=>setTimeout(r,500));
@@ -45243,6 +45316,7 @@ function renderAttackKeyOverlay(){
     const blocker=q("#rta112TrainBlocker"),prompt=q("#rta112BlockPrompt");
     blocker?.classList.add("jump");ace323TrainBlockStage("press");
     if(prompt)prompt.textContent=timedOut?"MISSED":Math.abs(t-ideal)<.055?"ROOF IT!":t<ideal?"EARLY":"LATE";
+    if(rta361Guide.active){if(prompt){prompt.textContent="ROOF IT!";prompt.classList.add("perfect")}rta361ScheduleLoop(1100);return}
     S.busy=true;
     try{
       const d=await rpc("vds_rta_submit_block_training_rep",{
@@ -45533,6 +45607,7 @@ function renderAttackKeyOverlay(){
     const qv=clamp(Number(quality||0),0,1),timing=clamp(.5+(1-qv)*.47,.5,.97);
     const tx=Number(rep.target_x||.5),ty=Number(rep.target_y||.5);
     rta218SetScore(label||`${Math.round(qv*100)}%`);
+    if(rta361Guide.active){rta218SetScore(label||"PERFECT REP");rta361ScheduleLoop(1050);return}
     S.busy=true;
     try{
       const d=await rpc("vds_rta_submit_physical_training_rep",{p_x:Number(tx.toFixed(4)),p_y:Number(ty.toFixed(4)),p_timing:Number(timing.toFixed(4))});
@@ -45790,6 +45865,7 @@ function renderAttackKeyOverlay(){
   }
   async function aceV3FinishTraining(qq,pos,contact,title){
     if(ACEV3D.lock||S.overlay!=="training"||!S.training?.rep)return;
+    if(rta361Guide.active){ACEV3D.lock=true;rta361ScheduleLoop(1500);return}
     ACEV3D.lock=true;
     S.busy=true;
     const started=performance.now();
@@ -46578,7 +46654,7 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta83-save-photo]")){rta83SaveCurrentCardPhoto();return}
     if(e.target.closest?.("[data-rta83-clear-photo]")){rta83RemoveCurrentCardPhoto();return}
     if(e.target.closest?.("[data-rta83-reset-placement]")){rta83ResetPlacement();return}
-    if(e.target.closest?.("[data-rta62-close]")){closeOverlay();return}
+    if(e.target.closest?.("[data-rta62-close]")){if(rta361Guide.active){rta125CloseGuide(true);return}closeOverlay();return}
     if(e.target.closest?.("[data-rta62-training-done]")){
       /* B21.36.313C — phone drill completion must return to a LIVE Training Centre.
          The result overlay can be dismissed before the silent post-drill state refresh
@@ -54789,6 +54865,23 @@ window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.359';
 window.ACE_VISIBLE_LEAGUE_CALENDAR_BUILD='B21.36.359';
 </script>
 
+
+<style id="ace361-exact-gameplay-guides">
+/* Guide = the real drill screen. Only the inputs are locked while the engine demonstrates a perfect rep. */
+#rta62Overlay.ace361ExactGuide .rta125GuideReplay{display:none!important}
+#rta62Overlay.ace361ExactGuide .rta62OverlayShell{position:relative!important}
+#rta62Overlay.ace361ExactGuide .rta62OverlayBody,#rta62Overlay.ace361ExactGuide .aceHitBody,#rta62Overlay.ace361ExactGuide .aceServeV5Body,#rta62Overlay.ace361ExactGuide .rta102SkillLayout,#rta62Overlay.ace361ExactGuide .aceBlockV2Body,#rta62Overlay.ace361ExactGuide .aceDef42-root,#rta62Overlay.ace361ExactGuide .rta218DrillLayout{pointer-events:none!important}
+#rta62Overlay.ace361ExactGuide button:not(.ace361DemoButton):not(.rta62Close){pointer-events:none!important}
+#rta62Overlay .ace361DemoBadge{position:fixed;z-index:2147483001;left:50%;top:max(62px,calc(env(safe-area-inset-top) + 54px));transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(110,210,255,.28);border-radius:999px;background:rgba(3,15,24,.88);box-shadow:0 10px 28px rgba(0,0,0,.34),0 0 20px rgba(55,161,218,.10);backdrop-filter:blur(12px);white-space:nowrap;pointer-events:none}
+#rta62Overlay .ace361DemoBadge i{width:7px;height:7px;border-radius:50%;background:#69e29d;box-shadow:0 0 10px rgba(105,226,157,.75);animation:ace361Pulse 1.05s ease-in-out infinite alternate}
+#rta62Overlay .ace361DemoBadge span{font-size:7px;font-weight:1000;letter-spacing:.13em;color:#eaf8ff}#rta62Overlay .ace361DemoBadge b{font-size:6px;color:#7fa4b9;letter-spacing:.08em}
+#rta62Overlay .ace361DemoDock{position:fixed;z-index:2147483002;left:50%;bottom:max(12px,calc(env(safe-area-inset-bottom) + 8px));transform:translateX(-50%);width:min(680px,calc(100vw - 22px));display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 12px;border:1px solid rgba(91,184,255,.24);border-radius:15px;background:linear-gradient(145deg,rgba(5,20,31,.96),rgba(7,29,44,.96));box-shadow:0 18px 50px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.04);backdrop-filter:blur(14px)}
+#rta62Overlay .ace361DemoDock small{display:block;color:#6dc8f3;font-size:6px;font-weight:1000;letter-spacing:.15em}#rta62Overlay .ace361DemoDock b{display:block;margin-top:2px;color:#f4fbff;font-size:11px}#rta62Overlay .ace361DemoDock span{display:block;margin-top:2px;color:#7e98a8;font-size:7px;line-height:1.35}
+#rta62Overlay .ace361DemoButton{min-height:46px;padding:0 15px;border-radius:11px;border:1px solid rgba(94,197,250,.36);background:linear-gradient(135deg,#207db4,#175f91);color:#fff;font-size:8px;font-weight:1000;letter-spacing:.10em;cursor:pointer;box-shadow:0 9px 22px rgba(16,97,146,.24)}
+@keyframes ace361Pulse{to{transform:scale(1.25);opacity:.72}}
+@media(max-width:760px){#rta62Overlay .ace361DemoBadge{top:calc(env(safe-area-inset-top) + 51px)}#rta62Overlay .ace361DemoBadge b{display:none}#rta62Overlay .ace361DemoDock{grid-template-columns:1fr auto;width:calc(100vw - 14px);padding:9px 9px;border-radius:13px;bottom:max(7px,env(safe-area-inset-bottom))}#rta62Overlay .ace361DemoDock span{display:none}#rta62Overlay .ace361DemoButton{min-height:44px;padding:0 12px}#rta62Overlay.ace361ExactGuide .rta94ActionPanel,#rta62Overlay.ace361ExactGuide .rta102SkillSide,#rta62Overlay.ace361ExactGuide .aceHitPanel,#rta62Overlay.ace361ExactGuide .aceServeV5Panel,#rta62Overlay.ace361ExactGuide .aceBlockV2Panel,#rta62Overlay.ace361ExactGuide .aceDef42-panel,#rta62Overlay.ace361ExactGuide .rta218DrillSide{padding-bottom:74px!important}}
+</style>
+<script id="ace361-build-marker">window.ACE_PROJECT_BUILD='B21.36.361';window.ACE_EXACT_GAMEPLAY_DRILL_GUIDES=true;</script>
 </body>
 
 <script id="ace334-final-build-marker">window.ACE_SKILL_LEGACY_AUTO_COMMIT="B21.36.334";window.ACE_PROJECT_BUILD="B21.36.334";window.ACE_RELEASE_BUILD="B21.36.334";window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.334";</script>
