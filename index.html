@@ -38120,7 +38120,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     skillTree:null,office:null,clubWorld:null,selection:null,pathway:null,livingLeague:null,transferMarket:null,storyWorld:null,worldUpdate:null,agentLastUpdate:null,
     saveSlots:[],activeSave:1,homePanel:"week",careerPanel:"overview",leaguePanel:"table",leaderStat:"kills",playerPanel:"attributes",
     showcase:null,showcaseLoading:false,showcaseDraft:null,
-    leaderboard:[],leaderboardLoaded:false,leaderboardLoading:false,leaderboardError:""
+    leaderboard:[],leaderboardLoaded:false,leaderboardLoading:false,leaderboardError:"",rankingsHub:null,rankingsPanel:"live",
+    legacy:null,legacyLoading:false,legacyError:""
   };
   window.__ACE_RTA_STATE=S; window.__ACE_RTA_RENDER=function(){return render();};
 
@@ -38977,11 +38978,12 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const agentStatus=S.office?.agent_type?esc(S.office.agent_name):Array.isArray(S.office?.approaches)&&S.office.approaches.length?"NEW APPROACH":"SELF-REP";
     setOverlay(`<div class="rta85MoreSheet">
       <div class="rta85MoreHandle"></div>
-      <div class="rta85MoreHead"><div><small>ROAD TO ACE</small><h2>Career</h2><p>Club, agent, career board and saves.</p></div><button type="button" data-rta62-close>×</button></div>
+      <div class="rta85MoreHead"><div><small>ROAD TO ACE</small><h2>Career</h2><p>Club, agent, rankings, showcase and saves.</p></div><button type="button" data-rta62-close>×</button></div>
       <div class="rta85MoreGrid">
         <button type="button" data-rta85-more-view="club" class="${S.view==="club"?"active":""}"><i>♜</i><div><b>Club</b><span>${esc(c.club_name)} · squad & teammates</span></div><em>→</em></button>
         <button type="button" data-rta85-more-view="agent" class="${S.view==="agent"?"active":""} ${rta108AgentAttention?.().active?"attention":""}"><i>◇</i><div><b>Agent${rta108AgentAttention?.().active?" · NEW":""}</b><span>${agentStatus}</span></div><em>→</em></button>
         <button type="button" data-rta85-more-view="career" class="${S.view==="career"?"active":""}"><i>▥</i><div><b>Career Board</b><span>Season, pathway, league & story</span></div><em>→</em></button>
+        <button type="button" data-rta85-more-showcase class="${S.view==="player"&&S.playerPanel==="showcase"?"active":""}"><i>★</i><div><b>Showcase</b><span>Public profile, trophies & badges</span></div><em>→</em></button>
         <button type="button" data-rta85-more-view="rankings" class="${S.view==="rankings"?"active":""}"><i>▤</i><div><b>Rankings</b><span>Global Career leaderboard by player OVR</span></div><em>→</em></button>
         <button type="button" data-rta85-more-saves><i>▣</i><div><b>Career Saves</b><span>Save ${Number(S.activeSave||1)} · manage 3 slots</span></div><em>→</em></button>
       </div>
@@ -39069,7 +39071,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return false;
   };
   function topbar(c){
-    const moreActive=["club","agent","career","rankings"].includes(S.view),league=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League");
+    const moreActive=["club","agent","career","rankings"].includes(S.view)||(S.view==="player"&&S.playerPanel==="showcase"),league=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League");
     const careerInbox=rta255CareerInbox(c),careerUnread=rta257UnreadInbox(c),agentUnread=rta257AgentUnread(c),sp=Math.max(0,Number(c?.skill_points||0));
     const navGlow=(v)=>{
       if(v==="match"&&S.activeKey)return "ace330NoticeRed";
@@ -39115,6 +39117,20 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
 
 
+  function ace352RankCountdown(endAt){
+    const end=Date.parse(String(endAt||""));
+    if(!Number.isFinite(end))return "—";
+    const left=Math.max(0,end-Date.now());
+    const d=Math.floor(left/86400000),h=Math.floor((left%86400000)/3600000),m=Math.floor((left%3600000)/60000),s=Math.floor((left%60000)/1000);
+    return `${d}D ${String(h).padStart(2,"0")}H ${String(m).padStart(2,"0")}M ${String(s).padStart(2,"0")}S`;
+  }
+  function ace352UpdateRankCountdown(){
+    document.querySelectorAll("[data-ace352-ranked-countdown]").forEach(el=>{
+      el.textContent=ace352RankCountdown(el.getAttribute("data-ace352-ranked-countdown"));
+    });
+  }
+  if(!window.__ACE352_RANK_TIMER){window.__ACE352_RANK_TIMER=setInterval(()=>{if(S.view==="rankings")ace352UpdateRankCountdown()},1000)}
+
   async function loadCareerLeaderboard(force=false){
     if(S.leaderboardLoading)return;
     if(S.leaderboardLoaded&&!force)return;
@@ -39122,17 +39138,50 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     S.leaderboardError="";
     if(S.view==="rankings")render();
     try{
-      const rows=await rpc("vds_rta_get_leaderboard",{p_limit:50});
-      S.leaderboard=Array.isArray(rows)?rows:[];
+      const hub=await rpc("vds_rta_get_rankings_hub_v352",{p_limit:50});
+      S.rankingsHub=hub&&typeof hub==="object"?hub:{};
+      S.leaderboard=Array.isArray(S.rankingsHub?.leaderboard)?S.rankingsHub.leaderboard:[];
       S.leaderboardLoaded=true;
     }catch(err){
-      S.leaderboard=[];
-      S.leaderboardLoaded=false;
-      S.leaderboardError=errText(err);
+      try{
+        const rows=await rpc("vds_rta_get_leaderboard_v350",{p_limit:50});
+        S.rankingsHub=null;
+        S.leaderboard=Array.isArray(rows)?rows:[];
+        S.leaderboardLoaded=true;
+      }catch(fallbackErr){
+        S.rankingsHub=null;
+        S.leaderboard=[];
+        S.leaderboardLoaded=false;
+        S.leaderboardError=errText(fallbackErr||err);
+      }
     }finally{
       S.leaderboardLoading=false;
-      if(S.view==="rankings")render();
+      if(S.view==="rankings"){render();requestAnimationFrame(ace352UpdateRankCountdown)}
     }
+  }
+
+  function ace352HallOfChampions(hall){
+    const seasons=Array.isArray(hall)?hall:[];
+    const rankIcon=(n)=>Number(n)===1?"🥇":Number(n)===2?"🥈":Number(n)===3?"🥉":`#${Number(n||0)}`;
+    if(!seasons.length){
+      const current=S.rankingsHub?.current||{};
+      return `<section class="ace352HallEmpty"><i>♛</i><b>THE FIRST PODIUM HAS NOT LOCKED YET</b><span>${current?.label?`${esc(current.label)} is the first Ranked Season. `:""}When the month ends, its Top 3 will be permanently added here.</span></section>`;
+    }
+    return `<section class="ace352Hall">
+      ${seasons.map((season,idx)=>{
+        const top=Array.isArray(season?.top3)?season.top3:[];
+        return `<article class="ace352HallSeason ${idx===0?"latest":""}">
+          <header><div><small>${idx===0?"LATEST CHAMPIONS":"RANKED SEASON"}</small><h2>${esc(String(season?.label||season?.season_key||"Ranked Season").toUpperCase())}</h2></div><span>FINAL PODIUM</span></header>
+          <div class="ace352HallPodium">
+            ${top.map(r=>`<button type="button" class="ace352HallPlayer ace350ProfileEntry rank${Number(r.rank_no||0)}" data-ace350-profile="${esc(r.player_key||"")}" aria-label="View ${esc(r.player_name||"player")} profile">
+              <i>${rankIcon(r.rank_no)}</i>
+              <div><small>${esc(r.player_position||"PLAYER")} · ${Number(r.overall||0)} OVR</small><b>${esc(r.player_name||"ACE Player")}</b><span>${esc(r.club_name||"Career")} · ${esc(r.profile_title||"RISING ACE")}</span></div>
+              <em>${Number(r.career_wins||0)}W–${Number(r.career_losses||0)}L</em>
+            </button>`).join("")||`<div class="ace352HallNoPodium">No eligible podium was recorded for this month.</div>`}
+          </div>
+        </article>`;
+      }).join("")}
+    </section>`;
   }
 
   function careerLeaderboardView(c){
@@ -39140,8 +39189,13 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       setTimeout(()=>loadCareerLeaderboard(false),0);
     }
     const rows=Array.isArray(S.leaderboard)?S.leaderboard:[];
-    const mine=rows.find(x=>x?.is_me);
+    const hub=S.rankingsHub||{};
+    const mine=hub?.me&&Object.keys(hub.me||{}).length?hub.me:rows.find(x=>x?.is_me);
     const podium=rows.slice(0,3);
+    const current=hub?.current||{};
+    const hall=Array.isArray(hub?.hall_of_champions)?hub.hall_of_champions:[];
+    const label=String(current?.label||"Current Month").toUpperCase();
+    const endAt=current?.ends_at||"";
     const rankIcon=(n)=>Number(n)===1?"🥇":Number(n)===2?"🥈":Number(n)===3?"🥉":`#${Number(n||0)}`;
     const status=S.leaderboardLoading
       ? `<div class="rtaRankState"><span class="rtaRankSpinner"></span><b>LOADING GLOBAL RANKINGS</b></div>`
@@ -39150,13 +39204,15 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         : !rows.length
           ? `<div class="rtaRankState"><b>NO CAREERS RANKED YET</b><span>Complete your Career setup to enter the table.</span></div>`
           : "";
+    const hallMode=S.rankingsPanel==="hall";
 
-    return `<main class="rtaRankings">
-      <section class="rtaRankHero">
+    return `<main class="rtaRankings ace352Rankings">
+      <section class="rtaRankHero ace352RankHero">
         <div>
-          <small>GLOBAL · ROAD TO ACE</small>
+          <small>RANKED SEASON · ${esc(label)}</small>
           <h1>Career Rankings</h1>
-          <p>Player OVR decides the leaderboard. If two players share the same OVR, career reputation, win rate, wins and season progress break the tie.</p>
+          <p>Compete on the live Career leaderboard throughout the month. When the Ranked Season closes, the final Top 3 are permanently immortalised in the Hall of Champions.</p>
+          <div class="ace352RankClock"><span>SEASON ENDS IN</span><b data-ace352-ranked-countdown="${esc(endAt)}">${ace352RankCountdown(endAt)}</b><em>TOP 3 LOCK INTO HISTORY AT THE MONTHLY RESET</em></div>
         </div>
         <div class="rtaRankHeroMe">
           <span>YOUR CURRENT RANK</span>
@@ -39166,20 +39222,26 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         </div>
       </section>
 
+      <nav class="ace352RankTabs" aria-label="Career ranking sections">
+        <button type="button" data-ace352-rank-panel="live" class="${hallMode?"":"active"}"><span>LIVE RANKINGS</span><small>${esc(label)}</small></button>
+        <button type="button" data-ace352-rank-panel="hall" class="${hallMode?"active":""}"><span>HALL OF CHAMPIONS</span><small>${hall.length} COMPLETED SEASON${hall.length===1?"":"S"}</small></button>
+      </nav>
+
+      ${hallMode?ace352HallOfChampions(hall):`
       ${podium.length?`<section class="rtaRankPodium">
-        ${podium.map((r,i)=>`<article class="${i===0?"first":""} ${r.is_me?"me":""}">
+        ${podium.map((r,i)=>`<article class="${i===0?"first":""} ${r.is_me?"me":""} ace350ProfileEntry" data-ace350-profile="${esc(r.player_key||"")}" role="button" tabindex="0" aria-label="View ${esc(r.player_name||"player")} profile">
           <div class="rtaRankMedal">${rankIcon(r.rank_no)}</div>
           <small>${esc(r.player_position||"PLAYER")} · S${Number(r.season||1)}</small>
           <h3>${esc(r.player_name||"ACE Player")}</h3>
           <div class="rtaRankPodiumOvr">${Number(r.overall||0)}<span>OVR</span></div>
           <p>${esc(r.club_name||"—")}</p>
-          <em>${Number(r.career_wins||0)}W · ${Number(r.career_losses||0)}L · ${Number(r.win_pct||0).toFixed(1)}%</em>
+          <em>${Number(r.career_wins||0)}W · ${Number(r.career_losses||0)}L · ${Number(r.win_pct||0).toFixed(1)}%</em><span class="ace350ViewHint">VIEW PROFILE →</span>
         </article>`).join("")}
       </section>`:""}
 
       <section class="rtaRankBoard">
         <div class="rtaRankBoardHead">
-          <div><small>TOP 50</small><h2>Global leaderboard</h2></div>
+          <div><small>CURRENT MONTH · TOP 50</small><h2>Live Ranked Season</h2></div>
           <span>OVR FIRST · PERFORMANCE TIEBREAK</span>
         </div>
         ${status}
@@ -39187,16 +39249,16 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
           <div class="rtaRankRow header">
             <span>RANK</span><span>PLAYER</span><span>OVR</span><span>CLUB / LEAGUE</span><span>RECORD</span><span>SEASON</span>
           </div>
-          ${rows.map(r=>`<div class="rtaRankRow ${r.is_me?"me":""}">
+          ${rows.map(r=>`<div class="rtaRankRow ${r.is_me?"me":""} ace350ProfileEntry" data-ace350-profile="${esc(r.player_key||"")}" role="button" tabindex="0" aria-label="View ${esc(r.player_name||"player")} profile">
             <strong>${rankIcon(r.rank_no)}</strong>
-            <div class="rtaRankPlayer"><b>${esc(r.player_name||"ACE Player")}</b><small>${esc(r.username||r.display_name||"Manager")} · ${esc(r.player_position||"—")}</small></div>
+            <div class="rtaRankPlayer"><b>${esc(r.player_name||"ACE Player")}</b><small>${esc(r.username||r.display_name||"Manager")} · ${esc(r.player_position||"—")} · ${esc(r.profile_title||"RISING ACE")}</small></div>
             <div class="rtaRankOvr"><b>${Number(r.overall||0)}</b><small>OVR</small></div>
             <div class="rtaRankClub"><div class="rtaRankClubIdentity">${rta77ClubLogo(r.club_name||"Club","sm")}<div><b>${esc(r.club_name||"WIP")}</b><small>${esc(r.league_name||"Career League")}</small></div></div></div>
             <div class="rtaRankRecord"><b>${Number(r.career_wins||0)}W–${Number(r.career_losses||0)}L</b><small>${Number(r.win_pct||0).toFixed(1)}% WIN</small></div>
             <div class="rtaRankSeason"><b>S${Number(r.season||1)}</b>${r.is_me?'<small>YOU</small>':""}</div>
           </div>`).join("")}
         </div>`:""}
-      </section>
+      </section>`}
     </main>`;
   }
 
@@ -41249,7 +41311,7 @@ document.addEventListener("click",function(e){
     const xp=xpProgress(c),rp=roleProgress(c),rep=repProgress(c),gains=rta93PlayerGains(c);
     return `<main class="rta93Player">
       <section class="rta93PlayerHero"><div class="rta93PlayerCardStage">${careerCardHTML(c)}</div><div class="rta93PlayerIdentity"><small>YOUR PLAYER</small><div class="rta93PlayerName"><h1>${esc(c.player_name)}</h1><strong>${Number(c.overall)}<span>OVR</span></strong></div><p>${esc(c.squad_role)} · ${esc(posLabel(c.position))} · #${Number(c.jersey_number)} · ${Number(c.height_cm)}cm · ${esc(c.nationality||"England")}</p>${ace349HeroShowcase(c)}<details class="ace316mQuickProfile"${(typeof window!=="undefined"&&window.innerWidth>760)?" open":""}><summary><span>QUICK ATTRIBUTES</span><b>VIEW PROFILE</b><i>⌄</i></summary><div class="ace316mQuickProfileBody">${rta217PlayerRadarHTML(c)}${rta93CompactAttributeRows(c,gains)}</div></details><div class="rta180MetaLine"><span>LEVEL <b>${Number(c.level||1)}</b></span><span>SP <b>${Number(c.skill_points||0)}</b></span><span>TRUST <b>${Number(c.coach_trust||0)}</b></span><span>REP <b>${Number(c.reputation||0)}</b></span></div><div class="rta93PlayerProgress"><div><span>XP</span><b>${xp.xp}/${xp.need}</b><i><em style="width:${xp.pct}%"></em></i></div><div><span>NEXT ROLE</span><b>${esc(rp.next||c.squad_role)}</b><i><em style="width:${rp.pct}%"></em></i></div><div><span>REPUTATION</span><b>${esc(rep.label)}</b><i><em style="width:${rep.pct}%"></em></i></div></div><div class="rta93PlayerActions"><button class="primary" data-rta93-player-panel="tree" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'tree')">DEVELOP PLAYER →</button><button data-rta83-open-card-studio>EDIT CARD</button></div></div></section>
-      <nav class="rta93PlayerTabs">${rta93PlayerTabButton("attributes","ATTRIBUTES","▦")}${rta93PlayerTabButton("tree","SKILL TREE","✦")}${rta93PlayerTabButton("form","FORM","↗")}${rta93PlayerTabButton("career","CAREER","◎")}${rta93PlayerTabButton("showcase","SHOWCASE","★")}</nav>
+      <nav class="rta93PlayerTabs">${rta93PlayerTabButton("attributes","ATTRIBUTES","▦")}${rta93PlayerTabButton("tree","SKILL TREE","✦")}${rta93PlayerTabButton("form","FORM","↗")}${rta93PlayerTabButton("career","CAREER","◎")}${(typeof window==="undefined"||window.innerWidth>760)?rta93PlayerTabButton("showcase","SHOWCASE","★"):""}</nav>
       ${rta93PlayerPanel(c)}
     </main>`;
   }
@@ -42152,18 +42214,81 @@ document.addEventListener("click",function(e){
     /* 315K: canonical international mount only. The old full depth/pool screen is no longer rendered. */
     return `<section class="aceV77Intl ace315kIntlRoot" data-intl-source="315K"></section>`;
   }
+  function ace351HonourName(v){
+    if(v==null)return "";
+    if(typeof v==="string")return v;
+    return String(v?.name||v?.title||"");
+  }
+  function ace351Fmt(n){return Number(n||0).toLocaleString()}
+  async function ace351EnsureLegacy(force=false){
+    if(S.legacyLoading||(!force&&S.legacy))return;
+    S.legacyLoading=true;S.legacyError="";render();
+    try{S.legacy=await rpc("vds_rta_get_career_legacy_v351");}
+    catch(err){S.legacy=null;S.legacyError=errText(err);toast(`CAREER LEGACY · ${S.legacyError}`,"error")}
+    finally{S.legacyLoading=false;render()}
+  }
+  function ace351LegacyPanel(c){
+    if(!S.legacy&&!S.legacyLoading&&!S.legacyError)setTimeout(()=>ace351EnsureLegacy(false),0);
+    if(S.legacyLoading)return `<section class="ace351Legacy"><div class="ace351LegacyState"><i>✦</i><b>BUILDING YOUR CAREER STORY…</b><span>Collecting seasons, records and honours.</span></div></section>`;
+    if(S.legacyError)return `<section class="ace351Legacy"><div class="ace351LegacyState error"><i>!</i><b>LEGACY UNAVAILABLE</b><span>${esc(S.legacyError)}</span><button type="button" data-ace351-refresh>TRY AGAIN</button></div></section>`;
+    const d=S.legacy||{},t=d.totals||{},r=d.records||{},ret=d.retirement||{},seasons=Array.isArray(d.seasons)?[...d.seasons].sort((a,b)=>Number(b.season||0)-Number(a.season||0)):[],clubs=Array.isArray(d.clubs)?d.clubs:[],honours=Array.isArray(d.honours)?d.honours:[],intl=Array.isArray(d.international_honours)?d.international_honours:[];
+    const totalGames=Number(t.wins||0)+Number(t.losses||0),winPct=totalGames?Math.round(Number(t.wins||0)*1000/totalGames)/10:0;
+    const position=String(d.player?.position||c.position||"").toUpperCase();
+    const statCards=position==="S"?
+      [["ASSISTS",t.assists],["ACES",t.aces],["DIGS",t.digs],["BLOCKS",t.blocks]]:
+      position==="L"?[["DIGS",t.digs],["RECEPTIONS","—"],["CAPS",t.international_caps],["WINS",t.wins]]:
+      [["KILLS",t.kills],["BLOCKS",t.blocks],["ACES",t.aces],["DIGS",t.digs]];
+    const honourNames=[...honours.map(ace351HonourName),...intl.map(ace351HonourName)].filter(Boolean);
+    return `<section class="ace351Legacy">
+      <header class="ace351LegacyHero ${ret.retired?"retired":""}">
+        <div><small>CAREER LEGACY</small><h2>${esc(d.player?.name||c.player_name||"ACE Player")}</h2><p>${ret.retired?`Career complete · ${Number(t.matches||0)} appearances`:"Your career story updates as every season is played."}</p></div>
+        <div class="ace351LegacyStatus"><span>${ret.retired?"CAREER COMPLETE":"ACTIVE CAREER"}</span><b>S${Number(d.player?.season||c.season||1)}</b><em>${Number(d.player?.age||c.age||17)} YEARS OLD</em></div>
+      </header>
+      ${d.beta_rules_active&&!ret.retired?`<div class="ace351BetaNote"><b>BETA GRACE ACTIVE</b><span>Retirement is paused during beta. Your legacy still records every season you play.</span></div>`:""}
+      <div class="ace351LegacyOverview">
+        <article><small>APPEARANCES</small><b>${ace351Fmt(t.matches)}</b><span>${ace351Fmt(t.wins)}W · ${ace351Fmt(t.losses)}L</span></article>
+        <article><small>WIN RATE</small><b>${winPct.toFixed(1)}%</b><span>${ace351Fmt(t.wins)} career wins</span></article>
+        <article><small>INTERNATIONAL</small><b>${ace351Fmt(t.international_caps)}</b><span>CAPS · ${ace351Fmt(t.international_wins)} wins</span></article>
+        <article><small>HONOURS</small><b>${honourNames.length}</b><span>career + international</span></article>
+      </div>
+      <div class="ace351SectionHead"><div><small>CAREER OUTPUT</small><h3>Your numbers</h3></div><button type="button" data-ace351-refresh>REFRESH</button></div>
+      <div class="ace351StatStrip">${statCards.map(([k,v])=>`<article><small>${esc(k)}</small><b>${typeof v==="number"?ace351Fmt(v):esc(v)}</b></article>`).join("")}</div>
+      <div class="ace351LegacyGrid">
+        <article class="ace351LegacyCard">
+          <div class="ace351CardHead"><small>MATCH RECORDS</small><h3>Career highs</h3></div>
+          <div class="ace351Records">
+            ${[["KILLS",r.kills],["BLOCKS",r.blocks],["ACES",r.aces],["DIGS",r.digs],["ASSISTS",r.assists],["RATING",Number(r.rating||0).toFixed(1)]].map(([k,v])=>`<span><small>${k}</small><b>${v}</b></span>`).join("")}
+          </div>
+        </article>
+        <article class="ace351LegacyCard">
+          <div class="ace351CardHead"><small>CLUB JOURNEY</small><h3>${clubs.length?`${clubs.length} recorded club${clubs.length===1?"":"s"}`:"Current club"}</h3></div>
+          <div class="ace351Clubs">${clubs.length?clubs.map(x=>`<div><b>${esc(x.club_name||"Club")}</b><span>${esc(x.league_name||"Career League")}</span><em>S${Number(x.first_season||1)}${Number(x.last_season||x.first_season)>Number(x.first_season||1)?`–S${Number(x.last_season)}`:""}</em></div>`).join(""):`<div><b>${esc(c.club_name||"Current club")}</b><span>${esc(S.league?.league_name||c.league_code||"Career League")}</span></div>`}</div>
+        </article>
+      </div>
+      <div class="ace351SectionHead"><div><small>SEASON BY SEASON</small><h3>Career timeline</h3></div><span>${seasons.length} recorded</span></div>
+      <div class="ace351Timeline">${seasons.length?seasons.map(s=>{
+        const sh=[...(Array.isArray(s.honours)?s.honours:[]).map(ace351HonourName),...(Array.isArray(s.international_honours)?s.international_honours:[]).map(ace351HonourName)].filter(Boolean);
+        const club=s.club_name||"Historical club unavailable";
+        return `<article class="ace351Season ${Number(s.season||0)===Number(c.season||0)?"current":""}"><div class="ace351SeasonNo"><small>SEASON</small><b>${Number(s.season||0)}</b>${s.age?`<em>AGE ${Number(s.age)}</em>`:""}</div><div class="ace351SeasonMain"><div><h4>${esc(club)}</h4><span>${esc(s.league_name||s.league_code||"Career League")}</span></div><div class="ace351SeasonRecord"><b>${Number(s.wins||0)}–${Number(s.losses||0)}</b><span>${Number(s.avg_rating||0).toFixed(1)} AVG</span></div><div class="ace351SeasonStats"><span><b>${ace351Fmt(s.kills)}</b>K</span><span><b>${ace351Fmt(s.blocks)}</b>B</span><span><b>${ace351Fmt(s.aces)}</b>A</span><span><b>${ace351Fmt(s.digs)}</b>D</span>${position==="S"?`<span><b>${ace351Fmt(s.assists)}</b>AST</span>`:""}</div>${sh.length?`<div class="ace351SeasonHonours">${sh.map(x=>`<em>★ ${esc(x)}</em>`).join("")}</div>`:""}${s.historic_backfill?`<small class="ace351Backfill">Older season stats recovered from match history; club name was not stored in those builds.</small>`:""}</div></article>`;
+      }).join(""):`<div class="ace351Empty">Play your first matches and your season timeline will begin here.</div>`}</div>
+      <div class="ace351SectionHead"><div><small>TROPHY ROOM</small><h3>Career honours</h3></div></div>
+      <div class="ace351Honours">${honourNames.length?honourNames.map((x,i)=>`<article><i>${i<3?"★":"✦"}</i><span><b>${esc(x)}</b><small>${intl.map(ace351HonourName).includes(x)?"INTERNATIONAL":"CAREER HONOUR"}</small></span></article>`).join(""):`<div class="ace351Empty">No major honours yet. Keep building the career.</div>`}</div>
+      ${ret.retired?`<section class="ace351Final"><i>✦</i><div><small>FINAL WHISTLE</small><h3>CAREER COMPLETE</h3><p>Retired at age ${Number(ret.age||d.player?.age||c.age||40)} after Season ${Number(ret.season||d.player?.season||c.season||1)}. Your career record is now permanent.</p></div></section>`:""}
+    </section>`;
+  }
+
   function careerView(c){
     const table=Array.isArray(S.league?.table)?S.league.table:[],offers=Array.isArray(c.transfer_offers)?c.transfer_offers:[],awards=Array.isArray(c.last_awards)?c.last_awards:[],h=latestMatch(),inbox=rta255CareerInbox(c);
     const leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"CURRENT LEAGUE"),tier=Number(S.pathway?.current?.tier||c.career_tier||5);
     const panel=String(S.careerPanel||"overview");
-    const body=panel==="pathway"?rta92PathwayPanel(c):panel==="league"?rta92LeaguePanel(c,leagueName,table,h):panel==="story"?rta92StoryPanel(c,inbox,offers,awards):panel==="international"?aceV77InternationalPanel(c):rta92OverviewPanel(c,leagueName,tier);
+    const body=panel==="pathway"?rta92PathwayPanel(c):panel==="league"?rta92LeaguePanel(c,leagueName,table,h):panel==="story"?rta92StoryPanel(c,inbox,offers,awards):panel==="international"?aceV77InternationalPanel(c):panel==="legacy"?ace351LegacyPanel(c):rta92OverviewPanel(c,leagueName,tier);
     return `<main class="rta92CareerHub">
       <section class="rta92CareerHeader">
         <div class="rta92CareerIdentity"><small>ROAD TO ACE · CAREER</small><h1>${esc(c.player_name)}</h1><p>${esc(c.club_name)} · ${esc(leagueName)}</p></div>
         <div class="rta92CareerHeaderStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${Number(c.age||17)}</b>AGE</span><span><b>${Number(c.season||1)}</b>SEASON</span><span><b>${tier}</b>WORLD TIER</span></div>
       </section>
       <nav class="rta92CareerTabs" aria-label="Career sections">
-        ${[["overview","OVERVIEW","⌂"],["pathway","PATHWAY","↗"],["league","LEAGUE","▦"],["story","STORY","✦"],["international","INT’L","◎"]].map(([v,l,i])=>`<button type="button" data-rta92-career-panel="${v}" class="${panel===v?"active":""}"><i>${i}</i><span>${l}</span></button>`).join("")}
+        ${[["overview","OVERVIEW","⌂"],["pathway","PATHWAY","↗"],["league","LEAGUE","▦"],["story","STORY","✦"],["international","INT’L","◎"],["legacy","LEGACY","◇"]].map(([v,l,i])=>`<button type="button" data-rta92-career-panel="${v}" class="${panel===v?"active":""}"><i>${i}</i><span>${l}</span></button>`).join("")}
       </nav>
       <div class="rta92CareerBody">${body}</div>
       <div class="rta92CareerDanger"><button type="button" data-rta62-reset>RESET THIS CAREER SAVE</button></div>
@@ -42326,8 +42451,8 @@ document.addEventListener("click",function(e){
     if(S.busy)return;S.busy=true;
     try{
       const d=await rpc("vds_rta_start_next_season",{p_club:club});
-      await loadState({silent:true});
-      if(d?.retired_now||ace347CareerEnded(S.career)){S.view="career";S.careerPanel="overview";render();toast("Playing career complete · your final record is locked in.");return;}
+      await loadState({silent:true});S.legacy=null;S.legacyError="";
+      if(d?.retired_now||ace347CareerEnded(S.career)){S.view="career";S.careerPanel="legacy";render();ace351EnsureLegacy(true);toast("Playing career complete · your final record is locked in.");return;}
       S.view="home";render();
       rta105ShowSeasonKickoff();
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
@@ -46190,7 +46315,66 @@ function renderAttackKeyOverlay(){
     requestAnimationFrame(()=>rta102StartResultReveal(data));
   }
 
+  function ace350PublicProfileClose(){
+    const el=document.getElementById("ace350PublicProfile");
+    if(!el)return;
+    el.classList.remove("show");
+    setTimeout(()=>el.remove(),180);
+  }
+  function ace350ProfileItemHTML(x,kind){
+    if(!x)return "";
+    if(kind==="trophy")return `<article class="ace350PublicTrophy"><i>${esc(x.icon||"★")}</i><div><small>${esc(x.tier||"HONOUR")}</small><b>${esc(x.name||"TROPHY")}</b><span>${esc(x.description||"")}</span></div></article>`;
+    return `<article class="ace350PublicBadge"><i>${esc(x.icon||"★")}</i><b>${esc(x.name||"BADGE")}</b><span>${esc(x.description||"")}</span></article>`;
+  }
+  function ace350PublicProfileShell(inner,accent="PURPLE"){
+    let el=document.getElementById("ace350PublicProfile");
+    if(!el){el=document.createElement("div");el.id="ace350PublicProfile";el.className="ace350PublicProfile";document.body.appendChild(el)}
+    el.dataset.accent=String(accent||"PURPLE").toUpperCase();
+    el.innerHTML=inner;
+    requestAnimationFrame(()=>el.classList.add("show"));
+    return el;
+  }
+  async function ace350OpenPublicProfile(playerKey){
+    const key=String(playerKey||"").trim();
+    if(!key)return;
+    ace350PublicProfileShell(`<div class="ace350PublicCard loading"><button type="button" data-ace350-close aria-label="Back">←</button><div class="ace350PublicLoading"><i></i><b>LOADING PLAYER PROFILE</b></div></div>`);
+    try{
+      const d=await rpc("vds_rta_get_public_player_profile_v350",{p_player_key:key});
+      const p=d?.player||{},m=d?.manager||{},st=d?.stats||{};
+      const trophies=Array.isArray(d?.featured_trophies)?d.featured_trophies:[];
+      const badges=Array.isArray(d?.featured_badges)?d.featured_badges:[];
+      const rank=(Array.isArray(S.leaderboard)?S.leaderboard:[]).find(x=>x?.player_key===key)?.rank_no;
+      const avatar=String(m.avatar_url||"");
+      const initial=String(p.player_name||m.display_name||"A").slice(0,1).toUpperCase();
+      const title=String(p.profile_title||"RISING ACE");
+      const primary=p.primary_archetype?pretty(String(p.primary_archetype)):"UNCOMMITTED";
+      const secondary=p.secondary_archetype?pretty(String(p.secondary_archetype)):"—";
+      const record=`${Number(st.wins||0)}W–${Number(st.losses||0)}L`;
+      ace350PublicProfileShell(`<div class="ace350PublicCard">
+        <header class="ace350PublicTop"><button type="button" data-ace350-close aria-label="Back to rankings">←</button><div><small>PUBLIC PLAYER PROFILE</small><b>${rank?`#${Number(rank)} GLOBAL`:"ROAD TO ACE"}</b></div>${d?.is_me?`<button type="button" class="edit" data-ace350-edit>EDIT SHOWCASE</button>`:""}</header>
+        <section class="ace350PublicHero">
+          <div class="ace350PublicAvatar">${avatar?`<img src="${esc(avatar)}" alt="" referrerpolicy="no-referrer">`:`<span>${esc(initial)}</span>`}</div>
+          <div class="ace350PublicIdentity"><small>${esc(p.nationality||"INTERNATIONAL")} · ${esc(posLabel(p.position||"OH"))}</small><h1>${esc(p.player_name||"ACE Player")}</h1><strong>${esc(title)}</strong><p>${esc(p.club_name||"Career Club")} · ${esc(p.league_name||"Career League")} · ${esc(p.squad_role||"PLAYER")}</p></div>
+          <div class="ace350PublicOvr">${Number(p.overall||0)}<span>OVR</span></div>
+        </section>
+        <section class="ace350PublicQuick"><div><span>SEASON</span><b>${Number(p.season||1)}</b></div><div><span>AGE</span><b>${Number(p.age||17)}</b></div><div><span>RECORD</span><b>${esc(record)}</b></div><div><span>ACE+</span><b>${Number(p.ace_plus_rank||0)?`RANK ${Number(p.ace_plus_rank)}`:"—"}</b></div></section>
+        ${Number(d?.olympic_summary?.appearances||0)>0?`<section class="ace355PublicOlympics"><div><div><small>OLYMPIC CAREER</small><h3>${Number(d.olympic_summary.appearances||0)} Olympic appearance${Number(d.olympic_summary.appearances||0)===1?"":"s"}</h3></div><div class="ace355PublicMedals"><b>🥇 ${Number(d.olympic_summary.gold||0)}</b><b>🥈 ${Number(d.olympic_summary.silver||0)}</b><b>🥉 ${Number(d.olympic_summary.bronze||0)}</b></div></div></section>`:""}
+        <section class="ace350PublicBuild"><div><small>PRIMARY</small><b>${esc(primary)}</b></div><div><small>SECONDARY</small><b>${esc(secondary)}</b></div><div><small>INTERNATIONAL</small><b>${Number(st.international_caps||0)} CAPS · ${Number(st.international_wins||0)} WINS</b></div></section>
+        <section class="ace350PublicSection"><div class="ace350PublicSectionHead"><small>FEATURED</small><h2>Trophy Cabinet</h2></div><div class="ace350PublicTrophies">${trophies.length?trophies.map(x=>ace350ProfileItemHTML(x,"trophy")).join(""):`<div class="ace350PublicEmpty">No trophies featured yet.</div>`}</div></section>
+        <section class="ace350PublicSection"><div class="ace350PublicSectionHead"><small>PLAYER IDENTITY</small><h2>Badges</h2></div><div class="ace350PublicBadges">${badges.length?badges.map(x=>ace350ProfileItemHTML(x,"badge")).join(""):`<div class="ace350PublicEmpty">No badges featured yet.</div>`}</div></section>
+        <section class="ace350PublicSection"><div class="ace350PublicSectionHead"><small>CAREER OUTPUT</small><h2>Career Stats</h2></div><div class="ace350PublicStats">
+          ${[["MATCHES",st.matches],["KILLS",st.kills],["BLOCKS",st.blocks],["ACES",st.aces],["DIGS",st.digs],["ASSISTS",st.assists],["CAPS",st.international_caps],["REP",st.reputation]].map(([n,v])=>`<div><span>${n}</span><b>${Number(v||0).toLocaleString()}</b></div>`).join("")}
+        </div></section>
+        <footer class="ace350PublicFooter"><span>@${esc(m.username||m.display_name||"Manager")}</span><button type="button" data-ace350-close>BACK TO RANKINGS</button></footer>
+      </div>`,p.profile_accent||"PURPLE");
+    }catch(err){
+      ace350PublicProfileShell(`<div class="ace350PublicCard error"><button type="button" data-ace350-close aria-label="Back">←</button><div class="ace350PublicLoading"><b>PROFILE UNAVAILABLE</b><span>${esc(errText(err))}</span><button type="button" data-ace350-close>BACK TO RANKINGS</button></div></div>`);
+    }
+  }
   async function handleClick(e){
+    if(e.target.closest?.("[data-ace350-close]")){ace350PublicProfileClose();return}
+    if(e.target.closest?.("[data-ace350-edit]")){ace350PublicProfileClose();S.view="player";S.playerPanel="showcase";render();ace349EnsureShowcase();return}
+    const publicProfile=e.target.closest?.("[data-ace350-profile]");if(publicProfile){ace350OpenPublicProfile(publicProfile.dataset.ace350Profile);return}
     if(e.target.closest?.("[data-rta125-guide-open]")){rta125OpenCurrentGuide();return}
     if(e.target.closest?.("[data-rta114-physical-focus]")){
       q(".rta114PhysicalSection")?.scrollIntoView({behavior:"smooth",block:"center"});
@@ -46231,8 +46415,11 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-ace349-save]")){ace349SaveShowcase();return}
     if(e.target.closest?.("[data-ace349-refresh]")){S.showcase=null;S.showcaseDraft=null;ace349EnsureShowcase(true);return}
     const playerPanel=e.target.closest?.("[data-rta93-player-panel]");if(playerPanel){S.playerPanel=playerPanel.dataset.rta93PlayerPanel||"attributes";S.view="player";render();if(S.playerPanel==="tree"){ace316hSkillTop();rta316EnsureSkillTree().then(()=>{render();ace316hSkillTop()}).catch(err=>toast(errText(err),"error"))}else if(S.playerPanel==="showcase"){ace349EnsureShowcase()}return}
-    const careerPanel=e.target.closest?.("[data-rta92-career-panel]");if(careerPanel){S.careerPanel=careerPanel.dataset.rta92CareerPanel||"overview";render();return}
+    const careerPanel=e.target.closest?.("[data-rta92-career-panel]");if(careerPanel){S.careerPanel=careerPanel.dataset.rta92CareerPanel||"overview";render();if(S.careerPanel==="legacy")ace351EnsureLegacy(true);return}
+    if(e.target.closest?.("[data-ace351-refresh]")){ace351EnsureLegacy(true);return}
     const mobileMoreView=e.target.closest?.("[data-rta85-more-view]");if(mobileMoreView){const v=mobileMoreView.dataset.rta85MoreView;closeOverlay();S.view=v;if(v==="rankings")S.leaderboardLoaded=false;if(v==="agent")rta257MarkAgentRead(S.career);render();return}
+    if(e.target.closest?.("[data-rta85-more-showcase]")){closeOverlay();S.view="player";S.playerPanel="showcase";render();ace349EnsureShowcase();return}
+    const rankingsPanel=e.target.closest?.("[data-ace352-rank-panel]");if(rankingsPanel){S.rankingsPanel=rankingsPanel.dataset.ace352RankPanel||"live";render();requestAnimationFrame(ace352UpdateRankCountdown);return}
     if(e.target.closest?.("[data-rta-rankings-refresh]")){loadCareerLeaderboard(true);return}
     if(e.target.closest?.("[data-rta85-more-saves]")){closeOverlay();showSaveManager();return}
     if(e.target.closest?.("[data-rta85-more]")){showRtaMobileMore();return}
@@ -54202,6 +54389,198 @@ window.ACE_TROPHY_CABINET_BUILD="B21.36.349";
 window.ACE_PROJECT_BUILD="B21.36.349";
 window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.349";
 </script>
+
+<!-- PROJECT ACE B21.36.350 · LEADERBOARD PUBLIC PROFILES -->
+<style id="ace350-public-profile-style">
+#roadtoace .ace350ProfileEntry{cursor:pointer!important;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+#roadtoace .rtaRankRow.ace350ProfileEntry:hover{background:linear-gradient(90deg,rgba(58,154,224,.11),rgba(58,154,224,.025))}
+#roadtoace .rtaRankPodium .ace350ProfileEntry:hover{transform:translateY(-2px);border-color:rgba(104,185,238,.20)}
+#roadtoace .ace350ProfileEntry:focus-visible{outline:2px solid #56bdf3;outline-offset:-2px}
+#roadtoace .ace350ViewHint{display:block;margin-top:8px;color:#58b7ed;font-size:6px;font-weight:1000;letter-spacing:.10em}
+.ace350PublicProfile{position:fixed;z-index:1001200;inset:0;overflow:auto;padding:28px;background:rgba(2,7,12,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .16s ease}.ace350PublicProfile.show{opacity:1;pointer-events:auto}
+.ace350PublicCard{width:min(920px,100%);min-height:min(720px,calc(100dvh - 56px));margin:0 auto;overflow:hidden;border:1px solid rgba(255,255,255,.08);border-radius:24px;background:radial-gradient(circle at 86% 8%,rgba(135,78,205,.14),transparent 25%),linear-gradient(180deg,#081522,#050d15);box-shadow:0 32px 100px rgba(0,0,0,.58);color:#edf7ff}
+.ace350PublicProfile[data-accent="BLUE"] .ace350PublicCard{background:radial-gradient(circle at 86% 8%,rgba(50,142,205,.17),transparent 25%),linear-gradient(180deg,#081522,#050d15)}.ace350PublicProfile[data-accent="GOLD"] .ace350PublicCard{background:radial-gradient(circle at 86% 8%,rgba(196,153,48,.15),transparent 25%),linear-gradient(180deg,#15150d,#050d15)}.ace350PublicProfile[data-accent="RED"] .ace350PublicCard{background:radial-gradient(circle at 86% 8%,rgba(197,68,81,.15),transparent 25%),linear-gradient(180deg,#170e14,#050d15)}.ace350PublicProfile[data-accent="GREEN"] .ace350PublicCard{background:radial-gradient(circle at 86% 8%,rgba(49,161,95,.14),transparent 25%),linear-gradient(180deg,#0a1713,#050d15)}
+.ace350PublicTop{height:62px;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.055);background:rgba(3,12,19,.52)}.ace350PublicTop>button:not(.edit){width:36px;height:36px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#091a28;color:#dcecf5;font-size:18px;cursor:pointer}.ace350PublicTop>div{min-width:0;flex:1}.ace350PublicTop small{display:block;color:#758da0;font-size:6px;font-weight:1000;letter-spacing:.16em}.ace350PublicTop b{display:block;margin-top:3px;color:#c8d9e5;font-size:8px}.ace350PublicTop .edit{min-height:35px;padding:0 12px;border:1px solid rgba(179,120,236,.22);border-radius:9px;background:rgba(116,67,166,.13);color:#d6b6f1;font-size:7px;font-weight:1000;letter-spacing:.08em;cursor:pointer}
+.ace350PublicHero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:28px 30px 20px}.ace350PublicAvatar{width:78px;height:78px;display:grid;place-items:center;overflow:hidden;border-radius:22px;border:1px solid rgba(255,255,255,.11);background:linear-gradient(145deg,#162839,#0b1520);font-size:27px;font-weight:1000}.ace350PublicAvatar img{width:100%;height:100%;object-fit:cover}.ace350PublicIdentity small{color:#718fa3;font-size:7px;font-weight:1000;letter-spacing:.13em}.ace350PublicIdentity h1{margin:5px 0 3px;font-size:34px;line-height:1;letter-spacing:-.04em}.ace350PublicIdentity strong{color:#c799ef;font-size:9px;letter-spacing:.12em}.ace350PublicProfile[data-accent="BLUE"] .ace350PublicIdentity strong{color:#70c1ee}.ace350PublicProfile[data-accent="GOLD"] .ace350PublicIdentity strong{color:#e3c36a}.ace350PublicProfile[data-accent="RED"] .ace350PublicIdentity strong{color:#ea8a95}.ace350PublicProfile[data-accent="GREEN"] .ace350PublicIdentity strong{color:#78d6a2}.ace350PublicIdentity p{margin:7px 0 0;color:#8298aa;font-size:9px}.ace350PublicOvr{font-size:48px;font-weight:1000;line-height:.82;color:#fff}.ace350PublicOvr span{display:block;margin-top:7px;text-align:right;color:#6d8497;font-size:7px;letter-spacing:.14em}
+.ace350PublicQuick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:0 30px 18px}.ace350PublicQuick>div,.ace350PublicBuild>div,.ace350PublicStats>div{padding:11px;border:1px solid rgba(255,255,255,.055);border-radius:12px;background:rgba(4,15,24,.55)}.ace350PublicQuick span,.ace350PublicStats span,.ace350PublicBuild small{display:block;color:#647e91;font-size:6px;font-weight:1000;letter-spacing:.11em}.ace350PublicQuick b,.ace350PublicStats b,.ace350PublicBuild b{display:block;margin-top:4px;color:#e0edf5;font-size:11px}.ace350PublicBuild{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;padding:0 30px 20px}
+.ace350PublicSection{padding:18px 30px;border-top:1px solid rgba(255,255,255,.045)}.ace350PublicSectionHead small{color:#775f91;font-size:6px;font-weight:1000;letter-spacing:.14em}.ace350PublicSectionHead h2{margin:4px 0 12px;font-size:18px}.ace350PublicTrophies{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ace350PublicTrophy{min-height:86px;display:flex;gap:10px;align-items:center;padding:11px;border:1px solid rgba(197,151,238,.09);border-radius:13px;background:rgba(92,51,132,.055)}.ace350PublicTrophy>i{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:rgba(147,92,197,.10);font-style:normal;font-size:20px}.ace350PublicTrophy small{display:block;color:#735b87;font-size:5px;font-weight:1000;letter-spacing:.10em}.ace350PublicTrophy b{display:block;margin-top:3px;font-size:8px;line-height:1.2}.ace350PublicTrophy span{display:block;margin-top:3px;color:#64798a;font-size:6px;line-height:1.3}
+.ace350PublicBadges{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.ace350PublicBadge{min-height:94px;padding:9px 6px;border:1px solid rgba(255,255,255,.055);border-radius:12px;background:rgba(4,15,24,.55);text-align:center}.ace350PublicBadge i{width:38px;height:38px;margin:0 auto 7px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(190,141,239,.13);background:rgba(112,67,157,.08);font-style:normal;font-size:11px;font-weight:1000}.ace350PublicBadge b{display:block;font-size:6px;line-height:1.2}.ace350PublicBadge span{display:block;margin-top:4px;color:#62788a;font-size:5px;line-height:1.25}.ace350PublicStats{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px}.ace350PublicStats>div{text-align:center}.ace350PublicStats b{font-size:13px}.ace350PublicEmpty{grid-column:1/-1;padding:18px;border:1px dashed rgba(255,255,255,.07);border-radius:11px;color:#657a8b;text-align:center;font-size:8px}
+.ace350PublicFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 30px 24px}.ace350PublicFooter span{color:#667e90;font-size:8px}.ace350PublicFooter button{min-height:38px;padding:0 14px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#0a1a27;color:#d8e7ef;font-size:7px;font-weight:1000;letter-spacing:.08em}.ace350PublicLoading{min-height:420px;display:grid;place-items:center;align-content:center;gap:10px;text-align:center;color:#7e96a7}.ace350PublicLoading i{width:28px;height:28px;border:2px solid rgba(255,255,255,.1);border-top-color:#56bdf3;border-radius:50%;animation:rtaRankSpin .8s linear infinite}.ace350PublicLoading b{font-size:9px;letter-spacing:.11em}.ace350PublicLoading span{max-width:360px;font-size:8px}.ace350PublicLoading button{min-height:36px;padding:0 12px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:#0a1a27;color:#dceaf2;font-size:7px;font-weight:1000}
+@media(max-width:760px){.ace350PublicProfile{padding:0;background:#050d15}.ace350PublicCard{width:100%;min-height:100dvh;border:0;border-radius:0;box-shadow:none;padding-bottom:calc(82px + env(safe-area-inset-bottom))}.ace350PublicTop{position:sticky;z-index:4;top:0;height:58px;padding:0 11px;background:rgba(5,13,21,.94);backdrop-filter:blur(10px)}.ace350PublicTop .edit{padding:0 9px;font-size:6px}.ace350PublicHero{grid-template-columns:auto 1fr auto;gap:11px;padding:19px 13px 15px}.ace350PublicAvatar{width:58px;height:58px;border-radius:17px}.ace350PublicIdentity h1{font-size:24px}.ace350PublicIdentity p{font-size:7px;line-height:1.35}.ace350PublicOvr{font-size:35px}.ace350PublicQuick{grid-template-columns:1fr 1fr;padding:0 13px 12px}.ace350PublicBuild{grid-template-columns:1fr;padding:0 13px 14px}.ace350PublicSection{padding:15px 13px}.ace350PublicTrophies{grid-template-columns:1fr}.ace350PublicBadges{grid-template-columns:repeat(3,minmax(0,1fr))}.ace350PublicStats{grid-template-columns:repeat(4,minmax(0,1fr))}.ace350PublicFooter{padding:14px 13px 22px;flex-direction:column;align-items:stretch}.ace350PublicFooter button{width:100%}#roadtoace .ace350ViewHint{font-size:7px}}
+</style>
+<script id="ace350-public-profile-runtime">
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape")document.querySelector("#ace350PublicProfile [data-ace350-close]")?.click();
+  if((e.key==="Enter"||e.key===" ")&&document.activeElement?.matches?.("[data-ace350-profile]")){e.preventDefault();document.activeElement.click()}
+});
+window.ACE_PUBLIC_PLAYER_PROFILE_BUILD="B21.36.350";
+window.ACE_LEADERBOARD_PROFILE_DISCOVERY="B21.36.350";
+window.ACE_PROJECT_BUILD="B21.36.350";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.350";
+</script>
+
+
+<!-- PROJECT ACE B21.36.351 · CAREER LEGACY -->
+<style id="ace351-career-legacy-style">
+#roadtoace .ace351Legacy{padding:0 0 22px}.ace351LegacyHero{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:22px;border:1px solid rgba(94,180,229,.17);border-radius:18px;background:radial-gradient(circle at 80% 10%,rgba(73,161,217,.13),transparent 38%),linear-gradient(145deg,rgba(7,29,44,.98),rgba(4,16,27,.98));box-shadow:0 18px 46px rgba(0,0,0,.22)}
+#roadtoace .ace351LegacyHero small,#roadtoace .ace351SectionHead small,#roadtoace .ace351CardHead small{color:#70afd1;font-size:7px;font-weight:1000;letter-spacing:.18em}#roadtoace .ace351LegacyHero h2{margin:5px 0 4px;color:#eef9ff;font-size:28px;letter-spacing:.01em}#roadtoace .ace351LegacyHero p{margin:0;color:#8199aa;font-size:9px}.ace351LegacyHero.retired{border-color:rgba(224,188,75,.24);background:radial-gradient(circle at 80% 10%,rgba(225,185,59,.15),transparent 38%),linear-gradient(145deg,rgba(38,30,7,.72),rgba(4,16,27,.98))}.ace351LegacyStatus{min-width:160px;padding:13px 15px;border:1px solid rgba(120,191,231,.13);border-radius:13px;background:rgba(2,12,20,.52);text-align:right}.ace351LegacyStatus span{display:block;color:#7d9caf;font-size:6px;font-weight:1000;letter-spacing:.13em}.ace351LegacyStatus b{display:block;margin:2px 0;color:#edf8ff;font-size:24px}.ace351LegacyStatus em{color:#6f8899;font-size:7px;font-style:normal;font-weight:900}.ace351BetaNote{display:flex;gap:12px;align-items:center;margin-top:10px;padding:10px 13px;border:1px solid rgba(182,118,255,.18);border-radius:11px;background:rgba(77,35,112,.13)}.ace351BetaNote b{color:#d8b6ff;font-size:7px;letter-spacing:.11em}.ace351BetaNote span{color:#8b9ca9;font-size:8px}.ace351LegacyOverview{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}.ace351LegacyOverview article,.ace351StatStrip article{padding:13px;border:1px solid rgba(101,173,213,.12);border-radius:12px;background:rgba(5,23,35,.72)}.ace351LegacyOverview small,.ace351StatStrip small{display:block;color:#6e8c9e;font-size:6px;font-weight:1000;letter-spacing:.12em}.ace351LegacyOverview b{display:block;margin:4px 0 2px;color:#edf8ff;font-size:22px}.ace351LegacyOverview span{color:#7890a0;font-size:7px}.ace351SectionHead{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:21px 2px 9px}.ace351SectionHead h3,.ace351CardHead h3{margin:3px 0 0;color:#e9f5fb;font-size:16px}.ace351SectionHead>span{color:#6f899a;font-size:7px;font-weight:900}.ace351SectionHead button{border:1px solid rgba(92,177,226,.18);border-radius:8px;background:rgba(9,35,51,.75);color:#8ec9eb;padding:7px 10px;font-size:6px;font-weight:1000;letter-spacing:.08em}.ace351StatStrip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.ace351StatStrip b{display:block;margin-top:4px;color:#dff5ff;font-size:18px}.ace351LegacyGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.ace351LegacyCard{padding:14px;border:1px solid rgba(98,174,215,.12);border-radius:14px;background:linear-gradient(145deg,rgba(6,25,38,.86),rgba(4,17,27,.88))}.ace351Records{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.ace351Records span{padding:9px;border-radius:9px;background:rgba(5,17,27,.65);text-align:center}.ace351Records small{display:block;color:#678699;font-size:5.5px;font-weight:1000}.ace351Records b{display:block;margin-top:3px;color:#dff4ff;font-size:14px}.ace351Clubs{display:grid;gap:6px;margin-top:10px}.ace351Clubs>div{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 9px;border-radius:9px;background:rgba(5,17,27,.58)}.ace351Clubs b{color:#dceef7;font-size:8px}.ace351Clubs span{grid-column:1;color:#728b9b;font-size:6.5px}.ace351Clubs em{grid-column:2;grid-row:1/3;align-self:center;color:#7dbfe3;font-size:6px;font-style:normal;font-weight:1000}.ace351Timeline{display:grid;gap:8px}.ace351Season{display:grid;grid-template-columns:76px 1fr;overflow:hidden;border:1px solid rgba(91,163,204,.11);border-radius:13px;background:rgba(5,21,32,.72)}.ace351Season.current{border-color:rgba(76,193,241,.25);box-shadow:0 0 0 1px rgba(76,193,241,.05) inset}.ace351SeasonNo{display:grid;align-content:center;justify-items:center;padding:12px;background:rgba(8,39,57,.70);border-right:1px solid rgba(100,177,217,.10)}.ace351SeasonNo small{color:#6e91a5;font-size:5.5px;font-weight:1000;letter-spacing:.12em}.ace351SeasonNo b{color:#eaf8ff;font-size:23px}.ace351SeasonNo em{color:#7090a2;font-size:6px;font-style:normal}.ace351SeasonMain{padding:11px 13px}.ace351SeasonMain>div:first-child{display:inline-block}.ace351SeasonMain h4{margin:0;color:#e1f2fa;font-size:11px}.ace351SeasonMain>div:first-child span{color:#6f899a;font-size:6.5px}.ace351SeasonRecord{float:right;text-align:right}.ace351SeasonRecord b{display:block;color:#e8f7ff;font-size:10px}.ace351SeasonRecord span{color:#75a7c2;font-size:6px}.ace351SeasonStats{clear:both;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ace351SeasonStats span{padding:5px 7px;border-radius:7px;background:rgba(3,14,23,.60);color:#718e9f;font-size:6px}.ace351SeasonStats b{margin-right:2px;color:#d9edf7;font-size:8px}.ace351SeasonHonours{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.ace351SeasonHonours em{padding:4px 6px;border:1px solid rgba(222,183,70,.14);border-radius:999px;background:rgba(132,100,12,.08);color:#d9c06e;font-size:5.8px;font-style:normal;font-weight:900}.ace351Backfill{display:block;margin-top:7px;color:#5d7483;font-size:5.8px;line-height:1.35}.ace351Honours{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.ace351Honours article{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid rgba(215,178,68,.13);border-radius:10px;background:rgba(72,55,8,.09)}.ace351Honours i{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:rgba(222,181,63,.10);color:#e3c66f;font-style:normal}.ace351Honours b{display:block;color:#e9e0bc;font-size:8px}.ace351Honours small{color:#887d59;font-size:5.5px;font-weight:1000;letter-spacing:.08em}.ace351Empty,.ace351LegacyState{padding:28px;border:1px dashed rgba(100,166,202,.14);border-radius:13px;color:#718898;text-align:center;font-size:8px}.ace351LegacyState{display:grid;justify-items:center;gap:6px;margin-top:10px}.ace351LegacyState i{font-size:24px;color:#72b9df;font-style:normal}.ace351LegacyState b{color:#dceef7;font-size:9px}.ace351LegacyState button{margin-top:8px;padding:8px 12px;border:1px solid rgba(91,177,224,.22);border-radius:8px;background:#0b2d42;color:#dff5ff;font-size:7px;font-weight:1000}.ace351Final{display:flex;align-items:center;gap:14px;margin-top:18px;padding:18px;border:1px solid rgba(228,192,79,.22);border-radius:15px;background:linear-gradient(135deg,rgba(54,42,7,.42),rgba(5,18,27,.94))}.ace351Final>i{width:54px;height:54px;display:grid;place-items:center;border-radius:50%;background:rgba(230,190,67,.10);color:#e6ca70;font-size:24px;font-style:normal}.ace351Final small{color:#af9350;font-size:6px;font-weight:1000;letter-spacing:.16em}.ace351Final h3{margin:3px 0;color:#f2e6b8;font-size:18px}.ace351Final p{margin:0;color:#8f8870;font-size:8px;line-height:1.45}.rta92CareerTabs{overflow-x:auto;scrollbar-width:none}.rta92CareerTabs::-webkit-scrollbar{display:none}.rta92CareerTabs button{flex:1 0 auto;min-width:82px}
+@media(max-width:760px){#roadtoace .ace351LegacyHero{align-items:flex-start;padding:15px}.ace351LegacyHero h2{font-size:23px!important}.ace351LegacyStatus{min-width:104px;padding:9px}.ace351LegacyStatus b{font-size:18px}.ace351BetaNote{align-items:flex-start;flex-direction:column;gap:3px}.ace351LegacyOverview{grid-template-columns:repeat(2,1fr)}.ace351StatStrip{grid-template-columns:repeat(4,1fr)}.ace351LegacyGrid{grid-template-columns:1fr}.ace351Season{grid-template-columns:58px 1fr}.ace351SeasonNo{padding:9px 6px}.ace351SeasonNo b{font-size:19px}.ace351Honours{grid-template-columns:1fr}.rta92CareerTabs{justify-content:flex-start!important}.rta92CareerTabs button{min-width:72px!important;padding-left:8px!important;padding-right:8px!important}.ace351Final{align-items:flex-start}.ace351LegacyOverview b{font-size:18px}}
+</style>
+<script id="ace351-final-build-marker">
+window.ACE_CAREER_LEGACY_BUILD="B21.36.351";
+window.ACE_PROJECT_BUILD="B21.36.351";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.351";
+</script>
+
+
+<!-- PROJECT ACE B21.36.353 · PHONE SHOWCASE MOVED TO MORE -->
+<style id="ace353-phone-showcase-more">
+@media(max-width:760px){
+  #roadtoace .rta93PlayerTabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;overflow-x:visible!important;}
+  #rta62Overlay[data-kind="mobile-more"] .rta85MoreGrid>button[data-rta85-more-showcase] i{color:#d3a5ff!important;background:rgba(132,78,184,.11)!important;}
+  #rta62Overlay[data-kind="mobile-more"] .rta85MoreGrid>button[data-rta85-more-showcase].active{background:linear-gradient(90deg,rgba(127,76,181,.13),transparent 72%)!important;}
+  body:has(#roadtoace .ace349Showcase) > .ace211CareerBottomNav button[data-rta62-view="player"].active{color:#6f899b!important;background:transparent!important;box-shadow:none!important;}
+}
+</style>
+<script id="ace353-final-build-marker">
+window.ACE_PHONE_SHOWCASE_MORE_BUILD="B21.36.353";
+window.ACE_PROJECT_BUILD="B21.36.353";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.353";
+</script>
+
+<style id="ace354-olympic-foundation-css">
+#roadtoace .ace354Olympic{border:1px solid rgba(239,201,95,.24)!important;background:radial-gradient(circle at 50% 0,rgba(213,170,54,.10),transparent 34%),linear-gradient(180deg,#071019,#050b11)!important}
+#roadtoace .ace354Olympic .ace354Head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:17px;border-bottom:1px solid rgba(239,201,95,.14)}
+#roadtoace .ace354Olympic .ace354Head small{display:block;color:#e4c56c;font-size:7px;font-weight:1000;letter-spacing:.16em}
+#roadtoace .ace354Olympic .ace354Head h4{margin:5px 0 0;font-size:22px;letter-spacing:-.035em}
+#roadtoace .ace354Olympic .ace354Head>span{padding:7px 9px;border-radius:999px;border:1px solid rgba(239,201,95,.22);background:rgba(239,201,95,.08);color:#f0d886;font-size:7px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace354Path{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:12px 14px}
+#roadtoace .ace354Path span{padding:7px 5px;border-radius:8px;background:#09141d;color:#526574;text-align:center;font-size:6px;font-weight:1000;letter-spacing:.06em}
+#roadtoace .ace354Path span.done{color:#77caa0;background:rgba(48,150,99,.10)}
+#roadtoace .ace354Path span.now{color:#f2d77e;background:rgba(220,178,61,.12);box-shadow:inset 0 0 0 1px rgba(220,178,61,.2)}
+#roadtoace .ace354OlympicMeta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 13px}
+#roadtoace .ace354OlympicMeta>div{padding:10px;border-radius:10px;background:#08131c;border:1px solid rgba(255,255,255,.055)}
+#roadtoace .ace354OlympicMeta small{display:block;color:#617888;font-size:6px;font-weight:1000;letter-spacing:.1em}
+#roadtoace .ace354OlympicMeta b{display:block;margin-top:4px;font-size:12px}
+#roadtoace .ace354Qual{margin:0 14px 13px;padding:12px;border-radius:12px;border:1px solid rgba(100,194,145,.18);background:rgba(49,146,96,.08);display:flex;align-items:center;justify-content:space-between;gap:12px}
+#roadtoace .ace354Qual small{color:#67a984;font-size:6px;font-weight:1000;letter-spacing:.12em}
+#roadtoace .ace354Qual b{display:block;margin-top:3px;font-size:12px}.ace354Qual strong{color:#79d29f;font-size:9px}
+#roadtoace .ace354KO{padding:2px 14px 13px;display:grid;gap:8px}
+#roadtoace .ace354KOCard{padding:13px;border-radius:12px;background:#08131c;border:1px solid rgba(239,201,95,.13)}
+#roadtoace .ace354KOCard small{color:#d1af55;font-size:6px;font-weight:1000;letter-spacing:.14em}.ace354KOCard b{display:block;margin-top:5px;font-size:15px}.ace354KOCard span{display:block;margin-top:4px;color:#647989;font-size:7px}
+#roadtoace .ace354Medal{margin:0 14px 14px;padding:18px;border-radius:14px;text-align:center;background:radial-gradient(circle at 50% 10%,rgba(232,196,92,.18),transparent 48%),#08131c;border:1px solid rgba(232,196,92,.18)}
+#roadtoace .ace354Medal>span{display:block;font-size:38px}.ace354Medal small{display:block;color:#c5a64e;font-size:7px;font-weight:1000;letter-spacing:.16em}.ace354Medal b{display:block;margin-top:5px;font-size:18px}
+#roadtoace .ace354Olympic .aceIntlPrimary{margin:0 14px 14px;width:calc(100% - 28px)!important}
+#roadtoace .ace354Olympic .ace307Table{margin-left:14px;margin-right:14px}
+#roadtoace .ace354Olympic .ace307QualKey{margin-left:14px;margin-right:14px}
+@media(max-width:520px){#roadtoace .ace354Olympic .ace354Head{padding:14px 12px}.ace354OlympicMeta{grid-template-columns:1fr 1fr!important}.ace354OlympicMeta>div:last-child{grid-column:1/-1}.ace354Path{padding-left:12px!important;padding-right:12px!important}}
+</style>
+<script id="ace354-olympic-foundation-script">
+(()=>{
+'use strict';
+const state=()=>window.__ACE_RTA_STATE||{};
+const career=()=>state().career||null;
+const isOlympicYear=c=>!!c&&Number(c.season||0)>0&&Number(c.season||0)%4===0;
+const isOlympicWindow=c=>String(c?.international_window?.event_type||'')==='OLYMPICS';
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+/* Route only Olympic-year international RPCs into the isolated V354 engine.
+   Normal VNL / regional international code remains untouched. */
+function installRpcRouter(){
+  const base=window.ACE_RTA_RPC;
+  if(typeof base!=='function'||base.__ace354OlympicRouter)return;
+  const wrapped=async function(name,args={}){
+    const c=career(),w=c?.international_window||{};
+    if(name==='vds_rta_start_international_window'&&isOlympicYear(c)){
+      return base('vds_rta_start_olympic_window_v354',args);
+    }
+    if(name==='vds_rta_complete_international_camp'&&isOlympicYear(c)&&String(w.stage||'')==='CAMP'&&!isOlympicWindow(c)){
+      const ow=await base('vds_rta_start_olympic_window_v354',{p_role:(w.role||args?.p_role||'ROTATION')});
+      if(c&&ow)c.international_window=ow;
+      return base(name,args);
+    }
+    if(name==='vds_rta_start_international_key_match'&&isOlympicWindow(c)){
+      return base('vds_rta_start_olympic_key_match_v354',args);
+    }
+    if(name==='vds_rta_resolve_international_key_moment_v315'&&isOlympicWindow(c)){
+      return base('vds_rta_resolve_olympic_key_moment_v354',args);
+    }
+    if(name==='vds_rta_resolve_international_key_timeout_v315'&&isOlympicWindow(c)){
+      return base('vds_rta_resolve_olympic_key_timeout_v354',args);
+    }
+    return base(name,args);
+  };
+  wrapped.__ace354OlympicRouter=true;
+  wrapped.__ace354Base=base;
+  window.ACE_RTA_RPC=wrapped;
+}
+
+function path(stage){
+  const s=String(stage||'CAMP').toUpperCase();
+  const step=s==='CAMP'?0:s==='GROUP'?1:s==='QUARTERFINAL'?2:s==='SEMIFINAL'?3:(s==='FINAL'||s==='BRONZE')?4:5;
+  const names=['CAMP','GROUP','QF','SF','MEDAL'];
+  return `<div class="ace354Path">${names.map((n,i)=>`<span class="${step>i?'done':step===i?'now':''}">${n}${step>i?' ✓':''}</span>`).join('')}</div>`;
+}
+function meta(c,w){return `<div class="ace354OlympicMeta"><div><small>READINESS</small><b>${Number(w?.readiness||50)}%</b></div><div><small>OLYMPIC RECORD</small><b>${Number(w?.wins||0)}–${Number(w?.losses||0)}</b></div><div><small>CAREER CAPS</small><b>${Number(c?.international_caps||0)}</b></div></div>`}
+function table(c,w){
+  const rows=Array.isArray(w?.group_table)?w.group_table:[];
+  if(!rows.length)return '';
+  return `<div class="ace307Table"><div class="ace307TR ace307TH"><span>#</span><span>TEAM</span><span>P</span><span>W</span><span>PTS</span><span>SD</span></div>${rows.map(r=>`<div class="ace307TR ${r.team===c.nationality?'user':''} ${Number(r.rank)<=2?'qual':''}"><span>${Number(r.rank)}</span><span>${esc(r.team)}${r.team===c.nationality?' <i>YOU</i>':''}</span><span>${Number(r.played)}</span><span>${Number(r.wins)}</span><span>${Number(r.points)}</span><span>${Number(r.set_diff)>0?'+':''}${Number(r.set_diff)}</span></div>`).join('')}</div><div class="ace307QualKey"><b>TOP 2</b> advance to the Olympic quarterfinals</div>`;
+}
+function results(w){return (Array.isArray(w?.results)?w.results:[]).map(r=>`<div class="aceIntlResultRow ${r.won?'':'loss'}"><strong>${r.won?'W':'L'}</strong><div><small>${esc(r.stage||'MATCH')} · OLYMPICS</small><b>${esc(r.opponent)}</b></div><span>${Number(r.sets_for)}–${Number(r.sets_against)}</span></div>`).join('')}
+function head(kicker,title,badge){return `<div class="ace354Head"><div><small>${kicker}</small><h4>${title}</h4></div><span>${badge}</span></div>`}
+function playButton(label='PLAY OLYMPIC MATCH'){return `<button class="aceIntlPrimary ace311cPlay" type="button" data-intl-play><b>▶ ${label}</b></button>`}
+
+function olympicHTML(c,w,sel){
+  const cycle=Math.max(1,Number(c.season||4)/4),role=String(w?.role||sel?.role||'SQUAD');
+  if(!w||String(w.event_type||'')!=='OLYMPICS'){
+    return `<section class="aceIntlWindow ace307Tournament ace354Olympic">${head(`OLYMPIC YEAR · CYCLE ${cycle}`,'THE OLYMPIC GAMES',role)}${path('CAMP')}<div class="ace354Qual"><div><small>COUNTRY QUALIFICATION</small><b>${esc(c.nationality||'YOUR COUNTRY')} has qualified for the Olympic tournament.</b></div><strong>QUALIFIED ✓</strong></div><div class="ace354OlympicMeta"><div><small>SEASON</small><b>${Number(c.season||0)}</b></div><div><small>SQUAD STATUS</small><b>SELECTED</b></div><div><small>FORMAT</small><b>GROUP → QF → SF → MEDAL</b></div></div><button type="button" class="aceIntlPrimary" data-intl-start-window>REPORT TO OLYMPIC CAMP →</button><div class="aceIntlStatus"></div></section>`;
+  }
+  const st=String(w.stage||'CAMP').toUpperCase();
+  if(st==='CAMP')return `<section class="aceIntlWindow ace307Tournament ace354Olympic">${head(`OLYMPIC GAMES · CYCLE ${cycle}`,'OLYMPIC TEAM CAMP',role)}${path(st)}<div class="ace354Qual"><div><small>QUALIFICATION COMPLETE</small><b>${esc(c.nationality)} · Olympic squad selected</b></div><strong>OLYMPICS</strong></div>${meta(c,w)}<div class="aceIntlCampGrid"><button class="aceIntlChoice" data-intl-camp="ATTACK"><b>ATTACK TEMPO</b><span>Sharpen transition and terminal attacking.</span></button><button class="aceIntlChoice" data-intl-camp="SERVE_RECEIVE"><b>SERVE + RECEIVE</b><span>Prepare first contact for Olympic pressure.</span></button><button class="aceIntlChoice" data-intl-camp="BLOCK_DEFENCE"><b>BLOCK + DEFENCE</b><span>Prepare reading and defensive structure.</span></button></div><div class="aceIntlStatus">One camp focus. Then the Olympic group stage begins.</div></section>`;
+  if(st==='GROUP'){
+    const idx=Number(w.match_index||0),opp=(Array.isArray(w.fixtures)?w.fixtures:[])[idx]||'Opponent';
+    return `<section class="aceIntlWindow ace307Tournament ace354Olympic">${head(`OLYMPIC GROUP STAGE · MATCH ${idx+1}/3`,`NEXT · ${esc(opp)}`,role)}${path(st)}${meta(c,w)}${table(c,w)}${playButton()}</section>`;
+  }
+  if(['QUARTERFINAL','SEMIFINAL','FINAL','BRONZE'].includes(st)){
+    const opp=w?.knockout?.opponent||'Opponent',isMedal=st==='FINAL'||st==='BRONZE';
+    const title=st==='QUARTERFINAL'?'WIN TO REACH THE FINAL FOUR':st==='SEMIFINAL'?'WIN TO PLAY FOR GOLD':st==='FINAL'?'🥇 GOLD MEDAL MATCH':'🥉 BRONZE MEDAL MATCH';
+    const sub=st==='QUARTERFINAL'?'OLYMPIC QUARTERFINAL':st==='SEMIFINAL'?'OLYMPIC SEMIFINAL':st==='FINAL'?'OLYMPIC FINAL':'OLYMPIC BRONZE MATCH';
+    return `<section class="aceIntlWindow ace307Tournament ace354Olympic">${head(sub,title,role)}${path(st)}<div class="ace354KO"><div class="ace354KOCard"><small>${st}</small><b>${esc(c.nationality)} <em>vs</em> ${esc(opp)}</b><span>${isMedal?(st==='FINAL'?'GOLD AND SILVER ARE DECIDED HERE':'ONE LAST MATCH FOR A MEDAL'):'ELIMINATION MATCH'}</span></div></div>${meta(c,w)}${playButton(isMedal?'PLAY MEDAL MATCH':'PLAY KNOCKOUT MATCH')}</section>`;
+  }
+  const out=String(w.outcome||'OLYMPIC TOURNAMENT COMPLETE'),medal=String(w.medal||''),icon=medal==='GOLD'?'🥇':medal==='SILVER'?'🥈':medal==='BRONZE'?'🥉':'◎';
+  return `<section class="aceIntlWindow ace307Tournament ace354Olympic">${head(`OLYMPIC GAMES · CYCLE ${cycle}`,'OLYMPIC CAMPAIGN COMPLETE',out)}${path('COMPLETE')}${medal?`<div class="ace354Medal"><span>${icon}</span><small>OLYMPIC ${esc(medal)} MEDAL</small><b>${esc(c.nationality)}</b></div>`:''}${meta(c,w)}${table(c,w)}<div class="aceIntlResults">${results(w)}</div>${w.award?`<div class="ace307Award"><small>OLYMPIC AWARD</small><b>★ ${esc(w.award)}</b></div>`:''}<button type="button" class="aceIntlPrimary" data-intl-back-career>RETURN TO CLUB CAREER →</button><div class="aceIntlStatus"></div></section>`;
+}
+
+let raf=0;
+function decorate(){
+  raf=0;installRpcRouter();
+  const c=career(),road=document.getElementById('roadtoace');
+  if(!c||!road||!c.season_complete||!isOlympicYear(c))return;
+  const hub=road.querySelector('.aceV77Intl');if(!hub)return;
+  let sel=null;try{sel=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}
+  if(!sel?.eligible||sel.status!=='SELECTED')return;
+  const w=c.international_window&&Number(c.international_window.season||0)===Number(c.season)?c.international_window:null;
+  /* Preserve a tournament that was already started on an older build. Only
+     pre-start/CAMP windows are eligible to become the Olympic cycle. */
+  if(w&&String(w.event_type||'')!=='OLYMPICS'&&!['','CAMP'].includes(String(w.stage||'')))return;
+  const sig=[c.season,w?.event_type||'PRE',w?.stage||'PRE',w?.match_index||0,w?.wins||0,w?.losses||0,w?.readiness||0,w?.outcome||'',w?.medal||''].join('|');
+  const old=hub.querySelector('.aceIntlWindow');
+  if(old?.classList.contains('ace354Olympic')&&old.dataset.ace354Sig===sig)return;
+  const box=document.createElement('div');box.innerHTML=olympicHTML(c,w,sel);const node=box.firstElementChild;if(!node)return;node.dataset.ace354Sig=sig;
+  old?.replaceWith(node);
+  hub.querySelectorAll('.ace315hHero').forEach(n=>n.remove());
+}
+function queue(){if(!raf)raf=requestAnimationFrame(()=>requestAnimationFrame(decorate))}
+installRpcRouter();
+const br=window.__ACE_RTA_RENDER;if(typeof br==='function'&&!br.__ace354Wrapped){const wr=function(...a){const out=br.apply(this,a);queue();return out};wr.__ace354Wrapped=true;window.__ACE_RTA_RENDER=wr}
+document.addEventListener('click',e=>{if(e.target.closest?.('#roadtoace'))setTimeout(queue,20)},true);
+window.addEventListener('pageshow',queue);setTimeout(queue,120);
+window.ACE_OLYMPIC_V354={isOlympicYear,isOlympicWindow,decorateNow:decorate};
+window.ACE_PROJECT_BUILD='B21.36.354';
+})();
+</script>
+<script id="ace354-build-marker">window.ACE_PROJECT_BUILD='B21.36.354';window.ACE_OLYMPIC_CYCLE_BUILD='B21.36.354';</script>
 </body>
 
 <script id="ace334-final-build-marker">window.ACE_SKILL_LEGACY_AUTO_COMMIT="B21.36.334";window.ACE_PROJECT_BUILD="B21.36.334";window.ACE_RELEASE_BUILD="B21.36.334";window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.334";</script>
@@ -54664,3 +55043,182 @@ window.ACE_FATIGUE_GAMEPLAY_BUILD="B21.36.347";
 window.ACE_PROJECT_BUILD="B21.36.347";
 window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.348";
 </script>
+
+
+<!-- PROJECT ACE B21.36.352 · MONTHLY RANKED SEASONS + HALL OF CHAMPIONS -->
+<style id="ace352-ranked-seasons-style">
+#roadtoace .ace352RankClock{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:15px;padding:9px 11px;border:1px solid rgba(216,177,74,.18);border-radius:10px;background:rgba(83,61,8,.10)}
+#roadtoace .ace352RankClock span{color:#987e42;font-size:6px;font-weight:1000;letter-spacing:.15em}#roadtoace .ace352RankClock b{color:#f0d27b;font-size:12px;letter-spacing:.04em}#roadtoace .ace352RankClock em{margin-left:auto;color:#786d4e;font-size:5.8px;font-style:normal;font-weight:900;letter-spacing:.08em}
+#roadtoace .ace352RankTabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 0 12px}#roadtoace .ace352RankTabs button{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:46px;padding:10px 13px;border:1px solid rgba(98,171,211,.11);border-radius:11px;background:rgba(5,22,34,.72);color:#7995a8;text-align:left;cursor:pointer}#roadtoace .ace352RankTabs button.active{border-color:rgba(84,181,238,.28);background:linear-gradient(135deg,rgba(25,94,134,.24),rgba(6,28,42,.90));color:#e4f6ff;box-shadow:inset 0 0 0 1px rgba(79,172,227,.05)}#roadtoace .ace352RankTabs span{font-size:8px;font-weight:1000;letter-spacing:.10em}#roadtoace .ace352RankTabs small{color:#638297;font-size:5.8px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace352Hall{display:grid;gap:10px}#roadtoace .ace352HallSeason{overflow:hidden;border:1px solid rgba(214,177,74,.14);border-radius:15px;background:linear-gradient(145deg,rgba(38,30,9,.30),rgba(4,19,30,.90))}#roadtoace .ace352HallSeason.latest{border-color:rgba(230,190,72,.28);box-shadow:0 10px 30px rgba(0,0,0,.14)}#roadtoace .ace352HallSeason>header{display:flex;justify-content:space-between;align-items:end;gap:12px;padding:14px 15px;border-bottom:1px solid rgba(225,187,74,.09)}#roadtoace .ace352HallSeason header small{color:#9d8447;font-size:6px;font-weight:1000;letter-spacing:.15em}#roadtoace .ace352HallSeason header h2{margin:3px 0 0;color:#eee2b9;font-size:18px}#roadtoace .ace352HallSeason header>span{color:#796c4e;font-size:6px;font-weight:1000;letter-spacing:.11em}
+#roadtoace .ace352HallPodium{display:grid;grid-template-columns:repeat(3,1fr);gap:0}#roadtoace .ace352HallPlayer{appearance:none;display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;min-height:112px;padding:13px;border:0;border-right:1px solid rgba(222,184,71,.08);background:transparent;color:inherit;text-align:left;cursor:pointer}#roadtoace .ace352HallPlayer:last-child{border-right:0}#roadtoace .ace352HallPlayer:hover{background:rgba(223,184,71,.05)}#roadtoace .ace352HallPlayer.rank1{background:radial-gradient(circle at 15% 20%,rgba(234,193,73,.10),transparent 34%)}#roadtoace .ace352HallPlayer>i{grid-row:1/3;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:rgba(226,187,66,.08);font-size:18px;font-style:normal}#roadtoace .ace352HallPlayer small{display:block;color:#8b7f5c;font-size:5.5px;font-weight:1000;letter-spacing:.08em}#roadtoace .ace352HallPlayer b{display:block;margin-top:2px;color:#eee6ca;font-size:10px}#roadtoace .ace352HallPlayer span{display:block;margin-top:3px;color:#756e59;font-size:6px}#roadtoace .ace352HallPlayer em{grid-column:2;color:#8c7d53;font-size:6px;font-style:normal;font-weight:1000}#roadtoace .ace352HallNoPodium{grid-column:1/-1;padding:26px;text-align:center;color:#756f5c;font-size:8px}
+#roadtoace .ace352HallEmpty{display:grid;justify-items:center;gap:6px;padding:42px 18px;border:1px dashed rgba(218,178,68,.18);border-radius:15px;background:rgba(62,47,7,.07);text-align:center}#roadtoace .ace352HallEmpty i{font-size:30px;color:#d5b55f;font-style:normal}#roadtoace .ace352HallEmpty b{color:#e6d49b;font-size:9px;letter-spacing:.08em}#roadtoace .ace352HallEmpty span{max-width:520px;color:#827a63;font-size:8px;line-height:1.5}
+@media(max-width:760px){#roadtoace .ace352RankClock{display:grid;grid-template-columns:auto 1fr}#roadtoace .ace352RankClock b{text-align:right}#roadtoace .ace352RankClock em{grid-column:1/-1;margin:0}#roadtoace .ace352RankTabs{position:sticky;top:0;z-index:5;background:#06131f;padding:5px 0}#roadtoace .ace352RankTabs button{display:block;min-height:44px}#roadtoace .ace352RankTabs small{display:block;margin-top:3px}#roadtoace .ace352HallPodium{grid-template-columns:1fr}#roadtoace .ace352HallPlayer{min-height:84px;border-right:0;border-bottom:1px solid rgba(222,184,71,.08)}#roadtoace .ace352HallPlayer:last-child{border-bottom:0}#roadtoace .ace352HallSeason>header{align-items:flex-start}#roadtoace .ace352HallSeason header h2{font-size:15px}}
+</style>
+<script id="ace352-final-build-marker">
+window.ACE_MONTHLY_RANKED_SEASONS_BUILD="B21.36.352";
+window.ACE_HALL_OF_CHAMPIONS_BUILD="B21.36.352";
+window.ACE_PROJECT_BUILD="B21.36.352";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.352";
+</script>
+<!-- PROJECT ACE B21.36.355 · BETA GRACE EXPLAINER + OLYMPIC PRESENTATION + CAREER CALENDAR -->
+<style id="ace355-beta-olympic-presentation-style">
+/* Beta Grace is now an intentional, tappable status control. */
+.ace348BetaTimer{pointer-events:auto!important;cursor:pointer!important;user-select:none;-webkit-user-select:none;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.ace348BetaTimer:hover,.ace348BetaTimer:focus-visible{transform:translateX(-50%) translateY(-1px);border-color:rgba(188,139,248,.38)!important;box-shadow:0 12px 34px rgba(0,0,0,.38),0 0 28px rgba(145,84,223,.16)!important;outline:none}
+.ace348BetaTimer:after{content:"?";display:grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1px solid rgba(198,161,244,.22);color:#c7a8ee;font-size:8px;font-weight:1000}
+.ace355BetaBackdrop,.ace355MomentBackdrop{position:fixed;inset:0;z-index:42000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,12,.84);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);animation:ace355Fade .18s ease both}
+.ace355BetaCard{width:min(560px,94vw);max-height:min(760px,88dvh);overflow:auto;border-radius:24px;border:1px solid rgba(174,124,236,.22);background:radial-gradient(circle at 82% 0,rgba(145,83,218,.16),transparent 30%),linear-gradient(180deg,#0b1019,#070b12);box-shadow:0 32px 90px rgba(0,0,0,.62);color:#eef2f7;padding:23px}
+.ace355BetaTop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.ace355BetaTop small{display:block;color:#ad82e1;font-size:8px;font-weight:1000;letter-spacing:.15em}.ace355BetaTop h2{margin:6px 0 0;font-size:27px;line-height:1;letter-spacing:-.045em}.ace355IconClose{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.10);background:#111722;color:#d9e1e9;font-size:18px;cursor:pointer}.ace355BetaLead{margin:13px 0 0;color:#9eabba;font-size:11px;line-height:1.55}.ace355BetaRules{display:grid;gap:8px;margin:17px 0}.ace355BetaRule{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:center;padding:11px;border-radius:12px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.025)}.ace355BetaRule>i{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:rgba(150,91,220,.10);color:#c9a5f1;font-style:normal;font-size:14px}.ace355BetaRule b{display:block;font-size:10px}.ace355BetaRule span{display:block;margin-top:3px;color:#7f90a1;font-size:8px;line-height:1.4}.ace355BetaWhy{padding:12px;border-radius:12px;border:1px solid rgba(99,177,224,.12);background:rgba(35,94,132,.08)}.ace355BetaWhy small{display:block;color:#6caed4;font-size:7px;font-weight:1000;letter-spacing:.12em}.ace355BetaWhy p{margin:5px 0 0;color:#8ea2b1;font-size:9px;line-height:1.5}.ace355BetaEnd{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:13px;padding:12px;border-radius:12px;background:#0d131c}.ace355BetaEnd small{display:block;color:#697987;font-size:7px;font-weight:1000;letter-spacing:.1em}.ace355BetaEnd b{display:block;margin-top:4px;font-size:10px}.ace355BetaEnd strong{color:#be92ed;font-size:13px}.ace355BetaDone{width:100%;min-height:47px;margin-top:14px;border:0;border-radius:12px;background:#8e58c6;color:white;font-weight:1000;font-size:9px;letter-spacing:.08em;cursor:pointer}
+
+/* Career calendar */
+#roadtoace .ace355Calendar{margin:0 0 14px;padding:14px;border:1px solid rgba(94,160,204,.10);border-radius:15px;background:linear-gradient(180deg,rgba(10,25,38,.78),rgba(6,15,24,.82))}
+#roadtoace .ace355CalendarHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:11px}#roadtoace .ace355CalendarHead small{display:block;color:#66879a;font-size:7px;font-weight:1000;letter-spacing:.13em}#roadtoace .ace355CalendarHead h3{margin:4px 0 0;font-size:16px;letter-spacing:-.025em}#roadtoace .ace355YearPill{padding:7px 9px;border-radius:999px;border:1px solid rgba(92,158,201,.14);background:rgba(41,103,143,.08);color:#7caeca;font-size:7px;font-weight:1000;letter-spacing:.08em}#roadtoace .ace355YearPill.olympic{border-color:rgba(226,188,77,.24);background:rgba(131,96,24,.11);color:#e1c363;box-shadow:0 0 25px rgba(204,163,55,.06)}
+#roadtoace .ace355CalendarTrack{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;position:relative}#roadtoace .ace355CalPhase{position:relative;min-height:70px;padding:9px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.045);background:#08131c;color:#5d7180}#roadtoace .ace355CalPhase small{display:block;font-size:5.7px;font-weight:1000;letter-spacing:.09em;color:#506674}#roadtoace .ace355CalPhase b{display:block;margin-top:5px;font-size:8px;line-height:1.2;color:#8196a5}#roadtoace .ace355CalPhase span{display:block;margin-top:4px;font-size:6px;line-height:1.3;color:#536674}#roadtoace .ace355CalPhase.done{background:rgba(35,96,75,.07);border-color:rgba(76,167,122,.10)}#roadtoace .ace355CalPhase.done b{color:#70af8e}#roadtoace .ace355CalPhase.now{border-color:rgba(91,169,218,.25);background:linear-gradient(145deg,rgba(48,119,163,.15),rgba(9,26,39,.82));box-shadow:inset 0 0 0 1px rgba(85,165,216,.05)}#roadtoace .ace355CalPhase.now small{color:#6db4dc}#roadtoace .ace355CalPhase.now b{color:#dfeef7}#roadtoace .ace355CalPhase.olympic{border-color:rgba(226,190,78,.20);background:linear-gradient(145deg,rgba(138,99,20,.13),rgba(14,24,30,.88))}#roadtoace .ace355CalPhase.olympic small{color:#bba356}#roadtoace .ace355CalPhase.olympic b{color:#edd889}#roadtoace .ace355CalendarNow{margin-top:9px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:9px;border-top:1px solid rgba(255,255,255,.045)}#roadtoace .ace355CalendarNow span{color:#6e8392;font-size:7px}#roadtoace .ace355CalendarNow b{color:#bdccd6;font-size:8px;text-align:right}
+
+/* Olympic presentation layer */
+#roadtoace .ace354Olympic.ace355OlympicPrime{position:relative;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,232,149,.04)!important}
+#roadtoace .ace354Olympic.ace355OlympicPrime:before{content:"";position:absolute;inset:-30% -10% auto;height:180px;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(242,204,101,.15),transparent 48%);filter:blur(12px)}
+#roadtoace .ace355GamesMark{position:relative;z-index:2;display:flex;align-items:center;gap:8px;margin:10px 14px 0;padding:8px 10px;border-radius:10px;border:1px solid rgba(239,199,88,.13);background:rgba(111,80,18,.07)}#roadtoace .ace355GamesMark i{font-style:normal;font-size:17px}#roadtoace .ace355GamesMark div small{display:block;color:#ad9450;font-size:5.8px;font-weight:1000;letter-spacing:.13em}#roadtoace .ace355GamesMark div b{display:block;margin-top:2px;font-size:8px;color:#e5d39a}#roadtoace .ace354Olympic.ace355MedalNight{border-color:rgba(241,200,83,.38)!important;box-shadow:0 18px 70px rgba(194,145,24,.09),inset 0 0 50px rgba(204,156,35,.035)!important}#roadtoace .ace354Olympic.ace355MedalNight .aceIntlPrimary{background:linear-gradient(135deg,#cba347,#8f6a1f)!important;color:#0d0b06!important;box-shadow:0 12px 26px rgba(174,126,23,.16)!important}
+
+/* Selection reveal / medal ceremony */
+.ace355MomentCard{width:min(640px,95vw);border-radius:28px;border:1px solid rgba(224,190,91,.24);background:radial-gradient(circle at 50% -5%,rgba(226,188,81,.18),transparent 34%),linear-gradient(180deg,#0a1118,#060b10);box-shadow:0 34px 100px rgba(0,0,0,.68);color:#f1f4f7;overflow:hidden;animation:ace355Rise .25s ease both}.ace355MomentTop{padding:25px 24px 14px;text-align:center}.ace355MomentTop small{display:block;color:#c3a85b;font-size:8px;font-weight:1000;letter-spacing:.17em}.ace355MomentTop h2{margin:8px 0 6px;font-size:30px;line-height:.98;letter-spacing:-.05em}.ace355MomentTop p{margin:0 auto;max-width:440px;color:#8798a5;font-size:10px;line-height:1.5}.ace355FlagLine{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 2px}.ace355FlagLine i{font-style:normal;font-size:28px}.ace355FlagLine div{text-align:left}.ace355FlagLine small{font-size:6px}.ace355FlagLine b{display:block;margin-top:2px;font-size:14px}.ace355MomentStats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 20px 18px}.ace355MomentStats div{padding:11px;border-radius:11px;background:#0b151e;border:1px solid rgba(255,255,255,.05);text-align:center}.ace355MomentStats small{display:block;color:#5f7482;font-size:6px;font-weight:1000;letter-spacing:.1em}.ace355MomentStats b{display:block;margin-top:5px;font-size:11px}.ace355MomentActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 20px 20px;border-top:1px solid rgba(255,255,255,.05)}.ace355MomentActions button{min-height:48px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:#111922;color:#afbdc7;font-size:8px;font-weight:1000;letter-spacing:.07em;cursor:pointer}.ace355MomentActions button.primary{border:0;background:linear-gradient(135deg,#d3ac53,#9f7929);color:#100d07}.ace355Podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:6px;padding:8px 22px 20px}.ace355Podium>div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-height:104px;border-radius:12px 12px 5px 5px;border:1px solid rgba(255,255,255,.05);background:#0a141d;padding:10px 6px}.ace355Podium>div:nth-child(2){min-height:134px}.ace355Podium i{font-style:normal;font-size:25px}.ace355Podium b{margin-top:6px;font-size:8px;text-align:center}.ace355Podium small{margin-top:3px;color:#687a87;font-size:6px}.ace355Podium .you{border-color:rgba(229,192,83,.23);background:linear-gradient(180deg,rgba(126,91,19,.12),#0a141d)}
+
+/* Olympics in Career Legacy */
+#roadtoace .ace355LegacyOlympics{margin:16px 0;padding:14px;border-radius:15px;border:1px solid rgba(226,188,74,.15);background:radial-gradient(circle at 90% 0,rgba(211,170,49,.08),transparent 35%),#07121a}#roadtoace .ace355LegacyOlympicsHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}#roadtoace .ace355LegacyOlympicsHead small{display:block;color:#b49745;font-size:6px;font-weight:1000;letter-spacing:.14em}#roadtoace .ace355LegacyOlympicsHead h3{margin:4px 0 0;font-size:15px}#roadtoace .ace355MedalCounts{display:flex;gap:5px}#roadtoace .ace355MedalCounts b{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.035);font-size:7px}#roadtoace .ace355OlympicHistory{display:grid;gap:7px;margin-top:11px}#roadtoace .ace355OlympicHistory article{display:grid;grid-template-columns:42px 1fr auto;gap:9px;align-items:center;padding:9px;border-radius:10px;background:#09151e;border:1px solid rgba(255,255,255,.045)}#roadtoace .ace355OlympicHistory article>i{font-style:normal;font-size:24px;text-align:center}#roadtoace .ace355OlympicHistory small{display:block;color:#647986;font-size:6px;font-weight:1000;letter-spacing:.09em}#roadtoace .ace355OlympicHistory b{display:block;margin-top:3px;font-size:9px}#roadtoace .ace355OlympicHistory span{display:block;margin-top:3px;color:#667985;font-size:7px}#roadtoace .ace355OlympicHistory em{font-style:normal;color:#d5b85e;font-size:7px;font-weight:1000}
+
+/* Olympics on public profile */
+.ace350PublicCard .ace355PublicOlympics{margin:0 20px 14px;padding:12px;border-radius:13px;border:1px solid rgba(222,185,78,.15);background:linear-gradient(145deg,rgba(112,81,18,.10),rgba(9,18,27,.92))}.ace350PublicCard .ace355PublicOlympics>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px}.ace350PublicCard .ace355PublicOlympics small{color:#a98d44;font-size:6px;font-weight:1000;letter-spacing:.12em}.ace350PublicCard .ace355PublicOlympics h3{margin:3px 0 0;font-size:12px}.ace350PublicCard .ace355PublicMedals{display:flex;gap:6px;flex-wrap:wrap}.ace350PublicCard .ace355PublicMedals b{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.04);font-size:7px;color:#dcc575}
+@keyframes ace355Fade{from{opacity:0}to{opacity:1}}@keyframes ace355Rise{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+@media(max-width:760px){.ace355BetaCard{padding:18px;border-radius:20px}.ace355BetaTop h2{font-size:24px}#roadtoace .ace355Calendar{margin-left:-2px;margin-right:-2px;padding:11px}#roadtoace .ace355CalendarTrack{display:flex;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:3px}#roadtoace .ace355CalPhase{min-width:116px;scroll-snap-align:start}.ace355MomentTop{padding:21px 16px 12px}.ace355MomentTop h2{font-size:27px}.ace355MomentStats{padding:0 14px 14px}.ace355MomentActions{padding:13px 14px calc(14px + env(safe-area-inset-bottom));grid-template-columns:1fr}.ace355Podium{padding-left:14px;padding-right:14px}.ace350PublicCard .ace355PublicOlympics{margin-left:14px;margin-right:14px}}
+</style>
+<script id="ace355-beta-olympic-presentation-script">
+(()=>{
+'use strict';
+const END=Date.parse('2026-09-27T23:59:59+08:00');
+const S=()=>window.__ACE_RTA_STATE||{};
+const C=()=>S().career||null;
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const olympicYear=c=>!!c&&Number(c.season||0)>0&&Number(c.season||0)%4===0;
+const olympicWindow=c=>String(c?.international_window?.event_type||'')==='OLYMPICS';
+const safeStore={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
+function remainingLabel(){
+  const ms=Math.max(0,END-Date.now()),mins=Math.floor(ms/60000),d=Math.floor(mins/1440),h=Math.floor((mins%1440)/60),m=mins%60;
+  return ms<=0?'ENDED':d?`${d}D ${h}H ${m}M`:h?`${h}H ${m}M`:`${m}M`;
+}
+function closeLayer(id){document.getElementById(id)?.remove();document.body.classList.remove('ace355ModalOpen')}
+function betaModal(){
+  closeLayer('ace355BetaExplainer');
+  const active=Date.now()<END,el=document.createElement('div');
+  el.id='ace355BetaExplainer';el.className='ace355BetaBackdrop';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Beta Grace explanation');
+  el.innerHTML=`<section class="ace355BetaCard"><div class="ace355BetaTop"><div><small>PROJECT ACE · BETA TEST</small><h2>BETA GRACE</h2></div><button class="ace355IconClose" type="button" data-ace355-beta-close aria-label="Close">×</button></div><p class="ace355BetaLead">Beta Grace temporarily relaxes two late-career systems so testers can reach more of Career Mode before the beta period ends.</p><div class="ace355BetaRules"><div class="ace355BetaRule"><i>↯</i><div><b>FATIGUE IS DISABLED</b><span>Fatigue does not build up or reduce match execution during the grace period.</span></div></div><div class="ace355BetaRule"><i>∞</i><div><b>RETIREMENT IS PAUSED</b><span>You can keep starting new career seasons. If your player reaches age 45, age stays capped at 45 during beta while seasons can continue.</span></div></div><div class="ace355BetaRule"><i>✓</i><div><b>YOUR PROGRESS STILL COUNTS</b><span>Career stats, trophies, badges, rankings, international achievements and Career Legacy continue saving normally.</span></div></div><div class="ace355BetaRule"><i>↺</i><div><b>NORMAL RULES RETURN AFTER BETA</b><span>When Beta Grace ends, the normal fatigue and retirement systems become active again.</span></div></div></div><div class="ace355BetaWhy"><small>WHY ARE WE DOING THIS?</small><p>It lets beta testers reach late-career pathways, international tournaments and long-term progression faster, which gives us better testing coverage before full rules return.</p></div><div class="ace355BetaEnd"><div><small>GRACE PERIOD ENDS</small><b>27 SEPTEMBER 2026 · 11:59 PM SGT</b></div><strong>${esc(active?remainingLabel():'ENDED')}</strong></div><button type="button" class="ace355BetaDone" data-ace355-beta-close>${active?'GOT IT':'CLOSE'}</button></section>`;
+  document.body.appendChild(el);document.body.classList.add('ace355ModalOpen');
+}
+function enhanceBeta(){
+  const el=document.getElementById('ace348BetaTimer');if(!el)return;
+  el.setAttribute('role','button');el.setAttribute('tabindex','0');el.setAttribute('aria-label','Open Beta Grace details');
+  el.title='Tap to see what Beta Grace changes during the Project Ace beta.';
+}
+function calendarPhase(c){
+  const w=c?.international_window||{},same=Number(w.season||0)===Number(c?.season||0),stage=same?String(w.stage||'').toUpperCase():'';
+  if(!c?.season_complete)return Number(c?.season_match||0)>0?1:0;
+  if(stage&&stage!=='COMPLETE')return 3;
+  if(stage==='COMPLETE')return 4;
+  return 2;
+}
+function calendarHTML(c){
+  const idx=calendarPhase(c),oly=olympicYear(c),w=c?.international_window||{},stage=String(w.stage||'').toUpperCase();
+  const intlName=oly?'OLYMPIC GAMES':String(w.competition||'INTERNATIONAL');
+  const phases=[
+    ['JAN','PRE-SEASON','Squad battle + preparation'],
+    ['FEB–JUN','CLUB SEASON',`${Math.min(14,Number(c.season_match||0))}/14 matches`],
+    ['JUN','CLUB AWARDS','Season review + selection'],
+    ['JUL–AUG',intlName,oly?'Olympic squad + tournament':'National-team window'],
+    ['SEP–DEC','TRANSFER + OFF-SEASON','Club decision + next year']
+  ];
+  const now=idx===0?'Prepare for the season':idx===1?`Club Match ${Math.min(14,Number(c.season_match||0)+1)} of 14`:idx===2?'Club season complete — international selection next':idx===3?(oly?`Olympic Games · ${stage||'CAMP'}`:`International duty · ${stage||'CAMP'}`):'Transfer decision and season rollover';
+  return `<section class="ace355Calendar"><div class="ace355CalendarHead"><div><small>CAREER CALENDAR</small><h3>Season ${Number(c.season||1)} · One career year</h3></div><span class="ace355YearPill ${oly?'olympic':''}">${oly?'OLYMPIC YEAR':'CAREER YEAR'}</span></div><div class="ace355CalendarTrack">${phases.map((p,i)=>`<article class="ace355CalPhase ${i<idx?'done':i===idx?'now':''} ${oly&&i===3?'olympic':''}"><small>${p[0]}</small><b>${esc(p[1])}</b><span>${esc(p[2])}</span></article>`).join('')}</div><div class="ace355CalendarNow"><span>WHERE YOU ARE NOW</span><b>${esc(now)}</b></div></section>`;
+}
+function decorateCalendar(){
+  const c=C(),root=document.querySelector('#roadtoace .rta92OverviewPanel');if(!c||!root)return;
+  const sig=[c.season,c.season_match,c.season_complete,c.international_window?.stage||'',c.international_window?.competition||''].join('|');
+  let el=root.querySelector('.ace355Calendar');
+  if(el?.dataset.sig===sig)return;
+  const box=document.createElement('div');box.innerHTML=calendarHTML(c);const node=box.firstElementChild;node.dataset.sig=sig;
+  if(el)el.replaceWith(node);else root.querySelector('.rta92HeroSummary')?.insertAdjacentElement('afterend',node);
+}
+function decorateOlympicHub(){
+  document.querySelectorAll('#roadtoace .ace354Olympic').forEach(el=>{
+    el.classList.add('ace355OlympicPrime');
+    const st=String(C()?.international_window?.stage||'').toUpperCase();
+    el.classList.toggle('ace355MedalNight',st==='FINAL'||st==='BRONZE');
+    if(!el.querySelector('.ace355GamesMark')){
+      const mark=document.createElement('div');mark.className='ace355GamesMark';
+      mark.innerHTML=`<i>✦</i><div><small>PROJECT ACE · OLYMPIC YEAR</small><b>COUNTRY. PRESSURE. LEGACY.</b></div>`;
+      el.querySelector('.ace354Head')?.insertAdjacentElement('afterend',mark);
+    }
+  });
+}
+function selectionState(){try{return window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){return null}}
+function momentOverlay(html){
+  closeLayer('ace355Moment');const el=document.createElement('div');el.id='ace355Moment';el.className='ace355MomentBackdrop';el.innerHTML=html;document.body.appendChild(el);document.body.classList.add('ace355ModalOpen');
+}
+function maybeSelectionReveal(){
+  const s=S(),c=C();if(!c||s.view!=='career'||s.careerPanel!=='international'||!c.season_complete||!olympicYear(c))return;
+  const w=c.international_window||{};if(olympicWindow(c)&&!['','CAMP'].includes(String(w.stage||'')))return;
+  const sel=selectionState();if(!sel?.eligible||sel.status!=='SELECTED')return;
+  const key=`ace355_oly_selected_${Number(c.season)}_${String(c.nationality||'INT')}_${String(c.player_name||'ACE')}`;
+  if(safeStore.get(key))return;safeStore.set(key,'1');
+  momentOverlay(`<section class="ace355MomentCard"><div class="ace355MomentTop"><small>OLYMPIC SQUAD ANNOUNCEMENT · SEASON ${Number(c.season)}</small><h2>YOU'RE GOING TO<br>THE OLYMPICS</h2><p>Your club season is complete. The national team has named you in the Olympic squad.</p><div class="ace355FlagLine"><i>◎</i><div><small>REPRESENTING</small><b>${esc(c.nationality||'YOUR COUNTRY')}</b></div></div></div><div class="ace355MomentStats"><div><small>SQUAD ROLE</small><b>${esc(sel.role||w.role||'SELECTED')}</b></div><div><small>POSITION</small><b>${esc(c.position||'PLAYER')}</b></div><div><small>OLYMPIC CYCLE</small><b>${Math.max(1,Number(c.season||4)/4)}</b></div></div><div class="ace355MomentActions"><button type="button" data-ace355-moment-close>LATER</button><button type="button" class="primary" data-ace355-moment-close>REPORT TO OLYMPIC CAMP →</button></div></section>`);
+}
+function podiumHTML(c,w){
+  const medal=String(w?.medal||'').toUpperCase(),country=String(c?.nationality||'YOUR COUNTRY');
+  const slot=(type,icon,label)=>`<div class="${medal===type?'you':''}"><i>${icon}</i><b>${medal===type?esc(country):'—'}</b><small>${label}</small></div>`;
+  return `<div class="ace355Podium">${slot('SILVER','🥈','SILVER')}${slot('GOLD','🥇','GOLD')}${slot('BRONZE','🥉','BRONZE')}</div>`;
+}
+function maybeMedalCeremony(){
+  const s=S(),c=C(),w=c?.international_window||{};if(!c||!olympicWindow(c)||String(w.stage||'').toUpperCase()!=='COMPLETE'||!['GOLD','SILVER','BRONZE'].includes(String(w.medal||'').toUpperCase()))return;
+  if(s.view!=='career'||s.careerPanel!=='international')return;
+  const key=`ace355_oly_medal_${Number(c.season)}_${String(w.medal)}`;if(safeStore.get(key))return;safeStore.set(key,'1');
+  const icon=String(w.medal).toUpperCase()==='GOLD'?'🥇':String(w.medal).toUpperCase()==='SILVER'?'🥈':'🥉';
+  momentOverlay(`<section class="ace355MomentCard"><div class="ace355MomentTop"><small>OLYMPIC GAMES · SEASON ${Number(c.season)}</small><h2>${icon} OLYMPIC ${esc(String(w.medal).toUpperCase())}</h2><p>${esc(c.nationality||'Your country')} finishes the Olympic tournament with a medal. This result is now permanent in your Profile and Career Legacy.</p></div>${podiumHTML(c,w)}<div class="ace355MomentStats"><div><small>TOURNAMENT RECORD</small><b>${Number(w.wins||0)}–${Number(w.losses||0)}</b></div><div><small>CAREER CAPS</small><b>${Number(c.international_caps||0)}</b></div><div><small>AWARD</small><b>${esc(w.award||'—')}</b></div></div><div class="ace355MomentActions"><button type="button" data-ace355-view-legacy>VIEW CAREER LEGACY</button><button type="button" class="primary" data-ace355-moment-close>CONTINUE →</button></div></section>`);
+}
+function decorateLegacy(){
+  const d=S().legacy,root=document.querySelector('#roadtoace .ace351Legacy');if(!d||!root)return;
+  const hist=Array.isArray(d.olympic_history)?d.olympic_history:[];if(!hist.length){root.querySelector('.ace355LegacyOlympics')?.remove();return}
+  const m=d.olympic_medals||{},sig=JSON.stringify([hist.length,m.gold,m.silver,m.bronze,hist.map(x=>[x.season,x.medal,x.outcome])]);
+  let el=root.querySelector('.ace355LegacyOlympics');if(el?.dataset.sig===sig)return;
+  const cards=[...hist].sort((a,b)=>Number(b.season||0)-Number(a.season||0)).map(x=>{const med=String(x.medal||'').toUpperCase(),icon=med==='GOLD'?'🥇':med==='SILVER'?'🥈':med==='BRONZE'?'🥉':'◎';return `<article><i>${icon}</i><div><small>SEASON ${Number(x.season||0)} · OLYMPIC CYCLE ${Number(x.cycle||Math.max(1,Number(x.season||4)/4))}</small><b>${esc(x.outcome||'OLYMPIC GAMES')}</b><span>${esc(x.nationality||C()?.nationality||'National team')} · ${Number(x.record?.wins||0)}–${Number(x.record?.losses||0)}${x.award?` · ${esc(x.award)}`:''}</span></div><em>${med||'OLYMPIAN'}</em></article>`}).join('');
+  const html=`<section class="ace355LegacyOlympics"><div class="ace355LegacyOlympicsHead"><div><small>OLYMPIC HISTORY</small><h3>Your Olympic record</h3></div><div class="ace355MedalCounts"><b>🥇 ${Number(m.gold||0)}</b><b>🥈 ${Number(m.silver||0)}</b><b>🥉 ${Number(m.bronze||0)}</b></div></div><div class="ace355OlympicHistory">${cards}</div></section>`;
+  const box=document.createElement('div');box.innerHTML=html;const node=box.firstElementChild;node.dataset.sig=sig;
+  if(el)el.replaceWith(node);else root.querySelector('.ace351LegacyOverview')?.insertAdjacentElement('afterend',node);
+}
+let raf=0;
+function decorate(){
+  raf=0;enhanceBeta();decorateCalendar();decorateOlympicHub();decorateLegacy();
+  setTimeout(()=>{maybeSelectionReveal();maybeMedalCeremony()},80);
+}
+function queue(){if(!raf)raf=requestAnimationFrame(()=>requestAnimationFrame(decorate))}
+document.addEventListener('click',e=>{
+  if(e.target.closest?.('#ace348BetaTimer')){e.preventDefault();betaModal();return}
+  if(e.target.closest?.('[data-ace355-beta-close]')||e.target.id==='ace355BetaExplainer'){closeLayer('ace355BetaExplainer');return}
+  if(e.target.closest?.('[data-ace355-moment-close]')||e.target.id==='ace355Moment'){closeLayer('ace355Moment');return}
+  if(e.target.closest?.('[data-ace355-view-legacy]')){closeLayer('ace355Moment');const s=S();s.view='career';s.careerPanel='legacy';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(queue,40);return}
+  setTimeout(queue,35);
+},true);
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&document.activeElement?.id==='ace348BetaTimer'){e.preventDefault();betaModal()}
+  if(e.key==='Escape'){closeLayer('ace355BetaExplainer');closeLayer('ace355Moment')}
+});
+document.addEventListener('ace:rta-render',queue);
+window.addEventListener('pageshow',queue);
+setTimeout(queue,120);
+window.ACE_BETA_GRACE_EXPLAINER_V355={open:betaModal};
+window.ACE_OLYMPIC_PRESENTATION_V355={decorateNow:decorate,showSelection:maybeSelectionReveal,showCeremony:maybeMedalCeremony};
+window.ACE_CAREER_CALENDAR_V355={decorateNow:decorateCalendar};
+window.ACE_PROJECT_BUILD='B21.36.355';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.355';
+})();
+</script>
+<script id="ace355-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.355';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.355';window.ACE_OLYMPIC_PRESENTATION_BUILD='B21.36.355';window.ACE_BETA_GRACE_EXPLAINER_BUILD='B21.36.355';</script>
+
