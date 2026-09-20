@@ -38620,11 +38620,63 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const auth=/sign in/i.test(message);
     m.innerHTML=`<div class="rta62Loading"><span>♠</span><b>ROAD TO ACE</b><div class="rta62Error">${esc(message)}</div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center"><button class="rta62Btn primary" data-rta62-retry>TRY AGAIN</button>${auth?'<button class="rta62Btn" data-rta62-account>OPEN ACCOUNT</button>':""}</div></div>`;
   }
+  let ACE335_RESET_NOTICE_OPEN=false;
+  function ace335CloseResetNotice(){
+    document.getElementById("ace335SkillResetModal")?.remove();
+    ACE335_RESET_NOTICE_OPEN=false;
+  }
+  async function ace335AcknowledgeReset(goTree=false){
+    if(S.busy)return;
+    S.busy=true;
+    const primary=document.querySelector("#ace335SkillResetModal [data-ace335-respec-now]");
+    const later=document.querySelector("#ace335SkillResetModal [data-ace335-respec-later]");
+    if(primary)primary.disabled=true;if(later)later.disabled=true;
+    try{
+      const d=await rpc("vds_rta_ack_skill_tree_reset_v335",{});
+      if(d?.career)S.career=d.career;
+      S.skillTree=null;
+      ACE_ST2_ACTIVE_PATH="";
+      ACE316K_SELECTED_NODE="";
+      ace335CloseResetNotice();
+      if(goTree){
+        S.view="player";S.playerPanel="tree";render();
+        try{S.skillTree=await rpc("vds_rta_get_skill_tree");render();ace316hSkillTop()}catch(err){toast(errText(err),"error")}
+      }else render();
+    }catch(err){
+      toast(errText(err),"error");
+      if(primary)primary.disabled=false;if(later)later.disabled=false;
+    }finally{S.busy=false}
+  }
+  function ace335MaybeShowSkillReset(){
+    const c=S.career;if(!c||!c.skill_tree_reset_pending||ACE335_RESET_NOTICE_OPEN||document.getElementById("ace335SkillResetModal"))return;
+    ACE335_RESET_NOTICE_OPEN=true;
+    S.skillTree=null;ACE_ST2_ACTIVE_PATH="";ACE316K_SELECTED_NODE="";
+    const refund=Math.max(0,Number(c.skill_tree_reset_refund_sp||0));
+    const modal=document.createElement("div");
+    modal.id="ace335SkillResetModal";modal.className="ace335ResetModal";
+    modal.innerHTML=`<section class="ace335ResetCard" role="dialog" aria-modal="true" aria-labelledby="ace335ResetTitle">
+      <div class="ace335ResetIcon">↺</div>
+      <small>PROJECT ACE · BUILD UPDATE</small>
+      <h2 id="ace335ResetTitle">SKILL TREE RESET</h2>
+      <p>We reset every Career skill tree so everyone can rebuild cleanly around the new archetypes and Specialisations.</p>
+      <div class="ace335ResetRefund"><span>${refund>0?`+${refund} SP RETURNED`:"TREE CLEARED"}</span><b>${refund>0?"All Skill Points you spent have been refunded.":"You had no spent Skill Points to refund on this save."}</b></div>
+      <div class="ace335ResetNote"><i>✓</i><span>Your current player attributes have been kept intact.</span></div>
+      <div class="ace335ResetActions"><button type="button" class="primary" data-ace335-respec-now>RESPEC NOW →</button><button type="button" data-ace335-respec-later>LATER</button></div>
+    </section>`;
+    document.body.appendChild(modal);
+    requestAnimationFrame(()=>modal.classList.add("show"));
+  }
+  document.addEventListener("click",e=>{
+    const now=e.target?.closest?.("[data-ace335-respec-now]");if(now){e.preventDefault();e.stopPropagation();ace335AcknowledgeReset(true);return}
+    const later=e.target?.closest?.("[data-ace335-respec-later]");if(later){e.preventDefault();e.stopPropagation();ace335AcknowledgeReset(false)}
+  },true);
+
   function render(){
     const m=q("#rta62Mount");if(!m)return;
     S.career?renderCareer(m):renderCreate(m);
     requestAnimationFrame(()=>{
-      try{rta119RunEnhancers?.()}catch(_){}
+      try{ace335MaybeShowSkillReset()}catch(_){}
+      try{window.ACE_RTA_RUN_ENHANCERS?.()}catch(_){}
       try{window.ace259SyncPageState?.()}catch(_){}
       try{window.ace211RefreshCareerNav?.()}catch(_){}
       try{window.ace221RefreshTrainingUI?.()}catch(_){}
@@ -39527,6 +39579,12 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     }catch(e){ console.warn("ACE career UI enhancement failed",e); }
   }
 
+  // B21.36.331: expose the scoped enhancers to the later post-render script.
+  // They previously existed only inside this Career closure, so the external
+  // scheduler threw a caught ReferenceError on every Career render.
+  window.__ACE_RTA_ENHANCE_CLUB_ICONS=rta117EnhanceClubIcons;
+  window.__ACE_RTA_ENHANCE_CAREER_UI=rta118EnhanceCareerUI;
+
   function rta257CareerScope(c){
     const slot=Number(S.activeSave||S.saveProfile?.active_slot||1);
     return `${slot}:${String(c?.player_name||"career").slice(0,48)}`;
@@ -40333,6 +40391,30 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function skillUnlockedSet(){
     return new Set(Array.isArray(S.skillTree?.unlocked)?S.skillTree.unlocked:Array.isArray(S.career?.skill_nodes)?S.career.skill_nodes:[]);
   }
+  function ace333MissingPrereq(n){
+    const unlocked=skillUnlockedSet();
+    const prereqs=Array.isArray(n?.prereq_nodes)&&n.prereq_nodes.length?n.prereq_nodes:(n?.prereq?[n.prereq]:[]);
+    const missing=prereqs.find(id=>!unlocked.has(id));
+    if(!missing)return null;
+    const node=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(x=>String(x.id)===String(missing));
+    return node||{id:missing,name:'previous node'};
+  }
+  function ace333RequirementText(n,c,state){
+    if(state.owned)return 'This node is active on your player.';
+    if(!state.identityOk){
+      if(String(state.identityReason||'')==='COMMIT PRIMARY')return `Commit ${pretty(n.branch)} as your Primary archetype first.`;
+      if(String(state.identityReason||'')==='CHOOSE AS SECONDARY')return `Complete Tier 1–3, then commit ${pretty(n.branch)} as your Secondary archetype.`;
+      return state.identityReason||'This path is locked.';
+    }
+    if(!state.prereqOk){
+      const req=ace333MissingPrereq(n);
+      return req?`Unlock ${req.name} first.`:'Unlock the previous node first.';
+    }
+    if(!state.roleOk)return `${n.role_gate} role required.`;
+    if(!state.milestoneOk)return `${Number(state.currentMilestone)}/${Number(n.milestone_value||0)} ${String(n.milestone_type||'').replace('RATINGS_8','8.0+ ratings')}.`;
+    if(!state.spOk)return `${Number(n.cost||0)} SP required.`;
+    return `${Number(n.cost||0)} SP to unlock.`;
+  }
   function skillNodeState(n,c){
     const unlocked=skillUnlockedSet(),owned=unlocked.has(n.id);
     const prereqs=Array.isArray(n.prereq_nodes)&&n.prereq_nodes.length?n.prereq_nodes:(n.prereq?[n.prereq]:[]);
@@ -40356,8 +40438,22 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       const other=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).find(x=>x.id!==n.id&&String(x.type||x.node_type||"").toUpperCase()==="SPECIALIZATION"&&String(x.effect_meta?.choice_group||"")===group&&unlocked.has(x.id));
       if(other&&!owned){identityOk=false;identityReason=`SPECIALIZED · ${String(other.name||"CHOICE LOCKED")}`;}
     }
-    else if(!primary&&tier>4){identityOk=false;identityReason="COMMIT PRIMARY";}
-    else if(primary&&n.branch!==primary){if(secondary===n.branch){if(tier>7){identityOk=false;identityReason="SECONDARY LIMIT · TIER 7"}}else if(tier>3){identityOk=false;identityReason=secondary?"FOUNDATION LIMIT · TIER 3":"CHOOSE AS SECONDARY"}}
+    else if(!primary&&tier>3){
+      const foundations=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).filter(x=>String(x.position||"").toUpperCase()===String(c.position||"OH").toUpperCase()&&String(x.branch||"")===String(n.branch||"")&&Number(x.tier||0)>=1&&Number(x.tier||0)<=3);
+      const foundationReady=foundations.length>0&&foundations.every(x=>unlocked.has(x.id));
+      identityOk=false;identityReason="COMMIT PRIMARY";
+    }
+    else if(primary&&n.branch!==primary){
+      if(secondary){
+        if(secondary===n.branch){
+          if(tier>7){identityOk=false;identityReason="SECONDARY LIMIT · TIER 7";}
+        }else{
+          identityOk=false;identityReason="VIEW ONLY · PATH LOCKED";
+        }
+      }else if(tier>3){
+        identityOk=false;identityReason="CHOOSE AS SECONDARY";
+      }
+    }
     return {owned,prereqOk,roleOk,milestoneOk,spOk,identityOk,identityReason,currentMilestone,available:!owned&&prereqOk&&roleOk&&milestoneOk&&spOk&&identityOk};
   }
   function skillEffectsLabel(effects){
@@ -40368,7 +40464,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function skillGateLabel(n,c,state){
     if(state.owned)return "UNLOCKED";
     if(!state.identityOk)return state.identityReason||"PATH LOCKED";
-    if(!state.prereqOk)return n.branch==="HYBRID"?"TWO PATH TRAITS REQUIRED":"PREVIOUS NODE REQUIRED";
+    if(!state.prereqOk){const req=ace333MissingPrereq(n);return n.branch==="HYBRID"?"TWO PATH TRAITS REQUIRED":req?`UNLOCK ${String(req.name||"PREVIOUS NODE").toUpperCase()} FIRST`:"PREVIOUS NODE REQUIRED";}
     if(!state.roleOk)return `${n.role_gate} REQUIRED`;
     if(!state.milestoneOk)return `${Number(state.currentMilestone)}/${Number(n.milestone_value||0)} ${String(n.milestone_type||"").replace("RATINGS_8","8.0+ RATINGS")}`;
     if(!state.spOk)return `${Number(n.cost||0)} SP REQUIRED`;
@@ -40479,6 +40575,118 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     return `<article class="ace316gBuildCard ${esc(state)}"><small>${esc(label)}</small><b>${esc(name)}</b><span>${esc(sub)}</span></article>`;
   }
   let ACE316K_SELECTED_NODE="";
+  function ace339Pct(v){
+    const n=Number(v||0)*100;
+    if(!Number.isFinite(n)||Math.abs(n)<.001)return "";
+    return `${Math.round(n*10)/10}%`;
+  }
+  function ace339KindLabel(k){
+    return ({
+      ATTACK:"attack",QUICK_ATTACK:"quick-attack",SERVE:"serve",RECEIVE:"serve-receive",
+      BLOCK_READ:"blocking",SET_DECISION:"setting",DUMP_DECISION:"setter-dump",
+      DEFENCE_READ:"defence",EMERGENCY_SET:"emergency-setting"
+    })[String(k||"").toUpperCase()]||pretty(String(k||"").replaceAll("_"," ")).toLowerCase();
+  }
+  function ace339Kinds(meta){
+    const arr=Array.isArray(meta?.match_kinds)?meta.match_kinds:[];
+    if(!arr.length)return "match";
+    const labels=arr.map(ace339KindLabel);
+    if(labels.length===1)return labels[0];
+    if(labels.length===2)return `${labels[0]} and ${labels[1]}`;
+    return `${labels.slice(0,-1).join(", ")}, and ${labels.at(-1)}`;
+  }
+  function ace339StatMeaning(key){
+    return ({
+      creativity:"Improves creative attacking/setting decisions and the value of alternative options.",
+      accuracy:"Improves shot placement and target control on attacking contacts.",
+      hitting_power:"Adds pace and finishing pressure to clean attacking swings.",
+      serve_receive:"Improves first-contact control and forgiveness on serve receive.",
+      positioning:"Improves movement into the correct base and rewards better court positioning.",
+      covering:"Improves scramble coverage and recovery around blocks, tips and loose balls.",
+      work_rate:"Improves fatigue resistance and movement consistency over longer matches.",
+      vertical:"Improves jump reach for attacking and blocking actions.",
+      speed:"Improves court movement and how quickly you can reach the required position.",
+      reaction_time:"Improves reaction/read windows in receive, defence, blocking and setting situations.",
+      service:"Improves serve pressure, placement and execution consistency.",
+      blocking:"Improves block timing, reach and success when the read is correct.",
+      set_technique:"Improves setting contact quality, release timing and target control.",
+      set_creativity:"Improves deceptive and alternative setting decisions.",
+      mindset:"Improves execution under pressure and late-match consistency."
+    })[String(key||"")]||`Improves ${pretty(String(key||"").replaceAll("_"," ")).toLowerCase()} in gameplay.`;
+  }
+  function ace339StatDescription(n){
+    const effects=n?.effects||{};
+    const entries=Object.entries(effects).filter(([,v])=>Number(v));
+    if(!entries.length)return "";
+    return entries.map(([k,v])=>`${Number(v)>0?"+":""}${Number(v)} ${pretty(k.replaceAll("_"," "))}. ${ace339StatMeaning(k)}`).join(" ");
+  }
+  function ace339GameplayDescription(n){
+    if(!n)return "";
+    const type=aceSt3NodeType(n),meta=n.effect_meta||{};
+    if(type==="SMALL"||type==="ADVANCED")return ace339StatDescription(n)||String(n.description||"Improves this part of your build.");
+    const parts=[];
+    const mechanic=String(meta.mechanic_text||n.description||"").trim();
+    if(mechanic)parts.push(mechanic);
+    const kinds=ace339Kinds(meta);
+    if(Number(meta.match_bonus||0))parts.push(`In ${kinds} key moments, adds a +${ace339Pct(meta.match_bonus)} base execution bonus.`);
+    if(Number(meta.correct_read_bonus||0))parts.push(`A correct read adds another +${ace339Pct(meta.correct_read_bonus)}.`);
+    if(Number(meta.choice_bonus||0))parts.push(`Using the intended option adds +${ace339Pct(meta.choice_bonus)}.`);
+    if(Number(meta.streak_bonus||0))parts.push(`After two successful moments, gain a +${ace339Pct(meta.streak_bonus)} rhythm bonus.`);
+    if(Number(meta.recovery_bonus||0))parts.push(`After an error, gain a +${ace339Pct(meta.recovery_bonus)} recovery bonus.`);
+    if(Number(meta.first_ball_bonus||0))parts.push(`On the first key moment, gain +${ace339Pct(meta.first_ball_bonus)}.`);
+    if(Number(meta.late_bonus||0))parts.push(`In the final quarter of a key-moment sequence, gain +${ace339Pct(meta.late_bonus)}.`);
+    if(Number(meta.pressure_bonus||0))parts.push(`In international semi-finals/finals, gain +${ace339Pct(meta.pressure_bonus)}.`);
+    if(Number(meta.wrong_read_rescue||0))parts.push(`A wrong read keeps +${ace339Pct(meta.wrong_read_rescue)} of the outcome instead of fully collapsing.`);
+    if(Number(meta.wrong_read_penalty||0))parts.push(`Wrong reads carry an extra ${ace339Pct(meta.wrong_read_penalty)} penalty.`);
+    if(Number(meta.training_bonus||0)&&meta.training_focus)parts.push(`In ${pretty(String(meta.training_focus)).toLowerCase()} drills, adds +${ace339Pct(meta.training_bonus)} to the active skill bonus.`);
+    if(type==="HYBRID")parts.push(`Only active when ${pretty(meta.required_primary||n.branch)} is Primary and ${pretty(meta.required_secondary||"")} is Secondary.`);
+    if(type.startsWith("ACE_PLUS")){
+      if(Number(meta.attribute_cap||0))parts.push(`Raises your Ace+ attribute cap to ${Number(meta.attribute_cap)}.`);
+      if(Number(meta.international_wins_required||0))parts.push(`This rank requires ${Number(meta.international_wins_required)} international wins and 100 OVR.`);
+    }
+    return parts.filter(Boolean).join(" ")||"Improves this part of your build in matches and training.";
+  }
+  function ace339NodeShortDescription(n){
+    const type=aceSt3NodeType(n),meta=n?.effect_meta||{};
+    if(type==="SMALL"||type==="ADVANCED"){
+      const first=Object.keys(n?.effects||{})[0];
+      return first?ace339StatMeaning(first):String(n?.description||"");
+    }
+    if(meta.mechanic_text)return String(meta.mechanic_text);
+    return String(n?.description||ace339GameplayDescription(n));
+  }
+
+  function ace341TreeDescription(n){
+    if(!n)return "";
+    const type=aceSt3NodeType(n),meta=n.effect_meta||{};
+    if(type==="SMALL"||type==="ADVANCED"){
+      const key=Object.keys(n.effects||{})[0];
+      return ({
+        creativity:"More effective creative options.",
+        accuracy:"Better shot placement and target control.",
+        hitting_power:"More pace and finishing pressure.",
+        serve_receive:"Cleaner, more forgiving first contact.",
+        positioning:"Reach the correct base more reliably.",
+        covering:"Better recovery on tips and loose balls.",
+        work_rate:"Hold movement quality deeper into matches.",
+        vertical:"More jump reach in attack and block.",
+        speed:"Move across court faster.",
+        reaction_time:"Larger reaction windows on reads.",
+        service:"More pressure and control on serve.",
+        blocking:"Better block timing and success.",
+        set_technique:"Cleaner release and set accuracy.",
+        set_creativity:"Stronger deceptive setting options.",
+        mindset:"More reliable execution under pressure."
+      })[String(key||"")]||ace339NodeShortDescription(n);
+    }
+    if(type.startsWith("ACE_PLUS")){
+      const cap=Number(meta.attribute_cap||0);
+      const power=String(meta.power_name||n.name||"ACE+ power");
+      return `${pretty(power)}${cap?` · attribute cap ${cap}`:""}.`;
+    }
+    return String(meta.mechanic_text||n.description||ace339NodeShortDescription(n));
+  }
+
   function ace316kTypeLabel(n){
     const t=aceSt3NodeType(n),meta=n.effect_meta||{};
     if(t.startsWith("ACE_PLUS"))return `ACE+ ${ace315aRoman(meta.power_rank)}`;
@@ -40490,7 +40698,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   function ace316kNodeIcon(n){
     const t=aceSt3NodeType(n);
-    if(t.startsWith("ACE_PLUS"))return "♛";
+    if(t.startsWith("ACE_PLUS")){
+      const rank=ace315aRoman(Number(n?.effect_meta?.power_rank||String(t).match(/(\d+)$/)?.[1]||1));
+      return `<span class="ace340AceNodeMark"><span class="ace340AceSpade">♠</span><em>${esc(rank)}</em></span>`;
+    }
     if(t==="PLAYSTYLE")return "★";
     if(t==="HYBRID")return "✦";
     if(t==="SPECIALIZATION")return "◇";
@@ -40506,21 +40717,29 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const type=aceSt3NodeType(n),meta=n.effect_meta||{};
     const mechanic=String(meta.mechanic_text||"");
     const mechanicLabel=String(meta.mechanic_label||"");
+    const gameplayDescription=ace339GameplayDescription(n);
     const effects=skillEffectsLabel(n.effects);
     const closed=type==="SPECIALIZATION"&&String(st.identityReason||"").startsWith("SPECIALIZED");
     const status=st.owned?"OWNED":st.available?"AVAILABLE":closed?"PATH CLOSED":"LOCKED";
-    const requirement=st.owned?"This node is active on your player.":st.available?`${Number(n.cost||0)} SP to unlock.`:skillGateLabel(n,c,st);
+    const requirement=ace333RequirementText(n,c,st);
+    const missingPrereq=!st.prereqOk?ace333MissingPrereq(n):null;
+    const primary=ace315aPrimary();
+    const canCommitPrimary=!primary&&String(n.branch||"")!=="HYBRID"&&Number(n.tier||0)>4&&(()=>{const all=(Array.isArray(S.skillTree?.nodes)?S.skillTree.nodes:[]).filter(x=>String(x.position||"").toUpperCase()===String(c.position||"OH").toUpperCase()&&String(x.branch||"")===String(n.branch||"")&&Number(x.tier||0)<=4);const owned=skillUnlockedSet();return all.length>0&&all.every(x=>owned.has(x.id));})();
     return `<div class="ace316kDetailInner">
+      <button type="button" class="ace341DetailClose" data-ace341-detail-close aria-label="Close node details">×</button>
+      <div class="ace341DetailHandle" aria-hidden="true"></div>
       <div class="ace316kDetailKicker">NODE DETAILS</div>
       <span class="ace316kDetailType">${esc(ace316kTypeLabel(n))}</span>
       <h2>${esc(n.name)}</h2>
+      <p class="ace339GameplayDescription">${esc(gameplayDescription)}</p>
       <h4>${esc(mechanicLabel||ace316gArchetypeTagline(n.branch))}</h4>
-      <p>${esc(n.description||mechanic||"Develop this part of your build.")}</p>
-      ${mechanic?`<div class="ace316kEffect"><small>GAMEPLAY EFFECT</small><b>${esc(mechanic)}</b></div>`:""}
       ${effects&&effects!=="Special skill"?`<div class="ace316kEffect stat"><small>ATTRIBUTE EFFECT</small><b>${esc(effects)}</b></div>`:""}
       ${secondaryName&&["TRAIT","SPECIALIZATION","PLAYSTYLE","HYBRID"].includes(type)?`<div class="ace316kSynergy"><small>BUILD CONTEXT</small><b>${esc(secondaryName)}</b><span>Your secondary path remains active alongside this build.</span></div>`:""}
       <div class="ace316kStatus ${st.owned?"owned":st.available?"available":"locked"}"><b>${esc(status)}</b><span>${esc(requirement)}</span></div>
-      ${st.available?`<button type="button" class="ace316kUnlock" data-rta67-node="${esc(n.id)}">UNLOCK · ${Number(n.cost||0)} SP</button>`:""}
+      ${missingPrereq?`<button type="button" class="ace333NextStep" data-ace333-jump-prereq="${esc(missingPrereq.id)}"><span>NEXT STEP</span><b>GO TO ${esc(String(missingPrereq.name||"REQUIRED NODE").toUpperCase())} →</b></button>`:""}
+      ${canCommitPrimary?`<button type="button" class="ace333NextStep commit" data-ace315a-commit-primary="${esc(n.branch)}"><span>NEXT STEP</span><b>COMMIT ${esc(pretty(n.branch).toUpperCase())} AS PRIMARY →</b></button>`:""}
+      ${type.startsWith("ACE_PLUS")?`<div class="ace340AceDetailSeal"><span>♠</span><div><small>ACE+ ENDGAME POWER</small><b>RANK ${esc(ace315aRoman(meta.power_rank))}</b></div></div>`:""}
+      ${st.available?`<button type="button" class="ace316kUnlock ${type.startsWith("ACE_PLUS")?"ace340AceUnlock":""}" data-rta67-node="${esc(n.id)}">${type.startsWith("ACE_PLUS")?`UNLOCK ACE+ ${esc(ace315aRoman(meta.power_rank))}`:`UNLOCK · ${Number(n.cost||0)} SP`}</button>`:""}
     </div>`;
   }
   function ace316kTreeHTML(nodeStates,c,secondaryName){
@@ -40543,7 +40762,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         });
         lastFork={items:pair.map(([sn,ss],idx)=>({n:sn,st:ss,x:idx?72:32,y}))};
         lastCenter=null;
-        y+=112;
+        y+=136;
         continue;
       }
       const pos={n,st,x:52,y};
@@ -40555,7 +40774,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         edges.push({x1:lastCenter.x,y1:lastCenter.y,x2:52,y2:y,cls:`${st.owned?"owned":st.available?"available":"locked"} ${type.toLowerCase()}`});
       }
       lastCenter=pos;
-      y+= type==="PLAYSTYLE"||type.startsWith("ACE_PLUS")?108:88;
+      y+= type.startsWith("ACE_PLUS")?164:type==="PLAYSTYLE"?138:112;
     }
     const height=Math.max(520,y+30);
     const firstUnlocked=nodeStates.find(([n,st])=>!st.owned&&st.available)?.[0]||nodeStates.find(([n,st])=>st.owned)?.[0]||nodeStates[0][0];
@@ -40579,6 +40798,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       return `<button type="button" class="ace316kNode ${ace316kNodeStateClass(p.n,p.st)} ${type.toLowerCase()} ${selected?"selected":""}" style="--x:${p.x};--y:${p.y}px" data-ace316k-node-select="${esc(p.n.id)}">
         <span class="ace316kOrb">${ace316kNodeIcon(p.n)}</span>
         <b>${esc(p.n.name)}</b>
+        <span class="ace339NodeDesc">${esc(ace341TreeDescription(p.n))}</span>
         <small>${esc(ace316kTypeLabel(p.n))}</small>
       </button>`;
     }).join("");
@@ -40614,9 +40834,26 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
 
     const pathPicker=keys.map(k=>{
       const pr=aceSt2PathProgress(all.filter(n=>n.branch===k),owned);
-      const state=k===active?"VIEWING":k===primary?"PRIMARY":k===secondary?"SECONDARY":k==="HYBRID"?"HYBRID":"PATH";
-      return `<button type="button" data-ace-st2-path="${esc(k)}" class="${k===active?"active":""}"><i>${paths[k][1]}</i><span><small>${esc(state)}</small><b>${esc(paths[k][0])}</b><em>${pr.got}/${pr.total}</em></span></button>`;
+      const viewOnly=!!secondary&&k!==primary&&k!==secondary&&k!=="HYBRID";
+      const state=k===active?"VIEWING":k===primary?"PRIMARY":k===secondary?"SECONDARY":k==="HYBRID"?"HYBRID":viewOnly?"VIEW ONLY":"PATH";
+      return `<button type="button" data-ace-st2-path="${esc(k)}" class="${k===active?"active":""} ${viewOnly?"ace337ViewOnly":""}"><i>${paths[k][1]}</i><span><small>${esc(state)}</small><b>${esc(paths[k][0])}</b><em>${pr.got}/${pr.total}</em></span></button>`;
     }).join("");
+
+    /* B21.36.332 — the 316K visual tree accidentally removed the only visible
+       primary/secondary commit controls. Primary and Secondary now both use a three-node foundation before commitment.
+       This keeps exploration open through T1-T3, then makes the player explicitly
+       commit a path before T4+ becomes spendable. */
+    const primaryFoundationNodes=pathNodes.filter(n=>Number(n.tier||0)>=1&&Number(n.tier||0)<=3);
+    const primaryFoundationOwned=primaryFoundationNodes.filter(n=>owned.has(n.id)).length;
+    const primaryFoundationReady=primaryFoundationNodes.length>0&&primaryFoundationOwned>=primaryFoundationNodes.length;
+    const secondaryFoundationNodes=pathNodes.filter(n=>Number(n.tier||0)>=1&&Number(n.tier||0)<=3);
+    const secondaryFoundationOwned=secondaryFoundationNodes.filter(n=>owned.has(n.id)).length;
+    const secondaryFoundationReady=secondaryFoundationNodes.length>0&&secondaryFoundationOwned>=secondaryFoundationNodes.length;
+    const commitBar=!primary&&active!=="HYBRID"
+      ?`<section class="ace332PathCommit ${primaryFoundationReady?"ready":"locked"}"><div><small>PRIMARY ARCHETYPE</small><b>${primaryFoundationReady?`Commit to ${esc(pm[0])}`:`Build ${esc(pm[0])} foundation`}</b><span>${primaryFoundationReady?"Locks in your primary identity and opens its Specialisation route.":`${primaryFoundationOwned}/${primaryFoundationNodes.length} foundation nodes · complete Tier 1–3 first.`}</span></div><button type="button" data-ace315a-commit-primary="${esc(active)}" ${primaryFoundationReady?"":"disabled"}>COMMIT PRIMARY →</button></section>`
+      :primary&&!secondary&&active!==primary&&active!=="HYBRID"
+        ?`<section class="ace332PathCommit secondary ${secondaryFoundationReady?"ready":"locked"}"><div><small>SECONDARY ARCHETYPE</small><b>${secondaryFoundationReady?`Commit ${esc(pm[0])}`:`Build ${esc(pm[0])} foundation`}</b><span>${secondaryFoundationReady?"Permanent secondary choice. Tier 4+ opens after commitment.":`${secondaryFoundationOwned}/${secondaryFoundationNodes.length} foundation nodes · complete Tier 1–3 first.`}</span></div><button type="button" data-ace315a-commit-secondary="${esc(active)}" ${secondaryFoundationReady?"":"disabled"}>COMMIT SECONDARY →</button></section>`
+        :"";
 
     return `<section class="ace316kPage">
       <header class="ace316kTop">
@@ -40636,6 +40873,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       </section>
 
       <nav class="ace316kPaths">${pathPicker}</nav>
+      ${commitBar}
       <section class="ace316kWorkspace">
         <div class="ace316kTreePane">
           <div class="ace316kTreeHead"><small>FULL PATH · VIEWING</small><b>${esc(pm[0])}</b></div>
@@ -40659,9 +40897,20 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const secondary=ace315aSecondary(),pos=String(c.position||"OH").toUpperCase(),paths=ACE_ST2_PATH_META[pos]||ACE_ST2_PATH_META.OH;
     const sName=secondary?(paths[secondary]?.[0]||pretty(secondary)):"NOT CHOSEN";
     const panel=document.getElementById("ace316kDetails");
-    if(panel)panel.innerHTML=ace316kDetailHTML(n,skillNodeState(n,c),c,sName);
+    if(panel){
+      panel.innerHTML=ace316kDetailHTML(n,skillNodeState(n,c),c,sName);
+      if(window.innerWidth<=760)panel.classList.add("ace341Open");
+    }
     setTimeout(ace316lFollowDetails,0);
   });
+
+  document.addEventListener("click",function(e){
+    const close=e.target?.closest?.("[data-ace341-detail-close]");
+    if(!close)return;
+    e.preventDefault();e.stopPropagation();
+    document.getElementById("ace316kDetails")?.classList.remove("ace341Open");
+  });
+
 
   let ACE316L_DETAIL_RAF=0;
   function ace316lFollowDetails(){
@@ -40689,10 +40938,24 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   });
 
   document.addEventListener("click",function(e){
+    const j=e.target?.closest?.("[data-ace333-jump-prereq]");
+    if(!j)return;
+    e.preventDefault();e.stopPropagation();
+    const id=String(j.getAttribute("data-ace333-jump-prereq")||"");
+    const n=(S.skillTree?.nodes||[]).find(x=>String(x.id)===id);
+    if(!n)return;
+    ACE_ST2_ACTIVE_PATH=String(n.branch||ACE_ST2_ACTIVE_PATH||"");
+    ACE316K_SELECTED_NODE=id;
+    render();
+    setTimeout(()=>{try{document.querySelector(`[data-ace316k-node-select="${CSS.escape(id)}"]`)?.scrollIntoView({behavior:"smooth",block:"center"})}catch(_){}},80);
+  });
+
+  document.addEventListener("click",function(e){
     const b=e.target?.closest?.("[data-ace-st2-path]");
     if(!b)return;
     e.preventDefault();e.stopPropagation();
     ACE_ST2_ACTIVE_PATH=String(b.getAttribute("data-ace-st2-path")||"");
+    document.getElementById("ace316kDetails")?.classList.remove("ace341Open");
     render();
   });
 document.addEventListener("click",function(e){
@@ -40701,17 +40964,55 @@ document.addEventListener("click",function(e){
     const jump=e.target?.closest?.("[data-ace316g-jump-tree]");
     if(jump){e.preventDefault();e.stopPropagation();q("#ace316gMap")?.scrollIntoView?.({behavior:"smooth",block:"start"});return}
   });
+  function ace340ShowAceUnlock(nodeId,data){
+    const node=data?.node||aceSt3NodeById(nodeId);
+    if(!node||!String(aceSt3NodeType(node)).startsWith("ACE_PLUS"))return false;
+    const meta=node.effect_meta||{};
+    const rank=ace315aRoman(meta.power_rank||1);
+    const match=Number(meta.match_bonus||0);
+    const cap=Number(meta.attribute_cap||0);
+    const kinds=Array.isArray(meta.match_kinds)?meta.match_kinds:[];
+    const old=document.getElementById("ace340AceUnlockReveal");if(old)old.remove();
+    const el=document.createElement("div");
+    el.id="ace340AceUnlockReveal";el.className="ace340AceReveal";
+    el.innerHTML=`<div class="ace340AceRevealCard" role="dialog" aria-modal="true" aria-label="ACE+ unlocked">
+      <div class="ace340AceBurst" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="ace340AceRevealKicker">THE ACE PROJECT</div>
+      <div class="ace340AceRevealEmblem"><span>♠</span><em>${esc(rank)}</em></div>
+      <div class="ace340AceRevealTitle">ACE+ UNLOCKED</div>
+      <h2>${esc(node.name||"ACE+ POWER")}</h2>
+      <p>${esc(ace339GameplayDescription(node))}</p>
+      <div class="ace340AceRevealStats">
+        ${match?`<div><small>MATCH POWER</small><b>+${ace339Pct(match)}</b></div>`:""}
+        ${cap?`<div><small>ATTRIBUTE CAP</small><b>${cap}</b></div>`:""}
+        <div><small>ACE+ RANK</small><b>${esc(rank)}</b></div>
+      </div>
+      ${kinds.length?`<div class="ace340AceRevealKinds">ACTIVE IN · ${esc(kinds.map(x=>pretty(String(x))).join(" · "))}</div>`:""}
+      <button type="button" data-ace340-close>CONTINUE</button>
+    </div>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add("show"));
+    const close=()=>{el.classList.remove("show");setTimeout(()=>el.remove(),220)};
+    el.querySelector("[data-ace340-close]")?.addEventListener("click",close,{once:true});
+    el.addEventListener("click",e=>{if(e.target===el)close()});
+    setTimeout(()=>el.querySelector("[data-ace340-close]")?.focus?.(),280);
+    vibrate([28,42,50,42,80]);
+    return true;
+  }
+
   async function unlockSkillNode(node,btn){
     if(S.busy)return;S.busy=true;if(btn)btn.disabled=true;
     try{
-      const d=await rpc("vds_rta_unlock_skill_node",{p_node:node});
+      const d=await rpc("vds_rta_unlock_skill_node_v335",{p_node:node});
       S.career=d.career;
       try{S.skillTree=await rpc("vds_rta_get_skill_tree")}catch(_){}
       render();
       const effects=skillEffectsLabel(d.node?.effects||{}),meta=d.node?.effect_meta||{};
       const unlockNote=meta.mechanic_text||meta.mechanic_label||(effects!=="Special skill"?effects:"ABILITY ACTIVE");
-      toast(`${d.node?.name||"Skill unlocked"} · ${unlockNote}`);
-      vibrate([18,30,28]);
+      if(!ace340ShowAceUnlock(node,d)){
+        toast(`${d.node?.name||"Skill unlocked"} · ${unlockNote}`);
+        vibrate([18,30,28]);
+      }
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
 
@@ -42625,7 +42926,18 @@ function renderAttackKeyOverlay(){
 
   async function resolveKeyTimeout(){
     if(S.busy||S.overlay!=="key")return;S.busy=true;keyAttackTimer=0;
-    try{const d=await rpc("vds_rta_resolve_key_timeout");if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;vibrate([20,35,20]);if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}else{S.key=d;S.feedback={good:false,text:`LATE READ · ${d.outcome||"The defence wins the moment."}`};renderKeyOverlay()}}catch(e){toast(errText(e),"error")}finally{S.busy=false}
+    try{
+      /* B21.36.332 — international Key Moments have their own session table/RPC.
+         Routing a missed/timed-out national-team rep through the club timeout RPC
+         leaves the international session on the same moment, which looked like the
+         drill had frozen after rep 1. */
+      const intl=!!S.key?.international;
+      const d=await rpc(intl?"vds_rta_resolve_international_key_timeout_v315":"vds_rta_resolve_key_timeout");
+      if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
+      vibrate([20,35,20]);
+      if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true})}
+      else{S.key=d;S.feedback={good:false,text:`LATE READ · ${d.outcome||"The defence wins the moment."}`};renderKeyOverlay()}
+    }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
 
 
@@ -46675,14 +46987,15 @@ function renderAttackKeyOverlay(){
     rta119Enhancing=true;
     try{
       const target=document.getElementById("roadtoaceApp")||document;
-      rta117EnhanceClubIcons(target);
-      rta118EnhanceCareerUI(target);
+      window.__ACE_RTA_ENHANCE_CLUB_ICONS?.(target);
+      window.__ACE_RTA_ENHANCE_CAREER_UI?.(target);
     }catch(e){console.warn("ACE RTA post-render enhancement failed",e)}
     finally{
       rta119Enhancing=false;
       rta119SuppressUntil=performance.now()+70;
     }
   }
+  window.ACE_RTA_RUN_ENHANCERS=rta119RunEnhancers;
   function rta119ScheduleEnhance(){
     if(rta119EnhanceRaf)return;
     rta119EnhanceRaf=requestAnimationFrame(()=>{
@@ -53431,7 +53744,149 @@ window.ACE_BLOCKING_VISUAL_REBUILD="B21.36.323";
 }
 </style>
 <script id="ace328-build-tag">window.ACE_PROJECT_BUILD='B21.36.328';</script>
+
+<style id="ace332-release-fixes-style">
+#roadtoace .ace332PathCommit{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin:0 0 9px;padding:11px 12px;border:1px solid rgba(100,184,235,.13);border-radius:12px;background:linear-gradient(90deg,rgba(8,28,43,.88),rgba(6,18,29,.94));box-sizing:border-box}
+#roadtoace .ace332PathCommit.ready{border-color:rgba(109,192,246,.32);box-shadow:0 0 24px rgba(59,151,218,.07)}
+#roadtoace .ace332PathCommit.secondary.ready{border-color:rgba(157,117,230,.27);background:linear-gradient(90deg,rgba(32,22,57,.72),rgba(6,18,29,.94))}
+#roadtoace .ace332PathCommit small{display:block;color:#6bbcea;font-size:5.8px;font-weight:1000;letter-spacing:.13em}
+#roadtoace .ace332PathCommit.secondary small{color:#ad8ce8}
+#roadtoace .ace332PathCommit b{display:block;margin-top:3px;color:#eef8ff;font-size:10px}
+#roadtoace .ace332PathCommit span{display:block;margin-top:3px;color:#718b9e;font-size:6.3px;line-height:1.35}
+#roadtoace .ace332PathCommit button{min-height:36px;padding:0 11px;border:1px solid rgba(103,188,241,.30);border-radius:9px;background:linear-gradient(135deg,#176491,#2e86b9);color:#f0faff;font-size:6.5px;font-weight:1000;letter-spacing:.07em;cursor:pointer}
+#roadtoace .ace332PathCommit.secondary button{border-color:rgba(153,113,230,.28);background:linear-gradient(135deg,#4d348c,#7651bd)}
+#roadtoace .ace332PathCommit button:disabled{cursor:default;opacity:.40;background:#0a1b28;border-color:rgba(255,255,255,.06)}
+@media(max-width:760px){#roadtoace .ace332PathCommit{grid-template-columns:1fr;margin-bottom:7px;padding:9px;gap:7px}#roadtoace .ace332PathCommit button{width:100%;min-height:34px}#roadtoace .ace332PathCommit b{font-size:8.5px}#roadtoace .ace332PathCommit span{font-size:5.6px}}
+</style>
+<script id="ace332-release-fixes-build">
+window.ACE_INTL_KEY_TIMEOUT_FIX="B21.36.332";
+window.ACE_SKILL_COMMIT_UI_FIX="B21.36.332";
+window.ACE_PROJECT_BUILD="B21.36.332";
+</script>
+
+<style id="ace333-skill-guidance-style">
+#roadtoace .ace333NextStep{width:100%;min-height:40px;margin-top:7px;padding:7px 8px;display:grid;gap:2px;border:1px solid rgba(79,183,239,.24);border-radius:8px;background:linear-gradient(135deg,rgba(13,75,108,.88),rgba(8,45,69,.94));color:#eaf8ff;text-align:left;cursor:pointer}
+#roadtoace .ace333NextStep span{color:#71bfe7;font-size:4px;font-weight:1000;letter-spacing:.11em}
+#roadtoace .ace333NextStep b{font-size:5.4px;line-height:1.25}
+#roadtoace .ace333NextStep.commit{border-color:rgba(146,104,229,.30);background:linear-gradient(135deg,rgba(72,48,128,.90),rgba(42,31,83,.94))}
+#roadtoace .ace333NextStep.commit span{color:#b99aed}
+#roadtoace .ace332PathCommit.ready{position:relative;z-index:5}
+@media(max-width:760px){
+ #roadtoace .ace332PathCommit{position:relative!important;top:auto!important;bottom:auto!important;transform:none!important;margin:7px 0!important;box-shadow:none!important}
+ #roadtoace .ace332PathCommit.ready{box-shadow:0 0 0 1px rgba(89,184,239,.08),0 8px 20px rgba(0,0,0,.13)!important}
+ #roadtoace .ace333NextStep{min-height:42px}
+ #roadtoace .ace333NextStep b{font-size:5.7px}
+}
+</style>
+<script id="ace333-build-marker">window.ACE_PROJECT_BUILD="B21.36.333";window.ACE_RELEASE_BUILD="B21.36.333";</script>
+
+<style id="ace334-legacy-skill-commit-style">
+#roadtoace .ace334CommitUnlock{border-color:rgba(224,183,74,.42)!important;background:linear-gradient(135deg,rgba(146,105,28,.92),rgba(194,150,48,.92))!important;box-shadow:0 0 0 1px rgba(255,225,140,.08) inset,0 10px 28px rgba(183,137,37,.18)!important}
+</style>
+
+<style id="ace335-global-respec-style">
+.ace335ResetModal{position:fixed;inset:0;z-index:1000008;display:grid;place-items:center;padding:20px;background:rgba(1,5,10,.82);backdrop-filter:blur(12px);opacity:0;transition:opacity .18s ease}.ace335ResetModal.show{opacity:1}.ace335ResetCard{width:min(460px,calc(100vw - 28px));padding:24px;border:1px solid rgba(95,180,239,.22);border-radius:22px;background:radial-gradient(circle at 50% 0,rgba(58,162,231,.14),transparent 35%),linear-gradient(180deg,#081725,#05101a);box-shadow:0 28px 80px rgba(0,0,0,.58),0 0 42px rgba(52,157,224,.08);color:#eef8ff;text-align:center}.ace335ResetIcon{width:56px;height:56px;margin:0 auto 13px;display:grid;place-items:center;border-radius:18px;border:1px solid rgba(91,183,244,.25);background:rgba(35,126,188,.12);color:#67c5ff;font-size:30px;font-weight:900}.ace335ResetCard>small{display:block;color:#6ba8ce;font-size:8px;font-weight:1000;letter-spacing:.16em}.ace335ResetCard h2{margin:7px 0 8px;font-size:27px;letter-spacing:.05em}.ace335ResetCard>p{max-width:380px;margin:0 auto;color:#91aabc;font-size:12px;line-height:1.55}.ace335ResetRefund{margin:18px 0 9px;padding:14px;border:1px solid rgba(230,188,71,.18);border-radius:14px;background:linear-gradient(135deg,rgba(214,172,50,.10),rgba(255,255,255,.015));text-align:left}.ace335ResetRefund span{display:block;color:#f1ca59;font-size:17px;font-weight:1000}.ace335ResetRefund b{display:block;margin-top:4px;color:#c4b98f;font-size:9px;line-height:1.4}.ace335ResetNote{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:11px;background:rgba(73,202,135,.06);border:1px solid rgba(73,202,135,.10);color:#91dbae;text-align:left;font-size:9px;font-weight:900}.ace335ResetNote i{font-style:normal}.ace335ResetActions{display:grid;grid-template-columns:1.35fr .65fr;gap:8px;margin-top:17px}.ace335ResetActions button{min-height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0b1b28;color:#9eb5c6;font-size:9px;font-weight:1000;letter-spacing:.08em;cursor:pointer}.ace335ResetActions button.primary{border-color:rgba(78,178,242,.28);background:linear-gradient(135deg,#1874ad,#32a9e8);color:#fff;box-shadow:0 12px 28px rgba(24,116,173,.24)}.ace335ResetActions button:disabled{opacity:.45;cursor:default}@media(max-width:760px){.ace335ResetModal{padding:14px 10px calc(96px + env(safe-area-inset-bottom))}.ace335ResetCard{align-self:end;width:100%;padding:20px 16px 17px;border-radius:20px}.ace335ResetCard h2{font-size:24px}.ace335ResetActions{grid-template-columns:1fr}.ace335ResetActions button{min-height:48px}}
+</style>
+<script id="ace335-build-marker">window.ACE_PROJECT_BUILD="B21.36.335";</script>
+
+<style id="ace337-secondary-commit-style">
+#roadtoace .ace316kPaths button.ace337ViewOnly{opacity:.58;filter:saturate(.65)}
+#roadtoace .ace316kPaths button.ace337ViewOnly.active{opacity:1;filter:none;box-shadow:inset 0 0 0 1px rgba(168,116,255,.32)}
+#roadtoace .ace316kPaths button.ace337ViewOnly small{color:#bda7dc}
+</style>
+<script id="ace337-build-marker">
+window.ACE_SECONDARY_COMMIT_BUILD="B21.36.338";
+window.ACE_PROJECT_BUILD="B21.36.338";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.338";
+</script>
+<!-- PROJECT ACE B21.36.338 · THREE-NODE PRIMARY / SECONDARY COMMIT FLOW -->
+
+<!-- PROJECT ACE B21.36.339 · CLEAR GAMEPLAY DESCRIPTIONS -->
+<style id="ace339-node-gameplay-description-style">
+#roadtoace .ace316kNode{width:94px!important;left:calc(var(--x)*1% - 47px)!important;}
+#roadtoace .ace316kNode>b{display:block!important;width:104px!important;margin:5px 0 0 -5px!important;font-size:5.9px!important;line-height:1.14!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;text-wrap:balance!important;}
+#roadtoace .ace316kNode>.ace339NodeDesc{display:-webkit-box!important;width:118px!important;min-height:11px!important;margin:3px 0 0 -12px!important;overflow:hidden!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;color:#819bad!important;font-size:4.45px!important;font-weight:760!important;line-height:1.28!important;letter-spacing:0!important;text-align:center!important;}
+#roadtoace .ace316kNode>small{display:block!important;width:104px!important;margin:3px 0 0 -5px!important;font-size:3.8px!important;line-height:1.1!important;}
+#roadtoace .ace316kDetailInner>.ace339GameplayDescription{margin:6px 0 7px!important;padding:7px!important;border:1px solid rgba(75,170,221,.11)!important;border-radius:8px!important;background:rgba(6,24,37,.78)!important;color:#a9c1d0!important;font-size:5.55px!important;line-height:1.52!important;}
+#roadtoace .ace316kDetailInner h2+.ace339GameplayDescription+h4{margin-top:0!important;}
+@media(min-width:761px){
+ #roadtoace .ace316kNode{width:122px!important;left:calc(var(--x)*1% - 61px)!important;}
+ #roadtoace .ace316kNode>b{width:132px!important;margin-left:-5px!important;font-size:8px!important;}
+ #roadtoace .ace316kNode>.ace339NodeDesc{width:150px!important;margin-left:-14px!important;font-size:6.3px!important;line-height:1.3!important;min-height:16px!important;}
+ #roadtoace .ace316kNode>small{width:132px!important;margin-left:-5px!important;font-size:5px!important;}
+ #roadtoace .ace316kDetailInner>.ace339GameplayDescription{font-size:9px!important;line-height:1.5!important;padding:10px!important;}
+}
+@media(max-width:420px){
+ #roadtoace .ace316kNode>.ace339NodeDesc{width:110px!important;margin-left:-8px!important;font-size:4.2px!important;}
+}
+</style>
+<script id="ace339-final-build-marker">
+window.ACE_SKILL_NODE_DESCRIPTION_BUILD="B21.36.339";
+window.ACE_PROJECT_BUILD="B21.36.339";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.339";
+</script>
+
+<style id="ace341-clean-mobile-skill-tree-style">
+/* B21.36.341 — phone skill tree: one clear canvas, details on demand. */
+#roadtoace .ace341DetailClose,#roadtoace .ace341DetailHandle{display:none}
+@media(max-width:760px){
+  #roadtoace .ace316kPage{width:calc(100% - 14px)!important;padding-bottom:132px!important}
+  #roadtoace .ace316kWorkspace{display:block!important;margin-top:8px!important}
+  #roadtoace .ace316kTreePane{width:100%!important;border-radius:15px!important;overflow:hidden!important}
+  #roadtoace .ace316kTreeHead{padding:10px 12px!important}
+  #roadtoace .ace316kTreeHead small{font-size:5px!important}
+  #roadtoace .ace316kTreeHead b{font-size:11px!important}
+  #roadtoace .ace316kTreeHead:after{content:"TAP A NODE FOR FULL DETAILS";display:block;margin-top:4px;color:#52788f;font-size:4.6px;font-weight:900;letter-spacing:.08em}
+
+  #roadtoace .ace316kTreeCanvas{min-height:560px!important;background-size:auto,auto,auto,24px 24px,24px 24px,auto!important}
+  #roadtoace .ace316kStageRail{left:7px!important;width:42px!important}
+  #roadtoace .ace316kStageRail div{width:40px!important}
+  #roadtoace .ace316kStageRail small{width:22px!important;height:22px!important;font-size:5.5px!important}
+  #roadtoace .ace316kStageRail b{font-size:4.5px!important}
+
+  #roadtoace .ace316kNode{width:150px!important;left:calc(var(--x)*1% - 75px)!important}
+  #roadtoace .ace316kNode>b{width:156px!important;margin:7px 0 0 -3px!important;font-size:7.5px!important;line-height:1.08!important;white-space:normal!important;overflow:visible!important;text-wrap:balance!important}
+  #roadtoace .ace316kNode>.ace339NodeDesc{display:-webkit-box!important;width:166px!important;min-height:15px!important;margin:4px 0 0 -8px!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;color:#7794a7!important;font-size:5.7px!important;font-weight:720!important;line-height:1.28!important;text-align:center!important}
+  #roadtoace .ace316kNode>small{display:none!important}
+  #roadtoace .ace316kOrb{width:54px!important;height:54px!important}
+  #roadtoace .ace316kNode.playstyle .ace316kOrb,#roadtoace .ace316kNode.ace_plus .ace316kOrb{width:62px!important;height:62px!important}
+  #roadtoace .ace316kNode.selected .ace316kOrb{outline-offset:5px!important}
+
+  /* Details are a deliberate bottom sheet instead of permanently crushing the tree. */
+  #roadtoace .ace316kDetails{
+    position:fixed!important;z-index:3600!important;left:9px!important;right:9px!important;bottom:calc(92px + env(safe-area-inset-bottom))!important;top:auto!important;
+    width:auto!important;min-height:0!important;max-height:min(56dvh,470px)!important;overflow-y:auto!important;
+    border:1px solid rgba(91,180,232,.22)!important;border-radius:20px!important;
+    background:linear-gradient(180deg,#071b2a 0%,#05121d 100%)!important;
+    box-shadow:0 -8px 45px rgba(0,0,0,.52),0 0 28px rgba(51,151,212,.08)!important;
+    transform:translateY(calc(100% + 125px))!important;opacity:0!important;pointer-events:none!important;
+    transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .18s ease!important;
+  }
+  #roadtoace .ace316kDetails.ace341Open{transform:translateY(0)!important;opacity:1!important;pointer-events:auto!important}
+  #roadtoace .ace316kDetailInner{position:relative!important;padding:18px 14px 15px!important}
+  #roadtoace .ace341DetailHandle{display:block;width:42px;height:4px;margin:-8px auto 10px;border-radius:999px;background:rgba(136,184,211,.30)}
+  #roadtoace .ace341DetailClose{display:grid;place-items:center;position:absolute;right:10px;top:10px;width:31px;height:31px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:#081a27;color:#91afc1;font-size:19px;line-height:1}
+  #roadtoace .ace316kDetailKicker{font-size:5.5px!important}
+  #roadtoace .ace316kDetailType{margin-top:8px!important;font-size:5px!important}
+  #roadtoace .ace316kDetailInner h2{max-width:calc(100% - 42px);margin:7px 0 4px!important;font-size:20px!important;line-height:1.03!important}
+  #roadtoace .ace316kDetailInner>.ace339GameplayDescription{margin:8px 0 8px!important;padding:10px 11px!important;font-size:8.2px!important;line-height:1.48!important;border-radius:11px!important}
+  #roadtoace .ace316kDetailInner h4{font-size:6px!important}
+  #roadtoace .ace316kEffect,#roadtoace .ace316kSynergy,#roadtoace .ace316kStatus{padding:9px!important;border-radius:10px!important}
+  #roadtoace .ace316kEffect small,#roadtoace .ace316kSynergy small{font-size:5px!important}
+  #roadtoace .ace316kEffect b,#roadtoace .ace316kSynergy b{font-size:7px!important}
+  #roadtoace .ace316kSynergy span,#roadtoace .ace316kStatus span{font-size:6.2px!important;line-height:1.35!important}
+  #roadtoace .ace316kStatus b{font-size:6.5px!important}
+  #roadtoace .ace316kUnlock{min-height:45px!important;font-size:7px!important;border-radius:11px!important}
+}
+</style>
+<script id="ace341-final-build-marker">
+window.ACE_SKILL_TREE_PHONE_BUILD="B21.36.341";
+window.ACE_PROJECT_BUILD="B21.36.341";
+</script>
+
 </body>
+
+<script id="ace334-final-build-marker">window.ACE_SKILL_LEGACY_AUTO_COMMIT="B21.36.334";window.ACE_PROJECT_BUILD="B21.36.334";window.ACE_RELEASE_BUILD="B21.36.334";window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.334";</script>
 </html>
 
 <!-- PROJECT ACE B21.36.329 · LIVE MATCH HUB VISUAL REBUILD (actual ace245 markup) -->
@@ -53659,3 +54114,87 @@ window.ACE_BLOCKING_VISUAL_REBUILD="B21.36.323";
 @keyframes ace329Pulse{0%,100%{transform:scale(.82);opacity:.22;}50%{transform:scale(1.22);opacity:.62;}}
 </style>
 <script id="ace329-build-marker">window.ACE_PROJECT_BUILD="B21.36.329";window.ACE_LIVE_MATCH_HUB_REBUILD="B21.36.329";</script>
+
+
+<!-- PROJECT ACE B21.36.331 · RELEASE CANDIDATE REGRESSION FIX -->
+<script id="ace331-release-candidate-marker">
+window.ACE_PROJECT_BUILD="B21.36.331";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.331";
+window.ACE_NOTIFICATION_GLOW_BUILD="B21.36.330";
+window.ACE_RTA_ENHANCER_SCOPE_FIX="B21.36.331";
+</script>
+
+<!-- PROJECT ACE B21.36.335 · GLOBAL SKILL TREE RESPEC -->
+<script id="ace335-final-build-marker">
+window.ACE_INTL_KEY_TIMEOUT_FIX="B21.36.332";
+window.ACE_SKILL_COMMIT_UI_FIX="B21.36.334";
+window.ACE_SKILL_TREE_RESET_BUILD="B21.36.335";
+window.ACE_PROJECT_BUILD="B21.36.335";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.335";
+</script>
+
+
+<!-- PROJECT ACE B21.36.338 · FINAL BUILD MARKER -->
+<script id="ace338-final-build-marker">
+window.ACE_PRIMARY_COMMIT_BUILD="B21.36.338";
+window.ACE_SECONDARY_COMMIT_BUILD="B21.36.338";
+window.ACE_SKILL_PATH_LOCK_BUILD="B21.36.338";
+window.ACE_PROJECT_BUILD="B21.36.338";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.338";
+</script>
+
+
+<!-- PROJECT ACE B21.36.340 · ACE+ PRESTIGE -->
+<style id="ace340-ace-plus-prestige-style">
+/* ACE+ is visually reserved for endgame progression. */
+#roadtoace .ace316kNode.ace_plus{z-index:8!important}
+#roadtoace .ace316kNode.ace_plus .ace316kOrb{
+ width:68px!important;height:68px!important;margin-left:-7px!important;border:2px solid rgba(228,199,103,.72)!important;border-radius:50%!important;
+ background:radial-gradient(circle at 35% 28%,rgba(159,221,255,.18),transparent 28%),radial-gradient(circle at 50% 62%,rgba(221,182,63,.14),transparent 58%),linear-gradient(145deg,#0b1a27,#111221 62%,#211a09)!important;
+ color:#fff4b8!important;box-shadow:0 0 0 3px rgba(94,187,235,.10),0 0 0 7px rgba(235,202,96,.055),0 0 30px rgba(87,185,241,.18),0 0 38px rgba(226,188,66,.13)!important;
+ position:relative!important;overflow:visible!important
+}
+#roadtoace .ace316kNode.ace_plus .ace316kOrb:before,#roadtoace .ace316kNode.ace_plus .ace316kOrb:after{
+ content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(112,204,255,.18);pointer-events:none
+}
+#roadtoace .ace316kNode.ace_plus .ace316kOrb:after{inset:-13px;border-color:rgba(239,207,100,.11);border-style:dashed}
+#roadtoace .ace316kNode.ace_plus:before{width:98px!important;height:98px!important;top:34px!important;border-radius:50%!important;transform:translate(-50%,-50%)!important;border:1px solid rgba(231,199,91,.11)!important;background:radial-gradient(circle,rgba(59,150,203,.055),rgba(169,126,31,.025) 53%,transparent 70%)!important}
+#roadtoace .ace340AceNodeMark{display:grid;place-items:center;line-height:1;transform:translateY(-1px)}
+#roadtoace .ace340AceSpade{display:block;font-size:28px;line-height:.78;text-shadow:0 0 10px rgba(147,221,255,.50),0 0 17px rgba(245,210,99,.38)}
+#roadtoace .ace340AceNodeMark em{display:block;margin-top:5px;padding:2px 5px;border-radius:999px;background:rgba(1,8,14,.72);border:1px solid rgba(245,214,115,.22);color:#f5d875;font-size:6px;font-style:normal;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace316kNode.ace_plus>b{color:#fff2bd!important;font-weight:1000!important;text-shadow:0 0 10px rgba(238,199,77,.14)}
+#roadtoace .ace316kNode.ace_plus>.ace339NodeDesc{color:#9fc8dd!important}
+#roadtoace .ace316kNode.ace_plus>small{color:#e2c96c!important;letter-spacing:.09em!important}
+#roadtoace .ace316kNode.ace_plus.locked{opacity:.66!important}
+#roadtoace .ace316kNode.ace_plus.locked .ace316kOrb{filter:saturate(.58) brightness(.72);box-shadow:0 0 0 3px rgba(94,187,235,.04),0 0 0 7px rgba(235,202,96,.025)!important}
+#roadtoace .ace316kNode.ace_plus.available{opacity:1!important}
+#roadtoace .ace316kNode.ace_plus.available .ace316kOrb{animation:ace340AceReady 2.15s ease-in-out infinite!important;border-color:#ffe082!important;box-shadow:0 0 0 4px rgba(120,210,255,.12),0 0 0 9px rgba(240,207,92,.07),0 0 36px rgba(81,191,255,.28),0 0 46px rgba(238,194,62,.22)!important}
+#roadtoace .ace316kNode.ace_plus.owned .ace316kOrb{border-color:#ffe68d!important;background:radial-gradient(circle at 34% 24%,rgba(175,228,255,.26),transparent 31%),radial-gradient(circle at 50% 65%,rgba(255,215,81,.23),transparent 58%),linear-gradient(145deg,#0c2433,#17172a 60%,#392c0b)!important;color:#fff7c4!important;box-shadow:0 0 0 4px rgba(114,205,255,.13),0 0 0 9px rgba(246,213,101,.08),0 0 34px rgba(91,197,255,.28),0 0 50px rgba(240,196,59,.24)!important}
+#roadtoace .ace316kNode.ace_plus.selected .ace316kOrb{outline:2px solid rgba(255,226,130,.72)!important;outline-offset:10px!important}
+#roadtoace .ace316kLines path.ace_plus{stroke-width:2!important}
+#roadtoace .ace316kLines path.ace_plus.available{stroke:#75cdf7!important;filter:drop-shadow(0 0 5px rgba(95,200,255,.42))!important}
+#roadtoace .ace316kLines path.ace_plus.owned{stroke:#f0d36e!important;filter:drop-shadow(0 0 7px rgba(240,211,110,.48))!important}
+@keyframes ace340AceReady{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.075);filter:brightness(1.16)}}
+
+#roadtoace .ace340AceDetailSeal{margin-top:8px;padding:8px;display:flex;align-items:center;gap:8px;border:1px solid rgba(236,202,92,.18);border-radius:9px;background:linear-gradient(135deg,rgba(13,43,60,.82),rgba(39,31,10,.72))}
+#roadtoace .ace340AceDetailSeal>span{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(247,217,116,.30);background:radial-gradient(circle,#233d50,#17140a);color:#ffe384;font-size:17px;text-shadow:0 0 9px rgba(111,205,255,.48)}
+#roadtoace .ace340AceDetailSeal small{display:block;color:#83b8d3;font-size:4px;font-weight:1000;letter-spacing:.12em}
+#roadtoace .ace340AceDetailSeal b{display:block;margin-top:2px;color:#f2d576;font-size:5.6px;letter-spacing:.07em}
+#roadtoace .ace316kUnlock.ace340AceUnlock{min-height:42px!important;border-color:rgba(255,224,120,.52)!important;background:linear-gradient(110deg,#12486a,#206d8e 42%,#8c6a18 100%)!important;color:#fff8d6!important;box-shadow:0 10px 26px rgba(63,165,220,.16),0 0 20px rgba(224,181,49,.12)!important;letter-spacing:.11em!important}
+
+.ace340AceReveal{position:fixed;inset:0;z-index:1000020;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 50% 42%,rgba(33,105,145,.22),transparent 26%),rgba(1,5,9,.91);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);opacity:0;transition:opacity .22s ease}.ace340AceReveal.show{opacity:1}
+.ace340AceRevealCard{position:relative;isolation:isolate;width:min(470px,calc(100vw - 28px));overflow:hidden;padding:30px 22px 22px;border:1px solid rgba(242,211,105,.28);border-radius:26px;background:radial-gradient(circle at 50% 0,rgba(75,183,239,.17),transparent 33%),radial-gradient(circle at 50% 44%,rgba(222,177,46,.10),transparent 38%),linear-gradient(180deg,#071725,#060d15);box-shadow:0 32px 90px rgba(0,0,0,.68),0 0 70px rgba(79,181,235,.10),0 0 80px rgba(226,182,48,.08);color:#edf8ff;text-align:center;transform:translateY(12px) scale(.95);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.ace340AceReveal.show .ace340AceRevealCard{transform:none}.ace340AceBurst{position:absolute;z-index:-1;left:50%;top:112px;width:240px;height:240px;transform:translate(-50%,-50%);pointer-events:none}.ace340AceBurst i{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(102,201,250,.14);animation:ace340Burst 2.6s ease-out infinite}.ace340AceBurst i:nth-child(2){inset:28px;border-color:rgba(244,210,98,.14);animation-delay:.28s}.ace340AceBurst i:nth-child(3){inset:58px;border-style:dashed;animation-delay:.52s}
+.ace340AceRevealKicker{color:#78b9dc;font-size:8px;font-weight:1000;letter-spacing:.22em}.ace340AceRevealEmblem{width:104px;height:104px;margin:17px auto 15px;display:grid;place-items:center;align-content:center;border-radius:50%;border:2px solid rgba(255,225,127,.72);background:radial-gradient(circle at 35% 25%,rgba(163,224,255,.22),transparent 30%),radial-gradient(circle at 50% 68%,rgba(240,195,65,.20),transparent 58%),#0a1721;box-shadow:0 0 0 6px rgba(88,190,241,.08),0 0 0 12px rgba(238,204,91,.045),0 0 42px rgba(84,191,245,.24),0 0 55px rgba(234,190,54,.18)}
+.ace340AceRevealEmblem span{font-size:53px;line-height:.76;color:#fff3ad;text-shadow:0 0 15px rgba(106,207,255,.58),0 0 24px rgba(238,199,67,.38)}.ace340AceRevealEmblem em{margin-top:8px;color:#f4d878;font-size:11px;font-style:normal;font-weight:1000;letter-spacing:.18em}
+.ace340AceRevealTitle{color:#f4d67a;font-size:10px;font-weight:1000;letter-spacing:.24em}.ace340AceRevealCard h2{margin:7px 0 8px;color:#fff8dc;font-size:27px;line-height:1.02;letter-spacing:-.025em}.ace340AceRevealCard>p{max-width:390px;margin:0 auto;color:#9db5c5;font-size:11px;line-height:1.55}
+.ace340AceRevealStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:17px}.ace340AceRevealStats div{min-height:58px;display:grid;place-items:center;align-content:center;border:1px solid rgba(255,255,255,.07);border-radius:13px;background:rgba(3,14,22,.62)}.ace340AceRevealStats small{color:#7195aa;font-size:6px;font-weight:1000;letter-spacing:.12em}.ace340AceRevealStats b{margin-top:3px;color:#f0d579;font-size:15px}.ace340AceRevealKinds{margin-top:9px;color:#7098ae;font-size:7px;font-weight:900;letter-spacing:.08em}.ace340AceRevealCard>button{width:100%;min-height:48px;margin-top:17px;border:1px solid rgba(255,224,122,.32);border-radius:13px;background:linear-gradient(110deg,#155676,#2184aa 50%,#937018);color:#fff8d7;font-size:9px;font-weight:1000;letter-spacing:.14em;cursor:pointer}
+@keyframes ace340Burst{0%{transform:scale(.72);opacity:0}18%{opacity:.8}100%{transform:scale(1.18);opacity:0}}
+@media(min-width:761px){#roadtoace .ace316kNode.ace_plus .ace316kOrb{width:78px!important;height:78px!important;margin-left:-3px!important}.ace340AceSpade{font-size:34px!important}#roadtoace .ace340AceNodeMark em{font-size:7px}.ace340AceRevealCard{padding:34px 28px 26px}}
+@media(max-width:760px){.ace340AceReveal{padding:14px 10px calc(92px + env(safe-area-inset-bottom))}.ace340AceRevealCard{align-self:end;width:100%;padding:24px 16px 18px;border-radius:24px}.ace340AceRevealCard h2{font-size:23px}.ace340AceRevealEmblem{width:92px;height:92px}.ace340AceRevealEmblem span{font-size:46px}.ace340AceRevealStats{gap:5px}.ace340AceRevealStats div{min-height:54px}}
+</style>
+<script id="ace340-final-build-marker">
+window.ACE_ACE_PLUS_PRESTIGE_BUILD="B21.36.340";
+window.ACE_PROJECT_BUILD="B21.36.340";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.340";
+</script>
