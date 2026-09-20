@@ -39918,10 +39918,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     }
 
     return `<main class="rta227CareerHome rta229CareerPulseHome ${firstMatch?"ace252FirstMatchHome":""} ${needsFirstTraining?"ace253NeedsTraining":firstTrainingDone?"ace253ReadyForMatch":""}">
-      <header class="ace227CareerIdentity ace362CareerNameBar ace364CareerNameBar">
-        <h1>${esc(c.player_name||"YOUR PLAYER")}</h1>
-        <span class="ace364Position">${esc(positionCode)}</span>
-        <small>${esc(clubName)}</small>
+      <header class="ace227CareerIdentity ace362CareerNameBar ace364CareerNameBar ace365CareerNameBar" style="position:relative!important;width:100%!important;height:36px!important;min-height:36px!important;max-height:36px!important;margin:0!important;padding:0 10px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;overflow:hidden!important;border:0!important;border-bottom:1px solid rgba(144,126,231,.14)!important;border-radius:0!important;background:linear-gradient(90deg,rgba(9,17,29,.98),rgba(8,17,29,.88))!important;box-shadow:none!important;text-align:left!important;box-sizing:border-box!important;">
+        <h1 style="display:block!important;position:static!important;flex:0 1 auto!important;width:auto!important;max-width:38vw!important;height:auto!important;margin:0!important;padding:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:left!important;color:#f4f8fc!important;font-family:'Bahnschrift SemiCondensed','Arial Narrow',Impact,sans-serif!important;font-size:16px!important;font-weight:1000!important;line-height:1!important;letter-spacing:-.025em!important;">${esc(c.player_name||"YOUR PLAYER")}</h1>
+        <span class="ace364Position" style="position:static!important;flex:0 0 auto!important;width:auto!important;min-width:25px!important;height:18px!important;margin:0!important;padding:0 6px!important;display:inline-grid!important;place-items:center!important;border:1px solid rgba(155,132,243,.20)!important;border-radius:999px!important;background:rgba(126,94,216,.10)!important;color:#cabdff!important;font-size:5.5px!important;font-weight:1000!important;line-height:1!important;letter-spacing:.10em!important;white-space:nowrap!important;box-sizing:border-box!important;">${esc(positionCode)}</span>
+        <small style="position:static!important;flex:0 1 auto!important;display:block!important;width:auto!important;max-width:32vw!important;height:auto!important;margin:0!important;padding:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:left!important;color:#71889b!important;font-size:5.7px!important;font-weight:900!important;line-height:1!important;letter-spacing:.045em!important;">${esc(clubName)}</small>
       </header>
       <section class="ace246HomeFixtureZone">
         <button type="button" class="ace234MobileFixtureStrip ${S.activeKey?"ace330NoticeRed":""}" data-rta62-view="match" onclick="return window.ACE_RTA_NAV(event,'match')">
@@ -56000,3 +56000,102 @@ window.ACE_CAREER_CALENDAR_V356={decorateNow:decorateCalendar};window.ACE_TRANSF
 })();
 </script>
 <script id="ace356-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.356';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.356';window.ACE_CAREER_CALENDAR_ENGINE_BUILD='B21.36.356';window.ACE_TRANSFER_WINDOWS_BUILD='B21.36.356';</script>
+
+<!-- PROJECT ACE B21.36.365 · ABSOLUTE FINAL MOBILE NAME BAR -->
+<style id="ace365-absolute-final-name-bar">
+@media(max-width:760px){
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace365CareerNameBar{
+    position:relative!important;
+    inset:auto!important;
+    float:none!important;
+    clear:both!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    height:36px!important;
+    min-height:36px!important;
+    max-height:36px!important;
+    margin:0 0 4px!important;
+    padding:0 10px!important;
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:7px!important;
+    overflow:hidden!important;
+    border:0!important;
+    border-bottom:1px solid rgba(144,126,231,.14)!important;
+    border-radius:0!important;
+    background:linear-gradient(90deg,rgba(9,17,29,.98),rgba(8,17,29,.88))!important;
+    box-shadow:none!important;
+    text-align:left!important;
+    box-sizing:border-box!important;
+  }
+  html body #roadtoace .ace365CareerNameBar > h1{
+    order:1!important;
+    position:static!important;
+    flex:0 1 auto!important;
+    display:block!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:38vw!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+    transform:none!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    text-align:left!important;
+    font-size:16px!important;
+    line-height:1!important;
+  }
+  html body #roadtoace .ace365CareerNameBar > span.ace364Position{
+    order:2!important;
+    position:static!important;
+    flex:0 0 auto!important;
+    transform:none!important;
+    margin:0!important;
+  }
+  html body #roadtoace .ace365CareerNameBar > small{
+    order:3!important;
+    position:static!important;
+    flex:0 1 auto!important;
+    display:block!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:31vw!important;
+    margin:0!important;
+    padding:0!important;
+    transform:none!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    text-align:left!important;
+  }
+  /* Kill any legacy pseudo decoration/cutout on the identity header. */
+  html body #roadtoace .ace365CareerNameBar::before,
+  html body #roadtoace .ace365CareerNameBar::after{
+    content:none!important;
+    display:none!important;
+  }
+  html body #roadtoace .rta229CareerPulseHome > .ace246HomeFixtureZone{
+    margin-top:0!important;
+    padding-top:0!important;
+  }
+}
+@media(max-width:390px){
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace365CareerNameBar{
+    height:34px!important;min-height:34px!important;max-height:34px!important;padding:0 9px!important;
+  }
+  html body #roadtoace .ace365CareerNameBar > h1{font-size:15px!important;max-width:36vw!important}
+  html body #roadtoace .ace365CareerNameBar > small{font-size:5.3px!important;max-width:30vw!important}
+}
+</style>
+<script id="ace365-final-marker">
+window.ACE_PROJECT_BUILD='B21.36.365';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.365';
+window.ACE_MOBILE_NAME_BAR_BUILD='B21.36.365';
+</script>
+
