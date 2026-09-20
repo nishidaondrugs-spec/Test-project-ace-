@@ -39918,8 +39918,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     }
 
     return `<main class="rta227CareerHome rta229CareerPulseHome ${firstMatch?"ace252FirstMatchHome":""} ${needsFirstTraining?"ace253NeedsTraining":firstTrainingDone?"ace253ReadyForMatch":""}">
-      <header class="ace227CareerIdentity ace362CareerNameBar">
-        <div class="ace362NameLead"><h1>${esc(c.player_name||"YOUR PLAYER")}</h1><span>${esc(positionCode)}</span></div>
+      <header class="ace227CareerIdentity ace362CareerNameBar ace364CareerNameBar">
+        <h1>${esc(c.player_name||"YOUR PLAYER")}</h1>
+        <span class="ace364Position">${esc(positionCode)}</span>
         <small>${esc(clubName)}</small>
       </header>
       <section class="ace246HomeFixtureZone">
@@ -42566,8 +42567,9 @@ document.addEventListener("click",function(e){
     ov.classList.add("ace361ExactGuide");
     const shell=ov.querySelector(".rta62OverlayShell");if(!shell)return;
     ov.querySelectorAll(".ace361DemoDock,.ace361DemoBadge").forEach(x=>x.remove());
-    const badge=document.createElement("div");badge.className="ace361DemoBadge";badge.innerHTML=`<i></i><span>PERFECT REP PREVIEW</span><b>REAL DRILL · AUTO PLAY</b>`;shell.appendChild(badge);
-    const dock=document.createElement("div");dock.className="ace361DemoDock";dock.innerHTML=`<div><small>HOW TO PLAY</small><b>WATCH THE REAL DRILL</b><span>One perfect rep repeats automatically. Copy the same movement, choice and timing.</span></div><button type="button" class="ace361DemoButton" data-ace361-demo-start>${rta361Guide.replay?"BACK TO DRILL":"START DRILL"} →</button>`;shell.appendChild(dock);
+    const d=rta125GuideData(rta361Guide.key);
+    const badge=document.createElement("div");badge.className="ace361DemoBadge";badge.innerHTML=`<i></i><span>${esc(d.title)} · PERFECT REP</span><b>REAL DRILL · AUTO PLAY</b>`;shell.appendChild(badge);
+    const dock=document.createElement("div");dock.className="ace361DemoDock";dock.innerHTML=`<div><small>WATCH FIRST · THEN COPY IT</small><b>${esc(d.cue||"WATCH THE PERFECT REP")}</b><span>${esc(d.goal||"One perfect rep repeats automatically using the real drill gameplay.")}</span></div><button type="button" class="ace361DemoButton" data-ace361-demo-start>${rta361Guide.replay?"BACK TO DRILL":"START DRILL"} →</button>`;shell.appendChild(dock);
   }
   function rta361TweenSkill(x,y,ms=620){
     const sx=Number(skillPlayer?.x||.5),sy=Number(skillPlayer?.y||.8),t0=performance.now(),token=rta361Guide.token;
@@ -42628,11 +42630,14 @@ document.addEventListener("click",function(e){
     if(!rta361Guide.active)return;rta361ClearTimers();rta361Guide.token++;S.busy=false;S.feedback=null;cleanupRaf();renderTrainingOverlay();requestAnimationFrame(()=>requestAnimationFrame(()=>{rta361Decorate();rta361Autoplay()}));
   }
 
-  function rta125GuideAccountKey(){
-    return String(vdsAccountSession?.user?.id||"device");
+  function rta125GuideCareerKey(){
+    const c=S?.career||{};
+    const owner=String(vdsAccountSession?.user?.id||c?.user_id||"device");
+    const career=String(c?.id||c?.career_id||c?.created_at||`save-${Number(S?.activeSave||1)}-${c?.player_name||"career"}`);
+    return `${owner}_${career}`.replace(/[^a-z0-9_-]/gi,"_");
   }
   function rta125GuideStoreKey(key){
-    return `ace_rta_training_guide_v1_${rta125GuideAccountKey()}_${String(key||"GENERIC").toUpperCase()}`;
+    return `ace_rta_training_guide_v2_${rta125GuideCareerKey()}_${String(key||"GENERIC").toUpperCase()}`;
   }
   function rta125GuideSeen(key){
     try{return safeStore.get(rta125GuideStoreKey(key))==="1"}catch(_){return false}
@@ -42656,51 +42661,51 @@ document.addEventListener("click",function(e){
     const data={
       RECEIVE:{
         title:"RECEIVE",kicker:"PLATFORM CONTROL",
-        goal:"Track the serve, move behind it, then time your platform.",
+        goal:"Watch the real receive rep: read the serve, move into its path, platform on time, then aim the pass to the setter.",
         desktop:["WASD","Move to the ball"],phone:["DRAG / TAP","Move into the ball path"],
         actionDesktop:["SPACE","Lock your platform"],actionPhone:["TAP","Lock your platform"],
         steps:["Read where the serve is travelling.","Get your body behind the ball.","Contact inside the timing window."],
-        cue:"MOVE → SET PLATFORM",icon:"◢"
+        cue:"READ → MOVE → PLATFORM → AIM",icon:"◢"
       },
       SERVE:{
         title:"SERVE",kicker:"TARGET + TIMING",
-        goal:"Pick your target, build the toss, then contact at the right moment.",
+        goal:"Watch the real serve rep: lock the target, set power, then hit the contact window cleanly.",
         desktop:["WASD / TARGET","Aim the serve"],phone:["TAP TARGET","Choose the zone"],
         actionDesktop:["SPACE","Contact the ball"],actionPhone:["TAP","Contact the ball"],
         steps:["Choose the serving zone.","Watch the toss and timing cue.","Contact cleanly to hit your target."],
-        cue:"AIM → TOSS → CONTACT",icon:"↟"
+        cue:"DIRECTION → POWER → CONTACT",icon:"↟"
       },
       ATTACK:{
         title:"ATTACK",kicker:"READ THE BLOCK",
-        goal:"Read the blocker hands and attack the open court.",
+        goal:"Watch the real attack rep: read the block, choose the open lane, set power, then time contact.",
         desktop:["WASD / CHOICE","Read and select"],phone:["TAP OPTION","Choose your shot"],
         actionDesktop:["SPACE / CLICK","Swing"],actionPhone:["TAP","Swing"],
         steps:["Watch the set and blocker movement.","Find the open lane or use the hands.","Time your contact at the top of the jump."],
-        cue:"READ → CHOOSE → HIT",icon:"⚡"
+        cue:"AIM → POWER → CONTACT",icon:"⚡"
       },
       BLOCK:{
         title:"BLOCKING",kicker:"FOOTWORK + JUMP",
-        goal:"Move your blocker with the set, close the lane and jump with the hitter.",
+        goal:"Watch the real block rep: read the setter, close the correct lane, then press at hitter contact.",
         desktop:["WASD","Move along the net"],phone:["DRAG / TAP","Move along the net"],
         actionDesktop:["SPACE","Jump / block"],actionPhone:["JUMP","Time the block"],
         steps:["Read where the setter sends the ball.","Move to close the hitter's lane.","Jump as the hitter reaches contact."],
-        cue:"READ SET → MOVE → JUMP",icon:"▥"
+        cue:"READ SET → CLOSE → PRESS",icon:"▥"
       },
       DEFENCE:{
         title:"DEFENCE",kicker:"READ + DIG",
-        goal:"Read the hitter, move into the ball path and control the dig.",
+        goal:"Watch the real defence rep: read the attack, move into range, then time the dig meter cleanly.",
         desktop:["WASD","Move into position"],phone:["DRAG / TAP","Move into position"],
         actionDesktop:["SPACE","Set your platform"],actionPhone:["TAP","Set your platform"],
         steps:["Watch the hitter's approach and shoulder.","Move towards the expected shot.","Time the platform as the ball arrives."],
-        cue:"READ HITTER → MOVE → DIG",icon:"◆"
+        cue:"READ → MOVE → DIG",icon:"◆"
       },
       SETTING:{
         title:"SETTING",kicker:"MOVE + RELEASE",
-        goal:"Get underneath the pass and release the set to the called target.",
+        goal:"Watch the real setting rep: move under the pass, make contact on time, then aim the set to the called hitter.",
         desktop:["WASD","Get under the pass"],phone:["DRAG / TAP","Get under the pass"],
         actionDesktop:["SPACE","Release the set"],actionPhone:["SET BALL","Release the set"],
         steps:["Read the coach's target call.","Move underneath the incoming pass.","Release when your hands and ball are aligned."],
-        cue:"READ CALL → MOVE → SET",icon:"◇"
+        cue:"READ → MOVE → CONTACT → AIM",icon:"◇"
       },
       CREATIVITY:{
         title:"CREATIVITY",kicker:"READ THE COURT",
@@ -42814,7 +42819,7 @@ document.addEventListener("click",function(e){
   document.addEventListener("click",e=>{const b=e.target.closest?.("[data-ace361-demo-start]");if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();rta125CloseGuide(true)},true);
 
   function overlayTop(kicker,title){
-    const help=S.overlay==="training"&&S.training?`<button type="button" class="rta125GuideReplay" data-rta125-guide-open>? <span>HOW TO PLAY</span></button>`:"";
+    const help=S.overlay==="training"&&S.training&&!rta361Guide.active?`<button type="button" class="rta125GuideReplay ace363GuideQuestion" data-rta125-guide-open aria-label="Replay perfect drill demonstration" title="Replay perfect drill demonstration">?</button>`:"";
     const ap=(S.overlay==="key")?ace315aPower():null,aceBadge=ap?`<span class="ace315aPowerBadge">♠ ACE+ ${ace315aRoman(ap.rank)} · ${esc(ap.name)}</span>`:"";
     let intlBadge="";
     if(S.overlay==="key"&&S.key?.international){
@@ -55028,6 +55033,205 @@ window.ACE_VISIBLE_LEAGUE_CALENDAR_BUILD='B21.36.359';
 window.ACE_PROJECT_BUILD='B21.36.362';
 window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.362';
 window.ACE_MOBILE_NAME_BAR_BUILD='B21.36.362';
+</script>
+
+
+
+<!-- PROJECT ACE B21.36.363 · DRILL GUIDE FLOW FIX -->
+<style id="ace363-drill-guide-flow">
+/* One replay entry-point only. The demo itself uses the actual gameplay renderer. */
+#rta62Overlay[data-kind="training"] .rta125GuideReplay.ace363GuideQuestion{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  border:1px solid rgba(132,178,211,.22)!important;
+  background:rgba(7,20,31,.72)!important;
+  color:#a8c9dc!important;
+  font-size:13px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  letter-spacing:0!important;
+  box-shadow:none!important;
+}
+#rta62Overlay[data-kind="training"] .rta125GuideReplay.ace363GuideQuestion:hover,
+#rta62Overlay[data-kind="training"] .rta125GuideReplay.ace363GuideQuestion:focus-visible{
+  border-color:rgba(103,195,240,.48)!important;
+  color:#e6f7ff!important;
+  background:rgba(20,66,94,.42)!important;
+}
+/* Retire the old embedded instruction cards. Gameplay prompts + the perfect demo are now the guide. */
+#rta62Overlay[data-kind="training"] .rta69HowTo,
+#rta62Overlay[data-kind="training"] .rta94HowTo{
+  display:none!important;
+}
+#rta125TrainingGuide{
+  display:none!important;
+}
+#rta62Overlay.ace361ExactGuide .ace361DemoDock small{
+  color:#7cccf3!important;
+}
+#rta62Overlay.ace361ExactGuide .ace361DemoDock b{
+  letter-spacing:.035em!important;
+}
+@media(max-width:760px){
+  #rta62Overlay[data-kind="training"] .rta125OverlayActions{
+    margin-left:auto!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:7px!important;
+  }
+  #rta62Overlay[data-kind="training"] .rta125GuideReplay.ace363GuideQuestion{
+    width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;
+  }
+}
+</style>
+<script id="ace363-drill-guide-flow-marker">
+window.ACE_PROJECT_BUILD='B21.36.363';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.363';
+window.ACE_DRILL_GUIDE_FLOW_BUILD='B21.36.363';
+window.ACE_DRILL_GUIDE_PER_CAREER=true;
+</script>
+
+
+
+<!-- PROJECT ACE B21.36.364 · TRUE ONE-LINE MOBILE NAME BAR -->
+<style id="ace364-true-mobile-name-bar">
+@media(max-width:760px){
+  /* Hard reset of every older identity rule. This header is one row only. */
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace227CareerIdentity.ace364CareerNameBar{
+    position:relative!important;
+    inset:auto!important;
+    width:calc(100% + 16px)!important;
+    max-width:none!important;
+    min-width:0!important;
+    height:36px!important;
+    min-height:36px!important;
+    max-height:36px!important;
+    flex:0 0 36px!important;
+    margin:0 -8px 3px!important;
+    padding:0 96px 0 12px!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,max-content) auto minmax(0,1fr)!important;
+    grid-template-rows:36px!important;
+    align-items:center!important;
+    justify-content:stretch!important;
+    column-gap:7px!important;
+    overflow:hidden!important;
+    border:0!important;
+    border-bottom:1px solid rgba(144,126,231,.14)!important;
+    border-radius:0!important;
+    outline:0!important;
+    background:linear-gradient(90deg,rgba(9,17,29,.98),rgba(8,17,29,.88))!important;
+    box-shadow:none!important;
+    text-align:left!important;
+    box-sizing:border-box!important;
+  }
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace364CareerNameBar > h1{
+    grid-column:1!important;
+    grid-row:1!important;
+    align-self:center!important;
+    justify-self:start!important;
+    width:auto!important;
+    max-width:39vw!important;
+    min-width:0!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#f4f8fc!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:16px!important;
+    font-weight:1000!important;
+    line-height:1!important;
+    letter-spacing:-.025em!important;
+    text-align:left!important;
+  }
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace364CareerNameBar > span.ace364Position{
+    grid-column:2!important;
+    grid-row:1!important;
+    align-self:center!important;
+    justify-self:start!important;
+    width:auto!important;
+    max-width:none!important;
+    min-width:25px!important;
+    height:18px!important;
+    margin:0!important;
+    padding:0 6px!important;
+    display:inline-grid!important;
+    place-items:center!important;
+    flex:none!important;
+    border:1px solid rgba(155,132,243,.20)!important;
+    border-radius:999px!important;
+    background:rgba(126,94,216,.10)!important;
+    color:#cabdff!important;
+    font-size:5.5px!important;
+    font-weight:1000!important;
+    line-height:1!important;
+    letter-spacing:.10em!important;
+    white-space:nowrap!important;
+    box-sizing:border-box!important;
+  }
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace364CareerNameBar > small{
+    grid-column:3!important;
+    grid-row:1!important;
+    align-self:center!important;
+    justify-self:start!important;
+    display:block!important;
+    width:auto!important;
+    max-width:100%!important;
+    min-width:0!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#71889b!important;
+    font-size:5.7px!important;
+    font-weight:900!important;
+    line-height:1!important;
+    letter-spacing:.045em!important;
+    text-align:left!important;
+  }
+
+  /* Do not let any old nested-title rules create space in this bar. */
+  html body #roadtoace .ace364CareerNameBar > div{display:none!important}
+
+  /* Keep the compact Beta chip in the reserved right-hand space. */
+  body.aceRtaCareerHome .ace348BetaTimer{
+    top:max(6px,env(safe-area-inset-top))!important;
+    right:7px!important;
+    left:auto!important;
+    transform:none!important;
+    z-index:80!important;
+  }
+
+  /* With the identity bar truly thin, the match card can sit directly below it. */
+  html body #roadtoace .rta229CareerPulseHome > .ace246HomeFixtureZone{
+    margin-top:0!important;
+    padding-top:3px!important;
+  }
+}
+@media(max-width:390px){
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace227CareerIdentity.ace364CareerNameBar{
+    height:34px!important;min-height:34px!important;max-height:34px!important;flex-basis:34px!important;
+    grid-template-rows:34px!important;padding-left:10px!important;padding-right:91px!important;column-gap:6px!important;
+  }
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace364CareerNameBar > h1{font-size:15px!important;max-width:37vw!important}
+  html body #roadtoace .rta227CareerHome.rta229CareerPulseHome > header.ace364CareerNameBar > small{font-size:5.2px!important}
+}
+</style>
+<script id="ace364-true-mobile-name-bar-marker">
+window.ACE_PROJECT_BUILD='B21.36.364';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.364';
+window.ACE_MOBILE_NAME_BAR_BUILD='B21.36.364';
 </script>
 
 </body>
