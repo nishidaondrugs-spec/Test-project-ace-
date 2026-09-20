@@ -38119,6 +38119,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     training:null,key:null,overlay:null,feedback:null,
     skillTree:null,office:null,clubWorld:null,selection:null,pathway:null,livingLeague:null,transferMarket:null,storyWorld:null,worldUpdate:null,agentLastUpdate:null,
     saveSlots:[],activeSave:1,homePanel:"week",careerPanel:"overview",leaguePanel:"table",leaderStat:"kills",playerPanel:"attributes",
+    showcase:null,showcaseLoading:false,showcaseDraft:null,
     leaderboard:[],leaderboardLoaded:false,leaderboardLoading:false,leaderboardError:""
   };
   window.__ACE_RTA_STATE=S; window.__ACE_RTA_RENDER=function(){return render();};
@@ -38171,6 +38172,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       RTA_CAREER_EXISTS:"You already have a Road to Ace career.",
       RTA_TRAINING_LIMIT:"Both training sessions are used. Play the next match to reset them.",
       RTA_SEASON_COMPLETE:"Your season is complete. Choose your next club first.",
+      RTA_NCAA_LIMIT_REACHED:"Your four-season NCAA eligibility is complete. Choose a professional pathway.",
+      RTA_CAREER_RETIRED:"This playing career is complete.",
       RTA_NO_TRAINING_SIM:"That training session is no longer active.",
       RTA_TRAINING_STALE:"That training session is stale. Start it again.",
       RTA_NO_KEY_MATCH:"No Key Moments match is active.",
@@ -38322,11 +38325,13 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const fatigue=Math.max(0,Math.min(100,Number(ctx.fatigue||0)));
     const compliance=ctx.instruction_compliance;
     const tired=fatigue>=75?"heavy":fatigue>=55?"tired":"";
+    const fatigueOff=ace348BetaGraceActive();
+    const fatigueNote=fatigueOff?"Fatigue effects are disabled during beta":fatigue<45?"No performance penalty":fatigue<60?"Timing is starting to tighten":fatigue<75?"Reactions and execution are getting harder":"Heavy legs — mistakes are more likely";
     return `<section class="rta99MatchHUD ${tired}">
       <div class="rta99LiveScore"><small>${esc(m.context||"LIVE MATCH")}</small><b>${esc(ctx.court_role||"YOUR ROTATION")}</b></div>
       <div class="rta99Rotation"><span>${esc(ctx.rotation_label||`ROTATION ${Number(ctx.rotation_no||1)}`)}</span>${rta99RotationDots(ctx.rotation_no)}</div>
       <div class="rta99CoachOrder"><small>COACH</small><b>${esc(ctx.instruction||"Execute your role.")}</b></div>
-      <div class="rta99Fatigue"><div><small>FATIGUE</small><b>${Math.round(fatigue)} · ${esc(ctx.stamina||"FRESH")}</b></div><i><em style="width:${fatigue}%"></em></i></div>
+      <div class="rta99Fatigue ${fatigueOff?"ace348FatigueOff":""}"><div><small>FATIGUE</small><b>${fatigueOff?"BETA · OFF":`${Math.round(fatigue)} · ${esc(ctx.stamina||"FRESH")}`}</b><span class="ace347FatigueExplain">${esc(fatigueNote)}</span></div><i><em style="width:${fatigueOff?0:fatigue}%"></em></i></div>
       ${compliance!==undefined&&compliance!==null?`<div class="rta99Compliance"><small>PLAN</small><b>${Math.round(Number(compliance||0)*100)}%</b></div>`:""}
     </section>
     ${ctx.is_substitute&&Number(ctx.moment_no||1)===1?`<div class="rta99SubBanner"><i>↗</i><span><small>SUBSTITUTION</small><b>YOU'RE ON</b></span></div>`:""}`;
@@ -38363,7 +38368,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         kicker:[m.context||m.type||"KEY MOMENT",`MOMENT ${Number(d.moment_no||1)}/${Number(d.total_moments||1)}`,ctx.rotation_label||""].filter(Boolean).join(" · "),
         title:m.title||pretty(m.type||"YOUR BALL"),
         cue:m.cue||m.prompt||"Read the court and make the play.",
-        fatigue:ctx.fatigue
+        fatigue:ctx.fatigue,
+        stamina:ctx.stamina||"FRESH"
       };
     }
     const d=S.training||{},r=d.rep||{};
@@ -38387,7 +38393,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       top.innerHTML=`<small>${esc(brief.kicker)}</small><b>${esc(brief.title)}</b><span class="rta106MobileCue">${esc(brief.cue)}</span>`;
       if(kind==="key"&&brief.fatigue!==undefined&&brief.fatigue!==null){
         const f=Math.round(Number(brief.fatigue||0));
-        top.insertAdjacentHTML("beforeend",`<i class="rta106FatigueChip">FATIGUE ${f}%</i>`);
+        top.insertAdjacentHTML("beforeend",`<i class="rta106FatigueChip">${esc(brief.stamina||"FRESH")} · ${f}%</i>`);
       }
     }
     ov.scrollTop=0;
@@ -39745,8 +39751,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       }
     }
     if(c.season_complete){
+      const ended=ace347CareerEnded(c);
       alerts.unshift(`<button type="button" class="world ace330NoticePurple" data-rta62-view="career">
-        <i>◎</i><div><small>WORLD · SEASON REVIEW</small><b>Your next chapter is ready</b></div><em>→</em>
+        <i>${ended?"★":"◎"}</i><div><small>${ended?"CAREER · FINAL RECORD":"WORLD · SEASON REVIEW"}</small><b>${ended?"Your playing career is complete":"Your next chapter is ready"}</b></div><em>→</em>
       </button>`);
     }
     if(!alerts.length)return "";
@@ -39776,7 +39783,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
 
     let storyKicker="CAREER PULSE",storyTitle="Make this week count.",storyCopy=`Your current development focus is ${focusName}. Keep building the habits that move you up the depth chart.`,storyTone="default";
     if(c.season_complete){
-      storyKicker="SEASON COMPLETE";storyTitle="Your next chapter is waiting.";storyCopy="Your season is finished. Review what changed, then decide where the career goes next.";storyTone="milestone";
+      if(ace347CareerEnded(c)){storyKicker="CAREER COMPLETE";storyTitle="Your playing career is in the books.";storyCopy=`You retire at ${Number(c.age||40)} after ${Number(c.season||1)} seasons. Open Career to review the final record.`;storyTone="milestone";}
+      else{storyKicker="SEASON COMPLETE";storyTitle="Your next chapter is waiting.";storyCopy="Your season is finished. Review what changed, then decide where the career goes next.";storyTone="milestone";}
     }else if(S.activeKey){
       storyKicker="LIVE MATCH";storyTitle="You still have a match to finish.";storyCopy="Your next playable moment is waiting in Match.";storyTone="live";
     }else if(needsFirstTraining){
@@ -40136,6 +40144,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       if(intlActive||intlSelected){
         return `<main class="rta93Match ace315eInternationalMatchHub"><section class="ace315eInternationalMatchHead"><div><small>MATCHES · INTERNATIONAL DUTY</small><h1>${esc(c.nationality||'NATIONAL TEAM')}</h1><p>Your club season is paused. Camp, fixtures and tournament matches now live here.</p></div><span>${esc(intlWindow?.competition||intlSel?.competition||'INTERNATIONAL')}</span></section>${aceV77InternationalPanel(c)}</main>`;
       }
+      if(ace347CareerEnded(c))return `<main class="rta93Match"><section class="rta78SeasonDone ace347CareerDone"><small>CAREER COMPLETE · AGE ${Number(c.age||40)}</small><h1>Your playing career is complete.</h1><p>No infinite Season 145 anymore. Your final club and international record is preserved in Career.</p><button class="rta62Btn primary" data-rta62-view="career">VIEW FINAL CAREER →</button></section></main>`;
       return `<main class="rta93Match"><section class="rta78SeasonDone"><small>SEASON COMPLETE</small><h1>The season is over.</h1><p>Review the year before deciding what comes next.</p><button class="rta62Btn primary" data-rta62-view="career">OPEN CAREER →</button></section></main>`;
     }
     const h=latestMatch(),ready=readiness(c),oppFallback=nextOpponent(),rank=leagueRank(),selState=S.selection||{},sel=selState.user||{},status=String(sel.selection_status||c.squad_role||"BENCH"),opp=String(selState.opponent||sel.opponent||oppFallback),rival=sel.direct_rival||null,coach=String(sel.coach_name||S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach"),leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League"),training=Number(c.training_used||0),firstMatch=Number(c.season||1)===1&&Number(c.season_match||0)===0,needsFirstTraining=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training===0,firstTrainingDone=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training>=1,playerTarget=posLabel(c.position)==="S"?"CONTROL THE OFFENCE":posLabel(c.position)==="L"?"OWN FIRST CONTACT":posLabel(c.position)==="M"?"WIN THE NET":"WIN YOUR ATTACKING MOMENTS",actionLabel=S.activeKey?"RESUME MATCH":rta88SelectionAction(status),rivalName=String(rival?.player_name||rival?.name||"").trim(),selectionNote=status==="BENCH"?(rivalName?`${rivalName} is currently ahead.`:"Stay ready."):(status==="ROTATION"?"Rotation role confirmed.":"You're in the starting six."),coachNote=status==="BENCH"?"Stay ready. Your chance may come.":status==="ROTATION"?"Make every touch count.":"Set the tone early.",matchday=Math.min(14,Number(c.season_match||0)+1);
@@ -40620,41 +40629,120 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     if(!entries.length)return "";
     return entries.map(([k,v])=>`${Number(v)>0?"+":""}${Number(v)} ${pretty(k.replaceAll("_"," "))}. ${ace339StatMeaning(k)}`).join(" ");
   }
-  function ace339GameplayDescription(n){
+  function ace343ChoiceLabel(meta){
+    const arr=Array.isArray(meta?.choice_ids)?meta.choice_ids:[];
+    if(!arr.length)return "";
+    return arr.map(x=>pretty(String(x||"").replaceAll("_"," ")).toUpperCase()).join(" / ");
+  }
+  function ace343PctText(v){
+    const n=Number(v||0);
+    if(!Number.isFinite(n)||Math.abs(n)<.00001)return "";
+    return `${Math.round(n*1000)/10}%`;
+  }
+  function ace343KindsTitle(meta){
+    const arr=Array.isArray(meta?.match_kinds)?meta.match_kinds:[];
+    if(!arr.length)return "Match";
+    const labels=arr.map(k=>pretty(String(ace339KindLabel(k)||k).replaceAll("-"," ")));
+    if(labels.length===1)return labels[0];
+    if(labels.length===2)return `${labels[0]} + ${labels[1]}`;
+    return labels.join(" + ");
+  }
+  function ace344KindBenefit(kind){
+    const k=String(kind||"").toUpperCase();
+    return ({
+      ATTACK:"Clean attacks are more likely to finish the rally.",
+      QUICK_ATTACK:"Well-timed quick attacks are harder for the block to close.",
+      BLOCK_READ:"Correct block reads are more likely to stop or slow the attack.",
+      RECEIVE:"Good serve-receive reads produce cleaner first contacts.",
+      DEFENCE_READ:"Good defensive reads help you keep harder balls alive.",
+      SET_DECISION:"Correct setting choices create better attacking chances.",
+      DUMP_DECISION:"Good dump decisions are harder for the defence to read.",
+      EMERGENCY_SET:"Emergency sets stay more controllable and keep more attacking options open."
+    })[k]||"Your best actions in these moments become more effective.";
+  }
+  function ace344FirstKind(meta){
+    const arr=Array.isArray(meta?.match_kinds)?meta.match_kinds:[];
+    return String(arr[0]||"");
+  }
+  function ace344PlayerDescription(n){
     if(!n)return "";
     const type=aceSt3NodeType(n),meta=n.effect_meta||{};
-    if(type==="SMALL"||type==="ADVANCED")return ace339StatDescription(n)||String(n.description||"Improves this part of your build.");
-    const parts=[];
-    const mechanic=String(meta.mechanic_text||n.description||"").trim();
-    if(mechanic)parts.push(mechanic);
-    const kinds=ace339Kinds(meta);
-    if(Number(meta.match_bonus||0))parts.push(`In ${kinds} key moments, adds a +${ace339Pct(meta.match_bonus)} base execution bonus.`);
-    if(Number(meta.correct_read_bonus||0))parts.push(`A correct read adds another +${ace339Pct(meta.correct_read_bonus)}.`);
-    if(Number(meta.choice_bonus||0))parts.push(`Using the intended option adds +${ace339Pct(meta.choice_bonus)}.`);
-    if(Number(meta.streak_bonus||0))parts.push(`After two successful moments, gain a +${ace339Pct(meta.streak_bonus)} rhythm bonus.`);
-    if(Number(meta.recovery_bonus||0))parts.push(`After an error, gain a +${ace339Pct(meta.recovery_bonus)} recovery bonus.`);
-    if(Number(meta.first_ball_bonus||0))parts.push(`On the first key moment, gain +${ace339Pct(meta.first_ball_bonus)}.`);
-    if(Number(meta.late_bonus||0))parts.push(`In the final quarter of a key-moment sequence, gain +${ace339Pct(meta.late_bonus)}.`);
-    if(Number(meta.pressure_bonus||0))parts.push(`In international semi-finals/finals, gain +${ace339Pct(meta.pressure_bonus)}.`);
-    if(Number(meta.wrong_read_rescue||0))parts.push(`A wrong read keeps +${ace339Pct(meta.wrong_read_rescue)} of the outcome instead of fully collapsing.`);
-    if(Number(meta.wrong_read_penalty||0))parts.push(`Wrong reads carry an extra ${ace339Pct(meta.wrong_read_penalty)} penalty.`);
-    if(Number(meta.training_bonus||0)&&meta.training_focus)parts.push(`In ${pretty(String(meta.training_focus)).toLowerCase()} drills, adds +${ace339Pct(meta.training_bonus)} to the active skill bonus.`);
-    if(type==="HYBRID")parts.push(`Only active when ${pretty(meta.required_primary||n.branch)} is Primary and ${pretty(meta.required_secondary||"")} is Secondary.`);
-    if(type.startsWith("ACE_PLUS")){
-      if(Number(meta.attribute_cap||0))parts.push(`Raises your Ace+ attribute cap to ${Number(meta.attribute_cap)}.`);
-      if(Number(meta.international_wins_required||0))parts.push(`This rank requires ${Number(meta.international_wins_required)} international wins and 100 OVR.`);
-    }
-    return parts.filter(Boolean).join(" ")||"Improves this part of your build in matches and training.";
-  }
-  function ace339NodeShortDescription(n){
-    const type=aceSt3NodeType(n),meta=n?.effect_meta||{};
     if(type==="SMALL"||type==="ADVANCED"){
-      const first=Object.keys(n?.effects||{})[0];
-      return first?ace339StatMeaning(first):String(n?.description||"");
+      const key=Object.keys(n.effects||{})[0];
+      return key?ace339StatMeaning(key):String(n.description||"Improves this attribute in gameplay.");
     }
-    if(meta.mechanic_text)return String(meta.mechanic_text);
-    return String(n?.description||ace339GameplayDescription(n));
+    const kind=ace344FirstKind(meta),kindTitle=ace343KindsTitle(meta);
+    const choiceLabel=ace343ChoiceLabel(meta);
+    if(type.startsWith("ACE_PLUS")){
+      const benefit=ace344KindBenefit(kind);
+      return `${benefit} Also raises your Ace+ attribute ceiling.`;
+    }
+    if(type==="HYBRID"){
+      const p=pretty(meta.required_primary||"");
+      const sec=pretty(meta.required_secondary||"");
+      return `Combines ${p} and ${sec} to improve ${kindTitle.toLowerCase()} moments.`;
+    }
+    if(type==="SPECIALIZATION"){
+      if(choiceLabel){
+        const risk=Number(meta.wrong_read_penalty||0)>0?" Bad reads are punished more.":"";
+        return `Makes ${choiceLabel} choices more effective in ${kindTitle.toLowerCase()} moments.${risk}`;
+      }
+      if(Number(meta.correct_read_bonus||0)>0)return `Correct ${kindTitle.toLowerCase()} reads become more rewarding.`;
+      if(Number(meta.recovery_bonus||0)>0)return `Helps you recover faster after a mistake in ${kindTitle.toLowerCase()} moments.`;
+      if(Number(meta.streak_bonus||0)>0)return `Gets stronger when you keep winning ${kindTitle.toLowerCase()} moments.`;
+      return ace344KindBenefit(kind);
+    }
+    if(type==="PLAYSTYLE"){
+      const first=ace344KindBenefit(kind);
+      const extra=[];
+      if(Number(meta.correct_read_bonus||0)>0)extra.push("reading the play correctly");
+      if(Number(meta.streak_bonus||0)>0)extra.push("building momentum");
+      if(Number(meta.late_bonus||0)>0)extra.push("late key moments");
+      return extra.length?`${first} It gets even better through ${extra.join(", ")}.`:first;
+    }
+    if(type==="TRAIT"){
+      if(choiceLabel)return `Makes ${choiceLabel} choices more effective in ${kindTitle.toLowerCase()} moments.`;
+      if(Number(meta.correct_read_bonus||0)>0)return `Correct ${kindTitle.toLowerCase()} reads get a more forgiving result.`;
+      if(Number(meta.recovery_bonus||0)>0)return `Helps you recover after a mistake in ${kindTitle.toLowerCase()} moments.`;
+      if(Number(meta.streak_bonus||0)>0)return `Gets stronger when you keep winning ${kindTitle.toLowerCase()} moments.`;
+      if(Number(meta.late_bonus||0)>0)return `Gives you extra help late in ${kindTitle.toLowerCase()} moments.`;
+      return ace344KindBenefit(kind);
+    }
+    return String(n.description||meta.mechanic_text||"Improves this part of your game.");
   }
+  function ace344ExactDetails(n){
+    if(!n)return "";
+    const type=aceSt3NodeType(n),meta=n.effect_meta||{};
+    if(type==="SMALL"||type==="ADVANCED"){
+      const entries=Object.entries(n.effects||{}).filter(([,v])=>Number(v));
+      return entries.map(([k,v])=>`${Number(v)>0?"+":""}${Number(v)} ${pretty(k.replaceAll("_"," "))}`).join(" • ");
+    }
+    const kind=ace343KindsTitle(meta),parts=[];
+    const base=ace343PctText(meta.match_bonus),correct=ace343PctText(meta.correct_read_bonus),choice=ace343PctText(meta.choice_bonus);
+    const streak=ace343PctText(meta.streak_bonus),recovery=ace343PctText(meta.recovery_bonus),late=ace343PctText(meta.late_bonus);
+    const first=ace343PctText(meta.first_ball_bonus),pressure=ace343PctText(meta.pressure_bonus),rescue=ace343PctText(meta.wrong_read_rescue),penalty=ace343PctText(meta.wrong_read_penalty);
+    const training=ace343PctText(meta.training_bonus),choiceLabel=ace343ChoiceLabel(meta);
+    if(base)parts.push(`${kind} +${base}`);
+    if(choice&&choiceLabel)parts.push(`${choiceLabel} +${choice}`);
+    if(correct)parts.push(`correct read +${correct}`);
+    if(streak)parts.push(`2-win rhythm +${streak}`);
+    if(recovery)parts.push(`after error +${recovery}`);
+    if(first)parts.push(`first moment +${first}`);
+    if(late)parts.push(`late +${late}`);
+    if(pressure)parts.push(`semi/final +${pressure}`);
+    if(rescue)parts.push(`wrong-read rescue +${rescue}`);
+    if(penalty)parts.push(`wrong-read penalty ${penalty}`);
+    if(training&&meta.training_focus)parts.push(`${pretty(String(meta.training_focus))} drill +${training}`);
+    if(type.startsWith("ACE_PLUS")){
+      const cap=Number(meta.attribute_cap||0),wins=Number(meta.international_wins_required||0);
+      if(cap)parts.push(`stat cap ${cap}`);
+      if(wins)parts.push(`unlock: 100 OVR + ${wins} INT win${wins===1?"":"s"}`);
+    }
+    return parts.join(" • ");
+  }
+  function ace343GameplayDescription(n){ return ace344PlayerDescription(n); }
+  function ace339GameplayDescription(n){ return ace344PlayerDescription(n); }
+  function ace339NodeShortDescription(n){ return ace344PlayerDescription(n); }
 
   function ace341TreeDescription(n){
     if(!n)return "";
@@ -40662,29 +40750,34 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     if(type==="SMALL"||type==="ADVANCED"){
       const key=Object.keys(n.effects||{})[0];
       return ({
-        creativity:"More effective creative options.",
-        accuracy:"Better shot placement and target control.",
-        hitting_power:"More pace and finishing pressure.",
-        serve_receive:"Cleaner, more forgiving first contact.",
-        positioning:"Reach the correct base more reliably.",
-        covering:"Better recovery on tips and loose balls.",
-        work_rate:"Hold movement quality deeper into matches.",
-        vertical:"More jump reach in attack and block.",
-        speed:"Move across court faster.",
-        reaction_time:"Larger reaction windows on reads.",
-        service:"More pressure and control on serve.",
-        blocking:"Better block timing and success.",
-        set_technique:"Cleaner release and set accuracy.",
-        set_creativity:"Stronger deceptive setting options.",
-        mindset:"More reliable execution under pressure."
-      })[String(key||"")]||ace339NodeShortDescription(n);
+        creativity:"More creative options.", accuracy:"Better shot placement.", hitting_power:"More attack power.",
+        serve_receive:"Cleaner first contact.", positioning:"Better court positioning.", covering:"Better scramble coverage.",
+        work_rate:"More late-match consistency.", vertical:"More jump reach.", speed:"Faster court movement.",
+        reaction_time:"More time to react.", service:"More serve pressure.", blocking:"Stronger block timing.",
+        set_technique:"Cleaner, more accurate sets.", set_creativity:"More deceptive setting.", mindset:"More reliable under pressure."
+      })[String(key||"")]||"Improves this attribute.";
     }
-    if(type.startsWith("ACE_PLUS")){
-      const cap=Number(meta.attribute_cap||0);
-      const power=String(meta.power_name||n.name||"ACE+ power");
-      return `${pretty(power)}${cap?` · attribute cap ${cap}`:""}.`;
+    const kind=ace344FirstKind(meta);
+    if(type.startsWith("ACE_PLUS"))return ({
+      ATTACK:"Perfect attacks are harder to stop.", QUICK_ATTACK:"Perfect quicks are harder to stop.", BLOCK_READ:"Perfect block reads are more decisive.",
+      RECEIVE:"Perfect passes keep the offence open.", DEFENCE_READ:"Great reads save harder balls.", SET_DECISION:"Great sets create stronger attacks.",
+      DUMP_DECISION:"Smart dumps become harder to read.", EMERGENCY_SET:"Emergency sets keep more options alive."
+    })[kind]||"Elite execution gets a bigger payoff.";
+    if(type==="HYBRID")return `Combines ${pretty(meta.required_primary||"")} + ${pretty(meta.required_secondary||"")}.`;
+    if(type==="PLAYSTYLE")return ace344KindBenefit(kind);
+    if(type==="SPECIALIZATION"){
+      const choice=ace343ChoiceLabel(meta);
+      return choice?`Makes ${choice} choices stronger.`:ace344KindBenefit(kind);
     }
-    return String(meta.mechanic_text||n.description||ace339NodeShortDescription(n));
+    if(type==="TRAIT"){
+      const choice=ace343ChoiceLabel(meta);
+      if(choice)return `Makes ${choice} choices stronger.`;
+      if(Number(meta.recovery_bonus||0)>0)return "Helps you bounce back after mistakes.";
+      if(Number(meta.streak_bonus||0)>0)return "Builds momentum after good plays.";
+      if(Number(meta.correct_read_bonus||0)>0)return "Rewards correct reads more strongly.";
+      return ace344KindBenefit(kind);
+    }
+    return ace344PlayerDescription(n);
   }
 
   function ace316kTypeLabel(n){
@@ -40732,6 +40825,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       <span class="ace316kDetailType">${esc(ace316kTypeLabel(n))}</span>
       <h2>${esc(n.name)}</h2>
       <p class="ace339GameplayDescription">${esc(gameplayDescription)}</p>
+      ${ace344ExactDetails(n)?`<details class="ace344Exact"><summary>EXACT BONUSES</summary><p>${esc(ace344ExactDetails(n))}</p></details>`:""}
       <h4>${esc(mechanicLabel||ace316gArchetypeTagline(n.branch))}</h4>
       ${effects&&effects!=="Special skill"?`<div class="ace316kEffect stat"><small>ATTRIBUTE EFFECT</small><b>${esc(effects)}</b></div>`:""}
       ${secondaryName&&["TRAIT","SPECIALIZATION","PLAYSTYLE","HYBRID"].includes(type)?`<div class="ace316kSynergy"><small>BUILD CONTEXT</small><b>${esc(secondaryName)}</b><span>Your secondary path remains active alongside this build.</span></div>`:""}
@@ -40795,7 +40889,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
 
     const nodes=positions.map(p=>{
       const type=aceSt3NodeType(p.n),selected=p.n.id===ACE316K_SELECTED_NODE;
-      return `<button type="button" class="ace316kNode ${ace316kNodeStateClass(p.n,p.st)} ${type.toLowerCase()} ${selected?"selected":""}" style="--x:${p.x};--y:${p.y}px" data-ace316k-node-select="${esc(p.n.id)}">
+      return `<button type="button" class="ace316kNode ${ace316kNodeStateClass(p.n,p.st)} ${type.toLowerCase()} ${selected?"selected":""}" style="--x:${p.x};--y:${p.y}px" data-ace316k-node-select="${esc(p.n.id)}" data-ace344-summary="${esc(ace344PlayerDescription(p.n))}" data-ace344-exact="${esc(ace344ExactDetails(p.n))}">
         <span class="ace316kOrb">${ace316kNodeIcon(p.n)}</span>
         <b>${esc(p.n.name)}</b>
         <span class="ace339NodeDesc">${esc(ace341TreeDescription(p.n))}</span>
@@ -41044,6 +41138,66 @@ document.addEventListener("click",function(e){
     }
     return false;
   };
+  function ace349ProfileAccent(accent){return ["PURPLE","BLUE","GOLD","RED","GREEN"].includes(String(accent||"").toUpperCase())?String(accent).toUpperCase():"PURPLE"}
+  function ace349ProfileDraft(){
+    if(!S.showcaseDraft){
+      const p=S.showcase?.profile||{};
+      S.showcaseDraft={title:String(p.title||S.career?.profile_title||"RISING ACE"),accent:ace349ProfileAccent(p.accent||S.career?.profile_accent),trophies:[...(Array.isArray(p.featured_trophies)?p.featured_trophies:[])],badges:[...(Array.isArray(p.featured_badges)?p.featured_badges:[])]};
+    }
+    return S.showcaseDraft;
+  }
+  async function ace349EnsureShowcase(force=false){
+    if(S.showcaseLoading||(!force&&S.showcase))return;
+    S.showcaseLoading=true;render();
+    try{
+      S.showcase=await rpc("vds_rta_get_profile_showcase");
+      S.showcaseDraft=null;ace349ProfileDraft();
+    }catch(err){toast(errText(err),"error")}
+    finally{S.showcaseLoading=false;render()}
+  }
+  function ace349ItemById(items,id){return (Array.isArray(items)?items:[]).find(x=>String(x?.id||"")===String(id||""))||null}
+  function ace349ToggleDraft(kind,id){
+    const d=ace349ProfileDraft(),key=kind==="trophy"?"trophies":"badges",limit=kind==="trophy"?3:6,arr=[...(d[key]||[])],i=arr.indexOf(id);
+    if(i>=0)arr.splice(i,1);else{if(arr.length>=limit){toast(`${kind==="trophy"?"3 trophies":"6 badges"} maximum.`,"error");return}arr.push(id)}
+    d[key]=arr;S.showcaseDraft=d;render();
+  }
+  async function ace349SaveShowcase(){
+    if(S.busy)return;const d=ace349ProfileDraft();S.busy=true;render();
+    try{
+      S.showcase=await rpc("vds_rta_update_profile_showcase",{p_title:d.title,p_accent:d.accent,p_trophies:d.trophies,p_badges:d.badges});
+      S.showcaseDraft=null;ace349ProfileDraft();
+      await loadState({silent:true,world:false});S.view="player";S.playerPanel="showcase";render();toast("Player showcase saved.");
+    }catch(err){toast(errText(err),"error")}finally{S.busy=false;render()}
+  }
+  function ace349LockedGoals(c){
+    const b=Array.isArray(S.showcase?.earned_badges)?S.showcase.earned_badges:[],has=id=>b.some(x=>x.id===id),goals=[];
+    if(!has("MATCHES_100"))goals.push(["CENTURY CLUB",`${Math.min(100,Number(c.matches||0))}/100 matches`]);
+    if(!has("KILLS_1000")&&String(c.position)!=="L"&&String(c.position)!=="S")goals.push(["1000 KILL CLUB",`${Math.min(1000,Number(c.career_kills||0))}/1000 kills`]);
+    if(!has("CAPS_100"))goals.push(["CENTURION",`${Math.min(100,Number(c.international_caps||0))}/100 caps`]);
+    if(!has("ACEPLUS_3"))goals.push(["ACE+ III",`Rank ${Math.min(3,Number(c.ace_plus_rank||0))}/3`]);
+    return goals.slice(0,4);
+  }
+  function ace349HeroShowcase(c){
+    const title=String(c.profile_title||S.showcase?.profile?.title||"RISING ACE"),accent=ace349ProfileAccent(c.profile_accent||S.showcase?.profile?.accent),t=Array.isArray(S.showcase?.earned_trophies)?S.showcase.earned_trophies:[],b=Array.isArray(S.showcase?.earned_badges)?S.showcase.earned_badges:[],p=S.showcase?.profile||{},tids=Array.isArray(p.featured_trophies)?p.featured_trophies:[],bids=Array.isArray(p.featured_badges)?p.featured_badges:[],featured=[...tids.map(id=>ace349ItemById(t,id)),...bids.map(id=>ace349ItemById(b,id))].filter(Boolean).slice(0,5);
+    return `<div class="ace349HeroShowcase ${accent.toLowerCase()}"><span>${esc(title)}</span>${featured.length?`<div>${featured.map(x=>`<b title="${esc(x.description||x.name)}">${esc(x.icon||"★")} ${esc(x.name)}</b>`).join("")}</div>`:`<small>Open Showcase to feature trophies and badges.</small>`}</div>`;
+  }
+  function ace349ShowcasePanel(c){
+    if(!S.showcase&&!S.showcaseLoading){setTimeout(()=>ace349EnsureShowcase(),0)}
+    if(S.showcaseLoading||!S.showcase)return `<section class="rta93PlayerPanel ace349Showcase"><div class="ace349Loading"><i>★</i><b>Loading your showcase…</b></div></section>`;
+    const d=ace349ProfileDraft(),trophies=Array.isArray(S.showcase.earned_trophies)?S.showcase.earned_trophies:[],badges=Array.isArray(S.showcase.earned_badges)?S.showcase.earned_badges:[],titles=Array.isArray(S.showcase.available_titles)?S.showcase.available_titles:["RISING ACE"],goals=ace349LockedGoals(c),accent=ace349ProfileAccent(d.accent);
+    const trophyCards=trophies.length?trophies.map(x=>`<button type="button" class="ace349Trophy ${d.trophies.includes(x.id)?"selected":""}" data-ace349-trophy="${esc(x.id)}"><i>${esc(x.icon||"★")}</i><span><small>${esc(x.tier||"HONOUR")}</small><b>${esc(x.name)}</b><em>${esc(x.description||"Career achievement")}</em></span><strong>${d.trophies.includes(x.id)?"FEATURED":"FEATURE"}</strong></button>`).join(""):`<div class="ace349Empty">Your trophies will appear here as you win awards and international honours.</div>`;
+    const badgeCards=badges.length?badges.map(x=>`<button type="button" class="ace349Badge ${d.badges.includes(x.id)?"selected":""}" data-ace349-badge="${esc(x.id)}"><i>${esc(x.icon||"★")}</i><span><b>${esc(x.name)}</b><em>${esc(x.description||"")}</em></span></button>`).join(""):`<div class="ace349Empty">Keep progressing to unlock profile badges.</div>`;
+    return `<section class="rta93PlayerPanel ace349Showcase ${accent.toLowerCase()}">
+      <div class="ace349ShowcaseHead"><div><small>PLAYER PROFILE</small><h2>Your career, your display.</h2><p>Choose what other players see first. Only achievements you have actually earned can be featured.</p></div><button type="button" data-ace349-refresh>REFRESH</button></div>
+      <div class="ace349ProfilePreview"><div class="ace349PreviewIdentity"><small>${esc(c.nationality||"INTERNATIONAL")} · ${esc(posLabel(c.position))}</small><h2>${esc(c.player_name)}</h2><span>${esc(d.title)}</span></div><strong>${Number(c.overall||0)}<small>OVR</small></strong><div class="ace349PreviewFeatured">${d.trophies.map(id=>ace349ItemById(trophies,id)).filter(Boolean).map(x=>`<b>${esc(x.icon||"★")} ${esc(x.name)}</b>`).join("")}${d.badges.map(id=>ace349ItemById(badges,id)).filter(Boolean).slice(0,6).map(x=>`<i title="${esc(x.name)}">${esc(x.icon||"★")}</i>`).join("")||`<em>No featured items yet</em>`}</div></div>
+      <div class="ace349EditRow"><label><span>PROFILE TITLE</span><select data-ace349-title>${titles.map(x=>`<option value="${esc(x)}" ${String(x).toUpperCase()===String(d.title).toUpperCase()?"selected":""}>${esc(x)}</option>`).join("")}</select></label><div class="ace349Accent"><span>ACCENT</span><div>${["PURPLE","BLUE","GOLD","RED","GREEN"].map(x=>`<button type="button" data-ace349-accent="${x}" class="${accent===x?"selected":""}" aria-label="${x}"></button>`).join("")}</div></div></div>
+      <div class="ace349SectionHead"><div><small>TROPHY CABINET</small><h3>Featured trophies</h3></div><span>${d.trophies.length}/3 selected</span></div><div class="ace349TrophyGrid">${trophyCards}</div>
+      <div class="ace349SectionHead"><div><small>PROFILE BADGES</small><h3>Featured badges</h3></div><span>${d.badges.length}/6 selected</span></div><div class="ace349BadgeGrid">${badgeCards}</div>
+      ${goals.length?`<div class="ace349SectionHead locked"><div><small>NEXT MILESTONES</small><h3>Still to earn</h3></div></div><div class="ace349LockedGrid">${goals.map(([n,p])=>`<div><i>◇</i><span><b>${esc(n)}</b><em>${esc(p)}</em></span></div>`).join("")}</div>`:""}
+      <div class="ace349SaveRow"><span>Your chosen title, trophies and badges are saved to this Career slot.</span><button type="button" data-ace349-save ${S.busy?"disabled":""}>${S.busy?"SAVING…":"SAVE SHOWCASE"}</button></div>
+    </section>`;
+  }
+
   function rta93PlayerTabButton(id,label,icon){return `<button type="button" data-rta93-player-panel="${id}" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'${id}')" class="${S.playerPanel===id?"active":""}"><i>${icon}</i><span>${label}</span></button>`;}
   function rta93PlayerPanel(c){
     const traits=strengthList(c),styles=(Array.isArray(c.playstyles)?c.playstyles:[]),rs=repStage(c.reputation),outputs=[["KILLS",c.career_kills],["ACES",c.career_aces],["BLOCKS",c.career_blocks],["DIGS",c.career_digs],["ASSISTS",c.career_assists]],gains=rta93PlayerGains(c);
@@ -41053,6 +41207,7 @@ document.addEventListener("click",function(e){
       return `<div class="rta182FormRow"><span class="md">MD ${Number(h.season_match||0)}</span><b class="opp">${esc(h.opponent||"Opponent")}</b><span class="result ${tone}">${result}</span><strong>${Number(h.match_rating||0).toFixed(1)}</strong></div>`;
     }).join(""):`<div class="rta182FormEmpty"><b>No matches yet.</b><span>Your recent form will appear after your first matchday.</span></div>`;
     const activeStyles=styles.length?styles.map(p=>`<span class="rta182Playstyle">★ ${esc(p)}</span>`).join(""):`<div class="rta182NoPlaystyles">No playstyles unlocked yet.</div>`;
+    if(S.playerPanel==="showcase")return ace349ShowcasePanel(c);
     if(S.playerPanel==="tree")return skillTreeHTML(c);
     if(S.playerPanel==="form")return `<section class="rta93PlayerPanel rta182FormPanel"><div class="rta93PanelTitle"><div><small>FORM</small><h2>Recent performances.</h2></div><span class="rta182FormLabel">LAST ${Math.min(4,recent.length||0)} MATCHES</span></div><div class="rta182FormGrid"><article><div class="rta182Subhead"><span>RECENT MATCHES</span><small>RATING</small></div>${formRows}</article><article><div class="rta182Subhead"><span>ACTIVE PLAYSTYLES</span><small>${styles.length}</small></div><div class="rta182Playstyles">${activeStyles}</div></article></div></section>`;
     if(S.playerPanel==="career")return `<section class="rta93PlayerPanel"><div class="rta93PanelTitle"><div><small>CAREER OUTPUT</small><h2>${esc(rs.name)}</h2></div><b>${Number(c.reputation||0)} REP</b></div><div class="rta93CareerOutputs">${outputs.map(([n,v])=>`<div><span>${n}</span><b>${Number(v||0)}</b></div>`).join("")}</div><div class="rta93CareerFacts"><span><b>${Number(c.age||17)}</b>AGE</span><span><b>${Number(c.season||1)}</b>SEASONS</span><span><b>${Number(c.matches||0)}</b>MATCHES</span><span><b>${Number(c.career_wins||0)}</b>WINS</span><span><b>${esc(c.squad_role)}</b>ROLE</span></div></section>`;
@@ -41093,8 +41248,8 @@ document.addEventListener("click",function(e){
     if(S.playerPanel==="tree")return `<main class="ace316gSkillPage">${skillTreeHTML(c)}</main>`;
     const xp=xpProgress(c),rp=roleProgress(c),rep=repProgress(c),gains=rta93PlayerGains(c);
     return `<main class="rta93Player">
-      <section class="rta93PlayerHero"><div class="rta93PlayerCardStage">${careerCardHTML(c)}</div><div class="rta93PlayerIdentity"><small>YOUR PLAYER</small><div class="rta93PlayerName"><h1>${esc(c.player_name)}</h1><strong>${Number(c.overall)}<span>OVR</span></strong></div><p>${esc(c.squad_role)} · ${esc(posLabel(c.position))} · #${Number(c.jersey_number)} · ${Number(c.height_cm)}cm · ${esc(c.nationality||"England")}</p><details class="ace316mQuickProfile"${(typeof window!=="undefined"&&window.innerWidth>760)?" open":""}><summary><span>QUICK ATTRIBUTES</span><b>VIEW PROFILE</b><i>⌄</i></summary><div class="ace316mQuickProfileBody">${rta217PlayerRadarHTML(c)}${rta93CompactAttributeRows(c,gains)}</div></details><div class="rta180MetaLine"><span>LEVEL <b>${Number(c.level||1)}</b></span><span>SP <b>${Number(c.skill_points||0)}</b></span><span>TRUST <b>${Number(c.coach_trust||0)}</b></span><span>REP <b>${Number(c.reputation||0)}</b></span></div><div class="rta93PlayerProgress"><div><span>XP</span><b>${xp.xp}/${xp.need}</b><i><em style="width:${xp.pct}%"></em></i></div><div><span>NEXT ROLE</span><b>${esc(rp.next||c.squad_role)}</b><i><em style="width:${rp.pct}%"></em></i></div><div><span>REPUTATION</span><b>${esc(rep.label)}</b><i><em style="width:${rep.pct}%"></em></i></div></div><div class="rta93PlayerActions"><button class="primary" data-rta93-player-panel="tree" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'tree')">DEVELOP PLAYER →</button><button data-rta83-open-card-studio>EDIT CARD</button></div></div></section>
-      <nav class="rta93PlayerTabs">${rta93PlayerTabButton("attributes","ATTRIBUTES","▦")}${rta93PlayerTabButton("tree","SKILL TREE","✦")}${rta93PlayerTabButton("form","FORM","↗")}${rta93PlayerTabButton("career","CAREER","◎")}</nav>
+      <section class="rta93PlayerHero"><div class="rta93PlayerCardStage">${careerCardHTML(c)}</div><div class="rta93PlayerIdentity"><small>YOUR PLAYER</small><div class="rta93PlayerName"><h1>${esc(c.player_name)}</h1><strong>${Number(c.overall)}<span>OVR</span></strong></div><p>${esc(c.squad_role)} · ${esc(posLabel(c.position))} · #${Number(c.jersey_number)} · ${Number(c.height_cm)}cm · ${esc(c.nationality||"England")}</p>${ace349HeroShowcase(c)}<details class="ace316mQuickProfile"${(typeof window!=="undefined"&&window.innerWidth>760)?" open":""}><summary><span>QUICK ATTRIBUTES</span><b>VIEW PROFILE</b><i>⌄</i></summary><div class="ace316mQuickProfileBody">${rta217PlayerRadarHTML(c)}${rta93CompactAttributeRows(c,gains)}</div></details><div class="rta180MetaLine"><span>LEVEL <b>${Number(c.level||1)}</b></span><span>SP <b>${Number(c.skill_points||0)}</b></span><span>TRUST <b>${Number(c.coach_trust||0)}</b></span><span>REP <b>${Number(c.reputation||0)}</b></span></div><div class="rta93PlayerProgress"><div><span>XP</span><b>${xp.xp}/${xp.need}</b><i><em style="width:${xp.pct}%"></em></i></div><div><span>NEXT ROLE</span><b>${esc(rp.next||c.squad_role)}</b><i><em style="width:${rp.pct}%"></em></i></div><div><span>REPUTATION</span><b>${esc(rep.label)}</b><i><em style="width:${rep.pct}%"></em></i></div></div><div class="rta93PlayerActions"><button class="primary" data-rta93-player-panel="tree" onclick="return window.ACE_RTA_PLAYER_PANEL(event,'tree')">DEVELOP PLAYER →</button><button data-rta83-open-card-studio>EDIT CARD</button></div></div></section>
+      <nav class="rta93PlayerTabs">${rta93PlayerTabButton("attributes","ATTRIBUTES","▦")}${rta93PlayerTabButton("tree","SKILL TREE","✦")}${rta93PlayerTabButton("form","FORM","↗")}${rta93PlayerTabButton("career","CAREER","◎")}${rta93PlayerTabButton("showcase","SHOWCASE","★")}</nav>
       ${rta93PlayerPanel(c)}
     </main>`;
   }
@@ -41669,12 +41824,27 @@ document.addEventListener("click",function(e){
   function rta89PathwayHTML(c){return rta92PathwayPanel(c)}
 
 
+  function ace348BetaGraceActive(){return Date.now()<Date.parse("2026-09-27T23:59:59+08:00")}
+  function ace347CareerEnded(c){return !!c&&!ace348BetaGraceActive()&&(!!c.retired||Number(c.age||17)>=40&&!!c.season_complete)}
+  function ace347CareerPhase(c){
+    const age=Number(c?.age||17);
+    if(ace348BetaGraceActive()&&age>=40)return "BETA EXTENDED CAREER";
+    if(age>=40)return "CAREER COMPLETE";
+    if(age>=38)return "FINAL YEARS";
+    if(age>=35)return "VETERAN";
+    if(age>=31)return "EXPERIENCED";
+    if(age>=23)return "PRIME YEARS";
+    return "BREAKTHROUGH";
+  }
+  function ace347NcaaSeason(c){return Math.max(0,Math.min(4,Number(c?.ncaa_seasons||0)+(String(c?.league_code||"")==="USA_NCAA"?1:0)))}
+
   function rta92OverviewPanel(c,leagueName,tier){
     const next=rta92NextStep(c),played=Number(c.season_match||0),pct=Math.round(Math.min(100,(played/14)*100));
     const coach=S.clubWorld?.club||{},sel=S.selection?.user||{},ncaa=S.pathway?.ncaa||{};
+    const age=Number(c.age||17),careerEnded=ace347CareerEnded(c),yearsLeft=Math.max(0,40-age),careerPhase=ace347CareerPhase(c),ncaaSeason=ace347NcaaSeason(c);
     return `<section class="rta92Panel rta92OverviewPanel">
       <div class="rta92HeroSummary">
-        <div class="rta92HeroCopy"><small>CAREER STATUS</small><h2>${esc(c.club_name)}</h2><p>${esc(leagueName)} · Season ${Number(c.season||1)}</p></div>
+        <div class="rta92HeroCopy"><small>CAREER STATUS · AGE ${age}</small><h2>${careerEnded?"PLAYING CAREER COMPLETE":esc(c.club_name)}</h2><p>${careerEnded?`Retired after Season ${Number(c.retirement_season||c.season||1)} · ${esc(careerPhase)}`:`${esc(leagueName)} · Season ${Number(c.season||1)} · ${esc(careerPhase)}`}</p></div>
         <div class="rta92QuickStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${leagueRank()?`#${leagueRank()}`:"—"}</b>LEAGUE</span><span><b>${Number(c.reputation||0)}</b>REP</span><span><b>${esc(c.squad_role)}</b>ROLE</span></div>
       </div>
 
@@ -41692,7 +41862,8 @@ document.addEventListener("click",function(e){
 
         <article class="rta92MiniCard"><small>COACH</small><b>${esc(coach.coach_name||coach.coach||"Club coach")}</b><span>${esc(pretty(coach.primary_focus||"OPEN"))} + ${esc(pretty(coach.secondary_focus||"OPEN"))}</span></article>
         <article class="rta92MiniCard"><small>SELECTION</small><b>${esc(sel.selection_status||c.squad_role||"—")}</b><span>${sel.rank?`#${Number(sel.rank)} depth chart · ${Number(sel.selection_score||0).toFixed(1)} selection`:"Team selection updates before matchday."}</span></article>
-        <article class="rta92MiniCard"><small>NCAA</small><b>${ncaa.completed?"COMPLETED":ncaa.eligible?"AVAILABLE":"LOCKED"}</b><span>${ncaa.completed?`${Number(ncaa.seasons||0)} NCAA season${Number(ncaa.seasons||0)===1?"":"s"}`:ncaa.eligible?"Scholarship pathway is open.":"Optional development route."}</span></article>
+        <article class="rta92MiniCard"><small>NCAA ELIGIBILITY</small><b>${ncaaSeason} / 4 SEASONS</b><span>${ncaaSeason>=4?"College eligibility complete.":String(c.league_code||"")==="USA_NCAA"?`${4-ncaaSeason} NCAA season${4-ncaaSeason===1?"":"s"} remaining.`:ncaa.completed?"NCAA pathway completed.":ncaa.eligible?"Scholarship pathway is open.":"Optional four-season development route."}</span></article>
+        <article class="rta92MiniCard ace347AgeCard"><small>CAREER AGE</small><b>${age} · ${esc(careerPhase)}</b><span>${ace348BetaGraceActive()?"Retirement is paused during the beta grace period.":careerEnded?"Playing career complete.":yearsLeft===1?"Final season available before retirement.":`${yearsLeft} season${yearsLeft===1?"":"s"} maximum remaining.`}</span></article>
         <article class="rta92MiniCard"><small>WORLD LEVEL</small><b>TIER ${tier}</b><span>${esc(S.pathway?.current?.stage_label||"Career progression")}</span></article>
       </div>
     </section>`;
@@ -41883,7 +42054,7 @@ document.addEventListener("click",function(e){
         </aside>
       </div>
       <details class="rta103OfficeFold"><summary><span>INBOX & AGENT</span><b>${inbox.length} ACTIVE +</b></summary><div class="rta92StoryLayout"><div class="rta92StoryInbox">${officeInboxHTML()}</div><aside class="rta92StoryAgent">${agentTeaserHTML(c)}</aside></div></details>
-      ${c.season_complete?`<div class="rta92OffersBlock"><div class="rta92BrowseHead"><div><small>END OF SEASON</small><h3>Career offers</h3></div><span>${offers.length} option${offers.length===1?"":"s"}</span></div><div class="rta92OfferGrid">${offers.map(o=>`<article class="${o.type==="SCHOLARSHIP"?"scholarship":""}"><small>${esc(o.type||"OFFER")}</small><h3>${esc(o.club)}</h3><p>${esc(o.league_name||"Career move")} · ${esc(o.role||"ROTATION")}</p><button type="button" data-rta62-next-season="${esc(o.club)}">${o.type==="STAY"?"STAY":o.type==="SCHOLARSHIP"?"ACCEPT SCHOLARSHIP":"JOIN"} →</button></article>`).join("")}</div>${awards.length?`<div class="rta92Awards">${awards.map(a=>`<span>★ ${esc(a.name||a)}</span>`).join("")}</div>`:""}</div>`:""}
+      ${c.season_complete?(ace347CareerEnded(c)?`<div class="rta92OffersBlock ace347RetirementCard"><div class="ace347RetirementIcon">★</div><div><small>PLAYING CAREER COMPLETE</small><h3>${esc(c.player_name||"Your player")} retires at ${Number(c.age||40)}</h3><p>${Number(c.matches||0)} club matches · ${Number(c.career_kills||0)} kills · ${Number(c.career_blocks||0)} blocks · ${Number(c.career_aces||0)} aces · ${Number(c.international_caps||0)} international caps.</p><span>Your full Legacy and trophy showcase will live in the upcoming Profile phase.</span></div>${awards.length?`<div class="rta92Awards">${awards.map(a=>`<span>★ ${esc(a.name||a)}</span>`).join("")}</div>`:""}</div>`:`<div class="rta92OffersBlock"><div class="rta92BrowseHead"><div><small>END OF SEASON</small><h3>Career offers</h3></div><span>${offers.length} option${offers.length===1?"":"s"}</span></div><div class="rta92OfferGrid">${offers.filter(o=>!(String(c.league_code||"")==="USA_NCAA"&&ace347NcaaSeason(c)>=4&&o.club===c.club_name)).map(o=>`<article class="${o.type==="SCHOLARSHIP"?"scholarship":""}"><small>${esc(o.type||"OFFER")}</small><h3>${esc(o.club)}</h3><p>${esc(o.league_name||"Career move")} · ${esc(o.role||"ROTATION")}</p><button type="button" data-rta62-next-season="${esc(o.club)}">${o.type==="STAY"?"STAY":o.type==="SCHOLARSHIP"?"ACCEPT SCHOLARSHIP":"JOIN"} →</button></article>`).join("")}</div>${String(c.league_code||"")==="USA_NCAA"&&ace347NcaaSeason(c)>=4?`<p class="ace347NcaaExit">NCAA eligibility complete · choose a professional pathway for next season.</p>`:""}${awards.length?`<div class="rta92Awards">${awards.map(a=>`<span>★ ${esc(a.name||a)}</span>`).join("")}</div>`:""}</div>`):""}
     </section>`;
   }
   function rta103DecorateHomeStory(){
@@ -41989,7 +42160,7 @@ document.addEventListener("click",function(e){
     return `<main class="rta92CareerHub">
       <section class="rta92CareerHeader">
         <div class="rta92CareerIdentity"><small>ROAD TO ACE · CAREER</small><h1>${esc(c.player_name)}</h1><p>${esc(c.club_name)} · ${esc(leagueName)}</p></div>
-        <div class="rta92CareerHeaderStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${Number(c.season||1)}</b>SEASON</span><span><b>${tier}</b>WORLD TIER</span></div>
+        <div class="rta92CareerHeaderStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${Number(c.age||17)}</b>AGE</span><span><b>${Number(c.season||1)}</b>SEASON</span><span><b>${tier}</b>WORLD TIER</span></div>
       </section>
       <nav class="rta92CareerTabs" aria-label="Career sections">
         ${[["overview","OVERVIEW","⌂"],["pathway","PATHWAY","↗"],["league","LEAGUE","▦"],["story","STORY","✦"],["international","INT’L","◎"]].map(([v,l,i])=>`<button type="button" data-rta92-career-panel="${v}" class="${panel===v?"active":""}"><i>${i}</i><span>${l}</span></button>`).join("")}
@@ -42142,6 +42313,7 @@ document.addEventListener("click",function(e){
     }
   }
   async function nextSeason(club){
+    if(ace347CareerEnded(S.career)){S.view="career";S.careerPanel="overview";render();toast("Playing career complete · final age 40.");return;}
     /* B21.36.314B — international duty is a hard career gate. A selected player
        must finish the national-team window before any legacy next-season path. */
     let intlSel=null;try{intlSel=window.ACE_INTL_SELECTION_V1?.get?.()||null}catch(_){}
@@ -42153,8 +42325,9 @@ document.addEventListener("click",function(e){
     }
     if(S.busy)return;S.busy=true;
     try{
-      await rpc("vds_rta_start_next_season",{p_club:club});
+      const d=await rpc("vds_rta_start_next_season",{p_club:club});
       await loadState({silent:true});
+      if(d?.retired_now||ace347CareerEnded(S.career)){S.view="career";S.careerPanel="overview";render();toast("Playing career complete · your final record is locked in.");return;}
       S.view="home";render();
       rta105ShowSeasonKickoff();
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
@@ -44432,11 +44605,19 @@ function renderAttackKeyOverlay(){
     }[k]||[pretty(k),"Make the read","READ"];
   }
   function ace316fBlockReadTarget(choice,d){
-    const k=String(choice||"READ").toUpperCase();
-    if(k==="COMMIT")return .5;
-    if(k==="SHIFT_LEFT")return .27;
-    if(k==="SHIFT_RIGHT")return .73;
-    const seed=(Number(d?.moment_no||1)*7+String(d?.opponent||"").length*3+Number(d?.successes||0))%3;
+    /* B21.36.345 — the setter chooses independently of the blocker.
+       The old version literally mapped COMMIT/LEFT/RIGHT to the same target lane,
+       so whatever the player predicted became the setter's destination. */
+    const m=d?.moment||d||{};
+    const actual=rta97ReadBestFromCue("BLOCK_READ",m?.cue||"");
+    if(actual==="COMMIT")return .5;
+    if(actual==="SHIFT_LEFT")return .27;
+    if(actual==="SHIFT_RIGHT")return .73;
+    /* Neutral/all-options cue: keep the actual set hidden and deterministic for
+       this moment, but completely independent from the player's button choice. */
+    const cue=String(m?.cue||"");
+    let hash=0;for(let i=0;i<cue.length;i++)hash=(hash*31+cue.charCodeAt(i))>>>0;
+    const seed=(hash+Number(d?.moment_no||1)*7+String(d?.opponent||"").length*3+Number(d?.successes||0))%3;
     return [.27,.5,.73][seed];
   }
   function ace316fBlockLane(x){
@@ -44489,6 +44670,8 @@ function renderAttackKeyOverlay(){
   function ace316fStartBlock(choice){
     if(S.busy||S.overlay!=="key"||blockMatchLive||blockMatchLocked)return;
     blockMatchChoice=String(choice||"READ").toUpperCase();
+    /* Actual setter destination is already decided from the moment cue and does
+       not change when the player picks a blocking read. */
     blockMatchTarget=ace316fBlockReadTarget(blockMatchChoice,S.key);
     blockMatchPos=.5;blockMatchT=0;blockMatchLive=true;blockMatchLocked=false;blockMatchKeys={a:false,d:false};
     qa("[data-rta97-block]").forEach(b=>{b.disabled=true;b.classList.toggle("selected",String(b.dataset.rta97Block).toUpperCase()===blockMatchChoice)});
@@ -44497,7 +44680,10 @@ function renderAttackKeyOverlay(){
     const prompt=q("#ace316fBlockPrompt"),target=q("#ace316fBlockTarget"),ability=q("#ace316fBlockAbility");
     const oracle=ace316eTier("ORACLE",5,"M")||ace316eTier("ORACLE",7,"M");
     const sharing=ace316fBlockPower();
-    const revealAt=blockMatchChoice==="READ"?(oracle||sharing?.34:.46):.18;
+    /* Committing early no longer reveals the answer early. READ keeps you neutral
+       and earns a slightly earlier visual read window; Oracle/ACE+ can improve it. */
+    const baseReveal=blockMatchChoice==="READ"?.34:.42;
+    const revealAt=(oracle||sharing)?Math.max(.20,baseReveal-.10):baseReveal;
     const duration=1800/Math.max(.86,1+(Number(S.career?.reaction_time||65)-65)*.0022);
     blockMatchStart=performance.now();blockMatchLast=blockMatchStart;
     if(ability){
@@ -44818,6 +45004,7 @@ function renderAttackKeyOverlay(){
     blockTrainStart=performance.now();blockTrainLast=blockTrainStart;
     const duration=1900/Math.max(.72,Number(rep.speed||1));
     const tx=clamp(Number(rep.target_x||.5),.18,.82);
+    const trainLane=tx<.39?"left":tx>.61?"right":"mid";
     const tick=now=>{
       if(S.overlay!=="training"||blockTrainLocked)return;
       const dt=Math.min(36,now-blockTrainLast);blockTrainLast=now;
@@ -44827,12 +45014,18 @@ function renderAttackKeyOverlay(){
       rta112MoveBlocker(blockTrainPos,blockTrainY);
       const t=clamp((now-blockTrainStart)/duration,0,1);blockTrainT=t;
       ace323TrainBlockStage(t<.34?"read":t<.62?"close":"press");
-      const ball=q("#rta112BlockBall"),prompt=q("#rta112BlockPrompt"),target=q("#rta112BlockTarget");
+      const ball=q("#rta112BlockBall"),prompt=q("#rta112BlockPrompt"),target=q("#rta112BlockTarget"),setter=q(".rta112Setter");
       const arc=Math.sin(Math.PI*t);
-      const bx=.5+(tx-.5)*Math.min(1,t*1.12);
+      /* Training now teaches a real read: setter body/ball direction telegraph the
+         lane first. The explicit target ring appears only late as confirmation. */
+      const readStart=.28;
+      const readP=clamp((t-readStart)/.34,0,1);
+      const bx=.5+(tx-.5)*readP;
       const by=.27+Math.min(1,t)*.20-arc*.07;
+      if(setter)setter.style.transform=`translateX(-50%) rotate(${readP*(tx-.5)*20}deg)`;
+      qa(".rta112BlockHitters span").forEach(h=>h.classList.toggle("live",t>.34&&h.classList.contains(trainLane)));
       if(ball){ball.style.left=(bx*100)+"%";ball.style.top=(by*100)+"%";ball.style.transform=`translate(-50%,-50%) scale(${.72+t*.28})`}
-      if(target)target.style.opacity=String(clamp((t-.30)*2,0,.72));
+      if(target)target.style.opacity=String(clamp((t-.62)*4,0,.58));
       const posErr=Math.abs(blockTrainPos-tx);
       if(prompt){
         prompt.classList.toggle("perfect",Math.abs(t-.79)<.06&&posErr<.10);
@@ -44874,10 +45067,10 @@ function renderAttackKeyOverlay(){
       <div class="aceBlockV2Body training ace323BlockBody">
         <div class="aceBlockV2TrainingScene ace320BlockScene ace323BlockSceneWrap">${rta112BlockScene(rep)}</div>
         <aside class="aceBlockV2Panel training ace320UnifiedSide ace320BlockSide ace323BlockPanel">
-          <div class="aceBlockV2PanelTop"><small>BLOCKING FOOTWORK</small><b>CLOSE WITH THE BALL</b><span>${esc(rep.cue||"Read the set, close the seam, then press over the net.")}</span></div>
+          <div class="aceBlockV2PanelTop"><small>BLOCKING FOOTWORK</small><b>READ · CLOSE · PRESS</b><span>Watch the setter's body and the ball. Move only when the set declares, then press over the net.</span></div>
           ${ace321PlaystyleChip("BLOCK")}
           <div class="ace323BlockSteps"><span class="active" data-block-training-stage="read">1 · READ</span><span data-block-training-stage="close">2 · CLOSE</span><span data-block-training-stage="press">3 · PRESS</span></div>
-          <div class="ace323BlockHelp"><b>CLOSE THE HITTER</b><span>${rta112IsTouch()?"Drag into the hitter's lane, then press at contact.":"Use A / D to close, then Space at contact."}</span></div>
+          <div class="ace323BlockHelp"><b>DON'T GUESS THE RING</b><span>${rta112IsTouch()?"Read the setter, drag into the hitter's lane, then press at contact.":"Read the setter, use A / D to close, then Space at contact."}</span></div>
           <button type="button" class="aceBlockV2Press training ace323BlockPress" data-rta112-block-jump><span>✋</span><b>PRESS BLOCK</b></button>
           <div class="rta62Progress">${Array.from({length:Number(d.total_reps||8)},(_,i)=>`<i class="${i<Number(d.rep_no)-1?"done":""}"></i>`).join("")}</div>
           <div class="aceBlockV2Feedback ${S.feedback?.good?"good":S.feedback?"bad":""}">${esc(S.feedback?.text||"Read the set, close the lane, then press over the net.")}</div>
@@ -46032,7 +46225,12 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-rta101-open-market]")){S.view="career";S.careerPanel="league";S.leaguePanel="market";render();return}
     const leaguePanel=e.target.closest?.("[data-rta100-league-panel]");if(leaguePanel){S.leaguePanel=leaguePanel.dataset.rta100LeaguePanel||"table";S.view="career";S.careerPanel="league";render();return}
     const leaderStat=e.target.closest?.("[data-rta100-leader-stat]");if(leaderStat){S.leaderStat=leaderStat.dataset.rta100LeaderStat||"kills";render();return}
-    const playerPanel=e.target.closest?.("[data-rta93-player-panel]");if(playerPanel){S.playerPanel=playerPanel.dataset.rta93PlayerPanel||"attributes";S.view="player";render();if(S.playerPanel==="tree"){ace316hSkillTop();rta316EnsureSkillTree().then(()=>{render();ace316hSkillTop()}).catch(err=>toast(errText(err),"error"))}return}
+    const trophyPick=e.target.closest?.("[data-ace349-trophy]");if(trophyPick){ace349ToggleDraft("trophy",trophyPick.dataset.ace349Trophy);return}
+    const badgePick=e.target.closest?.("[data-ace349-badge]");if(badgePick){ace349ToggleDraft("badge",badgePick.dataset.ace349Badge);return}
+    const accentPick=e.target.closest?.("[data-ace349-accent]");if(accentPick){const d=ace349ProfileDraft();d.accent=ace349ProfileAccent(accentPick.dataset.ace349Accent);S.showcaseDraft=d;render();return}
+    if(e.target.closest?.("[data-ace349-save]")){ace349SaveShowcase();return}
+    if(e.target.closest?.("[data-ace349-refresh]")){S.showcase=null;S.showcaseDraft=null;ace349EnsureShowcase(true);return}
+    const playerPanel=e.target.closest?.("[data-rta93-player-panel]");if(playerPanel){S.playerPanel=playerPanel.dataset.rta93PlayerPanel||"attributes";S.view="player";render();if(S.playerPanel==="tree"){ace316hSkillTop();rta316EnsureSkillTree().then(()=>{render();ace316hSkillTop()}).catch(err=>toast(errText(err),"error"))}else if(S.playerPanel==="showcase"){ace349EnsureShowcase()}return}
     const careerPanel=e.target.closest?.("[data-rta92-career-panel]");if(careerPanel){S.careerPanel=careerPanel.dataset.rta92CareerPanel||"overview";render();return}
     const mobileMoreView=e.target.closest?.("[data-rta85-more-view]");if(mobileMoreView){const v=mobileMoreView.dataset.rta85MoreView;closeOverlay();S.view=v;if(v==="rankings")S.leaderboardLoaded=false;if(v==="agent")rta257MarkAgentRead(S.career);render();return}
     if(e.target.closest?.("[data-rta-rankings-refresh]")){loadCareerLeaderboard(true);return}
@@ -46190,6 +46388,7 @@ function renderAttackKeyOverlay(){
       t.value="";
       return;
     }
+    if(t?.matches?.("[data-ace349-title]")){const d=ace349ProfileDraft();d.title=String(t.value||"RISING ACE");S.showcaseDraft=d;render();return}
   });
   document.addEventListener("input",e=>{
     const id=e.target?.id;
@@ -51826,7 +52025,7 @@ function render(){
  const wrap=document.querySelector('.ace312Backdrop');if(wrap)wrap.innerHTML=shell(body,step>=4?'PRE-SEASON VERDICT':'NEW CLUB ARRIVAL');
 }
 function open(startStep=0){const p=ps();if(!p?.status)return;close();step=p.status==='COMPLETE'?4:startStep;focus=String(p.focus||'');const wrap=document.createElement('div');wrap.className='ace312Backdrop';document.body.appendChild(wrap);document.body.style.overflow='hidden';render()}
-async function acceptClub(club){if(busy)return;busy=true;document.querySelectorAll('[data-rta62-next-season]').forEach(b=>b.disabled=true);try{const d=await rpc('vds_rta_start_next_season_v312',{p_club:club});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=0;focus='';open(0)}catch(err){console.error('ACE 312 arrival failed',err);alert(String(err?.message||err||'Could not start the next season.'))}finally{busy=false}}
+async function acceptClub(club){if(busy)return;busy=true;document.querySelectorAll('[data-rta62-next-season]').forEach(b=>b.disabled=true);try{const d=await rpc('vds_rta_start_next_season_v312',{p_club:club});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}if(d?.retired_now){close();return}step=0;focus='';open(0)}catch(err){console.error('ACE 312 arrival failed',err);alert(String(err?.message||err||'Could not start the next season.'))}finally{busy=false}}
 async function complete(){if(busy||!focus)return;busy=true;render();try{const d=await rpc('vds_rta_complete_preseason_v312',{p_focus:focus});if(d?.career&&S())S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}step=4;render();try{window.__ACE_RTA_RENDER?.()}catch(_){}}catch(err){console.error('ACE 312 preseason failed',err);alert(String(err?.message||err||'Could not complete pre-season.'))}finally{busy=false;render()}}
 function queue(){
  const c=C(),p=ps();
@@ -53884,6 +54083,125 @@ window.ACE_SKILL_TREE_PHONE_BUILD="B21.36.341";
 window.ACE_PROJECT_BUILD="B21.36.341";
 </script>
 
+
+<style id="ace344-player-friendly-skill-copy-style">
+#roadtoace .ace344Exact{margin:8px 0 4px;border:1px solid rgba(101,164,204,.10);border-radius:9px;background:rgba(5,17,27,.38);overflow:hidden}
+#roadtoace .ace344Exact>summary{list-style:none;cursor:pointer;padding:7px 9px;color:#698ba0;font-size:5.5px;font-weight:1000;letter-spacing:.10em}
+#roadtoace .ace344Exact>summary::-webkit-details-marker{display:none}
+#roadtoace .ace344Exact>summary::after{content:" +";color:#8fb4c9}
+#roadtoace .ace344Exact[open]>summary::after{content:" −"}
+#roadtoace .ace344Exact>p{margin:0;padding:0 9px 8px;color:#7895a8;font-size:6.2px;line-height:1.45}
+@media(max-width:760px){
+  .ace344MobileExact{margin-top:9px;border:1px solid rgba(86,158,199,.11);border-radius:10px;background:rgba(3,15,24,.42);overflow:hidden}
+  .ace344MobileExact>summary{list-style:none;cursor:pointer;padding:8px 9px;color:#7398ad;font-size:5.7px;font-weight:1000;letter-spacing:.09em}
+  .ace344MobileExact>summary::-webkit-details-marker{display:none}
+  .ace344MobileExact>summary::after{content:" +";color:#93b7ca}
+  .ace344MobileExact[open]>summary::after{content:" −"}
+  .ace344MobileExact>p{margin:0;padding:0 9px 9px;color:#87a0b0;font-size:6.6px;line-height:1.45}
+  .ace342SkillDesc{font-size:9.3px!important;line-height:1.44!important;color:#a4b9c6!important}
+}
+</style>
+<script id="ace344-final-build-marker">
+window.ACE_SKILL_COPY_BUILD="B21.36.344";
+window.ACE_SKILL_COPY_MODE="PLAYER_FIRST_NUMBERS_OPTIONAL";
+window.ACE_PROJECT_BUILD="B21.36.344";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.344";
+</script>
+
+<!-- PROJECT ACE B21.36.346 · RANDOMISED INTERNATIONAL TOURNAMENT DRAWS -->
+<script id="ace346-international-draw-marker">
+window.ACE_INTERNATIONAL_DRAW_BUILD="B21.36.346";
+window.ACE_PROJECT_BUILD="B21.36.346";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.346";
+</script>
+
+<!-- PROJECT ACE B21.36.348 · BETA GRACE COUNTDOWN -->
+<style id="ace348-beta-grace-style">
+.ace348BetaTimer{position:fixed;z-index:3180;top:68px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;min-height:36px;padding:6px 11px;border:1px solid rgba(172,122,238,.20);border-radius:999px;background:rgba(8,10,16,.93);box-shadow:0 10px 30px rgba(0,0,0,.32),0 0 22px rgba(126,75,201,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);pointer-events:none;color:#ddd5e8;white-space:nowrap}
+.ace348BetaTimer .ace348Dot{width:7px;height:7px;border-radius:50%;background:#aa78ef;box-shadow:0 0 12px rgba(170,120,239,.65)}
+.ace348BetaTimer strong{font-size:8px;font-weight:1000;letter-spacing:.11em;color:#f2ebfb}
+.ace348BetaTimer span{font-size:7px;font-weight:900;letter-spacing:.07em;color:#9a8ca9}
+.ace348BetaTimer em{font-style:normal;font-size:7px;font-weight:1000;letter-spacing:.08em;color:#b991ec}
+.ace348BetaTimer.ended{border-color:rgba(255,255,255,.09);box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.ace348BetaTimer.ended .ace348Dot{background:#718092;box-shadow:none}.ace348BetaTimer.ended em{color:#97a5b2}
+#roadtoace .ace348FatigueOff{opacity:.86}#roadtoace .ace348FatigueOff>i{opacity:.24}#roadtoace .ace348FatigueOff .ace347FatigueExplain{color:#a88bd0!important}
+@media(max-width:760px){.ace348BetaTimer{top:62px;max-width:calc(100vw - 20px);min-height:32px;padding:5px 9px;gap:7px}.ace348BetaTimer strong{font-size:7px}.ace348BetaTimer span{display:none}.ace348BetaTimer em{font-size:6.5px}}
+</style>
+<script id="ace348-beta-grace-script">
+(function(){
+  "use strict";
+  const END=Date.parse("2026-09-27T23:59:59+08:00");
+  window.ACE_BETA_GRACE_END="2026-09-27T23:59:59+08:00";
+  window.ACE_BETA_FATIGUE_DISABLED=true;
+  window.ACE_BETA_RETIREMENT_DISABLED=true;
+  function remaining(){return Math.max(0,END-Date.now())}
+  function label(ms){
+    const min=Math.floor(ms/60000),d=Math.floor(min/1440),h=Math.floor((min%1440)/60),m=min%60;
+    if(d>0)return `${d}D ${h}H ${m}M`;
+    if(h>0)return `${h}H ${m}M`;
+    return `${m}M`;
+  }
+  function ensure(){
+    let el=document.getElementById("ace348BetaTimer");
+    if(el)return el;
+    el=document.createElement("div");
+    el.id="ace348BetaTimer";el.className="ace348BetaTimer";
+    el.title="Beta grace ends 27 September 2026 at 11:59 PM Singapore time. Fatigue effects and retirement are paused until then.";
+    document.body.appendChild(el);return el;
+  }
+  function tick(){
+    const el=ensure(),ms=remaining();
+    if(ms<=0){
+      window.ACE_BETA_FATIGUE_DISABLED=false;window.ACE_BETA_RETIREMENT_DISABLED=false;
+      el.classList.add("ended");
+      el.innerHTML='<i class="ace348Dot"></i><strong>BETA GRACE ENDED</strong><span>FULL CAREER RULES LIVE</span><em>NOW</em>';
+      return;
+    }
+    el.classList.remove("ended");
+    el.innerHTML=`<i class="ace348Dot"></i><strong>BETA GRACE</strong><span>FATIGUE + RETIREMENT OFF</span><em>${label(ms)}</em>`;
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",tick,{once:true});else tick();
+  setInterval(tick,30000);
+  window.ACE_BETA_GRACE_ACTIVE=()=>Date.now()<END;
+  window.ACE_PROJECT_BUILD="B21.36.348";
+  window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.348";
+})();
+</script>
+
+<!-- PROJECT ACE B21.36.349 · PROFILE + TROPHY SHOWCASE -->
+<style id="ace349-profile-showcase-style">
+#roadtoace .rta93PlayerTabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+#roadtoace .ace349HeroShowcase{margin:9px 0 2px;padding:9px 10px;border:1px solid rgba(177,124,238,.12);border-radius:10px;background:rgba(75,42,118,.07)}
+#roadtoace .ace349HeroShowcase>span{display:block;font-size:7px;font-weight:1000;letter-spacing:.13em;color:#b58ee8}
+#roadtoace .ace349HeroShowcase>small{display:block;margin-top:4px;color:#71879a;font-size:7px}
+#roadtoace .ace349HeroShowcase>div{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+#roadtoace .ace349HeroShowcase>div b{padding:4px 6px;border:1px solid rgba(255,255,255,.06);border-radius:999px;background:rgba(255,255,255,.025);color:#aeb8c1;font-size:6px;font-weight:900}
+#roadtoace .ace349HeroShowcase.blue{border-color:rgba(77,164,226,.16);background:rgba(34,99,146,.07)}#roadtoace .ace349HeroShowcase.blue>span{color:#70bee9}
+#roadtoace .ace349HeroShowcase.gold{border-color:rgba(229,188,74,.17);background:rgba(132,99,24,.08)}#roadtoace .ace349HeroShowcase.gold>span{color:#e6c36a}
+#roadtoace .ace349HeroShowcase.red{border-color:rgba(222,91,104,.16);background:rgba(130,43,52,.07)}#roadtoace .ace349HeroShowcase.red>span{color:#e98e98}
+#roadtoace .ace349HeroShowcase.green{border-color:rgba(70,190,125,.16);background:rgba(28,105,65,.07)}#roadtoace .ace349HeroShowcase.green>span{color:#79d6a3}
+#roadtoace .ace349Showcase{display:grid;gap:14px}
+#roadtoace .ace349Loading{min-height:220px;display:grid;place-items:center;text-align:center;color:#7991a5}#roadtoace .ace349Loading i{font-style:normal;font-size:28px;color:#ad7aeb}#roadtoace .ace349Loading b{font-size:10px}
+#roadtoace .ace349ShowcaseHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}#roadtoace .ace349ShowcaseHead small,#roadtoace .ace349SectionHead small{color:#8f6abc;font-size:6px;font-weight:1000;letter-spacing:.15em}#roadtoace .ace349ShowcaseHead h2{margin:3px 0 4px;font-size:24px}#roadtoace .ace349ShowcaseHead p{margin:0;max-width:590px;color:#728699;font-size:8px;line-height:1.45}#roadtoace .ace349ShowcaseHead>button{min-height:34px;padding:0 11px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:#08121d;color:#8aa0b2;font-size:7px;font-weight:1000;letter-spacing:.08em}
+#roadtoace .ace349ProfilePreview{position:relative;overflow:hidden;min-height:142px;padding:18px;border:1px solid rgba(172,119,235,.17);border-radius:17px;background:radial-gradient(circle at 85% 20%,rgba(138,79,211,.21),transparent 31%),linear-gradient(145deg,#0d1320,#08111b);display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}#roadtoace .ace349ProfilePreview:after{content:"";position:absolute;left:-6%;right:-6%;bottom:-42%;height:72%;border-radius:50%;background:radial-gradient(circle,rgba(149,91,219,.16),transparent 63%)}
+#roadtoace .ace349ProfilePreview>strong{position:relative;z-index:2;font-size:42px;line-height:.8;color:#fff}#roadtoace .ace349ProfilePreview>strong small{display:block;margin-top:5px;text-align:right;color:#886e9f;font-size:7px;letter-spacing:.12em}#roadtoace .ace349PreviewIdentity{position:relative;z-index:2}#roadtoace .ace349PreviewIdentity small{color:#8a72a6;font-size:6px;font-weight:1000;letter-spacing:.13em}#roadtoace .ace349PreviewIdentity h2{margin:5px 0 3px;font-size:27px;letter-spacing:-.03em}#roadtoace .ace349PreviewIdentity span{color:#c49af4;font-size:8px;font-weight:1000;letter-spacing:.12em}
+#roadtoace .ace349PreviewFeatured{position:relative;z-index:2;grid-column:1/-1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}#roadtoace .ace349PreviewFeatured b{padding:6px 8px;border-radius:999px;border:1px solid rgba(221,184,255,.12);background:rgba(121,66,181,.11);font-size:7px;color:#ddcaf0}#roadtoace .ace349PreviewFeatured i{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.035);font-style:normal;font-size:10px;font-weight:1000}#roadtoace .ace349PreviewFeatured em{font-style:normal;color:#63788b;font-size:7px}
+#roadtoace .ace349Showcase.blue .ace349ProfilePreview{border-color:rgba(77,164,226,.18);background:radial-gradient(circle at 85% 20%,rgba(53,136,198,.22),transparent 31%),linear-gradient(145deg,#0b1825,#08111b)}#roadtoace .ace349Showcase.gold .ace349ProfilePreview{border-color:rgba(226,184,73,.20);background:radial-gradient(circle at 85% 20%,rgba(188,144,42,.18),transparent 31%),linear-gradient(145deg,#17160d,#08111b)}#roadtoace .ace349Showcase.red .ace349ProfilePreview{border-color:rgba(221,85,98,.18);background:radial-gradient(circle at 85% 20%,rgba(183,60,75,.19),transparent 31%),linear-gradient(145deg,#1a1015,#08111b)}#roadtoace .ace349Showcase.green .ace349ProfilePreview{border-color:rgba(67,187,120,.18);background:radial-gradient(circle at 85% 20%,rgba(47,151,93,.19),transparent 31%),linear-gradient(145deg,#0c1915,#08111b)}
+#roadtoace .ace349EditRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(5,15,24,.54)}#roadtoace .ace349EditRow label>span,#roadtoace .ace349Accent>span{display:block;margin-bottom:6px;color:#667f91;font-size:6px;font-weight:1000;letter-spacing:.12em}#roadtoace .ace349EditRow select{width:100%;min-height:39px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:#07111c;color:#e2e8ee;padding:0 10px;font-size:9px;font-weight:900}#roadtoace .ace349Accent>div{display:flex;gap:6px}#roadtoace .ace349Accent button{width:38px;height:38px;border-radius:10px;border:2px solid transparent;background:#7e4db1;cursor:pointer}#roadtoace .ace349Accent button:nth-child(2){background:#3486bc}#roadtoace .ace349Accent button:nth-child(3){background:#b88d2f}#roadtoace .ace349Accent button:nth-child(4){background:#b94f5d}#roadtoace .ace349Accent button:nth-child(5){background:#398d63}#roadtoace .ace349Accent button.selected{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.12)}
+#roadtoace .ace349SectionHead{display:flex;align-items:end;justify-content:space-between;gap:10px;padding-top:4px}#roadtoace .ace349SectionHead h3{margin:3px 0 0;font-size:17px}#roadtoace .ace349SectionHead>span{color:#6c8294;font-size:7px;font-weight:900}#roadtoace .ace349SectionHead.locked{opacity:.7}
+#roadtoace .ace349TrophyGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}#roadtoace .ace349Trophy{min-height:94px;display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:center;text-align:left;padding:10px;border:1px solid rgba(255,255,255,.06);border-radius:12px;background:#07111b;color:#d5dce3;cursor:pointer}#roadtoace .ace349Trophy>i{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:rgba(153,98,211,.09);font-style:normal;font-size:20px}#roadtoace .ace349Trophy span small{display:block;color:#745d89;font-size:5px;font-weight:1000;letter-spacing:.11em}#roadtoace .ace349Trophy span b{display:block;margin-top:3px;font-size:8px}#roadtoace .ace349Trophy span em{display:block;margin-top:3px;color:#687d8e;font-size:6px;font-style:normal;line-height:1.3}#roadtoace .ace349Trophy>strong{grid-column:1/-1;color:#6a7c8c;font-size:5px;letter-spacing:.1em}#roadtoace .ace349Trophy.selected{border-color:rgba(192,139,244,.28);background:rgba(105,58,159,.10);box-shadow:inset 0 0 0 1px rgba(194,145,243,.05)}#roadtoace .ace349Trophy.selected>strong{color:#c59cef}
+#roadtoace .ace349BadgeGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}#roadtoace .ace349Badge{min-height:91px;padding:8px 6px;border:1px solid rgba(255,255,255,.055);border-radius:11px;background:#07111b;color:#cdd6de;text-align:center;cursor:pointer}#roadtoace .ace349Badge>i{width:34px;height:34px;margin:0 auto 6px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(188,141,238,.13);background:rgba(121,68,176,.08);font-style:normal;font-size:11px;font-weight:1000}#roadtoace .ace349Badge b{display:block;font-size:6px;line-height:1.2}#roadtoace .ace349Badge em{display:block;margin-top:4px;color:#617587;font-size:5px;font-style:normal;line-height:1.25}#roadtoace .ace349Badge.selected{border-color:rgba(190,139,240,.28);background:rgba(105,58,159,.10)}
+#roadtoace .ace349LockedGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}#roadtoace .ace349LockedGrid>div{display:flex;gap:8px;align-items:center;padding:9px;border:1px dashed rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.018);opacity:.65}#roadtoace .ace349LockedGrid i{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(255,255,255,.08);font-style:normal}#roadtoace .ace349LockedGrid b{display:block;font-size:6px}#roadtoace .ace349LockedGrid em{display:block;margin-top:2px;color:#697b89;font-size:5px;font-style:normal}
+#roadtoace .ace349SaveRow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:5px}#roadtoace .ace349SaveRow>span{color:#647b8d;font-size:7px}#roadtoace .ace349SaveRow button{min-height:42px;padding:0 18px;border:1px solid rgba(190,140,244,.23);border-radius:10px;background:linear-gradient(135deg,#6335a8,#8e51d5);color:#fff;font-size:7px;font-weight:1000;letter-spacing:.09em;cursor:pointer}#roadtoace .ace349SaveRow button:disabled{opacity:.5}
+#roadtoace .ace349Empty{grid-column:1/-1;padding:18px;border:1px dashed rgba(255,255,255,.07);border-radius:10px;color:#64798a;font-size:8px;text-align:center}
+@media(max-width:760px){#roadtoace .rta93PlayerTabs{grid-template-columns:repeat(5,minmax(72px,1fr))!important;overflow-x:auto!important}#roadtoace .ace349ShowcaseHead{align-items:flex-start}#roadtoace .ace349ShowcaseHead p{font-size:9px}#roadtoace .ace349ProfilePreview{min-height:126px;padding:14px}#roadtoace .ace349PreviewIdentity h2{font-size:23px}#roadtoace .ace349ProfilePreview>strong{font-size:34px}#roadtoace .ace349EditRow{grid-template-columns:1fr}#roadtoace .ace349Accent button{width:36px;height:36px}#roadtoace .ace349TrophyGrid{grid-template-columns:1fr}#roadtoace .ace349Trophy{min-height:82px}#roadtoace .ace349BadgeGrid{grid-template-columns:repeat(3,minmax(0,1fr))}#roadtoace .ace349LockedGrid{grid-template-columns:1fr 1fr}#roadtoace .ace349SaveRow{align-items:stretch;flex-direction:column}#roadtoace .ace349SaveRow button{width:100%}}
+</style>
+<script id="ace349-final-build-marker">
+window.ACE_PROFILE_SHOWCASE_BUILD="B21.36.349";
+window.ACE_TROPHY_CABINET_BUILD="B21.36.349";
+window.ACE_PROJECT_BUILD="B21.36.349";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.349";
+</script>
 </body>
 
 <script id="ace334-final-build-marker">window.ACE_SKILL_LEGACY_AUTO_COMMIT="B21.36.334";window.ACE_PROJECT_BUILD="B21.36.334";window.ACE_RELEASE_BUILD="B21.36.334";window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.334";</script>
@@ -54197,4 +54515,152 @@ window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.338";
 window.ACE_ACE_PLUS_PRESTIGE_BUILD="B21.36.340";
 window.ACE_PROJECT_BUILD="B21.36.340";
 window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.340";
+</script>
+
+<!-- PROJECT ACE B21.36.343 · STICKY + CONCISE MOBILE SKILL DETAILS -->
+<style id="ace342-sticky-concise-skill-details-style">
+@media(max-width:760px){
+  /* The old details pane stays in the tree only as a data source for desktop logic. */
+  #roadtoace .ace316kDetails{display:none!important}
+
+  .ace342SkillSheet{
+    position:fixed;z-index:4800;left:9px;right:9px;bottom:calc(86px + env(safe-area-inset-bottom));
+    max-height:min(34dvh,290px);overflow:auto;-webkit-overflow-scrolling:touch;
+    border:1px solid rgba(91,180,232,.22);border-radius:20px;
+    background:linear-gradient(180deg,#071b2a 0%,#05121d 100%);
+    box-shadow:0 -8px 42px rgba(0,0,0,.55),0 0 28px rgba(51,151,212,.08);
+    color:#eaf7ff;transform:translateY(calc(100% + 120px));opacity:0;pointer-events:none;
+    transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .16s ease;
+  }
+  .ace342SkillSheet.show{transform:translateY(0);opacity:1;pointer-events:auto}
+  .ace342SkillSheetInner{position:relative;padding:15px 14px 14px}
+  .ace342SkillHandle{width:42px;height:4px;margin:-5px auto 10px;border-radius:999px;background:rgba(136,184,211,.30)}
+  .ace342SkillClose{position:absolute;right:10px;top:10px;width:30px;height:30px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:#081a27;color:#91afc1;font-size:19px;line-height:1}
+  .ace342SkillType{display:inline-block;padding:4px 7px;border:1px solid rgba(167,106,232,.22);border-radius:999px;background:rgba(119,68,174,.12);color:#c59ae8;font-size:5px;font-weight:1000;letter-spacing:.10em}
+  .ace342SkillSheet h2{max-width:calc(100% - 40px);margin:7px 0 4px;font-size:20px;line-height:1.04;letter-spacing:-.02em;color:#f2f7fb}
+  .ace342SkillDesc{margin:0;color:#9ab0be;font-size:9px;line-height:1.42;font-weight:650}
+  .ace342SkillEffect{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:8px 9px;border:1px solid rgba(76,175,226,.12);border-radius:10px;background:rgba(5,20,31,.66)}
+  .ace342SkillEffect small{color:#668aa0;font-size:5px;font-weight:1000;letter-spacing:.10em}
+  .ace342SkillEffect b{color:#68ddb1;font-size:7px}
+  .ace342SkillStatus{margin-top:8px;padding:8px 9px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:rgba(4,14,23,.66)}
+  .ace342SkillStatus b{display:block;color:#82a2b5;font-size:6px;font-weight:1000;letter-spacing:.08em}
+  .ace342SkillStatus span{display:block;margin-top:2px;color:#718899;font-size:6.5px;line-height:1.32}
+  .ace342SkillStatus.owned{border-color:rgba(63,211,148,.13)}
+  .ace342SkillStatus.owned b{color:#65dca8}
+  .ace342SkillStatus.available{border-color:rgba(69,190,244,.20)}
+  .ace342SkillStatus.available b{color:#65cfff}
+  .ace342SkillSheet .ace316kUnlock{width:100%;min-height:43px;margin-top:9px;border:1px solid #42bdf5;border-radius:11px;background:linear-gradient(135deg,#0a5c89,#0a759f);color:#effbff;font-size:7px;font-weight:1000;letter-spacing:.06em}
+  .ace342SkillSheet .ace316kUnlock.ace340AceUnlock{border-color:rgba(255,224,120,.52)!important;background:linear-gradient(110deg,#12486a,#206d8e 42%,#8c6a18 100%)!important;color:#fff8d6!important;box-shadow:0 10px 26px rgba(63,165,220,.16),0 0 20px rgba(224,181,49,.12)!important}
+
+  /* Keep the tree itself readable without turning it into documentation. */
+  #roadtoace .ace316kNode>.ace339NodeDesc{
+    -webkit-line-clamp:1!important;min-height:8px!important;margin-top:3px!important;
+    font-size:5.4px!important;line-height:1.15!important;color:#6f8b9d!important;
+  }
+}
+</style>
+<script id="ace342-sticky-concise-skill-details-script">
+(function(){
+  function isPhone(){return window.innerWidth<=760}
+  function sheet(){return document.getElementById('ace342SkillSheet')}
+  function closeSheet(){
+    const s=sheet();if(!s)return;
+    s.classList.remove('show');
+    setTimeout(()=>{if(!s.classList.contains('show'))s.remove()},220);
+  }
+  function esc342(v){return String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]))}
+  function shortFallback(text){
+    const t=String(text||'').trim();
+    if(!t)return 'Improves this part of your build.';
+    const sentences=t.split(/(?<=[.!?])\s+/).filter(Boolean);
+    if(!sentences.length)return t;
+    /* Attribute descriptions often start with '+1 X.'; keep the explanatory sentence too. */
+    if(/^\+\d+\s/i.test(sentences[0])&&sentences[1])return `${sentences[0]} ${sentences[1]}`;
+    return sentences[0];
+  }
+  function openForNode(nodeEl){
+    if(!isPhone()||!nodeEl)return;
+    const src=document.getElementById('ace316kDetails');
+    if(!src)return;
+    const type=src.querySelector('.ace316kDetailType')?.textContent?.trim()||'SKILL';
+    const name=src.querySelector('h2')?.textContent?.trim()||nodeEl.querySelector(':scope > b')?.textContent?.trim()||'SKILL';
+    const treeDesc=nodeEl.querySelector('.ace339NodeDesc')?.textContent?.trim();
+    const fullDesc=nodeEl.getAttribute('data-ace344-summary')?.trim()||src.querySelector('.ace339GameplayDescription')?.textContent?.trim();
+    const exact=nodeEl.getAttribute('data-ace344-exact')?.trim()||'';
+    const desc=fullDesc||treeDesc||'Improves this part of your game.';
+    const effect=src.querySelector('.ace316kEffect b')?.textContent?.trim()||'';
+    const statusEl=src.querySelector('.ace316kStatus');
+    const status=statusEl?.querySelector('b')?.textContent?.trim()||'';
+    const requirement=statusEl?.querySelector('span')?.textContent?.trim()||'';
+    const statusClass=statusEl?.classList.contains('owned')?'owned':statusEl?.classList.contains('available')?'available':'locked';
+    const unlock=src.querySelector('.ace316kUnlock');
+
+    let s=sheet();if(!s){s=document.createElement('div');s.id='ace342SkillSheet';s.className='ace342SkillSheet';document.body.appendChild(s)}
+    s.innerHTML=`<div class="ace342SkillSheetInner">
+      <div class="ace342SkillHandle" aria-hidden="true"></div>
+      <button type="button" class="ace342SkillClose" data-ace342-close aria-label="Close skill details">×</button>
+      <span class="ace342SkillType">${esc342(type)}</span>
+      <h2>${esc342(name)}</h2>
+      <p class="ace342SkillDesc">${esc342(desc)}</p>
+      ${exact?`<details class="ace344MobileExact"><summary>SHOW EXACT BONUSES</summary><p>${esc342(exact)}</p></details>`:''}
+      ${effect?`<div class="ace342SkillEffect"><small>ATTRIBUTE</small><b>${esc342(effect)}</b></div>`:''}
+      ${status?`<div class="ace342SkillStatus ${statusClass}"><b>${esc342(status)}</b>${requirement?`<span>${esc342(shortFallback(requirement))}</span>`:''}</div>`:''}
+      ${unlock?unlock.outerHTML:''}
+    </div>`;
+    requestAnimationFrame(()=>s.classList.add('show'));
+  }
+
+  document.addEventListener('click',function(e){
+    const close=e.target.closest?.('[data-ace342-close]');
+    if(close){e.preventDefault();e.stopPropagation();closeSheet();return}
+    const node=e.target.closest?.('[data-ace316k-node-select]');
+    if(node&&isPhone())setTimeout(()=>openForNode(node),0);
+    if(e.target.closest?.('[data-ace-st2-path],[data-ace316g-skill-back],[data-rta93-player-panel],.ace211CareerBottomNav,.rta93CareerRail'))closeSheet();
+    if(e.target.closest?.('#ace342SkillSheet [data-rta67-node]'))setTimeout(closeSheet,120);
+  });
+  window.addEventListener('resize',()=>{if(!isPhone())closeSheet()},{passive:true});
+})();
+window.ACE_SKILL_DETAILS_OVERLAY_BUILD="B21.36.343";
+window.ACE_SKILL_DETAIL_DENSITY="CONCISE";
+window.ACE_PROJECT_BUILD="B21.36.343";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.343";
+</script>
+
+
+<!-- PROJECT ACE B21.36.345 · BLOCK READ INTEGRITY FIX -->
+<style id="ace345-block-read-integrity-style">
+#rta62Overlay[data-kind="training"] .rta112Setter{transition:transform .08s linear!important}
+#rta62Overlay[data-kind="training"] .rta112BlockHitters span{transition:transform .15s ease,color .15s ease,text-shadow .15s ease!important}
+#rta62Overlay[data-kind="key"] .ace323Setter{transition:transform .08s linear!important}
+</style>
+<script id="ace345-final-build-marker">
+window.ACE_BLOCK_READ_INTEGRITY_BUILD="B21.36.345";
+window.ACE_PROJECT_BUILD="B21.36.345";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.345";
+</script>
+
+
+<!-- PROJECT ACE B21.36.347 · CAREER REALISM -->
+<style id="ace347-career-realism-style">
+#roadtoace .ace347FatigueExplain{display:block;margin-top:2px;color:#718da0;font-size:6px;font-weight:800;letter-spacing:.025em;line-height:1.25}
+#roadtoace .rta99MatchHUD.tired .ace347FatigueExplain{color:#d0a75d}
+#roadtoace .rta99MatchHUD.heavy .ace347FatigueExplain{color:#ef8c82}
+#roadtoace .ace347AgeCard{border-color:rgba(115,187,232,.14)!important;background:linear-gradient(145deg,rgba(22,68,94,.15),rgba(7,20,31,.55))!important}
+#roadtoace .ace347RetirementCard{display:grid!important;grid-template-columns:auto 1fr!important;gap:14px!important;align-items:center!important;border-color:rgba(226,191,91,.20)!important;background:linear-gradient(135deg,rgba(36,29,9,.60),rgba(5,20,31,.92))!important}
+#roadtoace .ace347RetirementIcon{width:54px;height:54px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(242,207,103,.30);background:rgba(228,190,67,.09);color:#efd477;font-size:23px;box-shadow:0 0 25px rgba(225,183,52,.08)}
+#roadtoace .ace347RetirementCard h3{margin:3px 0 5px!important;color:#f4ecd1!important}
+#roadtoace .ace347RetirementCard p{margin:0;color:#98a9b5;line-height:1.45}
+#roadtoace .ace347RetirementCard>div>span{display:block;margin-top:7px;color:#71899a;font-size:8px}
+#roadtoace .ace347RetirementCard .rta92Awards{grid-column:1/-1}
+#roadtoace .ace347NcaaExit{margin:10px 0 0;padding:9px 10px;border:1px solid rgba(103,174,220,.12);border-radius:9px;background:rgba(6,24,36,.52);color:#82a0b3;font-size:8px;font-weight:800}
+#roadtoace .ace347CareerDone{border-color:rgba(229,196,89,.18)!important;background:linear-gradient(145deg,rgba(38,31,10,.52),rgba(4,18,29,.92))!important}
+@media(max-width:760px){#roadtoace .ace347FatigueExplain{font-size:8px}.rta92CareerHeaderStats{grid-template-columns:repeat(4,minmax(0,1fr))!important}.ace347RetirementCard{grid-template-columns:1fr!important;text-align:center}.ace347RetirementIcon{margin:auto}.ace347RetirementCard .rta92Awards{grid-column:auto}}
+</style>
+<script id="ace347-final-build-marker">
+window.ACE_CAREER_REALISM_BUILD="B21.36.347";
+window.ACE_REALISTIC_MATCH_STATS="B21.36.347";
+window.ACE_CAREER_LIFESPAN_BUILD="B21.36.347";
+window.ACE_FATIGUE_GAMEPLAY_BUILD="B21.36.347";
+window.ACE_PROJECT_BUILD="B21.36.347";
+window.ACE_RELEASE_CANDIDATE_BUILD="B21.36.348";
 </script>
