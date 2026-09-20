@@ -38976,16 +38976,16 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function showRtaMobileMore(){
     const c=S.career;if(!c)return;
     const agentStatus=S.office?.agent_type?esc(S.office.agent_name):Array.isArray(S.office?.approaches)&&S.office.approaches.length?"NEW APPROACH":"SELF-REP";
-    setOverlay(`<div class="rta85MoreSheet">
+    setOverlay(`<div class="rta85MoreSheet ace367CareerTileSheet">
       <div class="rta85MoreHandle"></div>
-      <div class="rta85MoreHead"><div><small>ROAD TO ACE</small><h2>Career</h2><p>Club, agent, rankings, showcase and saves.</p></div><button type="button" data-rta62-close>×</button></div>
-      <div class="rta85MoreGrid">
-        <button type="button" data-rta85-more-view="club" class="${S.view==="club"?"active":""}"><i>♜</i><div><b>Club</b><span>${esc(c.club_name)} · squad & teammates</span></div><em>→</em></button>
-        <button type="button" data-rta85-more-view="agent" class="${S.view==="agent"?"active":""} ${rta108AgentAttention?.().active?"attention":""}"><i>◇</i><div><b>Agent${rta108AgentAttention?.().active?" · NEW":""}</b><span>${agentStatus}</span></div><em>→</em></button>
-        <button type="button" data-rta85-more-view="career" class="${S.view==="career"?"active":""}"><i>▥</i><div><b>Career Board</b><span>Season, pathway, league & story</span></div><em>→</em></button>
-        <button type="button" data-rta85-more-showcase class="${S.view==="player"&&S.playerPanel==="showcase"?"active":""}"><i>★</i><div><b>Showcase</b><span>Public profile, trophies & badges</span></div><em>→</em></button>
-        <button type="button" data-rta85-more-view="rankings" class="${S.view==="rankings"?"active":""}"><i>▤</i><div><b>Rankings</b><span>Global Career leaderboard by player OVR</span></div><em>→</em></button>
-        <button type="button" data-rta85-more-saves><i>▣</i><div><b>Career Saves</b><span>Save ${Number(S.activeSave||1)} · manage 3 slots</span></div><em>→</em></button>
+      <div class="rta85MoreHead"><div><small>ROAD TO ACE</small><h2>Career</h2></div><button type="button" data-rta62-close>×</button></div>
+      <div class="rta85MoreGrid ace367CareerTileGrid">
+        <button type="button" data-rta85-more-view="club" class="ace367TileClub ${S.view==="club"?"active":""}"><i>♜</i><div><b>Club</b><span>${esc(c.club_name)} · squad & teammates</span></div><em>→</em></button>
+        <button type="button" data-rta85-more-view="agent" class="ace367TileAgent ${S.view==="agent"?"active":""} ${rta108AgentAttention?.().active?"attention":""}"><i>◇</i><div><b>Agent${rta108AgentAttention?.().active?" · NEW":""}</b><span>${agentStatus}</span></div><em>→</em></button>
+        <button type="button" data-rta85-more-view="career" class="ace367TileBoard ${S.view==="career"?"active":""}"><i>▥</i><div><b>Career Board</b><span>Season, pathway, league & story</span></div><em>→</em></button>
+        <button type="button" data-rta85-more-showcase class="ace367TileShowcase ${S.view==="player"&&S.playerPanel==="showcase"?"active":""}"><i>★</i><div><b>Showcase</b><span>Public profile, trophies & badges</span></div><em>→</em></button>
+        <button type="button" data-rta85-more-view="rankings" class="ace367TileRankings ${S.view==="rankings"?"active":""}"><i>▤</i><div><b>Rankings</b><span>Global Career leaderboard by player OVR</span></div><em>→</em></button>
+        <button type="button" data-rta85-more-saves class="ace367TileSaves"><i>▣</i><div><b>Career Saves</b><span>Save ${Number(S.activeSave||1)} · manage 3 slots</span></div><em>→</em></button>
       </div>
       <button type="button" class="ace222CareerExit" data-ace222-main-page="home"><i>♠</i><span>BACK TO ACE HOME</span><em>→</em></button>
       <div class="rta85MoreMini"><span><b>${Number(c.overall||0)}</b> OVR</span><span><b>${Number(c.coach_trust||0)}</b> Trust</span><span><b>${Number(c.skill_points||0)}</b> SP</span></div>
@@ -40104,7 +40104,12 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       {id:'INTL',m:'AFTER CLUB',t:oly?'OLYMPIC / NATIONAL TEAM':'INTERNATIONAL',d:oly?'Olympics / national duty':'National-team window'},
       {id:'MOVE',m:'REGISTRATION',t:String(transfer?.label||'TRANSFER WINDOW'),d:String(transfer?.reason||'Move availability follows league registration rules')}
     ];
-    const mini=`<div class="ace357VisibleCalendarMini" aria-hidden="true">${phases.map(p=>`<i class="${stateFor(p.id)} ${p.id==='CUP'?'cup':''} ${p.id==='INTL'?'intl':''}" title="${esc(p.t)}"></i>`).join('')}</div>`;
+    const mini=`<div class="ace366SeasonRail" aria-hidden="true">${phases.map(p=>{
+      const short=({PRE:'PRE',REG:'LEAGUE',CUP:'CUP',POST:'POST',INTL:'INTL',MOVE:'MOVE'})[p.id]||String(p.t||'PHASE').slice(0,6).toUpperCase();
+      const st=stateFor(p.id),special=p.id==='CUP'?'cup':p.id==='INTL'?'intl':'';
+      const mark=st==='done'?'✓':p.id==='INTL'?'◆':'•';
+      return `<span class="${st} ${special}" title="${esc(p.t)}"><i>${mark}</i><b>${esc(short)}</b></span>`;
+    }).join('')}</div>`;
     const body=expanded?`
       <div class="ace357VisibleCalendarBody">
         <div class="ace357VisibleIdentity">
@@ -55948,7 +55953,12 @@ function calendarHTML(c,k){
   const current=inPre?'PRE-SEASON · ARRIVAL':c.season_complete?(intlStage&&intlStage!=='COMPLETE'?`${oly?'OLYMPIC GAMES':'INTERNATIONAL DUTY'} · ${intlStage}`:(intlStage==='COMPLETE'?'MAIN TRANSFER WINDOW':'CLUB SEASON COMPLETE')):String(k.event_label||phase||'REGULAR SEASON').replaceAll('_',' ');
   const pill=mode==='LEGACY'?'LEGACY-SAFE':oly?'OLYMPIC YEAR':'LEAGUE CALENDAR';
   const pclass=mode==='LEGACY'?'legacy':oly?'olympic':'';
-  const mini=`<div class="ace357EngineCalendarMini" aria-hidden="true">${phases.map(p=>`<i class="${phaseState(p.id,c,k)} ${oly&&p.id==='AFTER'?'olympic':''}"></i>`).join('')}</div>`;
+  const mini=`<div class="ace366SeasonRail ace366EngineRail" aria-hidden="true">${phases.map(p=>{
+    const short=({PRE:'PRE',REG:'LEAGUE',CUP:'CUP',POST:'POST',AFTER:oly?'OLY':'INTL'})[p.id]||String(p.t||'PHASE').slice(0,6).toUpperCase();
+    const st=phaseState(p.id,c,k),special=p.id==='CUP'?'cup':(p.id==='AFTER'?'intl':'');
+    const mark=st==='done'?'✓':p.id==='AFTER'?'◆':'•';
+    return `<span class="${st} ${special}" title="${esc(p.t)}"><i>${mark}</i><b>${esc(short)}</b></span>`;
+  }).join('')}</div>`;
   const body=expanded?`<div class="ace357EngineDropBody">
     <div class="ace356CalendarTrack">${phases.map(p=>`<article class="ace356Phase ${phaseState(p.id,c,k)} ${oly&&p.id==='AFTER'?'olympic':''}"><small>${esc(p.m)}</small><b>${esc(p.t)}</b><span>${esc(p.d)}</span></article>`).join('')}</div>
     <div class="ace356CalendarStats"><div><small>LEAGUE FIXTURES</small><b>${reg} / ${total}</b></div><div><small>FEATURED MATCHES</small><b>${feat} / ${featTotal}</b></div><div><small>BACKGROUND RESULTS</small><b>${mode==='ENGINE'?auto:'—'}</b></div><div><small>TRANSFER</small><b>${esc(transfer.can_move?'OPEN':String(transfer.state||'LOCKED').replaceAll('_',' '))}</b></div></div>
@@ -56097,5 +56107,342 @@ window.ACE_CAREER_CALENDAR_V356={decorateNow:decorateCalendar};window.ACE_TRANSF
 window.ACE_PROJECT_BUILD='B21.36.365';
 window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.365';
 window.ACE_MOBILE_NAME_BAR_BUILD='B21.36.365';
+</script>
+
+<!-- PROJECT ACE B21.36.366 · CLASSIC CONNECTED SEASON RAIL -->
+<style id="ace366-classic-season-rail">
+/* Retire the rectangular micro-bars from 359. */
+#roadtoace .ace357VisibleCalendarMini,
+#roadtoace .ace357EngineCalendarMini{display:none!important}
+
+/* V74-inspired connected timeline, rebuilt around the league-specific engine. */
+#roadtoace .ace366SeasonRail{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:repeat(var(--ace366-count,6),minmax(0,1fr))!important;
+  align-items:start!important;
+  width:100%!important;
+  margin:8px 0 1px!important;
+  padding:0!important;
+  gap:0!important;
+}
+#roadtoace .ace366SeasonRail:before{
+  content:""!important;
+  position:absolute!important;
+  left:7%!important;
+  right:7%!important;
+  top:8px!important;
+  height:1px!important;
+  background:linear-gradient(90deg,
+    rgba(111,151,178,.08),
+    rgba(123,174,206,.20) 18%,
+    rgba(123,174,206,.20) 82%,
+    rgba(111,151,178,.08))!important;
+  box-shadow:0 0 10px rgba(83,161,209,.04)!important;
+}
+#roadtoace .ace366SeasonRail>span{
+  position:relative!important;
+  z-index:1!important;
+  min-width:0!important;
+  display:grid!important;
+  justify-items:center!important;
+  align-content:start!important;
+  gap:4px!important;
+}
+#roadtoace .ace366SeasonRail>span>i{
+  width:17px!important;
+  height:17px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  border-radius:50%!important;
+  border:1px solid rgba(151,179,197,.16)!important;
+  background:#0a1822!important;
+  color:#5f7888!important;
+  box-shadow:0 0 0 3px rgba(6,17,27,.92)!important;
+  font-size:6px!important;
+  line-height:1!important;
+  font-style:normal!important;
+  font-weight:1000!important;
+  transition:.18s ease!important;
+}
+#roadtoace .ace366SeasonRail>span>b{
+  display:block!important;
+  width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#526a7b!important;
+  font-size:4.8px!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  letter-spacing:.08em!important;
+  text-align:center!important;
+}
+
+/* Completed phases: restrained blue-grey, not neon. */
+#roadtoace .ace366SeasonRail>span.done>i{
+  border-color:rgba(118,181,214,.26)!important;
+  background:#102635!important;
+  color:#90bdd4!important;
+}
+#roadtoace .ace366SeasonRail>span.done>b{color:#6f91a4!important}
+
+/* Current phase: one premium glow and a slightly larger marker. */
+#roadtoace .ace366SeasonRail>span.now>i{
+  width:19px!important;
+  height:19px!important;
+  margin-top:-1px!important;
+  border-color:rgba(128,211,250,.72)!important;
+  background:radial-gradient(circle at 40% 35%,#9be2ff 0 16%,#3b9ed2 22%,#17668f 72%)!important;
+  color:#f4fcff!important;
+  box-shadow:
+    0 0 0 3px rgba(6,17,27,.94),
+    0 0 12px rgba(75,174,225,.32)!important;
+}
+#roadtoace .ace366SeasonRail>span.now>b{
+  color:#c9e8f8!important;
+}
+
+/* Competition accents only when relevant. */
+#roadtoace .ace366SeasonRail>span.cup>i{
+  border-color:rgba(221,188,95,.28)!important;
+  color:#cbb36c!important;
+}
+#roadtoace .ace366SeasonRail>span.cup.now>i{
+  border-color:rgba(236,208,119,.72)!important;
+  background:radial-gradient(circle at 40% 35%,#fff1b5 0 15%,#cda94d 22%,#6f5720 75%)!important;
+  color:#fff8db!important;
+  box-shadow:0 0 0 3px rgba(6,17,27,.94),0 0 12px rgba(215,180,81,.24)!important;
+}
+#roadtoace .ace366SeasonRail>span.intl>i{
+  border-color:rgba(91,194,187,.25)!important;
+  color:#76bcb7!important;
+}
+#roadtoace .ace366SeasonRail>span.intl.now>i{
+  border-color:rgba(111,218,207,.68)!important;
+  background:radial-gradient(circle at 40% 35%,#b6fff4 0 15%,#45afa7 22%,#1e6964 75%)!important;
+  color:#eefffc!important;
+  box-shadow:0 0 0 3px rgba(6,17,27,.94),0 0 12px rgba(72,184,177,.24)!important;
+}
+
+/* Use the actual number of phases so spacing stays elegant across different leagues. */
+#roadtoace .ace366SeasonRail:has(>span:nth-child(5):last-child){grid-template-columns:repeat(5,minmax(0,1fr))!important}
+#roadtoace .ace366SeasonRail:has(>span:nth-child(6):last-child){grid-template-columns:repeat(6,minmax(0,1fr))!important}
+
+/* Keep the connected line compact on phones. */
+@media(max-width:760px){
+  #roadtoace .ace366SeasonRail{margin-top:7px!important}
+  #roadtoace .ace366SeasonRail:before{left:8%!important;right:8%!important;top:7px!important}
+  #roadtoace .ace366SeasonRail>span>i{width:15px!important;height:15px!important;font-size:5px!important}
+  #roadtoace .ace366SeasonRail>span.now>i{width:17px!important;height:17px!important}
+  #roadtoace .ace366SeasonRail>span>b{font-size:4.4px!important;letter-spacing:.06em!important}
+}
+</style>
+<script id="ace366-season-rail-marker">
+window.ACE_PROJECT_BUILD='B21.36.366';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.366';
+window.ACE_CLASSIC_SEASON_RAIL_BUILD='B21.36.366';
+</script>
+
+<!-- PROJECT ACE B21.36.367 · CAREER DRAWER TILE HUB -->
+<style id="ace367-career-drawer-tiles">
+@media(max-width:760px){
+  #rta62Overlay[data-kind="mobile-more"] .rta85MoreSheet.ace367CareerTileSheet{
+    max-height:min(70dvh,570px)!important;
+    padding:8px 10px calc(15px + env(safe-area-inset-bottom))!important;
+    background:
+      radial-gradient(circle at 78% 0,rgba(89,171,228,.075),transparent 27%),
+      radial-gradient(circle at 8% 100%,rgba(125,80,202,.045),transparent 30%),
+      linear-gradient(180deg,#071521,#03101a)!important;
+  }
+
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .rta85MoreHandle{
+    margin-bottom:7px!important;
+  }
+
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .rta85MoreHead{
+    align-items:center!important;
+    padding:1px 4px 10px!important;
+    margin:0!important;
+    border-bottom:1px solid rgba(255,255,255,.045)!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .rta85MoreHead small{
+    font-size:7px!important;
+    letter-spacing:.16em!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .rta85MoreHead h2{
+    margin:3px 0 0!important;
+    font-size:27px!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .rta85MoreHead p{
+    display:none!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .rta85MoreHead>button{
+    width:40px!important;height:40px!important;border-radius:12px!important;
+  }
+
+  /* Main 2 × 3 game hub. */
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+    margin-top:10px!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button{
+    position:relative!important;
+    min-width:0!important;
+    min-height:112px!important;
+    padding:11px!important;
+    display:grid!important;
+    grid-template-columns:36px minmax(0,1fr)!important;
+    grid-template-rows:auto 1fr!important;
+    align-items:start!important;
+    align-content:start!important;
+    gap:8px 9px!important;
+    border:1px solid rgba(111,174,211,.09)!important;
+    border-radius:15px!important;
+    background:
+      radial-gradient(circle at 8% 8%,rgba(62,144,195,.07),transparent 38%),
+      linear-gradient(145deg,rgba(8,25,38,.95),rgba(5,17,27,.96))!important;
+    color:#e9f4fa!important;
+    text-align:left!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important;
+    overflow:hidden!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button:active{
+    transform:scale(.985)!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button.active{
+    border-color:rgba(88,183,236,.28)!important;
+    background:
+      radial-gradient(circle at 10% 8%,rgba(58,160,219,.14),transparent 42%),
+      linear-gradient(145deg,rgba(8,31,47,.98),rgba(5,18,28,.97))!important;
+    box-shadow:inset 0 0 0 1px rgba(87,183,237,.05),0 0 18px rgba(67,158,211,.05)!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button>i{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:36px!important;
+    height:36px!important;
+    display:grid!important;
+    place-items:center!important;
+    margin:0!important;
+    border:1px solid rgba(86,169,215,.10)!important;
+    border-radius:11px!important;
+    background:rgba(42,123,170,.08)!important;
+    color:#79c5ec!important;
+    font-size:14px!important;
+    font-style:normal!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button>div{
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    min-width:0!important;
+    align-self:end!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button b{
+    display:block!important;
+    color:#eef7fb!important;
+    font-size:13px!important;
+    line-height:1.08!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button span{
+    display:-webkit-box!important;
+    min-height:22px!important;
+    margin-top:5px!important;
+    overflow:hidden!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    white-space:normal!important;
+    color:#718b9d!important;
+    font-size:7px!important;
+    line-height:1.35!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button>em{
+    position:absolute!important;
+    right:10px!important;
+    top:15px!important;
+    color:#50788f!important;
+    font-size:13px!important;
+    font-style:normal!important;
+  }
+
+  /* Showcase keeps a distinct, restrained purple identity. */
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button.ace367TileShowcase{
+    border-color:rgba(164,111,226,.14)!important;
+    background:
+      radial-gradient(circle at 8% 8%,rgba(133,77,195,.12),transparent 40%),
+      linear-gradient(145deg,rgba(18,18,39,.96),rgba(7,17,28,.97))!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button.ace367TileShowcase>i{
+    border-color:rgba(172,119,230,.16)!important;
+    background:rgba(127,72,181,.12)!important;
+    color:#d3a5ff!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button.ace367TileShowcase.active{
+    border-color:rgba(188,133,242,.28)!important;
+    box-shadow:inset 0 0 0 1px rgba(181,125,238,.06),0 0 18px rgba(125,73,181,.06)!important;
+  }
+
+  /* Agent attention can use gold without making the whole grid noisy. */
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button.ace367TileAgent.attention{
+    border-color:rgba(218,184,91,.18)!important;
+    background:
+      radial-gradient(circle at 8% 8%,rgba(210,177,82,.09),transparent 40%),
+      linear-gradient(145deg,rgba(20,22,30,.96),rgba(6,17,27,.97))!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button.ace367TileAgent.attention>i{
+    color:#e4c56d!important;
+    background:rgba(188,151,59,.10)!important;
+  }
+
+  /* Bottom exit remains one clean, full-width navigation strip. */
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .ace222CareerExit{
+    width:100%!important;
+    min-height:50px!important;
+    margin:9px 0 0!important;
+    padding:0 11px!important;
+    display:grid!important;
+    grid-template-columns:34px minmax(0,1fr) auto!important;
+    align-items:center!important;
+    gap:9px!important;
+    border:1px solid rgba(255,255,255,.045)!important;
+    border-radius:12px!important;
+    background:rgba(255,255,255,.018)!important;
+    color:#98adba!important;
+    text-align:left!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .ace222CareerExit>i{
+    width:31px!important;height:31px!important;
+    display:grid!important;place-items:center!important;
+    border-radius:9px!important;
+    background:rgba(57,144,196,.07)!important;
+    color:#77bee3!important;
+    font-size:13px!important;
+    font-style:normal!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .ace222CareerExit span{
+    font-size:7.5px!important;
+    font-weight:1000!important;
+    letter-spacing:.10em!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileSheet .rta85MoreMini{
+    display:none!important;
+  }
+}
+@media(max-width:390px){
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid{gap:6px!important}
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button{
+    min-height:104px!important;padding:10px!important;
+  }
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button b{font-size:12px!important}
+  #rta62Overlay[data-kind="mobile-more"] .ace367CareerTileGrid>button span{font-size:6.5px!important}
+}
+</style>
+<script id="ace367-career-drawer-marker">
+window.ACE_PROJECT_BUILD='B21.36.367';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.367';
+window.ACE_CAREER_DRAWER_TILES_BUILD='B21.36.367';
 </script>
 
