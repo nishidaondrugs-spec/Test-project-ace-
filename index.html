@@ -66849,3 +66849,153 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 }
 </style>
 <script id="ace522-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.524-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREP_POPUP_FILM_BUILD='B21.36.524-BETA';</script>
+
+<!-- PROJECT ACE B21.36.527 · PRIVATE CAREER ECOSYSTEM PREVIEW CONTROLS -->
+<style id="ace527-ecosystem-preview-style">
+#ace527PreviewChip{position:fixed;left:14px;bottom:14px;z-index:2147482400;display:none;align-items:center;gap:8px;max-width:min(360px,calc(100vw - 28px));padding:8px 10px;border:1px solid rgba(104,178,224,.20);border-radius:11px;background:rgba(4,15,25,.94);box-shadow:0 14px 34px rgba(0,0,0,.36);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#dcecf7;font:800 9px/1.15 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;letter-spacing:.055em;cursor:pointer;text-align:left}
+#ace527PreviewChip.show{display:flex}
+#ace527PreviewChip .ace527Dot{width:8px;height:8px;border-radius:50%;background:#6e8293;box-shadow:0 0 0 3px rgba(110,130,147,.08);flex:0 0 auto}
+#ace527PreviewChip.on{border-color:rgba(73,218,151,.34);background:rgba(5,29,22,.95)}
+#ace527PreviewChip.on .ace527Dot{background:#49da97;box-shadow:0 0 13px rgba(73,218,151,.52)}
+#ace527PreviewChip.error{border-color:rgba(255,102,119,.34)}
+#ace527PreviewChip.error .ace527Dot{background:#ff6677}
+#ace527PreviewChip span{display:block;color:#7990a3;font-size:6px;letter-spacing:.14em;margin-top:2px}
+#ace527PreviewChip b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ace527PreviewBackdrop{position:fixed;inset:0;z-index:2147482500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(1,7,12,.78);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.ace527PreviewModal{width:min(560px,96vw);max-height:88vh;overflow:auto;border:1px solid rgba(89,175,228,.20);border-radius:18px;background:radial-gradient(circle at 88% 0,rgba(61,154,211,.14),transparent 28%),linear-gradient(180deg,#081a29,#06121d);box-shadow:0 32px 90px rgba(0,0,0,.55);color:#eef8fd;padding:18px}
+.ace527PreviewHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.07)}
+.ace527PreviewHead small{display:block;color:#67bdf0;font-size:7px;font-weight:1000;letter-spacing:.18em}.ace527PreviewHead h2{margin:5px 0 4px;font-size:23px;letter-spacing:-.025em}.ace527PreviewHead p{margin:0;color:#7d95a8;font-size:9px;line-height:1.5}.ace527Close{border:0;background:rgba(255,255,255,.04);color:#9eb2c2;width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:20px}
+.ace527StatusGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:13px 0}.ace527StatusGrid>div{padding:10px;border:1px solid rgba(255,255,255,.065);border-radius:10px;background:rgba(255,255,255,.018)}.ace527StatusGrid span{display:block;color:#688196;font-size:6px;font-weight:1000;letter-spacing:.13em}.ace527StatusGrid b{display:block;margin-top:4px;font-size:12px}.ace527StatusGrid b.good{color:#68dfa4}.ace527StatusGrid b.warn{color:#f1c96b}.ace527StatusGrid b.bad{color:#ff8490}
+.ace527Notice{padding:10px 11px;border:1px solid rgba(255,193,83,.15);border-radius:10px;background:rgba(255,193,83,.035);color:#9caebc;font-size:8px;line-height:1.55;margin:9px 0 13px}.ace527Notice b{color:#e8f2f8}.ace527Field label{display:block;color:#7790a5;font-size:7px;font-weight:1000;letter-spacing:.11em;margin-bottom:5px}.ace527Field input{width:100%;height:40px;padding:0 11px;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(2,10,18,.64);color:#eef8fd;outline:none}.ace527Field input:focus{border-color:rgba(74,168,255,.48);box-shadow:0 0 0 3px rgba(74,168,255,.07)}
+.ace527Actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.ace527Actions button{min-height:38px;padding:0 12px;border-radius:9px;border:1px solid rgba(255,255,255,.075);background:#10283c;color:#dbeaf4;font-size:8px;font-weight:1000;letter-spacing:.06em;cursor:pointer}.ace527Actions button.primary{border-color:transparent;background:linear-gradient(135deg,#2588dc,#4eafff);color:#fff}.ace527Actions button.danger{background:rgba(107,34,44,.44);border-color:rgba(255,99,116,.18);color:#ffb6bd}.ace527Actions button:disabled{opacity:.45;cursor:wait}.ace527Message{min-height:18px;margin-top:10px;color:#849aad;font-size:8px;line-height:1.45}.ace527Message.good{color:#72dfa8}.ace527Message.bad{color:#ff8d98}
+@media(max-width:560px){#ace527PreviewChip{left:9px;bottom:9px}.ace527PreviewModal{padding:14px}.ace527StatusGrid{grid-template-columns:1fr 1fr}.ace527Actions{display:grid;grid-template-columns:1fr}.ace527Actions button{width:100%}}
+</style>
+<script id="ace527-ecosystem-preview-script">
+(()=>{
+  const BUILD='B21.36.527-PRIVATE-PREVIEW';
+  window.ACE_PROJECT_BUILD=BUILD;
+  window.ACE_RELEASE_BUILD=BUILD;
+  window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+  window.ACE_TEST_SERVER_BUILD=true;
+  window.ACE_ECOSYSTEM_PREVIEW_BUILD=BUILD;
+
+  let status=null,busy=false,lastSlot=0,lastChecked=0,modalOpen=false;
+  const STATUS_RPC='vds_rta_ecosystem_preview_status_v527';
+  const CLAIM_RPC='vds_rta_claim_ecosystem_preview_v527';
+  const DISABLE_RPC='vds_rta_disable_ecosystem_preview_v527';
+
+  function state(){return window.__ACE_RTA_STATE||null}
+  function slot(){return Number(state()?.activeSave||state()?.saveProfile?.active_slot||1)||1}
+  function careerReady(){return !!state()?.career}
+  function roadVisible(){const el=document.getElementById('roadtoace');return !!el&&(el.classList.contains('active')||getComputedStyle(el).display!=='none')}
+  function rpc(name,args={}){if(typeof window.ACE_RTA_RPC!=='function')return Promise.reject(new Error('Career connection unavailable.'));return window.ACE_RTA_RPC(name,args)}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+  function fmtDate(v){if(!v)return '—';try{return new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}catch(_){return String(v)}}
+  function errorText(err){const raw=String(err?.message||err||'Request failed');if(raw.includes('INVALID_PREVIEW_INVITE'))return 'That preview code is not valid.';if(raw.includes('PREVIEW_INVITE_ALREADY_CLAIMED'))return 'That preview invite is already bound to another account.';if(raw.includes('PREVIEW_INVITE_EXPIRED'))return 'That preview invite has expired.';if(raw.includes('PREVIEW_SLOT_LIMIT_REACHED'))return 'This preview invite has reached its save-slot limit.';if(raw.includes('PERMANENT_ACCOUNT_REQUIRED'))return 'Sign in with your permanent ACE account first.';return raw}
+
+  function ensureChip(){
+    let chip=document.getElementById('ace527PreviewChip');
+    if(chip)return chip;
+    chip=document.createElement('button');
+    chip.type='button';chip.id='ace527PreviewChip';chip.setAttribute('aria-label','Career ecosystem preview status');
+    chip.innerHTML='<i class="ace527Dot"></i><div><b>ECOSYSTEM PREVIEW</b><span>CHECKING STATUS…</span></div>';
+    document.body.appendChild(chip);
+    chip.addEventListener('click',()=>openModal());
+    return chip;
+  }
+  function paintChip(){
+    const chip=ensureChip();
+    const shouldShow=!!window.ACE_TEST_SERVER_BUILD&&careerReady()&&roadVisible();
+    chip.classList.toggle('show',shouldShow);
+    if(!shouldShow)return;
+    chip.classList.toggle('on',!!status?.ecosystem_active);
+    chip.classList.toggle('error',!!status?.error);
+    const b=chip.querySelector('b'),s=chip.querySelector('span');
+    if(status?.error){b.textContent='ECOSYSTEM PREVIEW · ERROR';s.textContent=`SAVE ${slot()} · TAP FOR DETAILS`;return}
+    if(status?.private_preview&&status?.ecosystem_active){b.textContent='PRIVATE PREVIEW · ON';s.textContent=`SAVE ${Number(status.slot||slot())} · POST-GRACE RULES`;return}
+    if(status?.ecosystem_active){b.textContent='CAREER ECOSYSTEM · ON';s.textContent=`SAVE ${Number(status.slot||slot())} · GLOBAL`;return}
+    b.textContent='ECOSYSTEM PREVIEW · DORMANT';s.textContent=`SAVE ${slot()} · CURRENT BETA RULES`;
+  }
+  function statusHTML(){
+    const s=status||{};
+    const active=!!s.ecosystem_active,preview=!!s.private_preview,beta=!!s.beta_grace;
+    return `<div class="ace527StatusGrid">
+      <div><span>ACTIVE SAVE</span><b>SAVE ${Number(s.slot||slot())}</b></div>
+      <div><span>MODE</span><b class="${active?'good':'warn'}">${esc(s.mode||'DORMANT')}</b></div>
+      <div><span>BETA GRACE</span><b class="${beta?'warn':'good'}">${beta?'ACTIVE':'ENDED'}</b></div>
+      <div><span>PRIVATE ACCESS</span><b class="${preview?'good':''}">${preview?'ENABLED':'OFF'}</b></div>
+      <div><span>ECOSYSTEM</span><b class="${active?'good':'warn'}">${active?'ON':'DORMANT'}</b></div>
+      <div><span>GRACE ENDS</span><b>${esc(fmtDate(s.beta_ends_at))}</b></div>
+    </div>`;
+  }
+  function openModal(){
+    document.querySelectorAll('.ace527PreviewBackdrop').forEach(n=>n.remove());
+    modalOpen=true;
+    const el=document.createElement('div');el.className='ace527PreviewBackdrop';
+    el.innerHTML=`<section class="ace527PreviewModal" role="dialog" aria-modal="true" aria-label="Career ecosystem private preview">
+      <header class="ace527PreviewHead"><div><small>PROJECT ACE · TEST SERVER</small><h2>CAREER ECOSYSTEM PREVIEW</h2><p>Enable the post-Beta-Grace backend for this save only.</p></div><button type="button" class="ace527Close" data-ace527-close>×</button></header>
+      <div data-ace527-status>${statusHTML()}</div>
+      <div class="ace527Notice"><b>Safe testing:</b> preview access is tied to your authenticated account + current save slot. Keep your main Career on a non-preview slot. Opening a preview-enabled slot in another client still uses the preview backend for that slot.</div>
+      <div class="ace527Field"><label>PRIVATE PREVIEW INVITE</label><input type="password" data-ace527-code placeholder="Enter preview code" autocomplete="off" spellcheck="false"></div>
+      <div class="ace527Actions"><button type="button" class="primary" data-ace527-enable>ENABLE FOR SAVE ${slot()}</button><button type="button" data-ace527-refresh>REFRESH STATUS</button><button type="button" class="danger" data-ace527-disable>DISABLE FOR THIS SAVE</button></div>
+      <div class="ace527Message" data-ace527-message>${status?.error?esc(status.error):''}</div>
+    </section>`;
+    document.body.appendChild(el);
+  }
+  function closeModal(){modalOpen=false;document.querySelectorAll('.ace527PreviewBackdrop').forEach(n=>n.remove())}
+  function paintModal(){
+    const root=document.querySelector('.ace527PreviewBackdrop');if(!root)return;
+    const box=root.querySelector('[data-ace527-status]');if(box)box.innerHTML=statusHTML();
+    const enable=root.querySelector('[data-ace527-enable]');if(enable)enable.textContent=`ENABLE FOR SAVE ${slot()}`;
+    root.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-ace527-close'))b.disabled=busy});
+  }
+  function message(text,type=''){const el=document.querySelector('[data-ace527-message]');if(!el)return;el.textContent=text||'';el.className='ace527Message '+type}
+
+  async function refresh(force=false){
+    paintChip();
+    if(!window.ACE_TEST_SERVER_BUILD||!careerReady()||!roadVisible()||typeof window.ACE_RTA_RPC!=='function')return null;
+    const now=Date.now(),currentSlot=slot();
+    if(!force&&status&&!status.error&&currentSlot===lastSlot&&now-lastChecked<20000){paintChip();paintModal();return status}
+    try{
+      status=await rpc(STATUS_RPC,{});lastSlot=currentSlot;lastChecked=Date.now();
+    }catch(err){status={error:errorText(err),slot:currentSlot,ecosystem_active:false,private_preview:false,beta_grace:true,mode:'STATUS ERROR'};lastSlot=currentSlot;lastChecked=Date.now()}
+    paintChip();paintModal();return status;
+  }
+  async function enable(){
+    const input=document.querySelector('[data-ace527-code]');const code=String(input?.value||'').trim();
+    if(!code){message('Enter your private preview code first.','bad');input?.focus();return}
+    busy=true;paintModal();message(`Enabling post-grace mechanics for Save ${slot()}…`);
+    try{await rpc(CLAIM_RPC,{p_code:code});if(input)input.value='';await refresh(true);message(`Private preview enabled for Save ${slot()}.`,'good')}
+    catch(err){message(errorText(err),'bad')}
+    finally{busy=false;paintModal()}
+  }
+  async function disable(){
+    busy=true;paintModal();message(`Disabling private preview for Save ${slot()}…`);
+    try{await rpc(DISABLE_RPC,{});await refresh(true);message(`Private preview disabled for Save ${slot()}.`,'good')}
+    catch(err){message(errorText(err),'bad')}
+    finally{busy=false;paintModal()}
+  }
+
+  document.addEventListener('click',e=>{
+    if(e.target.closest?.('[data-ace527-close]')||e.target===document.querySelector('.ace527PreviewBackdrop')){e.preventDefault();closeModal();return}
+    if(e.target.closest?.('[data-ace527-enable]')){e.preventDefault();enable();return}
+    if(e.target.closest?.('[data-ace527-disable]')){e.preventDefault();disable();return}
+    if(e.target.closest?.('[data-ace527-refresh]')){e.preventDefault();message('Refreshing…');refresh(true).then(()=>message('Status refreshed.','good'));return}
+  },true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalOpen)closeModal()});
+
+  // Detect save switching without hammering the backend. RPC refresh only occurs on
+  // a slot change or once every 20 seconds while Road to Ace is actually visible.
+  setInterval(()=>{
+    const current=slot();
+    paintChip();
+    if(careerReady()&&roadVisible()&&(current!==lastSlot||Date.now()-lastChecked>20000))refresh(true);
+  },1600);
+  window.addEventListener('focus',()=>refresh(false));
+  document.addEventListener('ace:rta-render',()=>refresh(false));
+  setTimeout(()=>refresh(true),900);
+
+  window.ACE527_ECOSYSTEM_PREVIEW={refresh,open:openModal,status:()=>status,build:BUILD};
+})();
+</script>
+<script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
