@@ -66488,3 +66488,155 @@ window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 })();
 </script>
 <script id="ace518-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.518-BETA';window.ACE_RELEASE_BUILD='B21.36.518-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.518-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_UNIFIED_PREPARATION_BUILD='B21.36.518-BETA';</script>
+
+<!-- PROJECT ACE B21.36.519-BETA · COMPACT TWO-SLOT PREPARATION PLANNER -->
+<style id="ace519-preparation-planner-style">
+/* Beta only. V519 replaces the large V518 dashboard with a compact plan-first screen. */
+#roadtoace .ace518PreparationHub{display:none!important}
+#roadtoace .rta187TrainingCentre>.rta187TrainingSection.technical,
+#roadtoace .rta187TrainingCentre>.rta187TrainingSection.physical,
+#roadtoace .rta187TrainingCentre>.rta187CoachStrip,
+#roadtoace .rta187TrainingCentre>.rta187RecommendedRail{display:none!important}
+#roadtoace .ace519Planner{
+  order:2!important;margin:0!important;padding:13px!important;border-radius:18px!important;
+  border:1px solid rgba(94,190,240,.15)!important;
+  background:linear-gradient(180deg,rgba(7,24,35,.97),rgba(4,14,22,.98))!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.16)!important;color:#edf8fc!important
+}
+#roadtoace .ace519Top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+#roadtoace .ace519Top small{display:block;color:#71b6dc;font:1000 6.5px/1 system-ui;letter-spacing:.16em}
+#roadtoace .ace519Top h2{margin:4px 0 0;font:1000 22px/.96 system-ui;letter-spacing:-.035em;color:#f4fbff}
+#roadtoace .ace519Top p{margin:5px 0 0;color:#7894a4;font:750 7px/1.35 system-ui}
+#roadtoace .ace519Counter{flex:0 0 auto;min-width:72px;padding:9px 8px;border:1px solid rgba(100,197,246,.17);border-radius:12px;background:rgba(51,143,194,.08);text-align:center}
+#roadtoace .ace519Counter b{display:block;font:1000 18px/1 system-ui;color:#effaff}
+#roadtoace .ace519Counter span{display:block;margin-top:4px;color:#6faacb;font:1000 5.5px/1 system-ui;letter-spacing:.11em}
+#roadtoace .ace519Condition{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:6px;margin-bottom:7px}
+#roadtoace .ace519Condition>div{min-width:0;padding:9px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.024)}
+#roadtoace .ace519Condition span{display:block;color:#6e899b;font:1000 5.5px/1 system-ui;letter-spacing:.12em}
+#roadtoace .ace519Condition b{display:block;margin-top:5px;color:#f0f8fb;font:1000 15px/1 system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .ace519Condition small{display:block;margin-top:4px;color:#6f8998;font:900 5.4px/1 system-ui;letter-spacing:.04em}
+#roadtoace .ace519Condition .fit b{color:#59d99a}.ace519Condition .sore b{color:#e7c85f}.ace519Condition .limited b{color:#eea252}.ace519Condition .out b{color:#ef6d72}
+#roadtoace .ace519Advice{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:8px 9px;border-radius:11px;border:1px solid rgba(104,194,239,.10);background:rgba(54,142,192,.045)}
+#roadtoace .ace519Advice i{flex:0 0 auto;width:22px;height:22px;display:grid;place-items:center;border-radius:8px;background:rgba(84,179,232,.09);font-style:normal;font-size:11px}
+#roadtoace .ace519Advice b{display:block;color:#dff5ff;font:1000 7px/1.2 system-ui}.ace519Advice span{display:block;margin-top:2px;color:#7694a5;font:700 6px/1.35 system-ui}
+#roadtoace .ace519BodyToggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 9px;padding:9px 10px;border-radius:11px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018);color:#d9ebf3;text-align:left}
+#roadtoace .ace519BodyToggle span{display:block;color:#718c9c;font:1000 5.5px/1 system-ui;letter-spacing:.12em}.ace519BodyToggle b{display:block;margin-top:3px;font:1000 7.5px/1.15 system-ui}.ace519BodyToggle em{font-style:normal;color:#72b9df;font-size:12px}
+#roadtoace .ace519BodyDetail{display:none;margin:-2px 0 9px;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.05);background:rgba(2,11,18,.48)}
+#roadtoace .ace519BodyDetail.open{display:grid;grid-template-columns:115px minmax(0,1fr);gap:10px;align-items:center}
+#roadtoace .ace519BodyMini{width:105px;height:178px;margin:auto}.ace519BodyMini .shape{fill:#0d2636;stroke:#3f6b82;stroke-width:2}.ace519BodyMini .limb{fill:none;stroke:#3f6b82;stroke-width:16;stroke-linecap:round}.ace519BodyMini .dot{stroke-width:3}.ace519BodyMini .good{fill:#4fce8d;stroke:#a1edc4}.ace519BodyMini .sore{fill:#e7c556;stroke:#fff0a0}.ace519BodyMini .limited{fill:#ed9847;stroke:#ffd09e}.ace519BodyMini .out{fill:#ef6268;stroke:#ffb1b5}
+#roadtoace .ace519BodyCopy h3{margin:0;color:#eff9fd;font:1000 12px/1.05 system-ui}.ace519BodyCopy p{margin:5px 0 0;color:#76909f;font:700 6.5px/1.45 system-ui}.ace519BodyCopy strong{display:inline-block;margin-top:7px;padding:5px 7px;border-radius:999px;background:rgba(80,204,143,.07);border:1px solid rgba(80,204,143,.15);color:#68dca2;font:1000 5.5px/1 system-ui;letter-spacing:.09em}
+#roadtoace .ace519PlanLabel{display:flex;align-items:center;justify-content:space-between;margin:2px 1px 6px}.ace519PlanLabel b{font:1000 7px/1 system-ui;letter-spacing:.12em;color:#bcd7e5}.ace519PlanLabel span{font:900 5.5px/1 system-ui;color:#68879a}
+#roadtoace .ace519Slots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+#roadtoace .ace519Slot{min-height:64px;padding:9px;border-radius:12px;border:1px dashed rgba(112,181,221,.18);background:rgba(255,255,255,.018);text-align:left;color:#dcecf4;position:relative}
+#roadtoace .ace519Slot.used{border-style:solid;border-color:rgba(92,171,216,.11);opacity:.72}.ace519Slot.planned{border-style:solid;border-color:rgba(86,194,244,.27);background:rgba(61,154,208,.07)}.ace519Slot.done{border-style:solid;border-color:rgba(82,211,151,.20);background:rgba(82,211,151,.05)}
+#roadtoace .ace519Slot small{display:block;color:#66869a;font:1000 5.4px/1 system-ui;letter-spacing:.11em}.ace519Slot b{display:block;margin-top:5px;font:1000 9px/1.05 system-ui;color:#f0f9fd}.ace519Slot span{display:block;margin-top:4px;font:750 5.8px/1.3 system-ui;color:#7692a3}.ace519Slot .remove{position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:7px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);color:#89a4b4;font:1000 10px/1 system-ui}
+#roadtoace .ace519Presets{display:flex;gap:5px;margin-bottom:8px;overflow:auto;scrollbar-width:none}.ace519Presets::-webkit-scrollbar{display:none}.ace519Preset{flex:0 0 auto;padding:7px 9px;border-radius:999px;border:1px solid rgba(108,187,231,.10);background:rgba(255,255,255,.02);color:#85a6b8;font:1000 5.8px/1 system-ui;letter-spacing:.07em}.ace519Preset.recommended{color:#dff6ff;border-color:rgba(91,191,241,.23);background:rgba(70,163,215,.08)}
+#roadtoace .ace519Categories{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:7px}.ace519Cat{min-width:0;padding:9px 5px;border-radius:11px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.022);color:#8aa4b3}.ace519Cat i{display:block;font-style:normal;font-size:12px}.ace519Cat b{display:block;margin-top:4px;font:1000 6.5px/1 system-ui;letter-spacing:.08em}.ace519Cat.active{color:#eefaff;border-color:rgba(89,194,246,.25);background:rgba(59,157,211,.08)}.ace519Cat.recommended:after{content:'REC';display:block;margin-top:4px;color:#67d8a1;font:1000 4.8px/1 system-ui;letter-spacing:.09em}
+#roadtoace .ace519Choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0 0 8px}.ace519Choice{min-width:0;padding:8px 9px;border-radius:10px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.018);color:#d9eaf2;text-align:left}.ace519Choice:disabled{opacity:.34}.ace519Choice small{display:block;color:#66899b;font:1000 5px/1 system-ui;letter-spacing:.09em}.ace519Choice b{display:block;margin-top:4px;font:1000 7.5px/1.05 system-ui}.ace519Choice span{display:block;margin-top:4px;color:#718b99;font:700 5.6px/1.25 system-ui}.ace519Choice.selected{border-color:rgba(87,195,245,.30);background:rgba(56,157,214,.085)}.ace519Choice.paid span{color:#d6ba64}
+#roadtoace .ace519Projection{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px;padding:8px;border-radius:11px;border:1px solid rgba(100,189,237,.10);background:rgba(50,133,180,.04)}.ace519Projection>div{min-width:0}.ace519Projection span{display:block;color:#668699;font:1000 4.8px/1 system-ui;letter-spacing:.10em}.ace519Projection b{display:block;margin-top:4px;color:#eef9fd;font:1000 8px/1 system-ui}.ace519Projection small{display:block;margin-top:3px;color:#6f8d9e;font:750 5.2px/1.2 system-ui}
+#roadtoace .ace519Actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}.ace519Confirm{min-height:40px;border:0;border-radius:11px;background:linear-gradient(135deg,#318fc8,#426ee0);color:#fff;font:1000 7px/1 system-ui;letter-spacing:.09em}.ace519Confirm:disabled{opacity:.38}.ace519Reset{min-width:72px;border-radius:11px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.025);color:#7896a6;font:1000 6px/1 system-ui}.ace519Progress{margin-top:6px;color:#6f8f9f;font:750 5.6px/1.35 system-ui;text-align:center}
+@media(max-width:760px){
+  #roadtoace .rta187TrainingCentre{padding-top:5px!important}
+  #roadtoace .rta187TrainingHero{display:none!important}
+  #roadtoace .ace519Planner{padding:10px!important;border-radius:14px!important}
+  #roadtoace .ace519Top h2{font-size:18px}.ace519Top p{font-size:6.2px!important}
+  #roadtoace .ace519Condition{grid-template-columns:1fr 1fr 1fr}.ace519Condition>div{padding:8px 7px!important}.ace519Condition b{font-size:13px!important}.ace519Condition small{font-size:4.8px!important}
+  #roadtoace .ace519Slot{min-height:58px;padding:8px}.ace519Slot b{font-size:8px!important}.ace519Slot span{font-size:5.2px!important}
+  #roadtoace .ace519Choices{grid-template-columns:1fr 1fr}.ace519Choice{padding:8px}.ace519Choice b{font-size:7px!important}
+  #roadtoace .ace519BodyDetail.open{grid-template-columns:92px minmax(0,1fr)}.ace519BodyMini{width:82px;height:145px}
+}
+@media(max-width:390px){#roadtoace .ace519Planner{padding:8px!important}.ace519Top h2{font-size:16px}.ace519Counter{min-width:64px}.ace519Slots{gap:4px}.ace519Categories{gap:4px}.ace519Cat{padding:8px 3px}.ace519Projection{padding:7px 6px}}
+</style>
+<script id="ace519-preparation-planner-js">
+(()=>{
+'use strict';
+if(window.ACE519_PREPARATION_PLANNER)return;window.ACE519_PREPARATION_PLANNER=true;
+const BUILD='B21.36.519-BETA';
+const S=()=>window.__ACE_RTA_STATE||{};
+const C=()=>S().career||null;
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const status=c=>String(c?.injury_status||'FIT').toUpperCase();
+const stateClass=s=>s==='SORE'?'sore':s==='LIMITED'?'limited':s==='OUT'?'out':'fit';
+const loadBand=n=>Number(n)<35?'LOW':Number(n)<60?'MODERATE':Number(n)<80?'HIGH':'VERY HIGH';
+const money=n=>'£'+Math.max(0,Math.round(Number(n)||0)).toLocaleString('en-GB');
+const specCost=c=>Math.max(50,Math.min(750,Math.round(Math.max(350,Number(c?.weekly_wage)||350)*.08)));
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const planKey=c=>`ace519-plan:${Number(c?.season||1)}:${Number(c?.season_match||0)}`;
+const meta={
+  RECEIVE:{type:'train',title:'Receive',sub:'Platform control',load:7,ready:-3,growth:'RECEIVE +'},SERVE:{type:'train',title:'Serve',sub:'Accuracy & pressure',load:9,ready:-4,growth:'SERVE +'},ATTACK:{type:'train',title:'Attack',sub:'Finishing & shot choice',load:11,ready:-5,growth:'ATTACK +'},BLOCK:{type:'train',title:'Block',sub:'Timing & footwork',load:11,ready:-5,growth:'BLOCK +'},DEFENCE:{type:'train',title:'Defence',sub:'Reading & reaction',load:7,ready:-3,growth:'DEFENCE +'},SETTING:{type:'train',title:'Setting',sub:'Technique & creativity',load:6,ready:-3,growth:'SETTING +'},
+  VERTICAL:{type:'physical',title:'Vertical',sub:'Jump explosiveness',load:14,ready:-7,growth:'VERTICAL +'},REACTION_TIME:{type:'physical',title:'Reaction',sub:'First-step response',load:14,ready:-7,growth:'REACTION +'},SPEED:{type:'physical',title:'Speed',sub:'Court movement',load:14,ready:-7,growth:'SPEED +'},WORK_RATE:{type:'physical',title:'Work Rate',sub:'Repeat-effort capacity',load:14,ready:-7,growth:'WORK RATE +'},
+  REST:{type:'recovery',title:'Full Rest',sub:'Maximum freshness',load:-18,ready:8,growth:'NO SKILL GAIN'},CLUB_PHYSIO:{type:'recovery',title:'Club Physio',sub:'Free rehab / treatment',load:-12,ready:5,injury:-3,growth:'RECOVERY'},FILM:{type:'offcourt',title:'Film Room',sub:'Low-load tactical work',load:-5,ready:2,xp:50,growth:'+50 XP'},TEAM_TIME:{type:'offcourt',title:'Team Gaming',sub:'Mental recovery',load:-7,ready:3,mental:3,growth:'MENTAL +3'},SPECIALIST_PHYSIO:{type:'recovery',title:'Specialist',sub:'Private recovery support',load:-15,ready:6,injury:-5,growth:'RECOVERY ++',paid:true}
+};
+let activeCategory='TRAIN';
+let bodyOpen=false;
+let busy=false;
+
+function loadPlan(c){
+  try{
+    const raw=sessionStorage.getItem(planKey(c));if(!raw)return{items:[],confirmed:false,index:0,waiting:null,baseUsed:Number(c?.training_used||0)};
+    const p=JSON.parse(raw)||{};return{items:Array.isArray(p.items)?p.items:[],confirmed:!!p.confirmed,index:Number(p.index||0),waiting:p.waiting??null,baseUsed:Number.isFinite(Number(p.baseUsed))?Number(p.baseUsed):Number(c?.training_used||0)};
+  }catch(_){return{items:[],confirmed:false,index:0,waiting:null,baseUsed:Number(c?.training_used||0)}}
+}
+function savePlan(c,p){try{sessionStorage.setItem(planKey(c),JSON.stringify(p))}catch(_){}}
+function clearPlan(c){try{sessionStorage.removeItem(planKey(c))}catch(_){}}
+function maxPlanItems(c,p=null){const base=p&&Number.isFinite(Number(p.baseUsed))?Number(p.baseUsed):Number(c?.training_used||0);return Math.max(0,2-base);}
+function item(id){const m=meta[id];return m?{id,...m}:null}
+function focusForPosition(c){const p=String(c?.position||'OH').toUpperCase();if(p==='S')return'SETTING';if(p==='M'||p==='MB')return'BLOCK';if(p==='L')return'RECEIVE';if(p==='OP')return'ATTACK';return'ATTACK'}
+function secondFocus(c){const p=String(c?.position||'OH').toUpperCase();if(p==='S')return'SERVE';if(p==='M'||p==='MB')return'VERTICAL';if(p==='L')return'REACTION_TIME';if(p==='OP')return'SERVE';return'RECEIVE'}
+function recommendation(c){const s=status(c),load=Number(c?.body_load||0),r=Number(c?.readiness??100);if(s==='OUT')return{cat:'RECOVER',icon:'✚',title:'Medical recovery first',text:'You are medically OUT. Use rehab or rest while the team continues.'};if(s==='LIMITED')return{cat:'RECOVER',icon:'⚕',title:'Keep the load controlled',text:'Limited status makes heavy training a poor trade before the next match.'};if(load>=75)return{cat:'RECOVER',icon:'↓',title:'Body load is high',text:'Consider spending one preparation slot on recovery.'};if(r<80)return{cat:'RECOVER',icon:'☾',title:'Readiness is down',text:'A recovery activity should improve your match-day condition.'};return{cat:'TRAIN',icon:'▲',title:'Condition supports development',text:'You are in a good position to use at least one slot on training.'}}
+function bodyZone(c,zone){const s=status(c),p=String(c?.injury_body_part||'').toUpperCase();if(s==='FIT')return'good';const hit={shoulder:/SHOULDER|ARM|ELBOW/.test(p),hand:/FINGER|HAND|WRIST/.test(p),back:/BACK|CORE/.test(p),muscle:/MUSCLE|HAMSTRING|CALF|THIGH|GENERAL/.test(p),knee:/KNEE/.test(p),ankle:/ANKLE|FOOT/.test(p)}[zone];return hit?(s==='SORE'?'sore':s==='LIMITED'?'limited':'out'):'good'}
+function miniBody(c){const z=n=>bodyZone(c,n),d=(zone,x,y,r=7)=>`<circle class="dot ${z(zone)}" cx="${x}" cy="${y}" r="${r}"/>`;return`<svg class="ace519BodyMini" viewBox="0 0 180 330" aria-label="Body status"><circle cx="90" cy="34" r="24" class="shape"/><path d="M67 63 Q90 53 113 63 L125 122 L112 174 L108 221 L121 307 L97 307 L89 226 L81 307 L57 307 L70 221 L66 174 L55 122 Z" class="shape"/><path d="M59 74 L31 145 L43 151 L72 96" class="limb"/><path d="M121 74 L149 145 L137 151 L108 96" class="limb"/>${d('shoulder',61,80,8)}${d('shoulder',119,80,8)}${d('hand',38,151)}${d('hand',142,151)}${d('back',90,151,9)}${d('muscle',72,222,8)}${d('muscle',108,222,8)}${d('knee',67,252,8)}${d('knee',113,252,8)}${d('ankle',61,303)}${d('ankle',119,303)}</svg>`}
+function normalizePlan(c,p){
+  const used=Number(c?.training_used||0);
+  if(p.waiting!==null&&used>Number(p.waiting)){p.index=Math.min(p.items.length,p.index+1);p.waiting=null;savePlan(c,p)}
+  if(p.index>=p.items.length&&p.confirmed&&p.items.length){p.confirmed=false;p.items=[];p.index=0;p.waiting=null;savePlan(c,p)}
+  if(!p.items.length&&!p.confirmed)p.baseUsed=Number(c?.training_used||0);
+  if(p.items.length>maxPlanItems(c,p)&&!p.confirmed){p.items=p.items.slice(0,maxPlanItems(c,p));savePlan(c,p)}
+  return p;
+}
+function projection(c,p){
+  let load=Number(c?.body_load||0),ready=Number(c?.readiness??100),inj=0,cost=0,g=[];
+  const arr=p.items.slice(p.confirmed?p.index:0);
+  for(const x of arr){const m=meta[x.id]||x;load+=Number(m.load||0);ready+=Number(m.ready||0);inj+=Number(m.injury||0);if(m.paid)cost+=specCost(c);if(m.growth&&!g.includes(m.growth))g.push(m.growth)}
+  return{load:Math.round(clamp(load,0,100)),ready:Math.round(clamp(ready,0,100)),inj,cost,growth:g.slice(0,2).join(' · ')||'NO CHANGE'}
+}
+function choiceDisabled(c,id){const s=status(c),m=meta[id]||{};if(Number(c?.training_used||0)>=2)return true;if(s==='OUT'&&(m.type==='train'||m.type==='physical'))return true;if(s==='LIMITED'&&['ATTACK','SERVE','BLOCK','VERTICAL','REACTION_TIME','SPEED','WORK_RATE'].includes(id))return true;if(id==='SPECIALIST_PHYSIO'){const cost=specCost(c);return!!c.recovery_boost_used||Number(c.cash_balance||0)<cost||(s==='FIT'&&Number(c.body_load||0)<60)}return false}
+function categories(c,p){const rec=recommendation(c);return`<div class="ace519Categories"><button class="ace519Cat ${activeCategory==='TRAIN'?'active':''} ${rec.cat==='TRAIN'?'recommended':''}" data-ace519-cat="TRAIN"><i>△</i><b>TRAIN</b></button><button class="ace519Cat ${activeCategory==='RECOVER'?'active':''} ${rec.cat==='RECOVER'?'recommended':''}" data-ace519-cat="RECOVER"><i>♡</i><b>RECOVER</b></button><button class="ace519Cat ${activeCategory==='OFFCOURT'?'active':''}" data-ace519-cat="OFFCOURT"><i>◉</i><b>OFF-COURT</b></button></div>`}
+function choiceHtml(c,p,id,kicker){const m=meta[id],sel=p.items.some(x=>x.id===id),disabled=choiceDisabled(c,id)||p.confirmed||p.items.length>=maxPlanItems(c)&&!sel;const extra=id==='SPECIALIST_PHYSIO'?`${money(specCost(c))} · ${m.sub}`:m.sub;return`<button class="ace519Choice ${sel?'selected':''} ${m.paid?'paid':''}" data-ace519-choice="${id}" ${disabled?'disabled':''}><small>${esc(kicker)}</small><b>${esc(m.title)}</b><span>${esc(extra)}</span></button>`}
+function choices(c,p){
+  let ids=[],kick='TRAINING';
+  if(activeCategory==='TRAIN')ids=['RECEIVE','SERVE','ATTACK','BLOCK','DEFENCE','SETTING','VERTICAL','REACTION_TIME','SPEED','WORK_RATE'];
+  else if(activeCategory==='RECOVER'){ids=['REST','CLUB_PHYSIO','SPECIALIST_PHYSIO'];kick='RECOVERY'}
+  else{ids=['FILM','TEAM_TIME'];kick='LOW LOAD'}
+  return`<div class="ace519Choices">${ids.map(id=>choiceHtml(c,p,id,kick)).join('')}</div>`
+}
+function slotHtml(c,p,n){const used=Number(c.training_used||0),base=Number.isFinite(Number(p.baseUsed))?Number(p.baseUsed):used;if(n<=base)return`<div class="ace519Slot used"><small>SLOT ${n}</small><b>ACTIVITY USED</b><span>Already completed this match cycle.</span></div>`;const planIndex=n-base-1,x=p.items[planIndex];if(!x)return`<button class="ace519Slot" data-ace519-empty="${planIndex}"><small>SLOT ${n}</small><b>+ CHOOSE ACTIVITY</b><span>Training, recovery or off-court.</span></button>`;const done=p.confirmed&&planIndex<p.index;const current=p.confirmed&&planIndex===p.index;return`<div class="ace519Slot ${done?'done':'planned'}"><small>SLOT ${n}${done?' · DONE':current?' · NEXT':''}</small><b>${esc(x.title)}</b><span>${esc(x.sub)}</span>${!p.confirmed?`<button class="remove" data-ace519-remove="${planIndex}" aria-label="Remove">×</button>`:''}</div>`}
+function preset(c,p,kind){if(p.confirmed)return;p.baseUsed=Number(c?.training_used||0);const max=maxPlanItems(c,p);let ids=[];if(kind==='DEVELOP')ids=[focusForPosition(c),secondFocus(c)];if(kind==='BALANCED')ids=[focusForPosition(c),'REST'];if(kind==='READY')ids=status(c)==='FIT'?['REST','FILM']:['CLUB_PHYSIO','REST'];p.items=ids.slice(0,max).map(item).filter(Boolean);p.index=0;p.waiting=null;savePlan(c,p);renderPlanner()}
+function planHtml(c,p){const used=Number(c.training_used||0),s=status(c),load=Math.round(Number(c.body_load||0)),ready=Math.round(Number(c.readiness??100)),rec=recommendation(c),proj=projection(c,p),max=Math.max(0,2-used),remaining=p.items.length-p.index;const issue=s==='FIT'?'ALL TRACKED AREAS CLEAR':`${c.injury_type||'MEDICAL ISSUE'} · ${c.injury_body_part||'BODY'}`;const actionLabel=used>=2?'PREPARATION COMPLETE':p.confirmed?(p.waiting!==null?'RESUME TRAINING':remaining>0?'CONTINUE PLAN':'PLAN COMPLETE'):'CONFIRM PREPARATION';const canAction=used<2&&(p.confirmed?(remaining>0):p.items.length>0);
+return`<section class="ace519Planner" data-ace519-planner>
+  <div class="ace519Top"><div><small>PREPARATION</small><h2>Build your match plan.</h2><p>Two preparation slots. Choose first, review the impact, then commit.</p></div><div class="ace519Counter"><b>${used} / 2</b><span>SLOTS USED</span></div></div>
+  <div class="ace519Condition"><div><span>READINESS</span><b>${ready}%</b><small>${ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED'}</small></div><div><span>BODY LOAD</span><b>${load}</b><small>${loadBand(load)}</small></div><div class="${stateClass(s)}"><span>MEDICAL</span><b>${esc(s)}</b><small>${s==='FIT'?'CLEARED':Math.max(0,Math.round(Number(c.injury_days_remaining||0)))+'D EST.'}</small></div></div>
+  <div class="ace519Advice"><i>${rec.icon}</i><div><b>${esc(rec.title)}</b><span>${esc(rec.text)}</span></div></div>
+  <button class="ace519BodyToggle" data-ace519-body><div><span>BODY STATUS</span><b>${esc(issue)}</b></div><em>${bodyOpen?'⌃':'⌄'}</em></button>
+  <div class="ace519BodyDetail ${bodyOpen?'open':''}">${miniBody(c)}<div class="ace519BodyCopy"><h3>${s==='FIT'?'No current medical issue.':esc(c.injury_type||'Medical issue')}</h3><p>${s==='FIT'?'The body map stays compact while you are healthy. It expands automatically in importance when soreness or injury appears.':`${esc(c.injury_body_part||'Affected area')} · ${esc(c.injury_severity||s)} · approximately ${Math.max(0,Math.round(Number(c.injury_days_remaining||0)))} days remaining.`}</p><strong>${esc(s)}</strong></div></div>
+  <div class="ace519PlanLabel"><b>YOUR PLAN</b><span>${max} slot${max===1?'':'s'} available</span></div>
+  <div class="ace519Slots">${slotHtml(c,p,1)}${slotHtml(c,p,2)}</div>
+  ${!p.confirmed&&max>0?`<div class="ace519Presets"><button class="ace519Preset ${rec.cat==='TRAIN'?'recommended':''}" data-ace519-preset="DEVELOP">DEVELOP</button><button class="ace519Preset" data-ace519-preset="BALANCED">BALANCED</button><button class="ace519Preset ${rec.cat==='RECOVER'?'recommended':''}" data-ace519-preset="READY">MATCH READY</button></div>${categories(c,p)}${choices(c,p)}`:''}
+  <div class="ace519Projection"><div><span>PROJECTED READY</span><b>${ready}% → ~${proj.ready}%</b><small>estimate</small></div><div><span>PROJECTED LOAD</span><b>${load} → ~${proj.load}</b><small>${loadBand(proj.load)}</small></div><div><span>EXPECTED EFFECT</span><b>${esc(proj.growth)}</b><small>${proj.inj<0?`recovery ${proj.inj}d`:proj.cost?money(proj.cost):'before match'}</small></div></div>
+  <div class="ace519Actions"><button class="ace519Confirm" data-ace519-confirm ${!canAction?'disabled':''}>${esc(actionLabel)}</button>${!p.confirmed&&p.items.length?`<button class="ace519Reset" data-ace519-reset>RESET</button>`:''}</div>
+  ${p.confirmed?`<div class="ace519Progress">Plan locked. Complete the highlighted activity, then continue to the next slot.</div>`:''}
+</section>`}
+function host(){return document.querySelector('#roadtoace .rta187TrainingCentre')}
+function renderPlanner(){const c=C(),h=host();if(!c||!h)return;h.querySelectorAll(':scope>.ace519Planner').forEach(n=>n.remove());h.querySelectorAll(':scope>.ace518PreparationHub').forEach(n=>n.remove());let p=normalizePlan(c,loadPlan(c));const anchor=h.querySelector(':scope>.rta187TrainingHero')||h.querySelector(':scope>.ace252FirstMatchGuide')||h.firstElementChild;if(anchor)anchor.insertAdjacentHTML('afterend',planHtml(c,p));}
+function toast(msg,type=''){if(typeof window.ACE_RTA_TOAST==='function'){try{return window.ACE_RTA_TOAST(msg,type)}catch(_){}}document.querySelectorAll('.ace519Toast').forEach(n=>n.remove());const el=document.createElement('div');el.className='ace519Toast';el.style.cssText='position:fixed;left:50%;bottom:95px;transform:translateX(-50%);z-index:999999;padding:10px 13px;border-radius:10px;background:#0d2533;color:#eefaff;border:1px solid rgba(106,196,241,.2);font:800 11px system-ui';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
+async function executeRecovery(c,p,x){busy=true;renderPlanner();try{const d=await window.ACE_RTA_RPC('vds_rta_recovery_activity_v512',{p_activity:x.id});if(d?.career)S().career=d.career;try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}p.index++;p.waiting=null;savePlan(C()||c,p);toast(`${x.title} completed.`,'good');try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(renderPlanner,50)}catch(e){toast(String(e?.message||e).replace(/^.*?:\s*/,''),'error')}finally{busy=false;renderPlanner()}}
+function executeTraining(c,p,x){const h=host();if(!h)return;let target=null;if(x.type==='physical')target=h.querySelector(`[data-rta113-physical="${CSS.escape(x.id)}"]`);else target=h.querySelector(`[data-rta62-train="${CSS.escape(x.id)}"]`);if(!target||target.disabled){toast('That training activity is currently unavailable.','error');return}p.waiting=Number(c.training_used||0);savePlan(c,p);renderPlanner();target.click()}
+function runNext(){const c=C();if(!c||busy)return;let p=normalizePlan(c,loadPlan(c));if(!p.confirmed){if(!p.items.length)return;if(!Number.isFinite(Number(p.baseUsed)))p.baseUsed=Number(c.training_used||0);p.confirmed=true;p.index=0;p.waiting=null;savePlan(c,p)}if(p.waiting!==null){const resume=document.querySelector('#roadtoace [data-rta62-resume-training]');if(resume){resume.click();return}toast('Finish the current training drill first.');return}const x=p.items[p.index];if(!x){clearPlan(c);renderPlanner();return}if(x.type==='train'||x.type==='physical')executeTraining(c,p,x);else executeRecovery(c,p,x)}
+function addChoice(id){const c=C();if(!c)return;let p=normalizePlan(c,loadPlan(c));if(p.confirmed)return;const max=maxPlanItems(c,p);if(p.items.some(x=>x.id===id)){p.items=p.items.filter(x=>x.id!==id);savePlan(c,p);renderPlanner();return}if(p.items.length>=max){toast(`Only ${max} preparation slot${max===1?' is':'s are'} available.`);return}const x=item(id);if(!x||choiceDisabled(c,id))return;p.items.push(x);savePlan(c,p);renderPlanner()}
+function sync(){if(String(S().view||'')!=='train')return;renderPlanner()}
+document.addEventListener('click',e=>{if(String(S().view||'')!=='train')return;const cat=e.target.closest?.('[data-ace519-cat]');if(cat){e.preventDefault();activeCategory=cat.dataset.ace519Cat||'TRAIN';renderPlanner();return}const ch=e.target.closest?.('[data-ace519-choice]');if(ch){e.preventDefault();addChoice(String(ch.dataset.ace519Choice||''));return}const rm=e.target.closest?.('[data-ace519-remove]');if(rm){e.preventDefault();const c=C(),p=loadPlan(c),i=Number(rm.dataset.ace519Remove);p.items.splice(i,1);savePlan(c,p);renderPlanner();return}const pr=e.target.closest?.('[data-ace519-preset]');if(pr){e.preventDefault();const c=C(),p=loadPlan(c);preset(c,p,String(pr.dataset.ace519Preset||''));return}if(e.target.closest?.('[data-ace519-body]')){e.preventDefault();bodyOpen=!bodyOpen;renderPlanner();return}if(e.target.closest?.('[data-ace519-reset]')){e.preventDefault();const c=C();clearPlan(c);renderPlanner();return}if(e.target.closest?.('[data-ace519-confirm]')){e.preventDefault();runNext();return}},true);
+document.addEventListener('ace:rta-render',()=>requestAnimationFrame(sync));window.addEventListener('pageshow',()=>setTimeout(sync,120),{passive:true});setTimeout(sync,120);setTimeout(sync,700);
+window.ACE_PROJECT_BUILD=BUILD;window.ACE_RELEASE_BUILD=BUILD;window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD=BUILD;
+})();
+</script>
+<script id="ace519-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.519-BETA';window.ACE_RELEASE_BUILD='B21.36.519-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.519-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.519-BETA';</script>
