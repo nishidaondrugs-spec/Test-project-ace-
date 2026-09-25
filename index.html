@@ -55652,7 +55652,7 @@ body.ace410GuideFocus #roadtoace .ace316kOrb.ace406GuideTargetPulse{z-index:1007
   }
   function syncRtaMilestones(){
     const c=career();if(!c)return;
-    const played=rtaPlayedCount(c),trained=Number(c.training_used||0)>=1;
+    const played=rtaPlayedCount(c),trained=c.first_training_completed===true;
     const st=read();let dirty=false;
     // Training usage resets after a match, so completion must be sticky.
     if((trained||played>=1)&&!st.rta_training_done){st.rta_training_done=true;dirty=true}
@@ -55815,8 +55815,8 @@ body.ace410GuideFocus #roadtoace .ace316kOrb.ace406GuideTargetPulse{z-index:1007
       {id:'ut_match',short:'MATCH',title:'Play your first match',desc:'Take the six you just reviewed onto court.',cta:'GO TO MATCH',done:()=>Number(utProfile()?.matches_played||0)>0,target:()=>firstVisible(['.aceUTMatchOverlay.show .aceUTMatchPrimary','#ultimate .aceUTHomeGhost']),nav:()=>firstVisible(['#ultimate .aceUTHomeGhost','#ultimate [data-ace35-route="match"].next button','#ultimate [data-ace35-route="match"].next']),tip:'You are in the match flow now. Use the highlighted button to find an opponent or start the match.',route:()=>{openPage('ut');later(()=>{try{window.aceUTOpenMatchFlow?.()}catch(_){try{aceUTOpenMatchFlow()}catch(__){}}},220)}}
     ],
     rta:[
-      {id:'rta_train',short:'TRAIN',title:'Complete your first training',desc:'Learn development by doing one real drill.',cta:'GO TO TRAINING',done:()=>has('rta_training_done')||Number(career()?.training_used||0)>=1||rtaPlayedCount()>=1,target:()=>firstVisible(['#roadtoace.page.active .rta187TrainCard.recommended:not([disabled])','#roadtoace.page.active .rta187PhysicalCard.recommended:not([disabled])','#roadtoace.page.active .rta187RecommendedRail>button.primary:not([disabled])']),nav:()=>firstVisible(['#roadtoace.page.active [data-rta62-view="train"]','body > .ace211CareerBottomNav [data-rta62-view="train"]']),tip:'Pick the Recommended drill if you are unsure. Any completed drill counts and improves your player.',route:()=>{openPage('rta');later(()=>window.ACE_RTA_NAV?.(null,'train'),220)}},
-      {id:'rta_match',short:'DEBUT',title:'Play your debut match',desc:'Put your training into the first real fixture.',cta:'GO TO MATCHDAY 1',done:()=>has('rta_match_done')||rtaPlayedCount()>=1,target:()=>firstVisible(['#roadtoace.page.active [data-rta62-key]','#roadtoace.page.active [data-rta62-sim]']),nav:()=>firstVisible(['#roadtoace.page.active [data-rta62-view="match"]','body > .ace211CareerBottomNav [data-rta62-view="match"]']),tip:'This is Matchday 1. Play Key Moments if you want control, or Sim Match if you want the quick result.',route:()=>{openPage('rta');later(()=>window.ACE_RTA_NAV?.(null,'match'),220)}},
+      {id:'rta_train',short:'PREP',title:'Complete your first training',desc:'Open Prep and use Slot 1 for a real training drill.',cta:'OPEN PREP',done:()=>has('rta_training_done')||career()?.first_training_completed===true||rtaPlayedCount()>=1,target:()=>firstVisible(['#roadtoace.page.active .ace519Slot.ace530TutorialTarget','#roadtoace.page.active .ace519Slot:not(.planned)','#roadtoace.page.active .ace519Planner']),nav:()=>firstVisible(['#roadtoace.page.active [data-rta62-view="train"]','body > .ace211CareerBottomNav [data-rta62-view="train"]']),tip:'Prep gives you two activities before a match. For the tutorial, use the first slot on TRAINING; recovery and off-court choices stay available afterwards.',route:()=>{openPage('rta');later(()=>window.ACE_RTA_NAV?.(null,'train'),220)}},
+      {id:'rta_match',short:'DEBUT',title:'Play your debut match',desc:'Enter Key Moments and learn the current match screen on the court itself.',cta:'GO TO MATCHDAY 1',done:()=>has('rta_match_done')||rtaPlayedCount()>=1,target:()=>firstVisible(['#roadtoace.page.active [data-rta62-key]','#roadtoace.page.active [data-rta62-sim]']),nav:()=>firstVisible(['#roadtoace.page.active [data-rta62-view="match"]','body > .ace211CareerBottomNav [data-rta62-view="match"]']),tip:'Choose Key Moments for the hands-on debut. The first live moment now includes a short walkthrough of the HUD, court and current controls. Sim Match remains the quick option.',route:()=>{openPage('rta');later(()=>window.ACE_RTA_NAV?.(null,'match'),220)}},
       {id:'rta_develop',short:'DEVELOP',title:'Open your Skill Tree',desc:'Now turn your first progress into a player build.',cta:'GO TO MY PLAYER',done:()=>has('rta_develop_seen')||rtaSkillTreeOpen(),target:()=>firstVisible(['#roadtoace.page.active [data-rta93-player-panel="tree"]']),nav:()=>firstVisible(['#roadtoace.page.active [data-rta62-view="player"]','body > .ace211CareerBottomNav [data-rta62-view="player"]']),tip:'Tap DEVELOP PLAYER. Once the Skill Tree opens, the main checklist collapses and I will guide you inside the tree.',route:()=>{openPage('rta');later(()=>window.ACE_RTA_NAV?.(null,'player'),220)}},
       {id:'rta_build',short:'BUILD',title:'Build your player',desc:'Choose a playstyle and unlock the first skill in its tree.',cta:'OPEN SKILL TREE',done:()=>has('rta_first_node_upgraded'),target:()=>rtaBuildTarget(),nav:()=>firstVisible(['#roadtoace.page.active .ace316kPaths']),coachCopy:()=>rtaBuildCopy(),tip:'Pick a build and follow the glowing first skill.',route:()=>openRtaSkillTree()}
     ]
@@ -66814,11 +66814,11 @@ function save(c,p){sessionStorage.setItem(planKey(c),JSON.stringify(p));document
 function max(c,p){return Math.max(0,Number.isFinite(Number(p.baseUsed))?2-Number(p.baseUsed):2-Number(c?.training_used||0))}
 function disabled(c,id){const st=String(c?.injury_status||'FIT').toUpperCase();if(Number(c?.training_used||0)>=2)return true;if(st==='OUT'&&META[id]?.[0]==='TRAIN')return true;if(st==='LIMITED'&&['ATTACK','SERVE','BLOCK','VERTICAL','REACTION_TIME','SPEED','WORK_RATE'].includes(id))return true;if(id==='SPECIALIST_PHYSIO'){const cost=specCost(c);return !!c?.recovery_boost_used||Number(c?.cash_balance||0)<cost||(st==='FIT'&&Number(c?.body_load||0)<60)}return false}
 function ids(){if(tab==='TRAIN')return['RECEIVE','SERVE','ATTACK','BLOCK','DEFENCE','SETTING','VERTICAL','REACTION_TIME','SPEED','WORK_RATE'];if(tab==='RECOVER')return['REST','CLUB_PHYSIO','SPECIALIST_PHYSIO'];return['FILM','TEAM_TIME']}
-function renderChoices(){const c=C();if(!c)return'';return`<div class="ace522ChoiceGrid">${ids().map(id=>{const m=META[id],sub=id==='FILM'?`Scout ${esc(nextOpp())}`:id==='SPECIALIST_PHYSIO'?`£${specCost(c).toLocaleString('en-GB')} · ${esc(m[2])}`:esc(m[2]);return`<button class="ace522Choice ${id==='FILM'?'film':''}" data-ace522-choice="${id}" ${disabled(c,id)?'disabled':''}><small>${esc(m[0])}</small><b>${esc(m[1])}</b><span>${sub}</span><em>${esc(m[3])}</em></button>`}).join('')}</div>`}
+function renderChoices(){const c=C();if(!c)return'';const p=load(c),filmPlanned=(p.items||[]).filter(x=>x?.id==='FILM').length;return`<div class="ace522ChoiceGrid">${ids().map(id=>{const m=META[id],sub=id==='FILM'?(filmPlanned?`Deep dive: ${esc(nextOpp())}`:`Scout ${esc(nextOpp())}`):id==='SPECIALIST_PHYSIO'?`£${specCost(c).toLocaleString('en-GB')} · ${esc(m[2])}`:esc(m[2]);const title=id==='FILM'&&filmPlanned?'Opponent Film · Deep Dive':m[1];const tag=id==='FILM'&&filmPlanned?'DEEPER INTEL':m[3];return`<button class="ace522Choice ${id==='FILM'?'film':''}" data-ace522-choice="${id}" ${disabled(c,id)?'disabled':''}><small>${esc(m[0])}</small><b>${esc(title)}</b><span>${sub}</span><em>${esc(tag)}</em></button>`}).join('')}</div>`}
 function openPicker(idx=0){const c=C();if(!c)return;targetIndex=Math.max(0,Number(idx)||0);closePicker();const el=document.createElement('div');el.className='ace522PickerBackdrop';el.innerHTML=`<section class="ace522Picker"><header class="ace522PickerHead"><div><small>PREPARATION SLOT ${targetIndex+1}</small><h2>CHOOSE ACTIVITY</h2><p>Training, recovery and off-court work all use the same preparation allowance.</p></div><button class="ace522Close" data-ace522-close>×</button></header><nav class="ace522PickerTabs"><button class="ace522PickerTab ${tab==='TRAIN'?'active':''}" data-ace522-tab="TRAIN">TRAIN</button><button class="ace522PickerTab ${tab==='RECOVER'?'active':''}" data-ace522-tab="RECOVER">RECOVER</button><button class="ace522PickerTab ${tab==='OFFCOURT'?'active':''}" data-ace522-tab="OFFCOURT">OFF-COURT</button></nav><div class="ace522PickerBody" data-ace522-body>${renderChoices()}</div></section>`;document.body.appendChild(el)}
 function closePicker(){document.querySelectorAll('.ace522PickerBackdrop').forEach(n=>n.remove())}
 function choose(id){const c=C();if(!c||disabled(c,id))return;const p=load(c);if(p.confirmed)return;const limit=Math.max(0,2-Number(p.baseUsed||0));if(!limit)return;const m=META[id];const map={RECEIVE:['train','Receive','Platform control',7,-3,'RECEIVE +'],SERVE:['train','Serve','Accuracy & pressure',9,-4,'SERVE +'],ATTACK:['train','Attack','Finishing & shot choice',11,-5,'ATTACK +'],BLOCK:['train','Block','Timing & footwork',11,-5,'BLOCK +'],DEFENCE:['train','Defence','Reading & reaction',7,-3,'DEFENCE +'],SETTING:['train','Setting','Technique & creativity',6,-3,'SETTING +'],VERTICAL:['physical','Vertical','Jump explosiveness',14,-7,'VERTICAL +'],REACTION_TIME:['physical','Reaction','First-step response',14,-7,'REACTION +'],SPEED:['physical','Speed','Court movement',14,-7,'SPEED +'],WORK_RATE:['physical','Work Rate','Repeat-effort capacity',14,-7,'WORK RATE +'],REST:['recovery','Full Rest','Maximum freshness',-18,8,'NO SKILL GAIN'],CLUB_PHYSIO:['recovery','Club Physio','Free rehab / treatment',-12,5,'RECOVERY'],SPECIALIST_PHYSIO:['recovery','Specialist','Private recovery support',-15,6,'RECOVERY ++'],FILM:['offcourt','Opponent Film',`Scout ${nextOpp()}`,-3,1,'TACTICAL EDGE'],TEAM_TIME:['offcourt','Team Gaming','Mental recovery',-7,3,'MENTAL +3']};const x=map[id];const obj={id,type:x[0],title:x[1],sub:x[2],load:x[3],ready:x[4],growth:x[5]};if(id==='SPECIALIST_PHYSIO')obj.paid=true;if(id==='CLUB_PHYSIO')obj.injury=-3;if(id==='SPECIALIST_PHYSIO')obj.injury=-5;if(id==='TEAM_TIME')obj.mental=3;const idx=Math.min(targetIndex,p.items.length);if(idx<p.items.length)p.items[idx]=obj;else p.items.push(obj);p.items=p.items.slice(0,limit);save(c,p);closePicker()}
-function showFilm(d){document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove());const r=d?.report||{},opp=r.opponent||nextOpp();const el=document.createElement('div');el.className='ace522FilmBackdrop';el.innerHTML=`<section class="ace522FilmReport"><small>OPPONENT FILM COMPLETE</small><h2>${esc(opp)}</h2><p>Your scouting edge applies to this match only.</p><div class="ace522FilmIntel"><div><span>COACH FOCUS</span><b>${esc(r.primary_focus||'BALANCED')}</b></div><div><span>STRONGEST AREA</span><b>${esc(r.strongest_area||'BALANCED')}</b></div><div><span>BEST TARGET</span><b>${esc(r.target_area||'BALANCED')}</b></div></div><div class="ace522FilmNote">${esc(r.tactical_note||'Use the scouting report to improve your first read and decision-making against this opponent.')}</div><div class="ace522FilmActions"><button data-ace522-film-close>REPORT UNDERSTOOD</button></div></section>`;document.body.appendChild(el)}
+function showFilm(d){document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove());const r=d?.report||{},opp=r.opponent||nextOpp(),count=Number(r.study_count||d?.study_count||1),adv=r.advanced_intel||{},deep=count>=2;const person=(x,key)=>x?.name?`${esc(x.name)} · ${esc(x.position||'')} · ${Number(x[key]||0)}`:'—';const extra=Object.keys(adv).length?`<div class="ace530AdvancedIntel"><small>${deep?'SECOND WATCH · DEEP DIVE':esc(r.intel_level||'ADVANCED')} INTEL</small><div><span>TOP ATTACKER<b>${person(adv.top_attacker,'attack')}</b></span><span>TOP SERVER<b>${person(adv.top_server,'serve')}</b></span><span>BLOCK ANCHOR<b>${person(adv.block_anchor,'block')}</b></span>${adv.form_player?`<span>FORM PLAYER<b>${person(adv.form_player,'form')}</b></span>`:''}</div></div>`:'';const el=document.createElement('div');el.className='ace522FilmBackdrop';el.innerHTML=`<section class="ace522FilmReport"><small>${deep?'OPPONENT DEEP DIVE COMPLETE':'OPPONENT FILM COMPLETE'}</small><h2>${esc(opp)}</h2><p>${deep?'Second viewing completed. You used both preparation slots on scouting; the extra physical/mental reward is smaller, but the report is deeper.':'Your scouting edge applies to this match only. You may spend the second Prep slot on Film again for a deeper report.'}</p><div class="ace522FilmIntel"><div><span>COACH FOCUS</span><b>${esc(r.primary_focus||'BALANCED')}</b></div><div><span>STRONGEST AREA</span><b>${esc(r.strongest_area||'BALANCED')}</b></div><div><span>BEST TARGET</span><b>${esc(r.target_area||'BALANCED')}</b></div></div><div class="ace522FilmNote">${esc(r.tactical_note||'Use the scouting report to improve your first read and decision-making against this opponent.')}</div>${extra}<div class="ace522FilmActions"><button data-ace522-film-close>REPORT UNDERSTOOD</button></div></section>`;document.body.appendChild(el)}
 window.ACE522_SHOW_FILM_REPORT=showFilm;
 document.addEventListener('click',e=>{if(String(S().view||'')!=='train'&&!e.target.closest?.('.ace522FilmBackdrop'))return;const empty=e.target.closest?.('[data-ace519-empty]');if(empty){e.preventDefault();e.stopPropagation();openPicker(Number(empty.dataset.ace519Empty||0));return}const planned=e.target.closest?.('.ace519Slot.planned');if(planned&&!e.target.closest?.('[data-ace519-remove]')){e.preventDefault();const all=[...planned.parentElement.children];openPicker(Math.max(0,all.indexOf(planned)-Number(C()?.training_used||0)));return}const t=e.target.closest?.('[data-ace522-tab]');if(t){e.preventDefault();tab=t.dataset.ace522Tab||'TRAIN';document.querySelectorAll('.ace522PickerTab').forEach(b=>b.classList.toggle('active',b.dataset.ace522Tab===tab));const body=document.querySelector('[data-ace522-body]');if(body)body.innerHTML=renderChoices();return}const ch=e.target.closest?.('[data-ace522-choice]');if(ch){e.preventDefault();choose(ch.dataset.ace522Choice);return}if(e.target.closest?.('[data-ace522-close]')||e.target===document.querySelector('.ace522PickerBackdrop')){e.preventDefault();closePicker();return}if(e.target.closest?.('[data-ace522-film-close]')||e.target===document.querySelector('.ace522FilmBackdrop')){e.preventDefault();document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove());return}},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePicker();document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove())}});
@@ -67001,7 +67001,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
 
 
-<!-- PROJECT ACE B21.36.531 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
+<!-- PROJECT ACE B21.36.535 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
 <style id="ace530-ecosystem-ui-style">
 #roadtoace .ace530TutorialBanner{position:relative;z-index:4;margin:0 0 8px;padding:9px 10px;border:1px solid rgba(92,190,239,.22);border-radius:11px;background:linear-gradient(135deg,rgba(45,145,207,.12),rgba(6,24,37,.92));box-shadow:inset 3px 0 0 #64c6f3;color:#dff5ff}
 #roadtoace .ace530TutorialBanner small{display:block;color:#6fc9f4;font:1000 5.8px/1 system-ui;letter-spacing:.15em}
@@ -67038,7 +67038,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace530-ecosystem-ui-script">
 (()=>{
 'use strict';
-const BUILD='B21.36.531-ECOSYSTEM-PREVIEW';
+const BUILD='B21.36.535-ECOSYSTEM-PREVIEW';
 window.ACE_PROJECT_BUILD=BUILD;
 window.ACE_RELEASE_BUILD=BUILD;
 window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
@@ -67208,7 +67208,7 @@ function dashboardHTML(){
   const holidayDisabled=!C()?.season_complete;
   const trainerUntil=Number(c.services?.personal_trainer_until_match||0),analystUntil=Number(c.services?.private_analyst_until_match||0),m=Number(C()?.season_match||0);
   return `<div class="ace530Dash">
-    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V531</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
+    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V535</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
     <div class="ace530MetricGrid">
       <div class="ace530Metric"><span>CHEMISTRY</span><b>${Number(c.team_chemistry||0).toFixed(0)}</b><small>${statusWord(c.team_chemistry)}</small></div>
       <div class="ace530Metric"><span>ADAPTATION</span><b>${Number(c.adaptation||0).toFixed(0)}</b><small>${statusWord(c.adaptation)}</small></div>
@@ -67336,5 +67336,306 @@ setTimeout(()=>{refreshEco(true);queue()},1100);
 window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD};
 })();
 </script>
-<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';</script>
+<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';</script>
+
+
+
+<!-- PROJECT ACE B21.36.535 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
+<style id="ace535-career-notice-nav-gameplay-style">
+/* Persistent injury notice: no timer and no close X. It leaves only after the player taps it. */
+.ace535InjuryNotice{
+  position:fixed;z-index:2147483500;right:14px;top:14px;width:min(360px,calc(100vw - 28px));
+  display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:11px 12px;border:1px solid rgba(255,111,126,.34);border-radius:14px;
+  background:linear-gradient(145deg,rgba(56,15,25,.97),rgba(19,12,18,.98));
+  box-shadow:0 18px 46px rgba(0,0,0,.52),inset 3px 0 0 #ff7183;
+  color:#fff;cursor:pointer;text-align:left;animation:ace535NoticeIn .24s ease both;
+  -webkit-tap-highlight-color:transparent;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+.ace535InjuryNotice>i{
+  width:42px;height:42px;display:grid;place-items:center;border-radius:12px;
+  background:rgba(255,112,130,.10);border:1px solid rgba(255,132,147,.17);
+  color:#ff9daa;font-style:normal;font-size:18px
+}
+.ace535InjuryNotice small{display:block;color:#ff9aa7;font:1000 5.6px/1 system-ui;letter-spacing:.15em}
+.ace535InjuryNotice b{display:block;margin-top:4px;color:#fff;font:1000 11px/1.08 system-ui}
+.ace535InjuryNotice span{display:block;margin-top:4px;color:#b99ca3;font:750 6.3px/1.35 system-ui}
+.ace535InjuryNotice em{
+  align-self:center;padding:6px 7px;border-radius:999px;background:rgba(255,255,255,.06);
+  color:#ffc4cc;font:1000 5.2px/1 system-ui;font-style:normal;letter-spacing:.09em;white-space:nowrap
+}
+@keyframes ace535NoticeIn{from{opacity:0;transform:translateY(-10px) scale(.985)}to{opacity:1;transform:none}}
+
+/* Let the Career nav actually occupy the phone width. The preview chip now sits above it. */
+@media(max-width:760px){
+  body.aceRtaActive{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+  body > .rta85MobileTabs.ace211CareerBottomNav{
+    left:4px!important;right:4px!important;bottom:max(5px,env(safe-area-inset-bottom))!important;
+    grid-template-columns:1.05fr 1.05fr 88px 1.05fr 1.05fr!important;
+    gap:3px!important;height:74px!important;min-height:74px!important;padding:8px 4px 7px!important;
+    border-radius:22px!important;
+  }
+  body > .ace211CareerBottomNav button{
+    min-height:57px!important;height:57px!important;padding:5px 2px!important;border-radius:13px!important
+  }
+  body > .ace211CareerBottomNav button i{font-size:18px!important;line-height:18px!important;min-height:18px!important}
+  body > .ace211CareerBottomNav button span{font-size:7.7px!important;line-height:9px!important;letter-spacing:.035em!important}
+  body > .ace211CareerBottomNav button[data-rta62-view="home"]{
+    min-height:83px!important;height:83px!important;margin-top:-30px!important
+  }
+  body > .ace211CareerBottomNav button[data-rta62-view="home"] i{
+    width:72px!important;height:72px!important;min-height:72px!important;top:-4px!important
+  }
+  body > .ace211CareerBottomNav button[data-rta62-view="home"] i::before{font-size:39px!important}
+  #ace527PreviewChip{
+    left:8px!important;bottom:calc(86px + env(safe-area-inset-bottom))!important;
+    max-width:min(245px,calc(100vw - 72px))!important;padding:7px 9px!important;
+    z-index:3400!important;
+  }
+  .ace535InjuryNotice{
+    left:8px;right:8px;top:max(8px,env(safe-area-inset-top));width:auto;
+    grid-template-columns:38px minmax(0,1fr) auto;padding:9px 10px;border-radius:13px
+  }
+  .ace535InjuryNotice>i{width:38px;height:38px;border-radius:10px;font-size:16px}
+  .ace535InjuryNotice b{font-size:10px}.ace535InjuryNotice span{font-size:5.9px}
+}
+@media(max-width:390px){
+  body > .rta85MobileTabs.ace211CareerBottomNav{
+    left:3px!important;right:3px!important;grid-template-columns:1fr 1fr 82px 1fr 1fr!important
+  }
+  body > .ace211CareerBottomNav button span{font-size:7.1px!important}
+  body > .ace211CareerBottomNav button[data-rta62-view="home"] i{
+    width:69px!important;height:69px!important;min-height:69px!important
+  }
+}
+
+/* New live gameplay walkthrough. It points at the CURRENT rendered HUD/court/control,
+   so future layout changes do not require a fake tutorial screen. */
+.ace535GameplayBlocker{position:fixed;inset:0;z-index:2147483000;background:transparent;pointer-events:auto}
+.ace535GameplaySpot{
+  position:fixed;z-index:2147483001;pointer-events:none;border:2px solid rgba(104,210,255,.98);
+  border-radius:14px;box-shadow:0 0 0 9999px rgba(0,6,12,.73),0 0 0 5px rgba(82,190,240,.11),0 0 32px rgba(67,184,237,.40);
+  transition:left .16s ease,top .16s ease,width .16s ease,height .16s ease
+}
+.ace535GameplayGuide{
+  position:fixed;z-index:2147483003;left:50%;bottom:max(10px,calc(env(safe-area-inset-bottom) + 8px));
+  transform:translateX(-50%);width:min(520px,calc(100vw - 18px));padding:11px 12px;
+  border:1px solid rgba(100,203,250,.25);border-radius:15px;
+  background:linear-gradient(145deg,rgba(5,21,32,.985),rgba(7,30,45,.985));
+  color:#eefaff;box-shadow:0 20px 55px rgba(0,0,0,.54);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)
+}
+.ace535GameplayGuide small{display:block;color:#69c6f1;font:1000 5.6px/1 system-ui;letter-spacing:.15em}
+.ace535GameplayGuide h3{margin:5px 0 0;font:1000 13px/1.05 system-ui}
+.ace535GameplayGuide p{margin:6px 0 0;color:#88a3b3;font:750 7px/1.42 system-ui}
+.ace535GameplayGuide footer{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:7px;margin-top:9px}
+.ace535GameplayGuide footer span{color:#648397;font:900 5.6px/1 system-ui}
+.ace535GameplayGuide button{
+  min-height:38px;padding:0 11px;border-radius:9px;border:1px solid rgba(105,203,249,.20);
+  background:rgba(64,159,211,.09);color:#bfeaff;font:1000 6px/1 system-ui;letter-spacing:.08em;cursor:pointer
+}
+.ace535GameplayGuide button.primary{background:linear-gradient(135deg,#319bd1,#2078ab);border-color:rgba(128,221,255,.35);color:white}
+.ace535GameplayHelpBtn{
+  width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;
+  display:grid!important;place-items:center!important;padding:0!important;border-radius:50%!important;
+  border:1px solid rgba(102,201,248,.20)!important;background:rgba(57,154,207,.08)!important;
+  color:#88d8ff!important;font:1000 13px/1 system-ui!important;cursor:pointer!important
+}
+@media(max-width:760px){
+  .ace535GameplayGuide{bottom:max(7px,env(safe-area-inset-bottom));padding:9px 10px;border-radius:13px}
+  .ace535GameplayGuide h3{font-size:11px}.ace535GameplayGuide p{font-size:6.3px}
+  .ace535GameplayGuide button{min-height:40px}
+}
+</style>
+<script id="ace535-injury-notice-current-gameplay-tutorial">
+(()=>{
+'use strict';
+if(window.ACE535_CAREER_NOTICE_TUTORIAL)return;
+window.ACE535_CAREER_NOTICE_TUTORIAL=true;
+const BUILD='B21.36.535-ECOSYSTEM-PREVIEW';
+const S=()=>window.__ACE_RTA_STATE||{};
+const C=()=>S().career||null;
+const q=(sel,root=document)=>{try{return root.querySelector(sel)}catch(_){return null}};
+const qa=(sel,root=document)=>{try{return [...root.querySelectorAll(sel)]}catch(_){return []}};
+const visible=el=>{if(!el)return false;const r=el.getBoundingClientRect(),cs=getComputedStyle(el);return r.width>2&&r.height>2&&cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity||1)>.02};
+const firstVisible=list=>{for(const sel of list){for(const el of qa(sel)){if(visible(el))return el}}return null};
+const rpc=(name,args={})=>typeof window.ACE_RTA_RPC==='function'?window.ACE_RTA_RPC(name,args):Promise.reject(new Error('Career connection unavailable.'));
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const slot=()=>Number(S().activeSave||1);
+const uid=()=>String(window.vdsAccountSession?.user?.id||'local');
+const gameKey=()=>`ace535_current_gameplay_tutorial:${uid()}:${slot()}:${String(C()?.created_at||C()?.player_name||'career')}`;
+let tutorial=null,step=0,raf=0,observer=null,injuryBusy=false;
+
+/* ------------------------- persistent medical notice ------------------------- */
+function injuryNotice(){
+  const n=C()?.injury_notice_pending;
+  return n&&typeof n==='object'&&Object.keys(n).length?n:null;
+}
+function injuryHeadline(n){
+  const st=String(n?.status||'INJURY').toUpperCase(),part=String(n?.body_part||'BODY').toUpperCase();
+  return `${st} · ${part}`;
+}
+function removeInjuryNotice(){q('.ace535InjuryNotice')?.remove()}
+function renderInjuryNotice(){
+  const n=injuryNotice(),overlay=q('#rta62Overlay.show');
+  if(!n||overlay){removeInjuryNotice();return}
+  let el=q('.ace535InjuryNotice');
+  if(!el){
+    el=document.createElement('button');el.type='button';el.className='ace535InjuryNotice';
+    document.body.appendChild(el);
+  }
+  const days=Math.max(0,Number(n.days||C()?.injury_days_remaining||0));
+  el.innerHTML=`<i>✚</i><div><small>NEW MEDICAL UPDATE</small><b>${esc(injuryHeadline(n))}</b><span>${esc(n.name||C()?.injury_type||'Injury update')}${days?` · about ${days} day${days===1?'':'s'} remaining`:''}. ${esc(n.message||'Tap to review your medical status in Prep.')}</span></div><em>TAP TO REVIEW</em>`;
+}
+async function acknowledgeInjury(){
+  if(injuryBusy)return;injuryBusy=true;
+  const el=q('.ace535InjuryNotice');if(el)el.style.opacity='.62';
+  try{
+    const d=await rpc('vds_rta_ack_injury_notice_v535',{});
+    if(d?.career)S().career=d.career;
+    removeInjuryNotice();
+    try{if(typeof window.goPage==='function')window.goPage('roadtoace')}catch(_){}
+    setTimeout(()=>{try{window.ACE_RTA_NAV?.(null,'train')}catch(_){}},80);
+  }catch(e){
+    if(el){el.style.opacity='1';el.querySelector('em').textContent='TAP TO RETRY'}
+    console.warn('ACE535 injury notice acknowledgement failed',e);
+  }finally{injuryBusy=false}
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest?.('.ace535InjuryNotice')){e.preventDefault();acknowledgeInjury()}
+},true);
+
+/* ----------------------- current gameplay walkthrough ----------------------- */
+function storageSeen(){try{return localStorage.getItem(gameKey())==='1'}catch(_){return false}}
+function markSeen(){try{localStorage.setItem(gameKey(),'1')}catch(_){}}
+function keyOverlay(){const ov=q('#rta62Overlay.show[data-kind="key"]');return ov&&visible(ov)?ov:null}
+function currentTarget(kind){
+  const ov=keyOverlay();if(!ov)return null;
+  if(kind==='hud')return firstVisible([
+    '#rta62Overlay[data-kind="key"] .rta99MatchHUD',
+    '#rta62Overlay[data-kind="key"] .rta62OverlayTop'
+  ]);
+  if(kind==='scene')return firstVisible([
+    '#rta62Overlay[data-kind="key"] .ace319Receive2SceneCol',
+    '#rta62Overlay[data-kind="key"] .ace320UnifiedScene',
+    '#rta62Overlay[data-kind="key"] .ace323BlockSceneWrap',
+    '#rta62Overlay[data-kind="key"] .rta94SceneColumn',
+    '#rta62Overlay[data-kind="key"] .aceHitScene',
+    '#rta62Overlay[data-kind="key"] .aceServeV5Scene',
+    '#rta62Overlay[data-kind="key"] .rta94AttackScene',
+    '#rta62Overlay[data-kind="key"] .rta94ServeScene',
+    '#rta62Overlay[data-kind="key"] .rta95SetterScene',
+    '#rta62Overlay[data-kind="key"] .rta97CourtScene',
+    '#rta62Overlay[data-kind="key"] .rta62Court'
+  ]);
+  return firstVisible([
+    '#rta62Overlay[data-kind="key"] .aceBlockV2Reads',
+    '#rta62Overlay[data-kind="key"] .ace318ReceiveContact',
+    '#rta62Overlay[data-kind="key"] .ace320SettingContact',
+    '#rta62Overlay[data-kind="key"] .aceBlockV2Press',
+    '#rta62Overlay[data-kind="key"] .aceHitPanel button:not([disabled])',
+    '#rta62Overlay[data-kind="key"] .aceServeV5Panel button:not([disabled])',
+    '#rta62Overlay[data-kind="key"] .rta94ActionPanel button:not([disabled])',
+    '#rta62Overlay[data-kind="key"] .rta102SkillSide button:not([disabled])',
+    '#rta62Overlay[data-kind="key"] button[data-rta62-key-choice]:not([disabled])',
+    '#rta62Overlay[data-kind="key"] button:not(.rta62Close):not(.ace535GameplayHelpBtn):not([disabled])'
+  ]);
+}
+function controlCopy(target){
+  if(!target)return {title:'Make the play',body:'Your live controls sit around the court. Read the cue first, then use the available choice or contact control at the right moment.'};
+  if(target.matches?.('.aceBlockV2Reads')||target.closest?.('.aceBlockV2Reads'))return {title:'Read first, then press',body:'For a block moment, choose the hitter/read across the top first. The jump/press control appears at the bottom-right when it is time to execute.'};
+  if(target.matches?.('.ace318ReceiveContact')||target.closest?.('.ace318ReceiveContact'))return {title:'Move, then contact',body:'Reception is two parts: get yourself into the ball path, then use the contact button at the right moment. Early movement matters as much as the tap.'};
+  if(target.matches?.('.ace320SettingContact')||target.closest?.('.ace320SettingContact'))return {title:'Choose the set, then release',body:'Read the block and your attackers, choose the set, then time the release/contact control. The current layout keeps the court visible while you decide.'};
+  if(target.matches?.('.aceBlockV2Press')||target.closest?.('.aceBlockV2Press'))return {title:'Execute at contact',body:'The large action control is your final execution. Wait for the visual cue instead of tapping immediately.'};
+  return {title:'Choose, then execute',body:'The current Key Moments layout keeps most controls on or around the live court. Follow the on-screen cue, make the tactical choice, then time the final action.'};
+}
+function steps(){
+  const ctrl=currentTarget('controls'),cc=controlCopy(ctrl);
+  return [
+    {kind:'hud',kicker:'1 OF 3 · MATCH CONTEXT',title:'Know what moment you are in',body:'The top area shows the current Key Moment, match context and — when relevant — your fatigue/energy. You are not playing every rally; you are being dropped into the important ones.'},
+    {kind:'scene',kicker:'2 OF 3 · READ THE COURT',title:'The court is the information',body:'Watch the server, setter, hitter, ball path and highlighted cue in the centre of the screen. The best decision comes from the scene — not from button spam.'},
+    {kind:'controls',kicker:'3 OF 3 · LIVE CONTROLS',title:cc.title,body:cc.body}
+  ];
+}
+function clearTutorial(mark=false){
+  q('.ace535GameplayBlocker')?.remove();q('.ace535GameplaySpot')?.remove();q('.ace535GameplayGuide')?.remove();
+  tutorial=null;step=0;
+  if(mark)markSeen();
+}
+function positionTutorial(){
+  if(!tutorial)return;
+  const st=steps()[step]||steps()[0],target=currentTarget(st.kind),spot=q('.ace535GameplaySpot');
+  if(!target||!spot)return;
+  const r=target.getBoundingClientRect(),pad=5;
+  let left=Math.max(5,r.left-pad),top=Math.max(5,r.top-pad),width=Math.max(20,r.width+pad*2),height=Math.max(20,r.height+pad*2);
+  width=Math.min(innerWidth-left-5,width);height=Math.min(innerHeight-top-5,height);
+  Object.assign(spot.style,{left:`${left}px`,top:`${top}px`,width:`${width}px`,height:`${height}px`,borderRadius:st.kind==='controls'?'13px':'14px'});
+}
+function renderTutorial(){
+  const ov=keyOverlay();if(!ov){clearTutorial(false);return}
+  const all=steps(),st=all[step]||all[0];
+  if(!tutorial){
+    const blocker=document.createElement('div');blocker.className='ace535GameplayBlocker';document.body.appendChild(blocker);
+    const spot=document.createElement('div');spot.className='ace535GameplaySpot';document.body.appendChild(spot);
+    tutorial=document.createElement('section');tutorial.className='ace535GameplayGuide';document.body.appendChild(tutorial);
+  }
+  tutorial.innerHTML=`<small>${esc(st.kicker)}</small><h3>${esc(st.title)}</h3><p>${esc(st.body)}</p><footer><button type="button" data-ace535-game-skip>SKIP</button><span>${step+1} / ${all.length}</span><button type="button" class="primary" data-ace535-game-next>${step===all.length-1?'START MOMENT':'NEXT →'}</button></footer>`;
+  requestAnimationFrame(positionTutorial);
+}
+function startTutorial(force=false){
+  if(!keyOverlay())return;
+  if(!force&&storageSeen())return;
+  step=0;renderTutorial();
+}
+function injectHelp(){
+  const ov=keyOverlay();if(!ov)return;
+  const actions=ov.querySelector('.rta125OverlayActions')||ov.querySelector('.rta62OverlayTop');
+  if(!actions||actions.querySelector('.ace535GameplayHelpBtn'))return;
+  const b=document.createElement('button');b.type='button';b.className='ace535GameplayHelpBtn';b.textContent='?';b.title='Gameplay walkthrough';b.setAttribute('aria-label','Gameplay walkthrough');
+  actions.prepend(b);
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest?.('.ace535GameplayHelpBtn')){e.preventDefault();e.stopPropagation();startTutorial(true);return}
+  if(e.target.closest?.('[data-ace535-game-skip]')){e.preventDefault();clearTutorial(true);return}
+  if(e.target.closest?.('[data-ace535-game-next]')){
+    e.preventDefault();
+    const all=steps();
+    if(step>=all.length-1)clearTutorial(true);
+    else{step++;renderTutorial()}
+  }
+},true);
+window.addEventListener('resize',()=>{if(tutorial)requestAnimationFrame(positionTutorial)},{passive:true});
+try{window.visualViewport?.addEventListener('resize',()=>{if(tutorial)requestAnimationFrame(positionTutorial)});window.visualViewport?.addEventListener('scroll',()=>{if(tutorial)requestAnimationFrame(positionTutorial)})}catch(_){}
+
+function sync(){
+  raf=0;
+  renderInjuryNotice();
+  const ov=keyOverlay();
+  if(ov){
+    injectHelp();
+    const c=C();
+    const debut=Number(c?.season||1)===1&&Number(c?.season_match||0)===0;
+    if(debut&&!storageSeen()&&!tutorial)setTimeout(()=>startTutorial(false),180);
+  }else if(tutorial)clearTutorial(false);
+}
+function queue(){if(!raf)raf=requestAnimationFrame(sync)}
+document.addEventListener('ace:rta-render',queue);
+window.addEventListener('pageshow',()=>setTimeout(queue,120),{passive:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)queue()});
+observer=new MutationObserver(queue);
+observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-kind']});
+setInterval(queue,900);
+setTimeout(queue,500);
+
+window.ACE535_GAMEPLAY_TUTORIAL={
+  open(){startTutorial(true)},
+  reset(){try{localStorage.removeItem(gameKey())}catch(_){};startTutorial(true)},
+  dismiss(){clearTutorial(true)}
+};
+window.ACE_PROJECT_BUILD=BUILD;
+window.ACE_RELEASE_BUILD=BUILD;
+window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+window.ACE_TEST_SERVER_BUILD=true;
+})();
+</script>
+<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
 
