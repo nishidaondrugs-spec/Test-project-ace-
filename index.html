@@ -66302,3 +66302,189 @@ window.ACE_HEALTH_ECONOMY_V1_BUILD='B21.36.517-BETA';
 window.ACE_RECOVERY_TAB_BUILD='B21.36.517-BETA';
 window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 </script>
+
+
+<!-- PROJECT ACE B21.36.518-BETA · UNIFIED PREPARATION HUB -->
+<style id="ace518-unified-preparation-style">
+/* Beta only: Training + Recovery + Off-court share the same 0/2 activity allowance. */
+#roadtoace .ace518PreparationHub{
+  order:2!important;
+  margin:0!important;
+  padding:14px!important;
+  border:1px solid rgba(94,190,240,.14)!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,rgba(7,24,35,.94),rgba(4,15,23,.96))!important;
+  box-shadow:0 16px 36px rgba(0,0,0,.14)!important;
+}
+#roadtoace .ace518PrepHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}
+#roadtoace .ace518PrepHead small{display:block;color:#75b8dc;font:1000 7px/1 system-ui;letter-spacing:.16em}
+#roadtoace .ace518PrepHead h2{margin:5px 0 0;color:#f2f9fc;font:1000 22px/.98 system-ui;letter-spacing:-.035em}
+#roadtoace .ace518PrepHead p{margin:6px 0 0;max-width:620px;color:#7894a5;font:700 8px/1.45 system-ui}
+#roadtoace .ace518SlotBadge{flex:0 0 auto;min-width:96px;padding:10px 11px;border:1px solid rgba(95,196,245,.16);border-radius:12px;background:rgba(62,155,209,.08);text-align:center}
+#roadtoace .ace518SlotBadge b{display:block;color:#e9f8ff;font:1000 19px/1 system-ui}
+#roadtoace .ace518SlotBadge span{display:block;margin-top:4px;color:#71a9c8;font:1000 6px/1 system-ui;letter-spacing:.12em}
+#roadtoace .ace518BodyWrap{display:grid;grid-template-columns:minmax(230px,.82fr) minmax(0,1.18fr);gap:10px;align-items:stretch}
+#roadtoace .ace518BodyCard{position:relative;min-height:278px;padding:11px;border-radius:15px;border:1px solid rgba(255,255,255,.055);background:radial-gradient(circle at 48% 35%,rgba(69,175,224,.11),transparent 42%),rgba(255,255,255,.018);overflow:hidden}
+#roadtoace .ace518BodyCard>header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;position:relative;z-index:2}
+#roadtoace .ace518BodyCard header small{display:block;color:#7897aa;font:1000 6px/1 system-ui;letter-spacing:.15em}
+#roadtoace .ace518BodyCard header h3{margin:4px 0 0;color:#f2f8fb;font:1000 15px/1 system-ui}
+#roadtoace .ace518MedicalPill{padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);font:1000 6px/1 system-ui;letter-spacing:.10em}
+#roadtoace .ace518MedicalPill.good{color:#61dca0;background:rgba(79,207,141,.07);border-color:rgba(79,207,141,.18)}
+#roadtoace .ace518MedicalPill.sore{color:#e9cc62;background:rgba(232,201,86,.07);border-color:rgba(232,201,86,.18)}
+#roadtoace .ace518MedicalPill.limited{color:#f0a356;background:rgba(239,156,74,.08);border-color:rgba(239,156,74,.20)}
+#roadtoace .ace518MedicalPill.out{color:#f1757a;background:rgba(239,98,104,.08);border-color:rgba(239,98,104,.20)}
+#roadtoace .ace518Human{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:132px;height:224px}
+#roadtoace .ace518Human .shape{fill:#102b3c;stroke:#416c84;stroke-width:2}
+#roadtoace .ace518Human .limb{fill:none;stroke:#416c84;stroke-width:15;stroke-linecap:round;stroke-linejoin:round}
+#roadtoace .ace518Human .dot{stroke-width:3;filter:drop-shadow(0 0 5px currentColor)}
+#roadtoace .ace518Human .good{fill:#4fcf8d;stroke:#a6f0c9;color:#4fcf8d}
+#roadtoace .ace518Human .sore{fill:#e8c956;stroke:#fff0a3;color:#e8c956}
+#roadtoace .ace518Human .limited{fill:#ef9c4a;stroke:#ffd0a0;color:#ef9c4a}
+#roadtoace .ace518Human .out{fill:#ef6268;stroke:#ffb1b5;color:#ef6268}
+#roadtoace .ace518PrepSide{display:grid;grid-template-rows:auto 1fr;gap:8px;min-width:0}
+#roadtoace .ace518StatusGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#roadtoace .ace518StatusGrid>div{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.022);min-width:0}
+#roadtoace .ace518StatusGrid span{display:block;color:#708da0;font:1000 6px/1 system-ui;letter-spacing:.13em}
+#roadtoace .ace518StatusGrid b{display:block;margin-top:5px;color:#f4f9fc;font:1000 18px/1 system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .ace518StatusGrid small{display:block;margin-top:4px;color:#668194;font:850 6px/1.2 system-ui}
+#roadtoace .ace518RecoveryChoices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+#roadtoace .ace518RecoveryCard{min-width:0;min-height:112px;padding:10px;text-align:left;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.022);color:#edf7f4;cursor:pointer;touch-action:manipulation}
+#roadtoace .ace518RecoveryCard:disabled{opacity:.38;cursor:not-allowed}
+#roadtoace .ace518RecoveryCard i{display:grid;place-items:center;width:29px;height:29px;border-radius:9px;background:rgba(82,202,153,.08);font-style:normal;font-size:15px}
+#roadtoace .ace518RecoveryCard small{display:block;margin-top:8px;color:#729387;font:1000 5.7px/1 system-ui;letter-spacing:.10em}
+#roadtoace .ace518RecoveryCard b{display:block;margin-top:4px;color:#edf8f5;font:1000 9px/1.05 system-ui}
+#roadtoace .ace518RecoveryCard span{display:block;margin-top:5px;color:#799188;font:700 6.4px/1.35 system-ui}
+#roadtoace .ace518RecoveryCard em{display:block;margin-top:7px;color:#6fd1a7;font:1000 6px/1.25 system-ui;font-style:normal}
+#roadtoace .ace518RecoveryCard.paid em{color:#e8c969}
+#roadtoace .ace518PrepHint{margin-top:9px;padding:9px 10px;border-radius:10px;border:1px solid rgba(108,195,238,.10);background:rgba(61,142,187,.045);color:#7898aa;font:800 7px/1.4 system-ui}
+#roadtoace .ace518PrepHint b{color:#dff4ff}
+#roadtoace .rta187TrainingHero .rta187SessionPill small{letter-spacing:.08em!important}
+@media(max-width:1000px){#roadtoace .ace518RecoveryChoices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){
+  #roadtoace .ace518PreparationHub{padding:10px!important;border-radius:14px!important}
+  #roadtoace .ace518PrepHead{gap:8px;margin-bottom:9px}
+  #roadtoace .ace518PrepHead h2{font-size:18px}
+  #roadtoace .ace518PrepHead p{font-size:6.8px}
+  #roadtoace .ace518SlotBadge{min-width:77px;padding:8px 7px}.ace518SlotBadge b{font-size:16px!important}
+  #roadtoace .ace518BodyWrap{grid-template-columns:42% 58%;gap:7px}
+  #roadtoace .ace518BodyCard{min-height:244px;padding:8px}
+  #roadtoace .ace518BodyCard header h3{font-size:12px}
+  #roadtoace .ace518Human{width:105px;height:188px;bottom:7px}
+  #roadtoace .ace518StatusGrid{grid-template-columns:1fr;gap:5px}
+  #roadtoace .ace518StatusGrid>div{padding:8px}
+  #roadtoace .ace518StatusGrid b{font-size:15px}
+  #roadtoace .ace518RecoveryChoices{grid-template-columns:1fr 1fr;gap:5px}
+  #roadtoace .ace518RecoveryCard{min-height:91px;padding:8px}
+  #roadtoace .ace518RecoveryCard:nth-child(5){grid-column:1/-1;min-height:77px}
+  #roadtoace .ace518RecoveryCard i{width:24px;height:24px;font-size:12px}
+  #roadtoace .ace518RecoveryCard small{font-size:5px;margin-top:6px}
+  #roadtoace .ace518RecoveryCard b{font-size:8px}
+  #roadtoace .ace518RecoveryCard span{font-size:5.8px;margin-top:3px}
+  #roadtoace .ace518RecoveryCard em{font-size:5.4px;margin-top:5px}
+}
+@media(max-width:430px){#roadtoace .ace518BodyWrap{grid-template-columns:40% 60%}.ace518MedicalPill{font-size:5px!important;padding:5px 6px!important}}
+</style>
+<script id="ace518-unified-preparation-js">
+(()=>{
+  'use strict';
+  if(window.ACE518_UNIFIED_PREPARATION)return;
+  window.ACE518_UNIFIED_PREPARATION=true;
+  const BUILD='B21.36.518-BETA';
+  const S=()=>window.__ACE_RTA_STATE||{};
+  const C=()=>S().career||null;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const st=v=>String(v||'FIT').toUpperCase();
+  const band=n=>Number(n)<35?'LOW':Number(n)<60?'MODERATE':Number(n)<80?'HIGH':'VERY HIGH';
+  const cash=n=>'£'+Math.max(0,Math.round(Number(n)||0)).toLocaleString('en-GB');
+  const specCost=c=>Math.max(50,Math.min(750,Math.round(Math.max(350,Number(c?.weekly_wage)||350)*.08)));
+  const stateClass=s=>s==='SORE'?'sore':s==='LIMITED'?'limited':s==='OUT'?'out':'good';
+
+  function zoneState(c,zone){
+    const s=st(c.injury_status),p=String(c.injury_body_part||'').toUpperCase();
+    if(s==='FIT')return'good';
+    const hit={
+      shoulder:/SHOULDER|ARM|ELBOW/.test(p),hand:/FINGER|HAND|WRIST/.test(p),
+      back:/BACK|CORE/.test(p),muscle:/MUSCLE|HAMSTRING|CALF|THIGH|GENERAL/.test(p),
+      knee:/KNEE/.test(p),ankle:/ANKLE|FOOT/.test(p)
+    }[zone];
+    return hit?stateClass(s):'good';
+  }
+  function bodySvg(c){
+    const z=n=>zoneState(c,n),dot=(zone,cx,cy,r=7)=>`<circle class="dot ${z(zone)}" cx="${cx}" cy="${cy}" r="${r}"/>`;
+    return `<svg class="ace518Human" viewBox="0 0 180 330" role="img" aria-label="Player body condition">
+      <circle cx="90" cy="34" r="24" class="shape"/>
+      <path d="M67 63 Q90 53 113 63 L125 122 L112 174 L108 221 L121 307 L97 307 L89 226 L81 307 L57 307 L70 221 L66 174 L55 122 Z" class="shape"/>
+      <path d="M59 74 L31 145 L43 151 L72 96" class="limb"/><path d="M121 74 L149 145 L137 151 L108 96" class="limb"/>
+      ${dot('shoulder',61,80,8)}${dot('shoulder',119,80,8)}${dot('hand',38,151,7)}${dot('hand',142,151,7)}${dot('back',90,151,9)}${dot('muscle',72,222,8)}${dot('muscle',108,222,8)}${dot('knee',67,252,8)}${dot('knee',113,252,8)}${dot('ankle',61,303,7)}${dot('ankle',119,303,7)}
+    </svg>`;
+  }
+  function activityCard(c,id,icon,kicker,title,desc,reward,opts={}){
+    const used=Number(c.training_used||0),active=!!S().activeTraining,locked=used>=2||active;
+    const disabled=locked||!!opts.disabled;
+    return `<button type="button" class="ace518RecoveryCard ${opts.paid?'paid':''}" data-ace512-recovery="${id}" ${disabled?'disabled':''}><i>${icon}</i><small>${kicker}</small><b>${title}</b><span>${desc}</span><em>${used>=2?'2 / 2 USED':active?'FINISH CURRENT DRILL':reward}</em></button>`;
+  }
+  function prepHtml(c){
+    const used=Number(c.training_used||0),s=st(c.injury_status),load=Math.round(Number(c.body_load||0)),ready=Math.round(Number(c.readiness??100)),cost=specCost(c);
+    const specialistDisabled=!!c.recovery_boost_used||Number(c.cash_balance||0)<cost||(s==='FIT'&&Number(c.body_load||0)<60);
+    const issue=s==='FIT'?'ALL TRACKED AREAS CLEAR':`${esc(c.injury_type||'MEDICAL ISSUE')} · ${esc(c.injury_body_part||'BODY')}`;
+    return `<section class="ace518PreparationHub" data-ace518-preparation>
+      <div class="ace518PrepHead"><div><small>PREPARATION HUB</small><h2>Choose how to spend your two activities.</h2><p>Training develops attributes. Recovery protects readiness. Film and team time give you lower-load alternatives. Every choice uses the same 0/2 allowance before the next match.</p></div><div class="ace518SlotBadge"><b>${used} / 2</b><span>ACTIVITIES USED</span></div></div>
+      <div class="ace518BodyWrap">
+        <div class="ace518BodyCard"><header><div><small>BODY STATUS</small><h3>${issue}</h3></div><span class="ace518MedicalPill ${stateClass(s)}">${esc(s)}</span></header>${bodySvg(c)}</div>
+        <div class="ace518PrepSide">
+          <div class="ace518StatusGrid"><div><span>READINESS</span><b>${ready}%</b><small>${ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED'}</small></div><div><span>BODY LOAD</span><b>${load}</b><small>${band(load)}</small></div><div><span>RECOVERY</span><b>${s==='FIT'?'CLEAR':Math.max(0,Math.round(Number(c.injury_days_remaining||0)))+'D'}</b><small>${s==='FIT'?'NO MEDICAL HOLD':esc(c.injury_body_part||s)}</small></div></div>
+          <div class="ace518RecoveryChoices">
+            ${activityCard(c,'REST','☾','RECOVERY','Full Rest','Best all-round freshness. No skill gain.','READINESS ↑↑ · LOAD −18')}
+            ${activityCard(c,'CLUB_PHYSIO','✚','CLUB MEDICAL','Physio / Rehab','Free club treatment and rehab.','INJURY −3D · LOAD −12')}
+            ${activityCard(c,'FILM','▶','LOW LOAD','Film Room','Progress without physical stress.','+50 XP · LOAD −5')}
+            ${activityCard(c,'TEAM_TIME','🎮','OFF-COURT','Team Gaming','Mental recovery and squad time.','MENTAL +3 · LOAD −7')}
+            ${activityCard(c,'SPECIALIST_PHYSIO','⚕','PRIVATE','Specialist',`Extra recovery support. ${cash(cost)}.`,`${cash(cost)} · INJURY −5D`,{paid:true,disabled:specialistDisabled})}
+          </div>
+        </div>
+      </div>
+      <div class="ace518PrepHint"><b>Same allowance:</b> one drill + one Rest = 2/2. Physio + Film = 2/2. Two training drills = 2/2. Your next match resets the allowance.</div>
+    </section>`;
+  }
+
+  function restoreHistory(){
+    const host=document.querySelector('#roadtoace .ace464HomeHub,#roadtoace .ace456ClubPage');
+    if(!host)return;
+    host.querySelectorAll('[data-ace512-recovery-tab]').forEach(tab=>{
+      tab.textContent='HISTORY';
+      tab.removeAttribute('data-ace512-recovery-tab');
+      tab.setAttribute('data-ace464-home-tab','history');
+      tab.title='Club history';
+    });
+  }
+  function relabelNav(){
+    document.querySelectorAll('body > .ace211CareerBottomNav button[data-rta62-view="train"] span,#roadtoace .rta93DesktopRail button[data-rta62-view="train"] span').forEach(n=>n.textContent='PREP');
+  }
+  function decorateTraining(){
+    const c=C(),host=document.querySelector('#roadtoace .rta187TrainingCentre');
+    if(!c||!host)return;
+    host.querySelectorAll(':scope>.ace518PreparationHub').forEach(n=>n.remove());
+    const hero=host.querySelector(':scope>.rta187TrainingHero');
+    if(!hero)return;
+    const kicker=hero.querySelector('.rta187HeroCopy>small');if(kicker)kicker.textContent='PREPARATION CENTRE';
+    const title=hero.querySelector('.rta187HeroCopy h1');if(title)title.innerHTML='<span>Prepare</span> your player.';
+    const p=hero.querySelector('.rta187HeroCopy p');if(p)p.innerHTML='Train, recover, or prepare mentally. <b>Two choices before the next match.</b>';
+    const pill=hero.querySelector('.rta187SessionPill');
+    if(pill){const b=pill.querySelector('b'),small=pill.querySelector('small');if(b)b.textContent=`⚡ ${Number(c.training_used||0)} / 2 USED`;if(small)small.textContent='PREPARATION ACTIVITIES';}
+    hero.insertAdjacentHTML('afterend',prepHtml(c));
+  }
+  function sync(){
+    restoreHistory();relabelNav();
+    if(String(S().view||'')==='train')decorateTraining();
+  }
+  document.addEventListener('ace:rta-render',()=>requestAnimationFrame(sync));
+  window.addEventListener('pageshow',()=>setTimeout(sync,100),{passive:true});
+  setTimeout(sync,80);setTimeout(sync,650);
+
+  window.ACE_PROJECT_BUILD=BUILD;
+  window.ACE_RELEASE_BUILD=BUILD;
+  window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+  window.ACE_TEST_SERVER_BUILD=true;
+  window.ACE_UNIFIED_PREPARATION_BUILD=BUILD;
+})();
+</script>
+<script id="ace518-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.518-BETA';window.ACE_RELEASE_BUILD='B21.36.518-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.518-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_UNIFIED_PREPARATION_BUILD='B21.36.518-BETA';</script>
