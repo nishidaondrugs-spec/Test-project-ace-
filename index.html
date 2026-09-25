@@ -41904,6 +41904,30 @@ document.addEventListener("click",function(e){
     const benchCards=bench.slice(0,5).map(p=>`<div class="ace456BenchCard ${p.isUser?'me':''}"><i>${esc(p.position)}</i><b>${esc(p.isUser?'You':p.name.split(/\s+/).slice(-1)[0])}</b><strong>${Number(p.overall)}</strong></div>`).join('')||'<div class="ace456BenchEmpty">No rotation players.</div>';
     const starterList=starters.map(p=>`<div class="ace456StarterListRow ${p.isUser?'me':''}"><i>${esc(p.position)}</i><span><b>${esc(p.isUser?'You':p.name)}</b><small>${Number(p.overall)} OVR · ${Number(p.form||65)} FORM</small></span></div>`).join('');
     const status=esc(c.squad_role||'SQUAD');
+    /* Stage 1 Home redesign: presentation data only. These values already exist
+       in the loaded Career state; no additional RPCs or save mutations occur. */
+    const homeNextOpponent=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||'Opponent');
+    const homePrepUsed=Math.max(0,Math.min(2,Number(c.training_used||0)));
+    const homePrepLeft=Math.max(0,2-homePrepUsed);
+    const homeInjury=String(c.injury_status||'FIT').toUpperCase();
+    const homeReadiness=Math.max(0,Math.min(100,Math.round(Number(c.readiness??100))));
+    const homeRole=String(S.selection?.user?.selection_status||c.squad_role||'SQUAD').toUpperCase();
+    const homeMatchNo=Math.max(1,Number(c.season_match||0)+1);
+    const homePlayerIdentity=[String(c.player_name||'').trim(),String(c.position||'').toUpperCase()].filter(Boolean).join(' · ');
+    const homePulse=homeMode?`<div class="ace532HomePulse" aria-label="Career status">
+      <button type="button" class="ace532HomePulseCard match" data-rta62-view="match">
+        <small>NEXT MATCH</small><b>MATCH ${homeMatchNo}</b><span>vs ${esc(homeNextOpponent)}</span>
+      </button>
+      <button type="button" class="ace532HomePulseCard prep ${homePrepUsed>=2?'ready':''}" data-rta62-view="train">
+        <small>PREPARATION</small><b>${homePrepUsed}/2 SLOTS</b><span>${homePrepUsed>=2?'Matchday ready':`${homePrepLeft} choice${homePrepLeft===1?'':'s'} remaining`}</span>
+      </button>
+      <div class="ace532HomePulseCard medical ${homeInjury==='FIT'?'fit':'warn'}">
+        <small>MEDICAL</small><b>${esc(homeInjury)}</b><span>${homeReadiness}% readiness</span>
+      </div>
+      <div class="ace532HomePulseCard role">
+        <small>YOUR PLACE</small><b>${esc(homeRole)}</b><span>${esc(c.position||'PLAYER')} · ${Number(c.overall||0)} OVR</span>
+      </div>
+    </div>`:'';
     const hubClass=homeMode?' ace464HomeHub':'';
     const homeTab=id=>homeMode?`data-ace464-home-tab="${id}"`:`data-ace456-tab="${id}"`;
     const panelClass=id=>(!homeMode&&id==='timeline')?' active':'';
@@ -41959,15 +41983,16 @@ document.addEventListener("click",function(e){
     const homeLeagueTable=Array.isArray(S.league?.table)?S.league.table:[];
     const clubTable=`<article class="ace471ClubTable"><div class="ace471ClubTableHead"><div><small>CURRENT TABLE · SEASON ${Math.max(1,Number(c.season||1))}</small><h2>${esc(leagueName)}</h2><p>Live league standings from your current career world.</p></div><span>${rank?`#${rank}`:'—'}<small>YOUR CLUB</small></span></div><div class="ace471ClubTableScroll"><table><thead><tr><th>#</th><th>CLUB</th><th>P</th><th>W</th><th>L</th><th>PTS</th></tr></thead><tbody>${homeLeagueTable.map((r,i)=>`<tr class="${r.is_user?'me':''}"><td>${i+1}</td><td><div class="ace471ClubCell">${rta77ClubLogo(r.club||'Club','sm')}<b>${esc(r.club||'Club')}</b></div></td><td>${Number(r.played||0)}</td><td>${Number(r.wins||0)}</td><td>${Number(r.losses||0)}</td><td><strong>${Number(r.points||0)}</strong></td></tr>`).join('')}</tbody></table></div></article>`;
 
-    return `<main class="rta93Club ace456ClubPage${hubClass}" data-ace456-country="${countryKey}">
+    return `<main class="rta93Club ace456ClubPage${hubClass}" data-ace456-country="${countryKey}" ${homeMode?'data-ace532-home-stage1="1"':''}>
       <section class="rta93ClubHero ace421ClubHero ace456Hero">
         <div class="ace421ClubCourtTexture" aria-hidden="true"></div>
         <div class="rta93HeroShade ace456HeroShade" aria-hidden="true"></div>
         <div class="ace456HeroTop">${homeMode?'':'<button type="button" class="ace456Back" data-rta62-view="home" aria-label="Back">‹</button>'}<span class="ace421SeasonChip">SEASON ${Math.max(1,Number(c.season||1))}</span></div>
+        ${homePulse}
         <div class="ace456HeroTag">MORE<br>THAN A GAME<br>A STRONGER<br>${esc(countryLabel)}</div>
         <div class="ace456HeroIdentity">
           <div class="ace456HeroCrest">${rta77ClubLogo(c.club_name||'Club','lg')}</div>
-          <div class="ace456HeroName"><h1>${esc(c.club_name)}</h1><p><span>${flag}</span>${esc(leagueName)}</p></div>
+          <div class="ace456HeroName"><h1>${esc(c.club_name)}</h1><p><span>${flag}</span>${esc(leagueName)}</p>${homeMode&&homePlayerIdentity?`<div class="ace532HomePlayer"><i></i>${esc(homePlayerIdentity)}</div>`:''}</div>
         </div>
         <div class="ace456HeroStats">
           <div><b>${metrics.overall}</b><span>TEAM OVR</span></div>
@@ -62000,6 +62025,58 @@ window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.443';
 #roadtoace .ace456HeroStats>div{min-height:82px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:12px 8px!important;border-radius:15px!important;border:1px solid rgba(104,194,245,.16)!important;background:linear-gradient(180deg,rgba(7,20,31,.86),rgba(5,14,22,.90))!important;box-shadow:0 12px 28px rgba(0,0,0,.16),inset 0 0 0 1px rgba(255,255,255,.015)!important;backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important;text-align:center!important;}
 #roadtoace .ace456HeroStats b{display:block!important;color:#fff!important;font-size:19px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important;}
 #roadtoace .ace456HeroStats span{display:block!important;margin-top:9px!important;color:#90a9bb!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.10em!important;text-transform:uppercase!important;}
+
+/* V532 STAGE 1 HOME — direct Hero composition, no post-render injection. */
+#roadtoace .ace464HomeHub .ace532HomePulse{
+  position:absolute!important;z-index:5!important;left:16px!important;right:16px!important;top:62px!important;
+  display:grid!important;grid-template-columns:1.18fr 1.18fr .9fr .9fr!important;gap:7px!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePulseCard{
+  min-width:0!important;min-height:64px!important;padding:10px 11px!important;
+  border:1px solid rgba(112,201,246,.12)!important;border-radius:13px!important;
+  background:linear-gradient(145deg,rgba(5,20,31,.80),rgba(4,13,22,.76))!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.014)!important;
+  backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;
+  color:#eef8fd!important;text-align:left!important;overflow:hidden!important;
+}
+#roadtoace .ace464HomeHub button.ace532HomePulseCard{cursor:pointer!important;-webkit-tap-highlight-color:transparent!important;}
+#roadtoace .ace464HomeHub button.ace532HomePulseCard:active{transform:scale(.985)!important;}
+#roadtoace .ace464HomeHub .ace532HomePulseCard.match{
+  border-color:rgba(91,194,244,.24)!important;
+  background:linear-gradient(145deg,rgba(16,62,88,.82),rgba(5,20,31,.80))!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePulseCard.prep.ready{
+  border-color:rgba(101,216,162,.20)!important;
+  background:linear-gradient(145deg,rgba(18,76,57,.66),rgba(5,23,28,.80))!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePulseCard.medical.warn{
+  border-color:rgba(255,111,133,.28)!important;
+  background:linear-gradient(145deg,rgba(91,25,38,.70),rgba(27,12,18,.82))!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePulseCard small{
+  display:block!important;color:#6f9bb3!important;font-size:5.7px!important;font-weight:1000!important;letter-spacing:.13em!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePulseCard.match small{color:#7dd1f7!important;}
+#roadtoace .ace464HomeHub .ace532HomePulseCard.medical.warn small{color:#ff9eae!important;}
+#roadtoace .ace464HomeHub .ace532HomePulseCard b{
+  display:block!important;margin-top:5px!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  color:#f6fbfe!important;font-size:12px!important;line-height:1!important;font-weight:1000!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePulseCard.medical.warn b{color:#ffb0bc!important;}
+#roadtoace .ace464HomeHub .ace532HomePulseCard span{
+  display:block!important;margin-top:5px!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+  color:#7d96a6!important;font-size:6.2px!important;font-weight:760!important;line-height:1.1!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePlayer{
+  display:flex!important;align-items:center!important;gap:7px!important;margin-top:8px!important;
+  color:#a7bfcd!important;font-size:8px!important;font-weight:900!important;letter-spacing:.055em!important;text-transform:uppercase!important;
+  text-shadow:0 3px 12px rgba(0,0,0,.34)!important;
+}
+#roadtoace .ace464HomeHub .ace532HomePlayer i{
+  width:5px!important;height:5px!important;flex:0 0 auto!important;border-radius:50%!important;background:#67c9f4!important;
+  box-shadow:0 0 12px rgba(103,201,244,.48)!important;
+}
+#roadtoace .ace464HomeHub .ace456HeroTag{top:151px!important;opacity:.52!important;}
 #roadtoace .ace456ClubTabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin:12px 0 0!important;border-bottom:1px solid rgba(107,196,244,.13)!important;background:rgba(6,17,27,.46)!important;border-radius:15px 15px 0 0!important;overflow:hidden!important;}
 #roadtoace .ace456ClubTabs button{position:relative!important;min-height:54px!important;border:0!important;background:transparent!important;color:#829caf!important;font-size:12px!important;font-weight:900!important;letter-spacing:.02em!important;}
 #roadtoace .ace456ClubTabs button.active{color:#fff!important;}
@@ -62055,6 +62132,15 @@ window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.443';
 #roadtoace .ace456ClubPage[data-ace456-country="turkiye"] .ace456Hero{border-color:rgba(242,129,81,.24)!important;}#roadtoace .ace456ClubPage[data-ace456-country="japan"] .ace456Hero{border-color:rgba(105,188,255,.22)!important;}#roadtoace .ace456ClubPage[data-ace456-country="poland"] .ace456Hero{border-color:rgba(229,100,120,.20)!important;}#roadtoace .ace456ClubPage[data-ace456-country="russia"] .ace456Hero{border-color:rgba(106,155,255,.20)!important;}#roadtoace .ace456ClubPage[data-ace456-country="italy"] .ace456Hero{border-color:rgba(99,202,145,.20)!important;}#roadtoace .ace456ClubPage[data-ace456-country="brazil"] .ace456Hero{border-color:rgba(85,206,131,.20)!important;}
 
 @media(max-width:760px){
+  #roadtoace .ace464HomeHub .ace532HomePulse{
+    left:11px!important;right:11px!important;top:52px!important;grid-template-columns:1fr 1fr!important;gap:5px!important;
+  }
+  #roadtoace .ace464HomeHub .ace532HomePulseCard{min-height:53px!important;padding:8px 9px!important;border-radius:10px!important;}
+  #roadtoace .ace464HomeHub .ace532HomePulseCard small{font-size:4.7px!important;}
+  #roadtoace .ace464HomeHub .ace532HomePulseCard b{margin-top:4px!important;font-size:9.6px!important;}
+  #roadtoace .ace464HomeHub .ace532HomePulseCard span{margin-top:4px!important;font-size:5.3px!important;}
+  #roadtoace .ace464HomeHub .ace456HeroTag{display:none!important;}
+  #roadtoace .ace464HomeHub .ace532HomePlayer{margin-top:6px!important;gap:5px!important;font-size:6.5px!important;letter-spacing:.035em!important;}
   #roadtoace .ace456ClubPage{width:calc(100% - 16px)!important;margin:8px 8px 104px!important;}
   #roadtoace .ace456Hero{width:100%!important;min-height:0!important;aspect-ratio:1/1!important;border-radius:22px!important;}
   #roadtoace .ace456HeroTag{right:14px!important;top:62px!important;font-size:6.8px!important;line-height:1.45!important;}
@@ -67337,256 +67423,3 @@ window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD
 })();
 </script>
 <script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';</script>
-
-
-<!-- PROJECT ACE · SAFE HERO REDESIGN PREVIEW 1
-     Presentation-only layer. No backend, save, RPC, match, prep or navigation logic is replaced. -->
-<style id="aceHeroR1Style">
-/* ---------- Hero composition ---------- */
-#roadtoace .ace464HomeHub>.ace456Hero{
-  min-height:560px!important;
-  border-color:rgba(104,202,250,.18)!important;
-  box-shadow:0 28px 72px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.018)!important;
-}
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroShade{
-  background:
-    radial-gradient(circle at 17% 16%,rgba(52,168,232,.14),transparent 28%),
-    linear-gradient(180deg,rgba(2,8,14,.11) 0%,rgba(2,8,14,.15) 24%,rgba(2,8,14,.38) 53%,rgba(2,8,14,.82) 78%,rgba(2,8,14,.98) 100%),
-    linear-gradient(90deg,rgba(2,8,14,.36),transparent 54%,rgba(2,8,14,.08))!important;
-}
-
-/* ---------- Compact "Career Pulse" ---------- */
-#roadtoace .aceHeroR1Pulse{
-  position:absolute;z-index:5;left:18px;right:18px;top:64px;
-  display:grid;grid-template-columns:1.18fr 1.18fr .9fr .9fr;gap:6px;
-}
-#roadtoace .aceHeroR1Pulse>button,
-#roadtoace .aceHeroR1Pulse>div{
-  position:relative;min-width:0;min-height:66px;padding:10px 11px;
-  border:1px solid rgba(113,204,248,.10);border-radius:13px;
-  background:linear-gradient(145deg,rgba(5,20,31,.78),rgba(5,14,23,.72));
-  box-shadow:0 10px 26px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.012);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  color:#eef9ff;text-align:left;
-}
-#roadtoace .aceHeroR1Pulse>button{
-  cursor:pointer;-webkit-tap-highlight-color:transparent;
-  transition:border-color .14s ease,background .14s ease,transform .14s ease;
-}
-#roadtoace .aceHeroR1Pulse>button:active{transform:scale(.985)}
-#roadtoace .aceHeroR1Pulse>button:hover{
-  border-color:rgba(104,205,252,.24);
-  background:linear-gradient(145deg,rgba(11,43,62,.88),rgba(7,23,35,.82));
-}
-#roadtoace .aceHeroR1Pulse small{
-  display:block;color:#658da5;font-size:5.5px;font-weight:1000;letter-spacing:.13em;
-}
-#roadtoace .aceHeroR1Pulse b{
-  display:block;margin-top:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:#f3fbff;font-size:13px;line-height:1;font-weight:1000;
-}
-#roadtoace .aceHeroR1Pulse span{
-  display:block;margin-top:5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:#7590a1;font-size:6.3px;font-weight:760;line-height:1.1;
-}
-#roadtoace .aceHeroR1Pulse .match{
-  border-color:rgba(84,189,242,.22);
-  background:linear-gradient(145deg,rgba(20,70,98,.76),rgba(5,22,34,.78));
-}
-#roadtoace .aceHeroR1Pulse .match small{color:#75cdf5}
-#roadtoace .aceHeroR1Pulse .prep.ready{
-  border-color:rgba(106,220,163,.18);
-  background:linear-gradient(145deg,rgba(23,91,65,.52),rgba(5,24,27,.76));
-}
-#roadtoace .aceHeroR1Pulse .medical.warn{
-  border-color:rgba(255,111,130,.26);
-  background:linear-gradient(145deg,rgba(103,25,40,.54),rgba(28,12,19,.76));
-}
-#roadtoace .aceHeroR1Pulse .medical.warn small,
-#roadtoace .aceHeroR1Pulse .medical.warn b{color:#ffabb8}
-#roadtoace .aceHeroR1Pulse .role b{font-size:11px}
-
-/* ---------- Player identity line ---------- */
-#roadtoace .aceHeroR1Player{
-  display:flex!important;align-items:center!important;gap:7px!important;
-  margin-top:8px!important;color:#9cb5c4!important;font-size:8px!important;
-  font-weight:900!important;letter-spacing:.04em!important;text-transform:uppercase!important;
-}
-#roadtoace .aceHeroR1Player i{
-  width:5px;height:5px;border-radius:50%;background:#67c9f4;box-shadow:0 0 12px rgba(103,201,244,.48);
-  font-style:normal;flex:0 0 auto;
-}
-
-/* Existing tagline is preserved, but de-emphasised so useful information wins. */
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroTag{
-  top:144px!important;opacity:.58!important;font-size:6.5px!important;letter-spacing:.12em!important;
-}
-
-/* Keep the club identity cinematic and make it the visual anchor. */
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroIdentity{
-  bottom:116px!important;
-}
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroCrest .rta77ClubMark,
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroCrest img{
-  filter:drop-shadow(0 18px 30px rgba(0,0,0,.42))!important;
-}
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroName h1{
-  text-wrap:balance!important;
-}
-
-/* Stats remain, but visually become secondary to the Career Pulse. */
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroStats>div{
-  min-height:76px!important;background:linear-gradient(180deg,rgba(6,19,29,.78),rgba(4,13,21,.88))!important;
-  border-color:rgba(104,194,245,.11)!important;
-}
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroStats b{font-size:18px!important}
-#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroStats span{color:#7895a6!important}
-
-/* Home section buttons feel like a clean secondary layer, not another dashboard. */
-#roadtoace .ace464HomeHub .ace456ClubTabs{
-  margin-top:10px!important;padding:4px!important;border:1px solid rgba(100,193,239,.10)!important;
-  border-radius:14px!important;background:rgba(6,18,28,.76)!important;
-}
-#roadtoace .ace464HomeHub .ace456ClubTabs button{
-  border-radius:10px!important;min-height:46px!important;color:#718b9c!important;
-}
-#roadtoace .ace464HomeHub .ace456ClubTabs button:hover{
-  color:#dff5ff!important;background:rgba(73,169,218,.06)!important;
-}
-
-@media(max-width:760px){
-  #roadtoace .ace464HomeHub>.ace456Hero{
-    aspect-ratio:auto!important;min-height:590px!important;border-radius:22px!important;
-  }
-  #roadtoace .aceHeroR1Pulse{
-    left:11px;right:11px;top:53px;
-    grid-template-columns:1fr 1fr;gap:5px;
-  }
-  #roadtoace .aceHeroR1Pulse>button,
-  #roadtoace .aceHeroR1Pulse>div{
-    min-height:54px;padding:8px 9px;border-radius:10px;
-  }
-  #roadtoace .aceHeroR1Pulse small{font-size:4.7px}
-  #roadtoace .aceHeroR1Pulse b{margin-top:4px;font-size:10px}
-  #roadtoace .aceHeroR1Pulse span{margin-top:4px;font-size:5.4px}
-  #roadtoace .aceHeroR1Pulse .role b{font-size:9px}
-
-  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroTag{
-    display:none!important;
-  }
-  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroIdentity{
-    left:15px!important;right:15px!important;bottom:103px!important;
-    grid-template-columns:108px minmax(0,1fr)!important;gap:12px!important;
-  }
-  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroName h1{
-    font-size:27px!important;
-  }
-  #roadtoace .aceHeroR1Player{
-    margin-top:6px!important;font-size:6.5px!important;gap:5px!important;
-  }
-  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroStats{
-    left:10px!important;right:10px!important;bottom:10px!important;gap:5px!important;
-  }
-  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroStats>div{
-    min-height:68px!important;border-radius:11px!important;padding:8px 3px!important;
-  }
-  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroStats b{font-size:14px!important}
-  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroStats span{font-size:5.7px!important;margin-top:6px!important}
-  #roadtoace .ace464HomeHub .ace456ClubTabs{
-    grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:2px!important;
-  }
-  #roadtoace .ace464HomeHub .ace456ClubTabs button{
-    min-height:44px!important;padding:0 2px!important;font-size:7px!important;
-  }
-}
-</style>
-
-<script id="aceHeroR1Script">
-(()=>{
-'use strict';
-if(window.ACE_HERO_R1)return;
-window.ACE_HERO_R1=true;
-
-const S=()=>window.__ACE_RTA_STATE||null;
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-
-function playerLine(c){
-  const bits=[];
-  if(c.player_name)bits.push(c.player_name);
-  if(c.position)bits.push(String(c.position).toUpperCase());
-  if(Number(c.jersey||0)>0)bits.push(`#${Number(c.jersey)}`);
-  return bits.join(' · ');
-}
-
-function pulseHTML(c){
-  const st=S()||{};
-  const used=Math.max(0,Math.min(2,Number(c.training_used||0)));
-  const left=Math.max(0,2-used);
-  const injury=String(c.injury_status||'FIT').toUpperCase();
-  const ready=Math.round(Math.max(0,Math.min(100,Number(c.readiness||100))));
-  const role=String(st.selection?.user?.selection_status||c.squad_role||'SQUAD').toUpperCase();
-  const opponent=String(st.selection?.opponent||st.selection?.user?.opponent||'Next fixture');
-  const matchNo=Math.max(1,Number(c.season_match||0)+1);
-  const medicalSub=injury==='FIT'?`${ready}% readiness`:`${Math.max(0,Number(c.injury_days_remaining||0))||'—'}d est. · ${ready}% ready`;
-  const prepDone=used>=2;
-  return `<div class="aceHeroR1Pulse" aria-label="Career pulse">
-    <button type="button" class="match" data-ace-hero-r1-route="match">
-      <small>NEXT MATCH</small><b>MATCH ${matchNo}</b><span>${esc(opponent)}</span>
-    </button>
-    <button type="button" class="prep ${prepDone?'ready':''}" data-ace-hero-r1-route="train">
-      <small>PREPARATION</small><b>${used}/2 SLOTS</b><span>${prepDone?'Ready for Matchday':`${left} choice${left===1?'':'s'} remaining`}</span>
-    </button>
-    <div class="medical ${injury==='FIT'?'':'warn'}">
-      <small>MEDICAL</small><b>${esc(injury)}</b><span>${esc(medicalSub)}</span>
-    </div>
-    <div class="role">
-      <small>YOUR PLACE</small><b>${esc(role)}</b><span>${esc(c.position||'PLAYER')} · ${Number(c.overall||0)} OVR</span>
-    </div>
-  </div>`;
-}
-
-function decorate(){
-  const st=S(),c=st?.career;
-  const hero=document.querySelector('#roadtoace .ace464HomeHub>.ace456Hero');
-  if(!hero||!c)return;
-
-  if(!hero.querySelector('.aceHeroR1Pulse')){
-    const top=hero.querySelector('.ace456HeroTop');
-    if(top)top.insertAdjacentHTML('afterend',pulseHTML(c));
-  }else{
-    const old=hero.querySelector('.aceHeroR1Pulse');
-    const temp=document.createElement('div');
-    temp.innerHTML=pulseHTML(c);
-    old.replaceWith(temp.firstElementChild);
-  }
-
-  const name=hero.querySelector('.ace456HeroName');
-  if(name&&!name.querySelector('.aceHeroR1Player')){
-    const line=playerLine(c);
-    if(line)name.insertAdjacentHTML('beforeend',`<div class="aceHeroR1Player"><i></i>${esc(line)}</div>`);
-  }else if(name){
-    const p=name.querySelector('.aceHeroR1Player');
-    const line=playerLine(c);
-    if(p&&line)p.innerHTML=`<i></i>${esc(line)}`;
-  }
-}
-
-document.addEventListener('click',e=>{
-  const hit=e.target.closest?.('[data-ace-hero-r1-route]');
-  if(!hit)return;
-  e.preventDefault();
-  const view=hit.dataset.aceHeroR1Route;
-  try{window.ACE_RTA_NAV?.(null,view)}catch(err){console.warn('Hero route',err)}
-},true);
-
-document.addEventListener('ace:rta-render',()=>requestAnimationFrame(decorate));
-window.addEventListener('pageshow',()=>setTimeout(decorate,120),{passive:true});
-new MutationObserver(()=>requestAnimationFrame(decorate))
-  .observe(document.documentElement,{subtree:true,childList:true});
-setTimeout(decorate,350);
-
-/* Presentation layer only. */
-window.ACE_HERO_R1_BUILD='V532-HERO-R1';
-})();
-</script>
-
