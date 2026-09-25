@@ -66489,7 +66489,7 @@ window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 </script>
 <script id="ace518-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.518-BETA';window.ACE_RELEASE_BUILD='B21.36.518-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.518-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_UNIFIED_PREPARATION_BUILD='B21.36.518-BETA';</script>
 
-<!-- PROJECT ACE B21.36.522-BETA · COMPACT TWO-SLOT PREPARATION PLANNER -->
+<!-- PROJECT ACE B21.36.523-BETA · COMPACT TWO-SLOT PREPARATION PLANNER -->
 <style id="ace519-preparation-planner-style">
 /* Beta only. V519 replaces the large V518 dashboard with a compact plan-first screen. */
 #roadtoace .ace518PreparationHub{display:none!important}
@@ -66551,7 +66551,7 @@ window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 (()=>{
 'use strict';
 if(window.ACE519_PREPARATION_PLANNER)return;window.ACE519_PREPARATION_PLANNER=true;
-const BUILD='B21.36.522-BETA';
+const BUILD='B21.36.523-BETA';
 const S=()=>window.__ACE_RTA_STATE||{};
 const C=()=>S().career||null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -66618,17 +66618,22 @@ return`<section class="ace519Planner" data-ace519-planner>
   <div class="ace519Condition"><div><span>READINESS</span><b>${ready}%</b><small>${ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED'}</small></div><div><span>BODY LOAD</span><b>${load}</b><small>${loadBand(load)}</small></div><div class="${stateClass(s)}"><span>MEDICAL</span><b>${esc(s)}</b><small>${s==='FIT'?'CLEARED':Math.max(0,Math.round(Number(c.injury_days_remaining||0)))+'D EST.'}</small></div></div>
   <div class="ace520Fixture"><div><small>NEXT FIXTURE</small><b>${esc(c.club_name||'YOUR CLUB')}</b></div><strong>VS</strong><div class="away"><small>MATCH ${Number(c.season_match||0)+1}</small><b>${esc(String(S().selection?.opponent||S().selection?.user?.opponent||S().league?.next_opponent||'OPPONENT'))}</b></div></div>
   <div class="ace519Advice"><i>${rec.icon}</i><div><small>MEDICAL / COACH STAFF</small><b>${esc(rec.title)}</b><span>${esc(rec.text)}</span></div></div>
-  <button class="ace519BodyToggle" data-ace519-body><div><span>BODY STATUS</span><b>${esc(issue)}</b></div><em>${bodyOpen?'⌃':'⌄'}</em></button>
-  <div class="ace519BodyDetail ${bodyOpen?'open':''}">${miniBody(c)}<div class="ace519BodyCopy"><h3>${s==='FIT'?'No current medical issue.':esc(c.injury_type||'Medical issue')}</h3><p>${s==='FIT'?'The body map stays compact while you are healthy. It expands automatically in importance when soreness or injury appears.':`${esc(c.injury_body_part||'Affected area')} · ${esc(c.injury_severity||s)} · approximately ${Math.max(0,Math.round(Number(c.injury_days_remaining||0)))} days remaining.`}</p><strong>${esc(s)}</strong></div></div>
-  <div class="ace519PlanLabel"><b>YOUR PLAN</b><span>${max} slot${max===1?'':'s'} available</span></div>
-  <div class="ace519Slots">${slotHtml(c,p,1)}${slotHtml(c,p,2)}</div>
+  <div class="ace523MainRow">
+    <div class="ace523BodyPanel">
+      <div class="ace523BodyHead"><small>BODY STATUS</small><b>${esc(issue)}</b><span>${s==='FIT'?'All tracked areas are currently clear.':`${esc(c.injury_body_part||'Affected area')} · ${esc(c.injury_severity||s)} · approximately ${Math.max(0,Math.round(Number(c.injury_days_remaining||0)))} days remaining.`}</span></div>
+      ${miniBody(c)}
+    </div>
+    <div class="ace523PlanWrap">
+      <div class="ace519PlanLabel"><b>YOUR PLAN</b><span>${max} slot${max===1?'':'s'} available</span></div>
+      <div class="ace519Slots">${slotHtml(c,p,1)}${slotHtml(c,p,2)}</div>
+    </div>
+  </div>
   ${!p.confirmed&&max>0?`<div class="ace519Presets"><button class="ace519Preset ${rec.cat==='TRAIN'?'recommended':''}" data-ace519-preset="DEVELOP">DEVELOP</button><button class="ace519Preset" data-ace519-preset="BALANCED">BALANCED</button><button class="ace519Preset ${rec.cat==='RECOVER'?'recommended':''}" data-ace519-preset="READY">MATCH READY</button></div>${categories(c,p)}${choices(c,p)}`:''}
-  <div class="ace519Projection"><div><span>PROJECTED READY</span><b>${ready}% → ~${proj.ready}%</b><small>estimate</small></div><div><span>PROJECTED LOAD</span><b>${load} → ~${proj.load}</b><small>${loadBand(proj.load)}</small></div><div><span>EXPECTED EFFECT</span><b>${esc(proj.growth)}</b><small>${proj.inj<0?`recovery ${proj.inj}d`:proj.cost?money(proj.cost):'before match'}</small></div></div>
   <div class="ace519Actions"><button class="ace519Confirm" data-ace519-confirm ${!canAction?'disabled':''}>${esc(actionLabel)}</button>${!p.confirmed&&p.items.length?`<button class="ace519Reset" data-ace519-reset>RESET</button>`:''}</div>
   ${p.confirmed?`<div class="ace519Progress">Plan locked. Complete the highlighted activity, then continue to the next slot.</div>`:''}
 </section>`}
 function host(){return document.querySelector('#roadtoace .rta187TrainingCentre')}
-function renderPlanner(){const c=C(),h=host();if(!c||!h)return;h.querySelectorAll(':scope>.ace519Planner').forEach(n=>n.remove());h.querySelectorAll(':scope>.ace518PreparationHub').forEach(n=>n.remove());let p=normalizePlan(c,loadPlan(c));const anchor=h.querySelector(':scope>.rta187TrainingHero')||h.querySelector(':scope>.ace252FirstMatchGuide')||h.firstElementChild;if(anchor)anchor.insertAdjacentHTML('afterend',planHtml(c,p));}
+function renderPlanner(){const c=C(),h=host();if(!c||!h)return;h.querySelectorAll(':scope>.ace519Planner').forEach(n=>n.remove());h.querySelectorAll(':scope>.ace518PreparationHub').forEach(n=>n.remove());let p=normalizePlan(c,loadPlan(c));const hero=h.querySelector(':scope>.rta187TrainingHero');if(hero)hero.style.display='none';const anchor=hero||h.querySelector(':scope>.ace252FirstMatchGuide')||h.firstElementChild;if(anchor)anchor.insertAdjacentHTML('afterend',planHtml(c,p));}
 function toast(msg,type=''){if(typeof window.ACE_RTA_TOAST==='function'){try{return window.ACE_RTA_TOAST(msg,type)}catch(_){}}document.querySelectorAll('.ace519Toast').forEach(n=>n.remove());const el=document.createElement('div');el.className='ace519Toast';el.style.cssText='position:fixed;left:50%;bottom:95px;transform:translateX(-50%);z-index:999999;padding:10px 13px;border-radius:10px;background:#0d2533;color:#eefaff;border:1px solid rgba(106,196,241,.2);font:800 11px system-ui';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
 async function executeRecovery(c,p,x){busy=true;renderPlanner();try{const d=x.id==='FILM'?await window.ACE_RTA_RPC('vds_rta_watch_opponent_film_v522',{}):await window.ACE_RTA_RPC('vds_rta_recovery_activity_v512',{p_activity:x.id});if(d?.career)S().career=d.career;if(x.id==='FILM'&&d?.report){try{window.ACE522_SHOW_FILM_REPORT?.(d)}catch(_){}}try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}p.index++;p.waiting=null;savePlan(C()||c,p);toast(`${x.title} completed.`,'good');try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(renderPlanner,50)}catch(e){toast(String(e?.message||e).replace(/^.*?:\s*/,''),'error')}finally{busy=false;renderPlanner()}}
 function executeTraining(c,p,x){const h=host();if(!h)return;let target=null;if(x.type==='physical')target=h.querySelector(`[data-rta113-physical="${CSS.escape(x.id)}"]`);else target=h.querySelector(`[data-rta62-train="${CSS.escape(x.id)}"]`);if(!target||target.disabled){toast('That training activity is currently unavailable.','error');return}p.waiting=Number(c.training_used||0);savePlan(c,p);renderPlanner();target.click()}
@@ -66640,10 +66645,26 @@ document.addEventListener('ace:rta-render',()=>requestAnimationFrame(sync));wind
 window.ACE_PROJECT_BUILD=BUILD;window.ACE_RELEASE_BUILD=BUILD;window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD=BUILD;
 })();
 </script>
-<script id="ace519-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.522-BETA';window.ACE_RELEASE_BUILD='B21.36.522-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.522-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.522-BETA';</script>
+
+<style id="ace523-match-prep-tidy">
+#roadtoace .ace523MainRow{display:grid;grid-template-columns:118px minmax(0,1fr);gap:8px;align-items:stretch;margin:2px 0 10px;position:relative;z-index:1} 
+#roadtoace .ace523BodyPanel{display:flex;flex-direction:column;justify-content:space-between;padding:8px;border-radius:12px;border:1px solid rgba(99,178,224,.10);background:linear-gradient(180deg,rgba(10,28,43,.72),rgba(6,18,30,.86));min-height:244px}
+#roadtoace .ace523BodyHead small{display:block;color:#71b6dc;font:1000 4.8px/1 system-ui;letter-spacing:.14em}
+#roadtoace .ace523BodyHead b{display:block;margin-top:5px;color:#f2fbff;font:1000 8.8px/.95 "Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif;letter-spacing:-.02em}
+#roadtoace .ace523BodyHead span{display:block;margin-top:4px;color:#7995a6;font:750 5.2px/1.25 system-ui}
+#roadtoace .ace523BodyPanel .ace519BodyMini{width:84px;height:150px;margin:10px auto 0;flex:0 0 auto}
+#roadtoace .ace523PlanWrap{min-width:0;display:flex;flex-direction:column;justify-content:flex-start}
+#roadtoace .ace523PlanWrap .ace519PlanLabel{margin-top:0!important}
+#roadtoace .ace523PlanWrap .ace519Slots{grid-template-columns:1fr!important;gap:7px!important;margin-bottom:0!important}
+#roadtoace .ace523PlanWrap .ace519Slot{min-height:80px}
+#roadtoace .ace519Actions{margin-top:8px!important}
+#roadtoace .ace519Projection,#roadtoace .ace519BodyToggle,#roadtoace .ace519BodyDetail{display:none!important}
+@media(max-width:560px){#roadtoace .ace523MainRow{grid-template-columns:105px minmax(0,1fr);gap:7px}#roadtoace .ace523BodyPanel{min-height:228px;padding:7px}#roadtoace .ace523BodyPanel .ace519BodyMini{width:74px;height:132px}}
+</style>
+<script id="ace519-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.523-BETA';</script>
 
 
-<!-- PROJECT ACE B21.36.522-BETA · NATIVE MATCH PREP VISUAL PASS -->
+<!-- PROJECT ACE B21.36.523-BETA · NATIVE MATCH PREP VISUAL PASS -->
 <style id="ace520-project-ace-prep-skin">
 #roadtoace .ace519Planner{
   position:relative!important;overflow:hidden!important;
@@ -66752,10 +66773,10 @@ window.ACE_PROJECT_BUILD=BUILD;window.ACE_RELEASE_BUILD=BUILD;window.ACE_RELEASE
   #roadtoace .ace520Fixture strong{width:26px;height:26px!important}
 }
 </style>
-<script id="ace520-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.522-BETA';window.ACE_RELEASE_BUILD='B21.36.522-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.522-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.522-BETA';</script>
+<script id="ace520-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.523-BETA';</script>
 
 
-<!-- PROJECT ACE B21.36.522-BETA · LOCKED PREP PICKER + OPPONENT FILM -->
+<!-- PROJECT ACE B21.36.523-BETA · LOCKED PREP PICKER + OPPONENT FILM -->
 <style id="ace522-prep-picker-style">
 /* Keep the main Prep page locked/compact. Activity catalogues live in the picker. */
 #roadtoace .ace519Categories,#roadtoace .ace519Choices{display:none!important}
@@ -66801,7 +66822,7 @@ function showFilm(d){document.querySelectorAll('.ace522FilmBackdrop').forEach(n=
 window.ACE522_SHOW_FILM_REPORT=showFilm;
 document.addEventListener('click',e=>{if(String(S().view||'')!=='train'&&!e.target.closest?.('.ace522FilmBackdrop'))return;const empty=e.target.closest?.('[data-ace519-empty]');if(empty){e.preventDefault();e.stopPropagation();openPicker(Number(empty.dataset.ace519Empty||0));return}const planned=e.target.closest?.('.ace519Slot.planned');if(planned&&!e.target.closest?.('[data-ace519-remove]')){e.preventDefault();const all=[...planned.parentElement.children];openPicker(Math.max(0,all.indexOf(planned)-Number(C()?.training_used||0)));return}const t=e.target.closest?.('[data-ace522-tab]');if(t){e.preventDefault();tab=t.dataset.ace522Tab||'TRAIN';document.querySelectorAll('.ace522PickerTab').forEach(b=>b.classList.toggle('active',b.dataset.ace522Tab===tab));const body=document.querySelector('[data-ace522-body]');if(body)body.innerHTML=renderChoices();return}const ch=e.target.closest?.('[data-ace522-choice]');if(ch){e.preventDefault();choose(ch.dataset.ace522Choice);return}if(e.target.closest?.('[data-ace522-close]')||e.target===document.querySelector('.ace522PickerBackdrop')){e.preventDefault();closePicker();return}if(e.target.closest?.('[data-ace522-film-close]')||e.target===document.querySelector('.ace522FilmBackdrop')){e.preventDefault();document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove());return}},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePicker();document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove())}});
-window.ACE_PROJECT_BUILD='B21.36.522-BETA';window.ACE_RELEASE_BUILD='B21.36.522-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.522-BETA';window.ACE_TEST_SERVER_BUILD=true;
+window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace522-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.522-BETA';window.ACE_RELEASE_BUILD='B21.36.522-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.522-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREP_POPUP_FILM_BUILD='B21.36.522-BETA';</script>
+<script id="ace522-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREP_POPUP_FILM_BUILD='B21.36.523-BETA';</script>
