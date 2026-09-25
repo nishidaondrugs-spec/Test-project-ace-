@@ -64257,22 +64257,22 @@ window.ACE_INTL_MATCH_CANONICAL_BUILD='B21.36.480';
         try{window.ACE_MALAYSIA_MVL_REGISTER_LOGO?.(club);}catch(_){}
       }
       const hero=heroUrl(data),crest=crestUrl(data);
-      el.querySelector('h2').textContent=club;el.querySelector('.ace491EntryLeague').textContent=league;setStatus(el,'Loading club crest + home scene');
+      el.querySelector('h2').textContent=club;
+      el.querySelector('.ace491EntryLeague').textContent=league;
+      setStatus(el,'Career data ready · test assets optional');
       if(hero)el.style.setProperty('--ace491-hero',`url("${hero}")`);
-      const malaysiaEntry=countryKey(data)==='malaysia';
-      let crestReady=true;
-      if(malaysiaEntry){
-        const settled=await Promise.allSettled([hero?waitImage(hero):Promise.resolve(),crest?waitImage(crest):Promise.resolve()]);
-        crestReady=!!crest&&settled[1]?.status==='fulfilled';
-      }else{
-        await Promise.all([waitImage(hero),waitImage(crest)]);
-      }
       const crestBox=el.querySelector('.ace491EntryCrest');
-      if(crestReady&&crest)crestBox.innerHTML=`<img src="${crest.replace(/"/g,'&quot;')}" alt="">`;
-      else crestBox.innerHTML=`<span>${club.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}</span>`;
+      const initials=club.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+      if(crest){
+        const safe=crest.replace(/"/g,'&quot;');
+        crestBox.innerHTML=`<img src="${safe}" alt="" onerror="this.remove();this.parentElement.innerHTML='<span>${initials}</span>'">`;
+      }else{
+        crestBox.innerHTML=`<span>${initials}</span>`;
+      }
       crestBox.classList.add('ready');
-      seedState(data);setStatus(el,malaysiaEntry&&!crestReady?'Career ready · crest placeholder active':'Career ready');
-      await new Promise(r=>setTimeout(r,110));
+      seedState(data);
+      setStatus(el,'Career ready · missing assets will use placeholders');
+      await new Promise(r=>setTimeout(r,40));
       el.classList.remove('show');busy=false;window.goPage?.('roadtoace');
     }catch(err){
       console.warn('Project Ace Career pre-entry gate',err);
@@ -66059,3 +66059,38 @@ img,svg{
 })();
 </script>
 <script id="ace514-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.514-BETA';window.ACE_RELEASE_BUILD='B21.36.514-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.514-BETA';window.ACE_TEST_SERVER_BUILD=true;</script>
+
+
+<!-- PROJECT ACE B21.36.515-BETA · TEST SERVER OPTIONAL ASSETS -->
+<style id="ace515-test-assets-optional-style">
+/* Test server: images are decoration, never a navigation requirement. */
+#roadtoace .ace464HomeHub.ace489HomeLoading>.ace456ClubTabs,
+#roadtoace .ace464HomeHub.ace489HomeLoading>.ace456Hero{
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+#roadtoace .ace464HomeHub.ace489HomeLoading::before,
+#roadtoace .ace464HomeHub.ace489HomeLoading::after{display:none!important;}
+</style>
+<script id="ace515-test-assets-optional-script">
+(()=>{
+  window.ACE_TEST_SERVER=true;
+  window.ACE_TEST_ASSETS_OPTIONAL=true;
+  window.ACE_REQUIRE_GENERATED_ASSETS=false;
+  function releaseHome(){
+    document.querySelectorAll('#roadtoace .ace464HomeHub.ace489HomeLoading').forEach(h=>{
+      h.classList.remove('ace489HomeLoading');
+      h.dataset.ace489AssetsReady='TEST_OPTIONAL';
+    });
+  }
+  document.addEventListener('ace:rta-render',releaseHome);
+  window.addEventListener('pageshow',releaseHome,{passive:true});
+  window.addEventListener('load',releaseHome,{passive:true});
+  setTimeout(releaseHome,0);
+  setTimeout(releaseHome,250);
+  window.ACE_PROJECT_BUILD='B21.36.515-BETA';
+  window.ACE_RELEASE_BUILD='B21.36.515-BETA';
+  window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.515-BETA';
+  window.ACE_TEST_OPTIONAL_ASSETS_BUILD='B21.36.515-BETA';
+})();
+</script>
