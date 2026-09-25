@@ -39301,7 +39301,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const items=inbox.length?inbox.slice(0,3):[{source:news.tag,title:news.title,body:news.copy}];
     return `<div class="rta77InboxPane">
       <div class="rta77PaneIntro"><div><small>CAREER INBOX</small><h2>${rta257UnreadInbox(c).length?`${rta257UnreadInbox(c).length} unread message${rta257UnreadInbox(c).length===1?"":"s"}`:inbox.length?`${inbox.length} saved message${inbox.length===1?"":"s"}`:"You're up to date"}</h2><p>Coach, agent, club and media updates.</p></div><span>${rta257UnreadInbox(c).length?`${rta257UnreadInbox(c).length} NEW`:"READ"}</span></div>
-      <div class="rta77MessageList">${items.map((m,i)=>`<button class="${m.action==="TUTORIAL_TRAIN"?"ace255TutorialMail":""}" data-rta62-view="${rta255InboxRoute(m)}"><i>${String(m.source||"•").slice(0,1)}</i><div><small>${esc(m.sender||m.source||"CAREER")}</small><b>${esc(m.title||"Career update")}</b><p>${esc(m.body||"")}</p>${m.action==="TUTORIAL_TRAIN"?`<strong>REPORT TO TRAINING →</strong>`:""}</div><em>→</em></button>`).join("")}</div>
+      <div class="rta77MessageList">${items.map((m,i)=>`<button class="${m.action==="TUTORIAL_TRAIN"?"ace255TutorialMail":""}" data-rta62-view="${rta255InboxRoute(m)}"><i>${String(m.source||"•").slice(0,1)}</i><div><small>${esc(m.sender||m.source||"CAREER")}</small><b>${esc(m.title||"Career update")}</b><p>${esc(m.body||"")}</p>${m.action==="TUTORIAL_TRAIN"?`<strong>OPEN PREPARATION →</strong>`:""}</div><em>→</em></button>`).join("")}</div>
       <div class="rta77PaneFooter"><button data-rta62-view="career">OPEN FULL CAREER INBOX →</button>${S.office?.agent_type||Array.isArray(S.office?.approaches)&&S.office.approaches.length?`<button data-rta62-view="agent">OPEN AGENT DESK →</button>`:""}</div>
     </div>`;
   }
@@ -39699,9 +39699,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const intlStage=String(c?.international_window?.stage||"");
     if(c?.season_complete&&intlSel?.status==="SELECTED"&&intlStage!=="COMPLETE")return {kicker:"INTERNATIONAL DUTY",icon:"◎",title:"REPORT TO YOUR NATIONAL TEAM",meta:intlStage?`${intlStage} · your club Career is paused.`:"You were called up. International duty comes before the next club season.",type:"intl",target:"international",cta:"CONTINUE INTERNATIONAL"};
     if(c?.season_complete)return {kicker:"YOUR NEXT MOVE",icon:"◎",title:"REVIEW YOUR SEASON",meta:"Your next career chapter is ready.",type:"view",target:"career",cta:"SEASON REVIEW"};
-    if(Number(c?.season||1)===1&&played===0&&used===0&&unread.some(m=>m?.action==="TUTORIAL_TRAIN"))return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"✉",title:"OPEN YOUR COACH MESSAGE",meta:"Your first instruction has arrived.",type:"panel",target:"inbox",cta:"OPEN INBOX"};
-    if(Number(c?.season||1)===1&&played===0&&used===0)return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"△",title:"REPORT TO TRAINING",meta:"Complete one drill before your debut.",type:"view",target:"train",cta:"GO TO TRAINING"};
-    if(Number(c?.season||1)===1&&played===0&&used>=1)return {kicker:"CAREER TUTORIAL · 2 OF 3",icon:"▶",title:"PLAY YOUR DEBUT",meta:`Next: ${opponent}`,type:"view",target:"match",cta:"GO TO MATCH"};
+    if(Number(c?.season||1)===1&&played===0&&!c?.first_training_completed&&unread.some(m=>m?.action==="TUTORIAL_TRAIN"))return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"✉",title:"OPEN YOUR COACH MESSAGE",meta:"Your first preparation instruction has arrived.",type:"panel",target:"inbox",cta:"OPEN INBOX"};
+    if(Number(c?.season||1)===1&&played===0&&!c?.first_training_completed)return {kicker:"CAREER TUTORIAL · 1 OF 3",icon:"△",title:"OPEN PREPARATION",meta:"Use your first preparation slot for a training drill before your debut.",type:"view",target:"train",cta:"OPEN PREP"};
+    if(Number(c?.season||1)===1&&played===0&&c?.first_training_completed)return {kicker:"CAREER TUTORIAL · 2 OF 3",icon:"▶",title:"PLAY YOUR DEBUT",meta:`Next: ${opponent}`,type:"view",target:"match",cta:"GO TO MATCH"};
     if(unread.length)return {kicker:"YOUR NEXT MOVE",icon:"✉",title:"READ YOUR NEW MESSAGE",meta:`${unread.length} unread Career update${unread.length===1?"":"s"}.`,type:"panel",target:"inbox",cta:"OPEN INBOX"};
     if(agentUnread){
       const a=rta108AgentAttention?.()||{};
@@ -39748,18 +39748,18 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         });
       }
     }catch(_){}
-    if(firstMatch&&used===0){
+    if(firstMatch&&!c.first_training_completed){
       const coach=String(S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach");
       const club=String(c.club_name||"the club");
       real.unshift({
         id:"ace_first_training_message",
         source:"COACH",
         sender:coach,
-        title:"Report to your first training session",
-        body:`Welcome to ${club}. Before your first Matchday, I want one session from you. Head to Training and complete the recommended drill.`,
+        title:"Prepare for your debut",
+        body:`Welcome to ${club}. Before your first Matchday, open Preparation and use your first slot for a training drill. Recovery and off-court choices unlock after you complete that first training session.`,
         tutorial_view:"train",
         action:"TUTORIAL_TRAIN",
-        action_label:"REPORT TO TRAINING"
+        action_label:"OPEN PREPARATION"
       });
     }
     return real;
@@ -39860,7 +39860,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       const rows=inbox.length?inbox.slice(0,3):[{source:"CAREER",title:"You're up to date",body:"New coach, club and agent messages will appear here."}];
       content=`<div class="ace227Panel ace227InboxPanel">
         <div class="ace227PanelHead"><div><small>CAREER INBOX</small><h2>${unreadInbox.length?`${unreadInbox.length} unread message${unreadInbox.length===1?"":"s"}`:inbox.length?`${inbox.length} message${inbox.length===1?"":"s"}`:"All caught up"}</h2></div>${unreadInbox.length?`<span>${unreadInbox.length} NEW</span>`:""}</div>
-        <div class="ace227InboxList">${rows.map(m=>`<button type="button" class="${m.action==="TUTORIAL_TRAIN"?"ace255TutorialMail":""}" data-rta62-view="${rta255InboxRoute(m)}"><i>${esc(String(m.source||"C").slice(0,1).toUpperCase())}</i><div><small>${esc(m.sender||m.source||"CAREER")}</small><b>${esc(m.title||"Career update")}</b><p>${esc(m.body||"")}</p>${m.action==="TUTORIAL_TRAIN"?`<strong>REPORT TO TRAINING →</strong>`:""}</div><em>→</em></button>`).join("")}</div>
+        <div class="ace227InboxList">${rows.map(m=>`<button type="button" class="${m.action==="TUTORIAL_TRAIN"?"ace255TutorialMail":""}" data-rta62-view="${rta255InboxRoute(m)}"><i>${esc(String(m.source||"C").slice(0,1).toUpperCase())}</i><div><small>${esc(m.sender||m.source||"CAREER")}</small><b>${esc(m.title||"Career update")}</b><p>${esc(m.body||"")}</p>${m.action==="TUTORIAL_TRAIN"?`<strong>OPEN PREPARATION →</strong>`:""}</div><em>→</em></button>`).join("")}</div>
       </div>`;
     }else if(panel==="objectives"){
       content=`<div class="ace227Panel ace227ObjectivesPanel">
@@ -41424,7 +41424,7 @@ document.addEventListener("click",function(e){
   function officeInboxHTML(){
     const inbox=rta255CareerInbox(S.career);
     if(!inbox.length)return `<div class="rta68InboxEmpty">No new career messages.</div>`;
-    return `<div class="rta68InboxList">${inbox.map((m,i)=>`<article class="rta68Message ${esc(m.tone||"")} ${m.action==="TUTORIAL_TRAIN"?"ace255CoachIntroMail":""}"><div class="rta68MsgSource"><i>${m.source==="COACH"?"C":m.source==="AGENT"?"A":m.source==="MEDIA"?"M":m.source==="RIVAL"?"R":"•"}</i><span>${esc(m.sender||m.source)}</span></div><div><small>${m.action==="TUTORIAL_TRAIN"?"WELCOME MESSAGE":`STORY ${String(i+1).padStart(2,"0")}`}</small><h3>${esc(m.title)}</h3><p>${esc(m.body)}</p>${m.action==="TUTORIAL_TRAIN"?`<button class="rta62Btn primary" data-rta62-view="train">REPORT TO TRAINING →</button>`:m.action==="MEET_AGENT"?`<button class="rta62Btn primary" data-rta71-meet-agent="${esc(m.approach_id||"")}">MEET ${esc(m.agent_name||"AGENT")} →</button>`:m.action?`<button class="rta62Btn" data-rta68-agent-action="${esc(m.action)}">RESPOND →</button>`:""}</div></article>`).join("")}</div>`;
+    return `<div class="rta68InboxList">${inbox.map((m,i)=>`<article class="rta68Message ${esc(m.tone||"")} ${m.action==="TUTORIAL_TRAIN"?"ace255CoachIntroMail":""}"><div class="rta68MsgSource"><i>${m.source==="COACH"?"C":m.source==="AGENT"?"A":m.source==="MEDIA"?"M":m.source==="RIVAL"?"R":"•"}</i><span>${esc(m.sender||m.source)}</span></div><div><small>${m.action==="TUTORIAL_TRAIN"?"WELCOME MESSAGE":`STORY ${String(i+1).padStart(2,"0")}`}</small><h3>${esc(m.title)}</h3><p>${esc(m.body)}</p>${m.action==="TUTORIAL_TRAIN"?`<button class="rta62Btn primary" data-rta62-view="train">OPEN PREPARATION →</button>`:m.action==="MEET_AGENT"?`<button class="rta62Btn primary" data-rta71-meet-agent="${esc(m.approach_id||"")}">MEET ${esc(m.agent_name||"AGENT")} →</button>`:m.action?`<button class="rta62Btn" data-rta68-agent-action="${esc(m.action)}">RESPOND →</button>`:""}</div></article>`).join("")}</div>`;
   }
 
 
@@ -66999,3 +66999,342 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 })();
 </script>
 <script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
+
+
+<!-- PROJECT ACE B21.36.531 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
+<style id="ace530-ecosystem-ui-style">
+#roadtoace .ace530TutorialBanner{position:relative;z-index:4;margin:0 0 8px;padding:9px 10px;border:1px solid rgba(92,190,239,.22);border-radius:11px;background:linear-gradient(135deg,rgba(45,145,207,.12),rgba(6,24,37,.92));box-shadow:inset 3px 0 0 #64c6f3;color:#dff5ff}
+#roadtoace .ace530TutorialBanner small{display:block;color:#6fc9f4;font:1000 5.8px/1 system-ui;letter-spacing:.15em}
+#roadtoace .ace530TutorialBanner b{display:block;margin-top:4px;font:1000 10px/1.05 system-ui}
+#roadtoace .ace530TutorialBanner span{display:block;margin-top:4px;color:#83a0b1;font:750 6.5px/1.35 system-ui}
+#roadtoace [data-ace530-tutorial-disabled="1"]{opacity:.28!important;pointer-events:none!important;filter:saturate(.55)!important}
+#roadtoace .ace519Slot.ace530TutorialTarget{border-color:rgba(99,202,250,.46)!important;box-shadow:0 0 0 2px rgba(99,202,250,.08),0 0 24px rgba(65,167,224,.10)!important}
+#roadtoace .ace519Slot.ace530TutorialTarget:after{content:"FIRST: CHOOSE TRAINING";position:absolute;right:7px;top:6px;color:#77d2fb;font:1000 4.8px/1 system-ui;letter-spacing:.11em}
+#roadtoace .ace530RiskBanner{margin:0 0 8px;padding:9px 10px;border:1px solid rgba(255,166,83,.20);border-radius:11px;background:linear-gradient(135deg,rgba(124,59,21,.16),rgba(31,18,14,.80));color:#f4ede7}
+#roadtoace .ace530RiskBanner.critical{border-color:rgba(255,102,119,.28);background:linear-gradient(135deg,rgba(126,35,48,.20),rgba(34,13,20,.86))}
+#roadtoace .ace530RiskTop{display:flex;align-items:center;justify-content:space-between;gap:8px}.ace530RiskTop small{color:#e7aa6e;font:1000 5.5px/1 system-ui;letter-spacing:.14em}.ace530RiskTop b{font:1000 11px/1 system-ui}.ace530RiskTop strong{color:#ffca7a;font:1000 10px/1 system-ui}.ace530RiskBanner.critical .ace530RiskTop strong{color:#ff8d9b}
+#roadtoace .ace530RiskBanner p{margin:5px 0 0;color:#ad9c91;font:750 6.5px/1.4 system-ui}.ace530RiskBanner p b{color:#f2e8df}
+#roadtoace .ace530EcoStrip{margin:9px 0 0;padding:10px;border:1px solid rgba(86,183,235,.13);border-radius:12px;background:linear-gradient(145deg,rgba(8,28,42,.78),rgba(5,18,28,.90));color:#e8f7fd}
+#roadtoace .ace530EcoStripHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}.ace530EcoStripHead small{color:#68bfe9;font:1000 5.5px/1 system-ui;letter-spacing:.13em}.ace530EcoStripHead span{padding:4px 6px;border-radius:999px;background:rgba(74,210,146,.08);color:#75dda8;font:1000 5px/1 system-ui}
+#roadtoace .ace530EcoStripGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.ace530EcoStripGrid>div{min-width:0;padding:7px 6px;border-radius:8px;background:rgba(255,255,255,.022)}.ace530EcoStripGrid span{display:block;color:#627f91;font:900 4.8px/1 system-ui}.ace530EcoStripGrid b{display:block;margin-top:3px;font:1000 9px/1 system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .ace530OfferDetail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 9px}.ace530OfferDetail>div{padding:7px;border-radius:8px;background:rgba(76,160,210,.045);border:1px solid rgba(86,178,230,.07)}.ace530OfferDetail small{display:block;color:#617f90;font-size:5.5px;font-weight:1000}.ace530OfferDetail b{display:block;margin-top:3px;color:#cfe8f5;font-size:8px}.ace530OfferFactors{grid-column:1/-1!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important}.ace530OfferFactors em{padding:5px 4px;border-radius:6px;background:rgba(255,255,255,.025);font-size:5.5px;font-style:normal;color:#7893a3;text-align:center}.ace530OfferFactors em strong{display:block;color:#dcebf3;font-size:7px;margin-top:2px}
+.ace527PreviewModal .ace530Dash{margin-top:13px;padding-top:13px;border-top:1px solid rgba(255,255,255,.07)}
+.ace527PreviewModal .ace530DashTitle{display:flex;align-items:end;justify-content:space-between;gap:8px;margin-bottom:7px}.ace527PreviewModal .ace530DashTitle small{display:block;color:#6fbce7;font-size:6px;font-weight:1000;letter-spacing:.13em}.ace527PreviewModal .ace530DashTitle b{display:block;margin-top:3px;font-size:12px}.ace527PreviewModal .ace530DashTitle span{color:#6d8798;font-size:6px}
+.ace527PreviewModal .ace530MetricGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.ace527PreviewModal .ace530Metric{padding:8px 6px;border-radius:9px;background:rgba(255,255,255,.024);border:1px solid rgba(255,255,255,.045);min-width:0}.ace527PreviewModal .ace530Metric span{display:block;color:#647f91;font-size:5.5px;font-weight:1000;letter-spacing:.07em}.ace527PreviewModal .ace530Metric b{display:block;margin-top:4px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace527PreviewModal .ace530Metric small{display:block;margin-top:2px;color:#526c7d;font-size:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ace527PreviewModal .ace530MiniSection{margin-top:8px;padding:9px;border:1px solid rgba(255,255,255,.055);border-radius:10px;background:rgba(255,255,255,.015)}.ace527PreviewModal .ace530MiniSection>small{display:block;color:#6c8ca0;font-size:5.8px;font-weight:1000;letter-spacing:.12em}.ace527PreviewModal .ace530MiniSection>p{margin:5px 0 0;color:#8aa0ae;font-size:7px;line-height:1.45}.ace527PreviewModal .ace530MiniSection>p b{color:#e6f2f8}
+.ace527PreviewModal .ace530Services{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:7px}.ace527PreviewModal .ace530Services button{min-height:42px;padding:7px 8px;border:1px solid rgba(84,177,229,.11);border-radius:9px;background:rgba(50,137,190,.055);color:#d9eef8;text-align:left;cursor:pointer}.ace527PreviewModal .ace530Services button:disabled{opacity:.34;cursor:not-allowed}.ace527PreviewModal .ace530Services button b{display:block;font-size:7px}.ace527PreviewModal .ace530Services button span{display:block;margin-top:3px;color:#718b9c;font-size:5.7px;line-height:1.25}
+.ace527PreviewModal .ace530WorldGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:7px}.ace527PreviewModal .ace530WorldGrid>div{padding:7px 5px;border-radius:8px;background:rgba(255,255,255,.02);text-align:center}.ace527PreviewModal .ace530WorldGrid span{display:block;color:#637e90;font-size:5px}.ace527PreviewModal .ace530WorldGrid b{display:block;margin-top:2px;font-size:9px}
+.ace527PreviewModal .ace530ActionMsg{min-height:15px;margin-top:7px;color:#7f99aa;font-size:6.5px}.ace527PreviewModal .ace530ActionMsg.good{color:#77d9a9}.ace527PreviewModal .ace530ActionMsg.bad{color:#ff8f9a}
+.ace522FilmReport .ace530AdvancedIntel{margin-top:9px;padding:9px;border:1px solid rgba(90,189,238,.13);border-radius:9px;background:rgba(54,151,207,.045)}.ace522FilmReport .ace530AdvancedIntel small{display:block;color:#6bbfe9;font-size:6px;font-weight:1000;letter-spacing:.1em}.ace522FilmReport .ace530AdvancedIntel div{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}.ace522FilmReport .ace530AdvancedIntel span{padding:6px;border-radius:7px;background:rgba(255,255,255,.025);color:#7992a2;font-size:5.5px}.ace522FilmReport .ace530AdvancedIntel b{display:block;margin-top:2px;color:#ddecf4;font-size:7px}
+@media(max-width:560px){
+ #roadtoace .ace530EcoStripGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ace527PreviewModal .ace530MetricGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ace527PreviewModal .ace530WorldGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .ace527PreviewModal .ace530Services{grid-template-columns:1fr}
+ #roadtoace .ace530OfferDetail{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ace530OfferFactors{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+</style>
+<script id="ace530-ecosystem-ui-script">
+(()=>{
+'use strict';
+const BUILD='B21.36.531-ECOSYSTEM-PREVIEW';
+window.ACE_PROJECT_BUILD=BUILD;
+window.ACE_RELEASE_BUILD=BUILD;
+window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+window.ACE_TEST_SERVER_BUILD=true;
+window.ACE_ECOSYSTEM_UI_BUILD=BUILD;
+
+const S=()=>window.__ACE_RTA_STATE||null;
+const C=()=>S()?.career||null;
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const rpc=(name,args={})=>typeof window.ACE_RTA_RPC==='function'?window.ACE_RTA_RPC(name,args):Promise.reject(new Error('Career connection unavailable.'));
+const money=n=>'£'+Math.max(0,Math.round(Number(n)||0)).toLocaleString('en-GB');
+const preview=()=>window.ACE527_ECOSYSTEM_PREVIEW?.status?.()||null;
+const active=()=>!!preview()?.ecosystem_active;
+let eco=null,fetching=false,lastFetch=0,raf=0;
+
+function tutorialActive(c=C()){
+  return !!c&&Number(c.season||1)===1&&Number(c.season_match||0)===0&&!c.first_training_completed;
+}
+function aggravationRisk(status,load){
+  status=String(status||'FIT').toUpperCase();load=Number(load)||0;
+  if(status==='SORE')return Math.min(.18,.03+Math.max(0,load-70)*.003);
+  if(status==='LIMITED')return Math.min(.30,.08+Math.max(0,load-70)*.0045);
+  return 0;
+}
+function statusWord(n,reverse=false){
+  n=Number(n)||0;
+  if(reverse)return n<30?'LOW':n<55?'MANAGED':n<75?'HIGH':'VERY HIGH';
+  return n>=82?'STRONG':n>=65?'SOLID':n>=45?'BUILDING':'LOW';
+}
+function cost(action,c=C()){
+  const w=Math.max(350,Number(c?.weekly_wage)||350);
+  switch(action){
+    case 'LANGUAGE_COURSE':return Math.max(60,Math.min(450,Math.round(w*.04)));
+    case 'PSYCHOLOGIST':return Math.max(75,Math.min(550,Math.round(w*.05)));
+    case 'TEAM_DINNER':return Math.max(60,Math.min(400,40+Math.round(w*.03)));
+    case 'PERSONAL_TRAINER':return Math.max(100,Math.min(850,Math.round(w*.08)));
+    case 'PRIVATE_ANALYST':return Math.max(60,Math.min(500,Math.round(w*.045)));
+    case 'HOLIDAY':return Math.max(250,Math.min(2500,Math.round(w*1.5)));
+    default:return 0;
+  }
+}
+async function refreshEco(force=false){
+  if(!active()){eco=null;queue();return null}
+  if(fetching||(!force&&eco&&Date.now()-lastFetch<8000))return eco;
+  fetching=true;
+  try{eco=await rpc('vds_rta_ecosystem_status_v529',{});lastFetch=Date.now()}
+  catch(e){console.warn('ACE 530 ecosystem status unavailable',e)}
+  finally{fetching=false;queue()}
+  return eco;
+}
+function setTutorialDisabled(el,on){
+  if(!el)return;
+  if(on){el.dataset.ace530TutorialDisabled='1';el.disabled=true}
+  else if(el.dataset.ace530TutorialDisabled==='1'){delete el.dataset.ace530TutorialDisabled;el.disabled=false}
+}
+function decorateTutorial(){
+  const c=C(),planner=document.querySelector('#roadtoace .ace519Planner');
+  document.querySelectorAll('#roadtoace [data-ace530-tutorial-disabled="1"]').forEach(el=>setTutorialDisabled(el,false));
+  document.querySelectorAll('#roadtoace .ace530TutorialBanner').forEach(n=>n.remove());
+  document.querySelectorAll('#roadtoace .ace519Slot.ace530TutorialTarget').forEach(n=>n.classList.remove('ace530TutorialTarget'));
+  if(!planner||!tutorialActive(c))return;
+
+  const banner=document.createElement('div');banner.className='ace530TutorialBanner';
+  banner.innerHTML='<small>CAREER TUTORIAL · PREPARATION</small><b>Use Slot 1 for your first training drill.</b><span>Training is the first lesson. Recovery and off-court preparation unlock immediately after you complete this drill.</span>';
+  const top=planner.querySelector('.ace519Top');if(top)top.insertAdjacentElement('afterend',banner);else planner.prepend(banner);
+
+  const slots=[...planner.querySelectorAll('.ace519Slot')];
+  const firstOpen=slots.find(x=>!x.classList.contains('planned'))||slots[0];
+  firstOpen?.classList.add('ace530TutorialTarget');
+
+  planner.querySelectorAll('[data-ace519-preset]').forEach(el=>setTutorialDisabled(el,String(el.dataset.ace519Preset||'')!=='DEVELOP'));
+  planner.querySelectorAll('[data-ace519-cat]').forEach(el=>{
+    const v=String(el.dataset.ace519Cat||'').toUpperCase();
+    setTutorialDisabled(el,!['TRAIN','PHYSICAL'].includes(v));
+  });
+  planner.querySelectorAll('[data-ace519-choice]').forEach(el=>{
+    const id=String(el.dataset.ace519Choice||'').toUpperCase();
+    setTutorialDisabled(el,['REST','CLUB_PHYSIO','SPECIALIST_PHYSIO','FILM','TEAM_TIME'].includes(id));
+  });
+  document.querySelectorAll('.ace522PickerBackdrop [data-ace522-tab]').forEach(el=>{
+    const v=String(el.dataset.ace522Tab||'').toUpperCase();
+    setTutorialDisabled(el,!['TRAIN','PHYSICAL'].includes(v));
+  });
+  document.querySelectorAll('.ace522PickerBackdrop [data-ace522-choice]').forEach(el=>{
+    const id=String(el.dataset.ace522Choice||'').toUpperCase();
+    setTutorialDisabled(el,['REST','CLUB_PHYSIO','SPECIALIST_PHYSIO','FILM','TEAM_TIME'].includes(id));
+  });
+}
+function riskHTML(c,compact=false){
+  if(!c)return '';
+  const st=String(c.injury_status||'FIT').toUpperCase(),load=Number(c.body_load||0),risk=aggravationRisk(st,load);
+  if(!risk)return '';
+  const b=eco?.battle||{},r=eco?.rival||b?.rival||{},pressure=Number(b?.pressure||0);
+  const contested=!!r?.player_name||pressure>=55;
+  const severe=st==='LIMITED'||risk>=.15;
+  return `<section class="ace530RiskBanner ${severe?'critical':''}">
+    <div class="ace530RiskTop"><div><small>${compact?'PLAY-THROUGH RISK':'MEDICAL DECISION'}</small><b>${esc(st)} · ${esc(c.injury_body_part||'EXISTING ISSUE')}</b></div><strong>${(risk*100).toFixed(1)}% AGGRAVATION</strong></div>
+    <p>${st==='LIMITED'?'Playing now can escalate this injury into time OUT.':'Playing through soreness can worsen it into a LIMITED injury.'}
+    ${contested?` <b>${esc(r?.player_name||'A direct rival')} is competing for your place${r?.role_momentum!=null?` · ${Number(r.role_momentum).toFixed(0)} role momentum`:''}.</b>`:''}
+    ${pressure?` Selection pressure: ${pressure}%.`:''}</p>
+  </section>`;
+}
+function decorateRisk(){
+  document.querySelectorAll('#roadtoace .ace530RiskBanner').forEach(n=>n.remove());
+  if(!active())return;
+  const c=C();if(!c)return;
+  if(String(S()?.view||'')==='train'){
+    const planner=document.querySelector('#roadtoace .ace519Planner');
+    const condition=planner?.querySelector('.ace519Condition');
+    const html=riskHTML(c,false);
+    if(condition&&html)condition.insertAdjacentHTML('afterend',html);
+  }
+  if(String(S()?.view||'')==='match'){
+    const mount=document.querySelector('#roadtoace #rta62Mount'),html=riskHTML(c,true);
+    if(mount&&html)mount.insertAdjacentHTML('afterbegin',html);
+  }
+}
+function ecoStripHTML(){
+  const c=eco?.career;if(!c)return '';
+  return `<section class="ace530EcoStrip" data-ace530-strip>
+    <div class="ace530EcoStripHead"><div><small>CAREER ECOSYSTEM · PRIVATE PREVIEW</small></div><span>POST-GRACE RULES</span></div>
+    <div class="ace530EcoStripGrid">
+      <div><span>CHEMISTRY</span><b>${Number(c.team_chemistry||0).toFixed(0)} · ${statusWord(c.team_chemistry)}</b></div>
+      <div><span>ADAPTATION</span><b>${Number(c.adaptation||0).toFixed(0)} · ${statusWord(c.adaptation)}</b></div>
+      <div><span>MENTAL LOAD</span><b>${Number(c.mental_load||0).toFixed(0)} · ${statusWord(c.mental_load,true)}</b></div>
+      <div><span>ROLE MOMENTUM</span><b>${Number(c.role_momentum||0).toFixed(0)}</b></div>
+    </div>
+  </section>`;
+}
+function decorateEcoStrip(){
+  document.querySelectorAll('#roadtoace [data-ace530-strip]').forEach(n=>n.remove());
+  if(!active()||!eco)return;
+  const mount=document.querySelector('#roadtoace #rta62Mount');if(!mount)return;
+  const view=String(S()?.view||'');
+  if(!['home','career','player'].includes(view))return;
+  const target=mount.querySelector('.rta92OverviewPanel,.rta77Home,.rta77Dashboard,.rta92Panel');
+  if(target)target.insertAdjacentHTML('afterbegin',ecoStripHTML());
+}
+function factor(o,key,label){if(o?.[key]==null)return '';return `<em>${esc(label)}<strong>${Math.round(Number(o[key])||0)}</strong></em>`}
+function decorateOffers(){
+  const cards=[...document.querySelectorAll('.ace311Offer')],os=Array.isArray(C()?.transfer_offers)?C().transfer_offers:[];
+  cards.forEach((card,i)=>{
+    card.querySelectorAll('.ace530OfferDetail').forEach(n=>n.remove());
+    const o=os[i];if(!o||!active()||(!o.position_need&&!o.recruitment_style))return;
+    const reason=card.querySelector('.ace311Reason');
+    const el=document.createElement('div');el.className='ace530OfferDetail';
+    el.innerHTML=`
+      <div><small>RECRUITMENT STAGE</small><b>${esc(o.stage||o.market_tag||'WATCHING')}</b></div>
+      <div><small>POSITION NEED</small><b>${esc(o.position_need||'SQUAD FIT')}</b></div>
+      <div><small>CLUB MODEL</small><b>${esc(String(o.recruitment_style||'BALANCED').replaceAll('_',' '))}</b></div>
+      <div><small>TRAINING</small><b>${'★'.repeat(Math.max(1,Number(o.training_facility||0)))}</b></div>
+      <div><small>MEDICAL</small><b>${'★'.repeat(Math.max(1,Number(o.medical_facility||0)))}</b></div>
+      <div><small>ANALYSIS</small><b>${'★'.repeat(Math.max(1,Number(o.analysis_facility||0)))}</b></div>
+      <div class="ace530OfferFactors">${factor(o,'ability_fit','ABILITY')}${factor(o,'need_fit','NEED')}${factor(o,'potential_age_fit','UPSIDE')}${factor(o,'recent_form_fit','FORM')}${factor(o,'reputation_exposure_fit','EXPOSURE')}${factor(o,'tactical_fit','TACTICAL')}${factor(o,'financial_fit','FINANCE')}${factor(o,'adaptation_fit','ADAPT')}</div>`;
+    if(reason)reason.insertAdjacentElement('beforebegin',el);else card.appendChild(el);
+  });
+}
+function serviceButton(action,title,desc,paid=true,disabled=false){
+  const c=C(),co=paid?cost(action,c):0;
+  return `<button type="button" data-ace530-action="${esc(action)}" ${disabled?'disabled':''}><b>${esc(title)}${paid&&co?` · ${money(co)}`:''}</b><span>${esc(desc)}</span></button>`;
+}
+function dashboardHTML(){
+  if(!active())return `<div class="ace530Dash"><div class="ace530MiniSection"><small>ECOSYSTEM SYSTEMS</small><p>Enable <b>Private Preview</b> for this save to test the post-Beta-Grace career ecosystem.</p></div></div>`;
+  if(!eco)return `<div class="ace530Dash"><div class="ace530MiniSection"><small>ECOSYSTEM SYSTEMS</small><p>Loading live career ecosystem…</p></div></div>`;
+  const c=eco.career||{},club=eco.club||{},w=eco.world||{},r=eco.rival||{},rel=eco.relationships||{},sp=Array.isArray(c.sponsorships)?c.sponsorships:[],contract=c.current_contract||{},bon=contract.bonuses||{};
+  const job=String(c.employment_type||'NONE').replaceAll('_',' ');
+  const holidayDisabled=!C()?.season_complete;
+  const trainerUntil=Number(c.services?.personal_trainer_until_match||0),analystUntil=Number(c.services?.private_analyst_until_match||0),m=Number(C()?.season_match||0);
+  return `<div class="ace530Dash">
+    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V531</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
+    <div class="ace530MetricGrid">
+      <div class="ace530Metric"><span>CHEMISTRY</span><b>${Number(c.team_chemistry||0).toFixed(0)}</b><small>${statusWord(c.team_chemistry)}</small></div>
+      <div class="ace530Metric"><span>ADAPTATION</span><b>${Number(c.adaptation||0).toFixed(0)}</b><small>${statusWord(c.adaptation)}</small></div>
+      <div class="ace530Metric"><span>MENTAL LOAD</span><b>${Number(c.mental_load||0).toFixed(0)}</b><small>${statusWord(c.mental_load,true)}</small></div>
+      <div class="ace530Metric"><span>ROLE MOMENTUM</span><b>${Number(c.role_momentum||0).toFixed(0)}</b><small>${r?.player_name?`vs ${esc(r.player_name)}`:'NO CLOSE RIVAL'}</small></div>
+      <div class="ace530Metric"><span>EXPOSURE</span><b>${Number(c.exposure||0).toFixed(0)}</b><small>market visibility</small></div>
+      <div class="ace530Metric"><span>OUTSIDE LIFE</span><b>${esc(job)}</b><small>${esc(c.outside_commitment||'NONE')} commitment</small></div>
+      <div class="ace530Metric"><span>WEEKLY WAGE</span><b>${money(c.weekly_wage)}</b><small>${Number(c.employment_income||0)?`+ ${money(c.employment_income)} work`:esc(c.support_status||'SELF')}</small></div>
+      <div class="ace530Metric"><span>CAREER PEAK</span><b>${Number(c.career_peak_ovr||c.overall||0)}</b><small>OVR reached</small></div>
+    </div>
+
+    <div class="ace530MiniSection"><small>CLUB ENVIRONMENT · ${esc(club.name||C()?.club_name||'CLUB')}</small><p>
+      Training <b>${'★'.repeat(Math.max(1,Number(club.training_facility||1)))}</b> ·
+      Medical <b>${'★'.repeat(Math.max(1,Number(club.medical_facility||1)))}</b> ·
+      Analysis <b>${'★'.repeat(Math.max(1,Number(club.analysis_facility||1)))}</b> ·
+      Recruitment <b>${esc(String(club.recruitment_style||'BALANCED').replaceAll('_',' '))}</b> ·
+      Working language <b>${esc(club.working_language||'LOCAL')}</b>.
+    </p></div>
+
+    <div class="ace530MiniSection"><small>ROLE BATTLE</small><p>${r?.player_name?`Your direct rival is <b>${esc(r.player_name)}</b> · ${Number(r.overall||0)} OVR · ${Number(r.form||0)} form${r.role_momentum!=null?` · ${Number(r.role_momentum).toFixed(0)} role momentum`:''}. Missing a match medically does not directly punish your role score, but gives the rival an opportunity.`:'No direct rival is currently close enough to create a major role battle.'}</p></div>
+
+    <div class="ace530MiniSection"><small>RELATIONSHIPS</small><p>${Number(rel.tracked||0)} teammates tracked · average relationship chemistry <b>${Number(rel.average||0).toFixed(0)}</b>${rel.best?.name?` · strongest connection <b>${esc(rel.best.name)} (${Number(rel.best.chemistry||0).toFixed(0)})</b>`:''}${Number(rel.mentor_count||0)?` · <b>${Number(rel.mentor_count)} mentor${Number(rel.mentor_count)===1?'':'s'}</b>`:''}.</p></div>
+
+    <div class="ace530MiniSection"><small>CONTRACT + SPONSORSHIP</small><p>${contract.club?`Contract: <b>${esc(contract.role||C()?.squad_role||'PLAYER')}</b> at <b>${esc(contract.club)}</b> · ${money(contract.weekly_wage||c.weekly_wage)}/wk${bon.appearance?` · ${money(bon.appearance)} appearance bonus`:''}${bon.performance_bonus?` · ${money(bon.performance_bonus)} at ${Number(bon.performance_rating||8).toFixed(1)}+ rating`:''}${bon.trophy?` · ${money(bon.trophy)} trophy bonus`:''}.`:'Current contract uses the existing career terms.'} ${sp.length?`Sponsor: <b>${esc(sp[0].name||sp[0].tier)}</b> · ${money(sp[0].weekly)}/wk.`:'No active sponsorship yet.'}</p></div>
+
+    <div class="ace530MiniSection"><small>CAREER SERVICES + OUTSIDE COMMITMENTS</small>
+      <div class="ace530Services">
+        ${serviceButton('LEAVE_JOB','LEAVE OUTSIDE JOB','Remove job income and improve recovery capacity.',false,String(c.employment_type||'NONE')==='NONE')}
+        ${serviceButton('TAKE_FLEXIBLE_JOB','FLEXIBLE WORK · +£220/WK','Small recovery cost; useful in low-paid leagues.',false,String(c.employment_type||'NONE')!=='NONE')}
+        ${serviceButton('TAKE_PART_TIME_JOB','PART-TIME WORK · +£350/WK','More income with moderate outside commitments.',false,String(c.employment_type||'NONE')!=='NONE')}
+        ${serviceButton('TAKE_PHYSICAL_JOB','PHYSICAL WORK · +£450/WK','Highest job income, but adds body/recovery pressure.',false,String(c.employment_type||'NONE')!=='NONE')}
+        ${serviceButton('LANGUAGE_COURSE','LANGUAGE COURSE','Improves adaptation and communication; no direct OVR gain.')}
+        ${serviceButton('PSYCHOLOGIST','MENTAL PERFORMANCE','Reduces accumulated mental load.')}
+        ${serviceButton('TEAM_DINNER','TEAM DINNER','Improves chemistry and lowers mental load.')}
+        ${serviceButton('PERSONAL_TRAINER',trainerUntil>=m?'PERSONAL TRAINER · ACTIVE':'PERSONAL TRAINER','Four match cycles of lower training load.',true,trainerUntil>=m)}
+        ${serviceButton('PRIVATE_ANALYST',analystUntil>=m?'PRIVATE ANALYST · ACTIVE':'PRIVATE ANALYST','Three match cycles of deeper film intel; no hidden match buff.',true,analystUntil>=m)}
+        ${serviceButton('HOLIDAY','OFFSEASON HOLIDAY','Large mental reset and modest load reduction.',true,holidayDisabled)}
+      </div><div class="ace530ActionMsg" data-ace530-action-msg></div>
+    </div>
+
+    <div class="ace530MiniSection"><small>WORLD DIAGNOSTICS · THIS SAVE</small>
+      <div class="ace530WorldGrid">
+        <div><span>PLAYERS</span><b>${Number(w.players||0)}</b></div>
+        <div><span>INJURED</span><b>${Number(w.injured||0)}</b></div>
+        <div><span>OUT</span><b>${Number(w.out||0)}</b></div>
+        <div><span>AVG OVR</span><b>${Number(w.avg_ovr||0).toFixed(1)}</b></div>
+        <div><span>80+</span><b>${Number(w.ovr80_plus||0)}</b></div>
+        <div><span>85+</span><b>${Number(w.ovr85_plus||0)}</b></div>
+        <div><span>90+</span><b>${Number(w.ovr90_plus||0)}</b></div>
+        <div><span>95+</span><b>${Number(w.ovr95_plus||0)}</b></div>
+        <div><span>98+</span><b>${Number(w.ovr98_plus||0)}</b></div>
+        <div><span>100 OVR</span><b>${Number(w.ovr100||0)}</b></div>
+        <div><span>AVG CHEM</span><b>${Number(w.avg_chemistry||0).toFixed(0)}</b></div>
+        <div><span>AVG MENTAL</span><b>${Number(w.avg_mental_load||0).toFixed(0)}</b></div>
+      </div>
+    </div>
+  </div>`;
+}
+function decoratePreviewModal(){
+  const modal=document.querySelector('.ace527PreviewModal');if(!modal)return;
+  let dash=modal.querySelector('[data-ace530-dashboard]');
+  if(!dash){dash=document.createElement('div');dash.dataset.ace530Dashboard='1';modal.appendChild(dash)}
+  dash.innerHTML=dashboardHTML();
+}
+function decorateFilm(){
+  const report=document.querySelector('.ace522FilmReport');if(!report||report.querySelector('.ace530AdvancedIntel'))return;
+  const f=C()?.opponent_film||{},a=f.advanced_intel||{};
+  if(!a||!Object.keys(a).length)return;
+  const label=f.intel_level||'ADVANCED';
+  const person=x=>x?.name?`${esc(x.name)} · ${esc(x.position||'')} · ${Number(x.attack||x.serve||x.block||0)}`:'—';
+  const el=document.createElement('div');el.className='ace530AdvancedIntel';
+  el.innerHTML=`<small>${esc(label)} INTEL</small><div><span>TOP ATTACKER<b>${person(a.top_attacker)}</b></span><span>TOP SERVER<b>${person(a.top_server)}</b></span><span>BLOCK ANCHOR<b>${person(a.block_anchor)}</b></span></div>`;
+  const actions=report.querySelector('.ace522FilmActions');if(actions)actions.insertAdjacentElement('beforebegin',el);else report.appendChild(el);
+}
+async function doAction(action,btn){
+  if(!active())return;
+  const msg=document.querySelector('[data-ace530-action-msg]');
+  if(msg){msg.textContent='Applying…';msg.className='ace530ActionMsg'}
+  if(btn)btn.disabled=true;
+  try{
+    const d=await rpc('vds_rta_ecosystem_action_v529',{p_action:action});
+    if(d?.career&&S())S().career=d.career;
+    if(d?.status)eco=d.status;else await refreshEco(true);
+    try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}
+    if(msg){msg.textContent=String(d?.description||'Career ecosystem updated.');msg.className='ace530ActionMsg good'}
+    try{window.__ACE_RTA_RENDER?.()}catch(_){}
+    setTimeout(()=>{refreshEco(true);queue()},80);
+  }catch(e){
+    if(msg){msg.textContent=String(e?.message||e).replace(/^.*?:\s*/,'');msg.className='ace530ActionMsg bad'}
+  }finally{if(btn)btn.disabled=false}
+}
+function decorate(){
+  raf=0;
+  decorateTutorial();
+  decorateRisk();
+  decorateEcoStrip();
+  decorateOffers();
+  decoratePreviewModal();
+  decorateFilm();
+}
+function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
+
+document.addEventListener('click',e=>{
+  setTimeout(queue,90);setTimeout(queue,420);
+  const a=e.target.closest?.('[data-ace530-action]');
+  if(a){e.preventDefault();doAction(String(a.dataset.ace530Action||''),a);return}
+  if(e.target.closest?.('#ace527PreviewChip,[data-ace527-refresh],[data-ace527-enable],[data-ace527-disable]')){
+    setTimeout(()=>{refreshEco(true);queue()},180);
+  }
+},true);
+
+document.addEventListener('ace:rta-render',()=>{refreshEco(false);queue()});
+window.addEventListener('focus',()=>{refreshEco(false);queue()});
+window.addEventListener('pageshow',()=>{setTimeout(()=>refreshEco(true),250);setTimeout(queue,350)},{passive:true});
+
+
+setInterval(()=>{
+  if(document.visibilityState!=='visible')return;
+  const should=active();
+  if(should&&(!eco||Date.now()-lastFetch>12000))refreshEco(true);
+  if(!should&&eco){eco=null;queue()}
+},2200);
+
+setTimeout(()=>{refreshEco(true);queue()},1100);
+window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD};
+})();
+</script>
+<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.531-ECOSYSTEM-PREVIEW';</script>
+
