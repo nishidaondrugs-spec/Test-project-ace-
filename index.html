@@ -64274,7 +64274,9 @@ window.ACE_INTL_MATCH_CANONICAL_BUILD='B21.36.480';
     const S=window.__ACE_RTA_STATE;if(!S||!data)return;
     S.career=data.career||null;S.history=Array.isArray(data.history)?data.history:[];S.league=data.league||null;
     S.activeTraining=data.active_training||null;S.activeKey=data.active_key_match||null;S.loaded=true;S.loading=false;S.view='home';
-    try{window.__ACE_RTA_RENDER?.()}catch(_){ }
+    /* V538: do NOT render while the pre-entry gate is blocking the page.
+       The data RPC is fast; an expensive downstream render was able to strand
+       the UI on "Checking career data". Navigation happens first, render second. */
   }
   function fixLiveJapanIdentity(){
     const S=window.__ACE_RTA_STATE,c=S?.career;if(!S||!c)return;
@@ -64300,7 +64302,9 @@ window.ACE_INTL_MATCH_CANONICAL_BUILD='B21.36.480';
       if(live?.loaded&&live?.career){
         data={career:live.career,history:Array.isArray(live.history)?live.history:[],league:live.league||null,active_training:live.activeTraining||null,active_key_match:live.activeKey||null};
       }else{
-        data=await window.ACE_RTA_RPC('vds_rta_get_state_fast',{});
+        const stateRequest=window.ACE_RTA_RPC('vds_rta_get_state_fast',{});
+        const stateTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('CAREER_DATA_TIMEOUT')),5000));
+        data=await Promise.race([stateRequest,stateTimeout]);
       }
       data=normalizeIdentity(data);
       if(!data?.career){el.classList.remove('show');busy=false;window.goPage?.('roadtoace');return;}
@@ -64326,12 +64330,22 @@ window.ACE_INTL_MATCH_CANONICAL_BUILD='B21.36.480';
       }
       crestBox.classList.add('ready');
       seedState(data);
-      setStatus(el,'Career ready · missing assets will use placeholders');
-      await new Promise(r=>setTimeout(r,40));
-      el.classList.remove('show');busy=false;window.goPage?.('roadtoace');
+      setStatus(el,'Career ready');
+      /* V538: release the blocking gate BEFORE asking the large Career UI to render. */
+      el.classList.remove('show');
+      busy=false;
+      window.goPage?.('roadtoace');
+      requestAnimationFrame(()=>{
+        try{window.__ACE_RTA_RENDER?.()}catch(err){console.warn('Project Ace post-entry render',err)}
+      });
     }catch(err){
       console.warn('Project Ace Career pre-entry gate',err);
-      busy=false;el.querySelector('.ace491EntrySpin').style.display='none';el.querySelector('.ace491EntryActions').classList.add('show');setStatus(el,'Career assets could not finish loading');
+      busy=false;
+      el.querySelector('.ace491EntrySpin').style.display='none';
+      el.querySelector('.ace491EntryActions').classList.add('show');
+      setStatus(el,String(err?.message||'').includes('TIMEOUT')
+        ?'Career data took too long · tap RETRY'
+        :'Career data could not load · tap RETRY');
     }
   }
   document.addEventListener('click',e=>{
@@ -67056,7 +67070,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
 
 
-<!-- PROJECT ACE B21.36.537 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
+<!-- PROJECT ACE B21.36.538 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
 <style id="ace530-ecosystem-ui-style">
 #roadtoace .ace530TutorialBanner{position:relative;z-index:4;margin:0 0 8px;padding:9px 10px;border:1px solid rgba(92,190,239,.22);border-radius:11px;background:linear-gradient(135deg,rgba(45,145,207,.12),rgba(6,24,37,.92));box-shadow:inset 3px 0 0 #64c6f3;color:#dff5ff}
 #roadtoace .ace530TutorialBanner small{display:block;color:#6fc9f4;font:1000 5.8px/1 system-ui;letter-spacing:.15em}
@@ -67093,7 +67107,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace530-ecosystem-ui-script">
 (()=>{
 'use strict';
-const BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+const BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
 window.ACE_PROJECT_BUILD=BUILD;
 window.ACE_RELEASE_BUILD=BUILD;
 window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
@@ -67263,7 +67277,7 @@ function dashboardHTML(){
   const holidayDisabled=!C()?.season_complete;
   const trainerUntil=Number(c.services?.personal_trainer_until_match||0),analystUntil=Number(c.services?.private_analyst_until_match||0),m=Number(C()?.season_match||0);
   return `<div class="ace530Dash">
-    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V537</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
+    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V538</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
     <div class="ace530MetricGrid">
       <div class="ace530Metric"><span>CHEMISTRY</span><b>${Number(c.team_chemistry||0).toFixed(0)}</b><small>${statusWord(c.team_chemistry)}</small></div>
       <div class="ace530Metric"><span>ADAPTATION</span><b>${Number(c.adaptation||0).toFixed(0)}</b><small>${statusWord(c.adaptation)}</small></div>
@@ -67391,11 +67405,11 @@ setTimeout(()=>{refreshEco(true);queue()},1100);
 window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD};
 })();
 </script>
-<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';</script>
+<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';</script>
 
 
 
-<!-- PROJECT ACE B21.36.537 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
+<!-- PROJECT ACE B21.36.538 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
 <style id="ace535-career-notice-nav-gameplay-style">
 /* Persistent injury notice: no timer and no close X. It leaves only after the player taps it. */
 .ace535InjuryNotice{
@@ -67506,7 +67520,7 @@ window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD
 'use strict';
 if(window.ACE535_CAREER_NOTICE_TUTORIAL)return;
 window.ACE535_CAREER_NOTICE_TUTORIAL=true;
-const BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+const BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
 const S=()=>window.__ACE_RTA_STATE||{};
 const C=()=>S().career||null;
 const q=(sel,root=document)=>{try{return root.querySelector(sel)}catch(_){return null}};
@@ -67707,11 +67721,11 @@ window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
+<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
 
 
 
-<!-- PROJECT ACE B21.36.537 · CAREER OFFICE / TRUE HISTORY / CLEAN MOBILE CHROME -->
+<!-- PROJECT ACE B21.36.538 · CAREER OFFICE / TRUE HISTORY / CLEAN MOBILE CHROME -->
 <style id="ace536-career-office-history-mobile-style">
 /* Career money belongs in Career Office; History remains history. */
 #roadtoace .ace536MoneyQuick b{color:#8fdfb2!important}
@@ -67790,17 +67804,17 @@ window.addEventListener('pageshow',cleanRtaChrome,{passive:true});
 new MutationObserver(cleanRtaChrome).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']});
 setTimeout(cleanRtaChrome,150);
 
-window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
-window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
-window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace536-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace536-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
-<!-- PROJECT ACE B21.36.537 · INJURY NOTICE AS HANGING POPUP -->
+<!-- PROJECT ACE B21.36.538 · INJURY NOTICE AS HANGING POPUP -->
 <style id="ace537-injury-popup-style">
 /* Use the same hanging popup language as club-interest / scout notices. */
 body .ace535InjuryNotice,
@@ -67877,11 +67891,46 @@ body .ace535InjuryNotice em{
   window.addEventListener('pageshow', ()=>setTimeout(upgradeMedicalPopup,120), {passive:true});
   new MutationObserver(upgradeMedicalPopup).observe(document.documentElement,{subtree:true,childList:true});
   setTimeout(upgradeMedicalPopup,200);
-  window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
-  window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
-  window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+  window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+  window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+  window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
   window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace537-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace537-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
+
+
+
+<!-- PROJECT ACE B21.36.538 · CAREER ENTRY GATE WATCHDOG -->
+<script id="ace538-career-entry-watchdog">
+(()=>{
+  let token=0;
+  const arm=()=>{
+    const gate=document.getElementById('ace491CareerEntryGate');
+    if(!gate?.classList.contains('show'))return;
+    const mine=++token;
+    setTimeout(()=>{
+      if(mine!==token)return;
+      const g=document.getElementById('ace491CareerEntryGate');
+      if(!g?.classList.contains('show'))return;
+      const status=g.querySelector('.ace491EntryStatus');
+      const spin=g.querySelector('.ace491EntrySpin');
+      const actions=g.querySelector('.ace491EntryActions');
+      if(status?.textContent?.trim()==='Checking career data'){
+        if(spin)spin.style.display='none';
+        actions?.classList.add('show');
+        status.textContent='Career data took too long · tap RETRY';
+      }
+    },6000);
+  };
+  new MutationObserver(arm).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class'],childList:true});
+  document.addEventListener('click',e=>{
+    if(e.target.closest?.('[data-ace491-retry]'))setTimeout(arm,60);
+  },true);
+  window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+  window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+  window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+})();
+</script>
+<script id="ace538-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
 
