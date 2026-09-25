@@ -65487,7 +65487,7 @@ img,svg{
 <script id="ace512-health-economy-js">
 (()=>{
   'use strict';
-  const BUILD='B21.36.516-BETA';
+  const BUILD='B21.36.517-BETA';
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const S=()=>window.__ACE_RTA_STATE||null;
   const career=()=>S()?.career||null;
@@ -65626,20 +65626,80 @@ img,svg{
     }
   }
 
+  function bodyZoneState(c,zone){
+    const st=status(c.injury_status),part=String(c.injury_body_part||'').toUpperCase();
+    if(st==='FIT')return'good';
+    const hit={
+      shoulder:/SHOULDER|ARM|ELBOW/.test(part),
+      hand:/FINGER|HAND|WRIST/.test(part),
+      back:/BACK|SPINE|CORE/.test(part),
+      knee:/KNEE/.test(part),
+      ankle:/ANKLE|FOOT/.test(part),
+      muscle:/MUSCLE|HAMSTRING|CALF|THIGH/.test(part)
+    }[zone];
+    if(hit)return st.toLowerCase();
+    if((!part||part==='GENERAL')&&zone==='back')return st.toLowerCase();
+    return'good';
+  }
+  function bodyZoneLabel(c,zone,label){
+    const state=bodyZoneState(c,zone);
+    const copy=state==='good'?'GOOD':state==='sore'?'SORE':state==='limited'?'LIMITED':'INJURED';
+    return `<div class="ace517ZoneRow ${state}"><span>${esc(label)}</span><b>${copy}</b></div>`;
+  }
+  function bodyMapHTML(c){
+    const st=status(c.injury_status),part=String(c.injury_body_part||'').toUpperCase();
+    const z=n=>bodyZoneState(c,n);
+    const dot=(zone,cx,cy,r=8)=>`<circle class="ace517BodyDot ${z(zone)}" cx="${cx}" cy="${cy}" r="${r}" data-zone="${zone}"/>`;
+    return `<section class="ace517BodyCard">
+      <div class="ace517BodyTop">
+        <div><small>BODY STATUS</small><h3>${st==='FIT'?'Everything looks good.':'Your body is carrying an issue.'}</h3><p>${st==='FIT'?'All tracked areas are currently clear.':`${esc(c.injury_type||'Medical issue')} · ${esc(c.injury_body_part||'body')} · ${estDays(c.injury_days_remaining)}`}</p></div>
+        <span class="ace517StatusPill ${statClass(st)}">${esc(st)}</span>
+      </div>
+      <div class="ace517BodyLayout">
+        <div class="ace517BodyVisual" aria-label="Player body status map">
+          <svg viewBox="0 0 180 330" role="img" aria-label="Human body injury map">
+            <defs>
+              <linearGradient id="ace517BodyFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#18364a"/><stop offset="1" stop-color="#0b1f2d"/></linearGradient>
+            </defs>
+            <circle cx="90" cy="34" r="24" class="ace517BodyShape"/>
+            <path d="M67 63 Q90 53 113 63 L125 122 L112 174 L108 221 L121 307 L97 307 L89 226 L81 307 L57 307 L70 221 L66 174 L55 122 Z" class="ace517BodyShape"/>
+            <path d="M59 74 L31 145 L43 151 L72 96" class="ace517Limb"/>
+            <path d="M121 74 L149 145 L137 151 L108 96" class="ace517Limb"/>
+            ${dot('shoulder',61,80,9)}${dot('shoulder',119,80,9)}
+            ${dot('hand',38,151,8)}${dot('hand',142,151,8)}
+            ${dot('back',90,151,10)}
+            ${dot('muscle',72,222,9)}${dot('muscle',108,222,9)}
+            ${dot('knee',67,252,9)}${dot('knee',113,252,9)}
+            ${dot('ankle',61,303,8)}${dot('ankle',119,303,8)}
+          </svg>
+          <div class="ace517BodyLegend"><span><i class="good"></i>GOOD</span><span><i class="sore"></i>SORE</span><span><i class="limited"></i>LIMITED</span><span><i class="out"></i>INJURED</span></div>
+        </div>
+        <div class="ace517ZoneList">
+          ${bodyZoneLabel(c,'shoulder','Shoulders / arms')}
+          ${bodyZoneLabel(c,'hand','Hands / fingers')}
+          ${bodyZoneLabel(c,'back','Lower back / core')}
+          ${bodyZoneLabel(c,'muscle','Leg muscles')}
+          ${bodyZoneLabel(c,'knee','Knees')}
+          ${bodyZoneLabel(c,'ankle','Ankles / feet')}
+        </div>
+      </div>
+    </section>`;
+  }
+
   function recoveryHubHTML(c){
     const st=status(c.injury_status),load=Number(c.body_load||0),ready=Math.round(Number(c.readiness??100));
     return `<div class="ace512Modal ace516RecoveryModal" data-ace512-recovery-modal>
-      <section class="ace512ModalCard ace516RecoveryHub" role="dialog" aria-modal="true" aria-label="Recovery">
+      <section class="ace512ModalCard ace516RecoveryHub ace517RecoveryHub" role="dialog" aria-modal="true" aria-label="Recovery">
         <header class="ace512ModalHead ace516RecoveryHead">
           <div><small>ROAD TO ACE · PLAYER CARE</small><h2>Recovery</h2></div>
           <button type="button" data-ace512-recovery-close aria-label="Close">×</button>
         </header>
-        <div class="ace516RecoverySummary">
+        ${bodyMapHTML(c)}
+        <div class="ace516RecoverySummary ace517RecoverySummary">
           <div><span>READINESS</span><b>${ready}%</b><small>${ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED'}</small></div>
           <div><span>BODY LOAD</span><b>${Math.round(load)}</b><small>${loadBand(load)}</small></div>
           <div class="${statClass(st)}"><span>MEDICAL</span><b>${esc(st)}</b><small>${st==='FIT'?'CLEARED':estDays(c.injury_days_remaining)}</small></div>
         </div>
-        ${status(c.injury_status)!=='FIT'?`<div class="ace512InjuryLine"><div><b>${esc(c.injury_type||'Medical issue')}</b><span>${esc(c.injury_body_part||'')} · ${esc(c.injury_severity||st)}</span></div><strong>${estDays(c.injury_days_remaining)}</strong></div>`:''}
         ${recoverySection(c)}
         <button type="button" class="ace516ContractButton" data-ace512-details>CONTRACT + MONEY DETAILS <span>→</span></button>
       </section>
@@ -66172,7 +66232,7 @@ img,svg{
 </script>
 
 
-<!-- PROJECT ACE B21.36.516-BETA · RECOVERY TAB + INTERACTION HOTFIX -->
+<!-- PROJECT ACE B21.36.517-BETA · VISUAL BODY RECOVERY MAP -->
 <style id="ace516-recovery-tab-interaction-style">
 /* Keep the original cinematic Club Home hero intact. */
 #roadtoace .ace464HomeHub>.ace456Hero{
@@ -66219,11 +66279,26 @@ img,svg{
   .ace516RecoverySummary span,.ace516RecoverySummary small{font-size:6.3px!important;}
 }
 </style>
+
+<style id="ace517-body-recovery-style">
+/* B21.36.517-BETA: visual body-status recovery UI. No new image assets required. */
+.ace517BodyCard{margin:0 0 11px;padding:13px;border-radius:17px;border:1px solid rgba(104,196,242,.14);background:radial-gradient(circle at 25% 30%,rgba(55,160,211,.10),transparent 34%),rgba(255,255,255,.022)}
+.ace517BodyTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.ace517BodyTop small{display:block;color:#7191a5;font:1000 6.5px/1 system-ui;letter-spacing:.16em}.ace517BodyTop h3{margin:5px 0 0;color:#f2f8fb;font:1000 17px/1.05 system-ui;letter-spacing:-.025em}.ace517BodyTop p{margin:5px 0 0;color:#7791a3;font:700 7.5px/1.45 system-ui}
+.ace517StatusPill{flex:0 0 auto;padding:7px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font:1000 6.5px/1 system-ui;letter-spacing:.12em}.ace517StatusPill.fit{color:#67e0a7;border-color:rgba(80,221,155,.20);background:rgba(80,221,155,.07)}.ace517StatusPill.sore{color:#efd16e;border-color:rgba(239,209,110,.20);background:rgba(239,209,110,.07)}.ace517StatusPill.limited{color:#f4aa5e;border-color:rgba(244,170,94,.22);background:rgba(244,170,94,.08)}.ace517StatusPill.out{color:#f47878;border-color:rgba(244,120,120,.22);background:rgba(244,120,120,.08)}
+.ace517BodyLayout{display:grid;grid-template-columns:minmax(190px,.9fr) minmax(220px,1.1fr);gap:12px;align-items:stretch}.ace517BodyVisual{min-height:330px;display:grid;place-items:center;position:relative;border-radius:15px;border:1px solid rgba(255,255,255,.05);background:linear-gradient(180deg,rgba(5,18,28,.82),rgba(3,12,20,.90));overflow:hidden}.ace517BodyVisual:before{content:"";position:absolute;inset:10% 15%;background:radial-gradient(circle,rgba(61,164,216,.12),transparent 65%);filter:blur(8px);pointer-events:none}.ace517BodyVisual svg{position:relative;z-index:1;width:155px;height:300px;overflow:visible}.ace517BodyShape{fill:url(#ace517BodyFill);stroke:#426b82;stroke-width:2}.ace517Limb{fill:none;stroke:#426b82;stroke-width:17;stroke-linecap:round;stroke-linejoin:round}
+.ace517BodyDot{stroke-width:3;filter:drop-shadow(0 0 6px currentColor)}.ace517BodyDot.good{fill:#4fcf8d;stroke:#a6f0c9;color:#4fcf8d}.ace517BodyDot.sore{fill:#e8c956;stroke:#fff0a3;color:#e8c956}.ace517BodyDot.limited{fill:#ef9c4a;stroke:#ffd0a0;color:#ef9c4a}.ace517BodyDot.out{fill:#ef6268;stroke:#ffb1b5;color:#ef6268}.ace517BodyLegend{position:absolute;left:8px;right:8px;bottom:8px;z-index:2;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}.ace517BodyLegend span{display:flex;align-items:center;gap:4px;color:#718b9c;font:900 5.5px/1 system-ui;letter-spacing:.05em}.ace517BodyLegend i{width:6px;height:6px;border-radius:50%;display:inline-block}.ace517BodyLegend .good{background:#4fcf8d}.ace517BodyLegend .sore{background:#e8c956}.ace517BodyLegend .limited{background:#ef9c4a}.ace517BodyLegend .out{background:#ef6268}
+.ace517ZoneList{display:grid;grid-template-columns:1fr 1fr;gap:7px;align-content:center}.ace517ZoneRow{min-width:0;padding:11px;border-radius:12px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.022)}.ace517ZoneRow span{display:block;color:#7892a3;font:850 7px/1.25 system-ui}.ace517ZoneRow b{display:block;margin-top:5px;font:1000 9px/1 system-ui;letter-spacing:.06em}.ace517ZoneRow.good b{color:#5edb9c}.ace517ZoneRow.sore{border-color:rgba(232,201,86,.18);background:rgba(232,201,86,.045)}.ace517ZoneRow.sore b{color:#e8c956}.ace517ZoneRow.limited{border-color:rgba(239,156,74,.20);background:rgba(239,156,74,.05)}.ace517ZoneRow.limited b{color:#ef9c4a}.ace517ZoneRow.out{border-color:rgba(239,98,104,.22);background:rgba(239,98,104,.055)}.ace517ZoneRow.out b{color:#ef7075}
+.ace517RecoverySummary{margin-top:10px!important}.ace517RecoveryHub .ace512RecoverySection{padding:13px!important}.ace517RecoveryHub .ace512RecoveryHead{margin-bottom:9px!important}.ace517RecoveryHub .ace512RecoveryHead h2{font-size:17px!important}.ace517RecoveryHub .ace512RecoveryHead p{font-size:7px!important}.ace517RecoveryHub .ace512RecoveryGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.ace517RecoveryHub .ace512RecoveryCard{min-height:105px!important;padding:10px!important}.ace517RecoveryHub .ace512RecoveryCard:nth-child(5){grid-column:1/-1!important;min-height:88px!important}
+@media(max-width:760px){.ace517BodyCard{padding:10px}.ace517BodyLayout{grid-template-columns:45% 55%;gap:8px}.ace517BodyVisual{min-height:286px}.ace517BodyVisual svg{width:126px;height:252px}.ace517ZoneList{grid-template-columns:1fr;gap:5px}.ace517ZoneRow{padding:8px 9px}.ace517ZoneRow span{font-size:6px}.ace517ZoneRow b{font-size:8px}.ace517BodyTop h3{font-size:15px}.ace517BodyTop p{font-size:6.8px}.ace517RecoveryHub .ace512RecoveryGrid{grid-template-columns:1fr!important}.ace517RecoveryHub .ace512RecoveryCard:nth-child(5){grid-column:auto!important}}
+@media(max-width:420px){.ace517BodyLayout{grid-template-columns:42% 58%}.ace517BodyVisual{min-height:268px}.ace517BodyVisual svg{width:112px;height:232px}.ace517BodyLegend{gap:5px}.ace517BodyLegend span{font-size:4.8px}}
+</style>
 <script id="ace516-final-build-marker">
-window.ACE_PROJECT_BUILD='B21.36.516-BETA';
-window.ACE_RELEASE_BUILD='B21.36.516-BETA';
-window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.516-BETA';
+window.ACE_PROJECT_BUILD='B21.36.517-BETA';
+window.ACE_RELEASE_BUILD='B21.36.517-BETA';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.517-BETA';
 window.ACE_TEST_SERVER_BUILD=true;
-window.ACE_HEALTH_ECONOMY_V1_BUILD='B21.36.516-BETA';
-window.ACE_RECOVERY_TAB_BUILD='B21.36.516-BETA';
+window.ACE_HEALTH_ECONOMY_V1_BUILD='B21.36.517-BETA';
+window.ACE_RECOVERY_TAB_BUILD='B21.36.517-BETA';
+window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 </script>
