@@ -38841,7 +38841,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function primaryAction(c){
     if(c.season_complete)return["SEASON REVIEW →","career"];
     if(S.activeTraining)return["RESUME TRAINING →","train"];
-    if(Number(c.training_used||0)<2)return[Number(c.training_used||0)===0?"TRAIN →":"SECOND SESSION →","train"];
+    if(Number(c.training_used||0)<2)return[Number(c.training_used||0)===0?"OPEN PREP →":"SECOND PREP →","train"];
     return["MATCHDAY →","match"];
   }
 
@@ -38932,7 +38932,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         <button type="button" data-ace464-career-inbox class="ace367TileClub"><i>▣</i><div><b>Inbox</b><span>Club, agent & national-team mail</span></div><em>→</em></button>
         <button type="button" data-rta85-more-showcase class="ace367TileShowcase ace474CareerProfileTile ${S.view==="career"&&S.careerPanel==="careerprofile"?"active":""}"><i>◈</i><div><b>Customise</b><span>Build your public identity & feature career achievements</span></div><em>→</em></button>
         <button type="button" data-rta85-more-view="agent" class="ace367TileAgent ${S.view==="agent"?"active":""} ${rta108AgentAttention?.().active?"attention":""}"><i>◇</i><div><b>Agent${rta108AgentAttention?.().active?" · NEW":""}</b><span>${agentStatus}</span></div><em>→</em></button>
-        <button type="button" data-rta85-more-view="career" class="ace367TileBoard ${S.view==="career"&&S.careerPanel!=="careerprofile"?"active":""}"><i>▥</i><div><b>Career</b><span>Progression, form, pathway, international & legacy</span></div><em>→</em></button>
+        <button type="button" data-rta85-more-view="career" class="ace367TileBoard ${S.view==="career"&&S.careerPanel!=="careerprofile"?"active":""}"><i>▥</i><div><b>Career</b><span>Office, history, progression, pathway & international</span></div><em>→</em></button>
         <button type="button" data-rta85-more-view="rankings" class="ace367TileRankings ${S.view==="rankings"?"active":""}"><i>▤</i><div><b>Rankings</b><span>Global Career leaderboard by player OVR</span></div><em>→</em></button>
         <button type="button" data-ace399-scout-clubs class="ace367TileSaves ace399ScoutTile"><i>⌖</i><div><b>Scout Clubs</b><span>Browse every league, club & squad</span></div><em>→</em></button>
       </div>
@@ -39287,14 +39287,14 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   function rta77WeekPanel(c,used,next,focus,action,view){
     const stage=Number(c.season_complete?3:used<2?used:2);
     const items=[
-      {n:"01",label:"TRAINING",title:used>=1?"Session complete":"Session one",done:used>=1,current:stage===0,view:"train"},
-      {n:"02",label:"TRAINING",title:used>=2?"Session complete":"Session two",done:used>=2,current:stage===1,view:"train"},
+      {n:"01",label:"PREP",title:used>=1?"Slot complete":"Preparation slot one",done:used>=1,current:stage===0,view:"train"},
+      {n:"02",label:"PREP",title:used>=2?"Slot complete":"Preparation slot two",done:used>=2,current:stage===1,view:"train"},
       {n:"03",label:"MATCHDAY",title:next,done:false,current:stage===2,view:"match"}
     ];
     return `<div class="rta77WeekPane">
-      <div class="rta77PaneIntro"><div><small>THIS WEEK</small><h2>Prepare for ${esc(next)}</h2><p>Complete up to two development sessions, then take the form into Matchday.</p></div><span>${used}/2 TRAINING</span></div>
+      <div class="rta77PaneIntro"><div><small>THIS WEEK</small><h2>Prepare for ${esc(next)}</h2><p>Use up to two Prep slots for training, recovery or off-court work before Matchday.</p></div><span>${used}/2 PREP</span></div>
       <div class="rta77Calendar">${items.map(x=>`<button class="${x.done?"done":x.current?"current":""}" data-rta62-view="${x.view}"><i>${x.done?"✓":x.n}</i><div><small>${x.label}</small><b>${esc(x.title)}</b></div><em>${x.current?"NEXT":x.done?"DONE":"UPCOMING"}</em></button>`).join("")}</div>
-      <div class="rta77FocusLine ace266InfoOnly"><div><span>DEVELOPMENT FOCUS</span><b>${esc(focus[0])}</b><small>${Number(focus[1])} current rating</small></div><em>${used<2?"TRAINING AVAILABLE":"MATCHDAY READY"}</em></div>
+      <div class="rta77FocusLine ace266InfoOnly"><div><span>DEVELOPMENT FOCUS</span><b>${esc(focus[0])}</b><small>${Number(focus[1])} current rating</small></div><em>${used<2?"PREP AVAILABLE":"MATCHDAY READY"}</em></div>
     </div>`;
   }
   function rta77InboxPanel(c,inbox,news){
@@ -39820,7 +39820,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const position=({OH:"OUTSIDE HITTER",OP:"OPPOSITE",M:"MIDDLE BLOCKER",S:"SETTER",L:"LIBERO"}[String(c.position||"OH").toUpperCase()]||posLabel(c.position)||"PLAYER");
     const positionCode=String(c.position||"OH").toUpperCase();
     const role=String(c.squad_role||S.selection?.user?.selection_status||"BENCH").toUpperCase();
-    const played=Number(c.season_match||0),firstMatch=Number(c.season||1)===1&&played===0,needsFirstTraining=firstMatch&&used===0,firstTrainingDone=firstMatch&&used>=1,seasonPct=Math.max(0,Math.min(100,Math.round((played/14)*100)));
+    const played=Number(c.season_match||0),firstMatch=Number(c.season||1)===1&&played===0,needsFirstTraining=firstMatch&&!c.first_training_completed,firstTrainingDone=firstMatch&&c.first_training_completed,seasonPct=Math.max(0,Math.min(100,Math.round((played/14)*100)));
     const rp=roleProgress(c),unreadInbox=rta257UnreadInbox(c),inboxBadge=unreadInbox.length?String(unreadInbox.length):"";
     const last=h?`${h.won?"WIN":"LOSS"} · ${Number(h.sets_for||0)}–${Number(h.sets_against||0)} vs ${esc(h.opponent||"Opponent")}`:"No match played yet";
     const trust=Math.max(0,Math.round(Number(c.coach_trust||0)));
@@ -39889,11 +39889,11 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
           <div class="ace229PulseStatus"><span>FORM <b>${esc(formMood)}</b></span><span>TRUST <b>${trust}</b></span><span>ROLE <b>${esc(role)}</b></span></div>
         </article>
         <section class="ace229WeekBlock">
-          <div class="ace229SectionLabel"><span>THIS WEEK</span><b>${used}/2 TRAINING</b></div>
+          <div class="ace229SectionLabel"><span>THIS WEEK</span><b>${used}/2 PREP</b></div>
           <div class="ace229WeekStrip">
             <div class="${s1?"done":!s1?"current open":"open"}"><i>${s1?"✓":"1"}</i><span>TRAINING 1</span><b>${s1?"DONE":"NEXT"}</b></div>
             <div class="${s2?"done":s1&&!s2?"current open":"open"}"><i>${s2?"✓":"2"}</i><span>TRAINING 2</span><b>${s2?"DONE":s1?"NEXT":"UPCOMING"}</b></div>
-            <div class="match ${s2?"current":""}"><i>03</i><span>MATCHDAY</span><b>${s2?"NEXT":needsFirstTraining?"AFTER TRAINING":"UPCOMING"}</b></div>
+            <div class="match ${s2?"current":""}"><i>03</i><span>MATCHDAY</span><b>${s2?"NEXT":needsFirstTraining?"AFTER FIRST PREP":"UPCOMING"}</b></div>
           </div>
         </section>
         <section class="ace229Development">
@@ -40029,7 +40029,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     const current=months[monthIndex];
     const nextOpp=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||"Opponent");
     let major={tag:"CLUB",title:`${c.club_name} vs ${nextOpp}`,meta:`MATCHDAY ${Math.min(14,played+1)} · NEXT UP`,tone:"club"};
-    let events=[{label:"TRAIN",state:Number(c.training_used||0)>0?"done":"next"},{label:"MATCH",state:Number(c.training_used||0)>=1?"next":"future"},{label:"RECOVER",state:"future"},{label:"MATCH",state:"future"},{label:"INT'L",state:"future",intl:true}];
+    let events=[{label:"PREP",state:Number(c.training_used||0)>0?"done":"next"},{label:"MATCH",state:c.first_training_completed?"next":"future"},{label:"RECOVER",state:"future"},{label:"MATCH",state:"future"},{label:"INT'L",state:"future",intl:true}];
     let teaser="June · national team selection";
     if(complete){
       const selected=sel?.status==="SELECTED", reserve=sel?.status==="RESERVE", training=sel?.status==="TRAINING SQUAD";
@@ -40260,7 +40260,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       if(ace347CareerEnded(c))return `<main class="rta93Match"><section class="rta78SeasonDone ace347CareerDone"><small>CAREER COMPLETE · AGE ${Number(c.age||40)}</small><h1>Your playing career is complete.</h1><p>No infinite Season 145 anymore. Your final club and international record is preserved in Career.</p><button class="rta62Btn primary" data-rta62-view="career">VIEW FINAL CAREER →</button></section></main>`;
       return `<main class="rta93Match"><section class="rta78SeasonDone"><small>SEASON COMPLETE</small><h1>The season is over.</h1><p>Review the year before deciding what comes next.</p><button class="rta62Btn primary" data-rta62-view="career">OPEN CAREER →</button></section></main>`;
     }
-    const h=latestMatch(),ready=readiness(c),oppFallback=nextOpponent(),rank=leagueRank(),selState=S.selection||{},sel=selState.user||{},status=String(sel.selection_status||c.squad_role||"BENCH"),opp=String(selState.opponent||sel.opponent||oppFallback),rival=sel.direct_rival||null,coach=String(sel.coach_name||S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach"),leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League"),training=Number(c.training_used||0),firstMatch=Number(c.season||1)===1&&Number(c.season_match||0)===0,needsFirstTraining=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training===0,firstTrainingDone=Number(c.season||1)===1&&Number(c.season_match||0)===0&&training>=1,playerTarget=posLabel(c.position)==="S"?"CONTROL THE OFFENCE":posLabel(c.position)==="L"?"OWN FIRST CONTACT":posLabel(c.position)==="M"?"WIN THE NET":"WIN YOUR ATTACKING MOMENTS",actionLabel=S.activeKey?"RESUME MATCH":rta88SelectionAction(status),rivalName=String(rival?.player_name||rival?.name||"").trim(),selectionNote=status==="BENCH"?(rivalName?`${rivalName} is currently ahead.`:"Stay ready."):(status==="ROTATION"?"Rotation role confirmed.":"You're in the starting six."),coachNote=status==="BENCH"?"Stay ready. Your chance may come.":status==="ROTATION"?"Make every touch count.":"Set the tone early.",matchday=Math.min(14,Number(c.season_match||0)+1);
+    const h=latestMatch(),ready=readiness(c),oppFallback=nextOpponent(),rank=leagueRank(),selState=S.selection||{},sel=selState.user||{},status=String(sel.selection_status||c.squad_role||"BENCH"),opp=String(selState.opponent||sel.opponent||oppFallback),rival=sel.direct_rival||null,coach=String(sel.coach_name||S.clubWorld?.club?.coach_name||S.clubWorld?.club?.coach||"Head Coach"),leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"Career League"),training=Number(c.training_used||0),firstMatch=Number(c.season||1)===1&&Number(c.season_match||0)===0,needsFirstTraining=Number(c.season||1)===1&&Number(c.season_match||0)===0&&!c.first_training_completed,firstTrainingDone=Number(c.season||1)===1&&Number(c.season_match||0)===0&&!!c.first_training_completed,playerTarget=posLabel(c.position)==="S"?"CONTROL THE OFFENCE":posLabel(c.position)==="L"?"OWN FIRST CONTACT":posLabel(c.position)==="M"?"WIN THE NET":"WIN YOUR ATTACKING MOMENTS",actionLabel=S.activeKey?"RESUME MATCH":rta88SelectionAction(status),rivalName=String(rival?.player_name||rival?.name||"").trim(),selectionNote=status==="BENCH"?(rivalName?`${rivalName} is currently ahead.`:"Stay ready."):(status==="ROTATION"?"Rotation role confirmed.":"You're in the starting six."),coachNote=status==="BENCH"?"Stay ready. Your chance may come.":status==="ROTATION"?"Make every touch count.":"Set the tone early.",matchday=Math.min(14,Number(c.season_match||0)+1);
     return `<main class="rta93Match ace245MatchPage ${firstMatch?"ace252FirstMatchMatch":""} ${needsFirstTraining?"ace253MatchNeedsTraining":firstTrainingDone?"ace253MatchReady":""}">
       <section class="rta93MatchHero ace245FixtureHero">
         <div class="ace245FixtureAtmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -40274,8 +40274,8 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       </section>
       ${firstMatch&&!S.activeKey?(needsFirstTraining?`<section class="ace252FirstMatchGuide ace253MatchRedirect">
         <div class="ace252GuideNumber">1</div>
-        <div class="ace252GuideCopy"><small>CAREER TUTORIAL · 1 OF 3</small><h2>Train once before your debut.</h2><p>We want to show you how player development works first. Complete one drill, then come back here.</p></div>
-        <button type="button" data-rta62-view="train" onclick="return window.ACE_RTA_NAV(event,'train')">TAKE ME TO TRAINING →</button>
+        <div class="ace252GuideCopy"><small>CAREER TUTORIAL · 1 OF 3</small><h2>Prepare for your debut.</h2><p>Open Prep and use Slot 1 for a training drill. After that, all Prep choices are available normally.</p></div>
+        <button type="button" data-rta62-view="train" onclick="return window.ACE_RTA_NAV(event,'train')">OPEN PREPARATION →</button>
       </section>`:`<section class="ace252FirstMatchGuide ace252StepTwo ace253MatchStart">
         <div class="ace252GuideNumber">3</div>
         <div class="ace252GuideCopy"><small>CAREER TUTORIAL · 3 OF 3</small><h2>Play your first fixture.</h2><p>Choose Key Moments or Sim Match.</p></div>
@@ -41885,7 +41885,59 @@ document.addEventListener("click",function(e){
     return `<div class="rta93ClubCourt"><div class="v3d-net"></div><div class="rta93AttackLine top"></div><div class="rta93AttackLine bottom"></div>${slots.map(([p,slot])=>`<div class="rta93CourtPlayer ${slot} ${p.isUser?"me":""}"><i>${esc(p.position)}</i><b>${esc(p.isUser?"YOU":p.name.split(/\s+/).slice(-1)[0])}</b><span>${Number(p.overall)} OVR</span></div>`).join("")}${libero?`<div class="rta93LiberoBadge ${libero.isUser?"me":""}"><small>LIBERO</small><b>${esc(libero.isUser?"YOU":libero.name.split(/\s+/).slice(-1)[0])}</b><span>${Number(libero.overall)} OVR</span></div>`:""}</div>`;
   }
 
-  function clubView(c,homeMode=false){
+  
+  function aceV1HomeEssentials(c){
+    const used=Math.max(0,Math.min(2,Number(c?.training_used||0)));
+    const left=Math.max(0,2-used);
+    const ready=Math.round(Math.max(0,Math.min(100,Number(c?.readiness??readiness(c)??0))));
+    const medical=String(c?.injury_status||'FIT').toUpperCase();
+    const days=Math.max(0,Number(c?.injury_days_remaining||0));
+    const sel=S.selection?.user||{};
+    const role=String(sel.selection_status||c?.squad_role||'SQUAD').toUpperCase();
+    const rival=sel.direct_rival||null;
+    const unread=rta257UnreadInbox(c).length;
+    const next=String(S.selection?.opponent||sel.opponent||nextOpponent()||'OPPONENT');
+    const matchNo=Math.max(1,Number(c?.season_match||0)+1);
+    const wage=Number(c?.weekly_wage||0);
+    const bank=Number(c?.cash_balance||0);
+    const firstTraining=Number(c?.season||1)===1&&Number(c?.season_match||0)===0&&!c?.first_training_completed;
+    const seasonDone=!!c?.season_complete;
+    const intl=c?.international_window||{};
+    const intlActive=!!(intl&&String(intl.stage||'').toUpperCase()&&!['','COMPLETE'].includes(String(intl.stage||'').toUpperCase()));
+    const roleSub=rival?.player_name?`vs ${String(rival.player_name).split(/\s+/).slice(-1)[0]}`:
+      (sel.rank?`depth #${Number(sel.rank)}`:'squad place');
+    const matchValue=seasonDone?'REVIEW':intlActive?'INT’L':`M${matchNo}`;
+    const matchSub=seasonDone?'Season complete':intlActive?String(intl.competition||'National duty'):next;
+    const prepValue=firstTraining?'FIRST':`${used}/2`;
+    const prepSub=firstTraining?'Training required':left?`${left} slot${left===1?'':'s'} left`:'Match ready';
+    const medSub=medical==='FIT'?`${ready}% ready`:`${days||'—'}d est. · ${ready}%`;
+    return `<section class="aceV1HomeDock" aria-label="Career essentials">
+      <div class="aceV1DockLabel"><span>CAREER ESSENTIALS</span><small>PROJECT ACE · V1</small></div>
+      <div class="aceV1DockGrid">
+        <button type="button" class="match ${S.activeKey?'urgent':''}" onclick="return window.ACE_V1_HOME_ROUTE(event,'match')">
+          <small>${seasonDone?'SEASON':'NEXT MATCH'}</small><b>${esc(matchValue)}</b><span>${esc(matchSub)}</span>
+        </button>
+        <button type="button" class="prep ${firstTraining?'urgent':''}" onclick="return window.ACE_V1_HOME_ROUTE(event,'prep')">
+          <small>PREPARATION</small><b>${esc(prepValue)}</b><span>${esc(prepSub)}</span>
+        </button>
+        <button type="button" class="medical ${medical!=='FIT'?'alert':''}" onclick="return window.ACE_V1_HOME_ROUTE(event,'medical')">
+          <small>MEDICAL</small><b>${esc(medical)}</b><span>${esc(medSub)}</span>
+        </button>
+        <button type="button" class="role" onclick="return window.ACE_V1_HOME_ROUTE(event,'role')">
+          <small>YOUR PLACE</small><b>${esc(role)}</b><span>${esc(roleSub)}</span>
+        </button>
+        <button type="button" class="office" onclick="return window.ACE_V1_HOME_ROUTE(event,'office')">
+          <small>OFFICE</small><b>${esc(money(wage))}<em>/WK</em></b><span>${esc(money(bank))} bank</span>
+        </button>
+        <button type="button" class="inbox ${unread?'notice':''}" onclick="return window.ACE_V1_HOME_ROUTE(event,'inbox')">
+          <small>INBOX</small><b>${unread?unread:'✓'}</b><span>${unread?`new message${unread===1?'':'s'}`:'up to date'}</span>
+          ${unread?`<i>${unread}</i>`:''}
+        </button>
+      </div>
+    </section>`;
+  }
+
+function clubView(c,homeMode=false){
     const roster=rta86ServerClubRoster(c),metrics=rta80ClubMetrics(roster),starters=roster.filter(x=>x.starter).slice(0,7),bench=roster.filter(x=>!x.starter),rank=leagueRank(),battle=rta86PositionBattle(c,roster),profile=S.clubWorld?.club||{},teamForm=roster.length?Math.round(roster.reduce((sum,p)=>sum+Number(p.form||65),0)/roster.length):65;
     const leagueName=String(profile.league_name||S.league?.league_name||'Career League');
     const countryRaw=String(profile.country||S.league?.country||leagueName||'');
@@ -41964,6 +42016,7 @@ document.addEventListener("click",function(e){
         <div class="ace421ClubCourtTexture" aria-hidden="true"></div>
         <div class="rta93HeroShade ace456HeroShade" aria-hidden="true"></div>
         <div class="ace456HeroTop">${homeMode?'':'<button type="button" class="ace456Back" data-rta62-view="home" aria-label="Back">‹</button>'}<span class="ace421SeasonChip">SEASON ${Math.max(1,Number(c.season||1))}</span></div>
+        ${homeMode?aceV1HomeEssentials(c):''}
         <div class="ace456HeroTag">MORE<br>THAN A GAME<br>A STRONGER<br>${esc(countryLabel)}</div>
         <div class="ace456HeroIdentity">
           <div class="ace456HeroCrest">${rta77ClubLogo(c.club_name||'Club','lg')}</div>
@@ -42662,7 +42715,7 @@ function ace536CareerOfficePanel(c){
 
     <div class="ace536OfficeActions">
       <button type="button" data-ace512-details>OPEN MONEY LEDGER + MEDICAL DETAILS →</button>
-      <button type="button" data-ace536-preview-settings>TEST PREVIEW SETTINGS</button>
+      <button type="button" data-ace536-preview-settings>TEST PREVIEW SETTINGS</button><button type="button" onclick="window.ACE_V1_SYSTEM_CHECK?.()">V1 SYSTEM CHECK</button>
     </div>
   </section>`;
 }
@@ -46913,7 +46966,7 @@ function renderAttackKeyOverlay(){
     if(e.target.closest?.("[data-ace351-refresh]")){ace351EnsureLegacy(true);return}
     const clubHomeTab=e.target.closest?.("[data-ace464-home-tab]");if(clubHomeTab){showClubHomePanel(clubHomeTab.dataset.ace464HomeTab);return}
     if(e.target.closest?.("[data-ace464-career-inbox]")){window.ACE481_MAIL_OPEN=-1;closeOverlay();showCareerInboxPopup();return}
-    const mobileMoreView=e.target.closest?.("[data-rta85-more-view]");if(mobileMoreView){const v=mobileMoreView.dataset.rta85MoreView;closeOverlay();S.view=v;if(v==="career"&&!['overview','player','form','pathway','international','legacy'].includes(String(S.careerPanel||'')))S.careerPanel='overview';if(v==="career"&&S.careerPanel==="player")S.playerPanel='attributes';if(v==="rankings")S.leaderboardLoaded=false;if(v==="agent")rta257MarkAgentRead(S.career);render();ace371MobilePostRenderTop();return}
+    const mobileMoreView=e.target.closest?.("[data-rta85-more-view]");if(mobileMoreView){const v=mobileMoreView.dataset.rta85MoreView;closeOverlay();S.view=v;if(v==="career"&&!['overview','office','history','player','form','pathway','international','legacy','careerprofile'].includes(String(S.careerPanel||'')))S.careerPanel='overview';if(v==="career"&&S.careerPanel==="player")S.playerPanel='attributes';if(v==="rankings")S.leaderboardLoaded=false;if(v==="agent")rta257MarkAgentRead(S.career);render();ace371MobilePostRenderTop();return}
     if(e.target.closest?.("[data-rta85-more-showcase]")){closeOverlay();S.view="career";S.careerPanel="careerprofile";render();ace371MobilePostRenderTop();ace349EnsureShowcase();return}
     const rankingsPanel=e.target.closest?.("[data-ace352-rank-panel]");if(rankingsPanel){S.rankingsPanel=rankingsPanel.dataset.ace352RankPanel||"live";render();requestAnimationFrame(ace352UpdateRankCountdown);return}
     if(e.target.closest?.("[data-rta-rankings-refresh]")){loadCareerLeaderboard(true);return}
@@ -64290,63 +64343,32 @@ window.ACE_INTL_MATCH_CANONICAL_BUILD='B21.36.480';
     if(changed&&!normalizing){normalizing=true;requestAnimationFrame(()=>{try{window.__ACE_RTA_RENDER?.()}catch(_){}normalizing=false;});}
   }
   async function begin(){
-    if(busy)return;busy=true;
-    const el=gate();el.classList.add('show');el.style.removeProperty('--ace491-hero');
-    el.querySelector('.ace491EntryCrest').innerHTML='';el.querySelector('.ace491EntryCrest').classList.remove('ready');
-    el.querySelector('.ace491EntryActions').classList.remove('show');el.querySelector('.ace491EntrySpin').style.display='block';
-    el.querySelector('h2').textContent='LOADING CAREER';el.querySelector('.ace491EntryLeague').textContent='Loading club identity…';setStatus(el,'Checking career data');
+    /* V539 — fail-open Career entry.
+       The old full-screen pre-entry RPC gate could strand iOS/GitHub Pages on
+       "Checking career data". Road to Ace now opens immediately and the normal
+       Career loader refreshes state after navigation. */
+    if(busy)return;
+    busy=true;
+    const el=document.getElementById('ace491CareerEntryGate');
+    if(el)el.classList.remove('show');
     try{
-      if(typeof window.ACE_RTA_RPC!=='function')throw new Error('CAREER_SERVICE_NOT_READY');
-      const live=window.__ACE_RTA_STATE;
-      let data;
-      if(live?.loaded&&live?.career){
-        data={career:live.career,history:Array.isArray(live.history)?live.history:[],league:live.league||null,active_training:live.activeTraining||null,active_key_match:live.activeKey||null};
-      }else{
-        const stateRequest=window.ACE_RTA_RPC('vds_rta_get_state_fast',{});
-        const stateTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('CAREER_DATA_TIMEOUT')),5000));
-        data=await Promise.race([stateRequest,stateTimeout]);
-      }
-      data=normalizeIdentity(data);
-      if(!data?.career){el.classList.remove('show');busy=false;window.goPage?.('roadtoace');return;}
-      const club=String(data.career.club_name||'Your Club'),league=String(data.league?.league_name||data.career?.league_name||'Career League');
-      /* Register Malaysia before resolving the pre-entry Home crest. The Career
-         state is not seeded until later in this function, so relying only on the
-         shared-state synchroniser leaves the Malaysia Home gate on initials. */
-      if(countryKey(data)==='malaysia'){
-        try{window.ACE_MALAYSIA_MVL_REGISTER_LOGO?.(club);}catch(_){}
-      }
-      const hero=heroUrl(data),crest=crestUrl(data);
-      el.querySelector('h2').textContent=club;
-      el.querySelector('.ace491EntryLeague').textContent=league;
-      setStatus(el,'Career data ready · test assets optional');
-      if(hero)el.style.setProperty('--ace491-hero',`url("${hero}")`);
-      const crestBox=el.querySelector('.ace491EntryCrest');
-      const initials=club.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
-      if(crest){
-        const safe=crest.replace(/"/g,'&quot;');
-        crestBox.innerHTML=`<img src="${safe}" alt="" onerror="this.remove();this.parentElement.innerHTML='<span>${initials}</span>'">`;
-      }else{
-        crestBox.innerHTML=`<span>${initials}</span>`;
-      }
-      crestBox.classList.add('ready');
-      seedState(data);
-      setStatus(el,'Career ready');
-      /* V538: release the blocking gate BEFORE asking the large Career UI to render. */
-      el.classList.remove('show');
-      busy=false;
       window.goPage?.('roadtoace');
-      requestAnimationFrame(()=>{
-        try{window.__ACE_RTA_RENDER?.()}catch(err){console.warn('Project Ace post-entry render',err)}
-      });
-    }catch(err){
-      console.warn('Project Ace Career pre-entry gate',err);
+    }finally{
       busy=false;
-      el.querySelector('.ace491EntrySpin').style.display='none';
-      el.querySelector('.ace491EntryActions').classList.add('show');
-      setStatus(el,String(err?.message||'').includes('TIMEOUT')
-        ?'Career data took too long · tap RETRY'
-        :'Career data could not load · tap RETRY');
     }
+    requestAnimationFrame(()=>{
+      try{
+        const live=window.__ACE_RTA_STATE;
+        if(live?.career){
+          live.loading=false;
+          try{window.__ACE_RTA_RENDER?.()}catch(_){}
+        }else if(typeof window.ACE_RTA_LOAD_STATE==='function'){
+          Promise.resolve(window.ACE_RTA_LOAD_STATE({silent:false,world:false}))
+            .then(()=>{try{window.__ACE_RTA_RENDER?.()}catch(_){}})
+            .catch(err=>console.warn('Project Ace background Career load',err));
+        }
+      }catch(err){console.warn('Project Ace Career entry',err)}
+    });
   }
   document.addEventListener('click',e=>{
     const home=document.querySelector('#home.page.active');if(!home)return;
@@ -67070,7 +67092,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
 
 
-<!-- PROJECT ACE B21.36.538 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
+<!-- PROJECT ACE V1 · RC2 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
 <style id="ace530-ecosystem-ui-style">
 #roadtoace .ace530TutorialBanner{position:relative;z-index:4;margin:0 0 8px;padding:9px 10px;border:1px solid rgba(92,190,239,.22);border-radius:11px;background:linear-gradient(135deg,rgba(45,145,207,.12),rgba(6,24,37,.92));box-shadow:inset 3px 0 0 #64c6f3;color:#dff5ff}
 #roadtoace .ace530TutorialBanner small{display:block;color:#6fc9f4;font:1000 5.8px/1 system-ui;letter-spacing:.15em}
@@ -67107,7 +67129,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace530-ecosystem-ui-script">
 (()=>{
 'use strict';
-const BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+const BUILD='PROJECT-ACE-V1-RC2';
 window.ACE_PROJECT_BUILD=BUILD;
 window.ACE_RELEASE_BUILD=BUILD;
 window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
@@ -67277,7 +67299,7 @@ function dashboardHTML(){
   const holidayDisabled=!C()?.season_complete;
   const trainerUntil=Number(c.services?.personal_trainer_until_match||0),analystUntil=Number(c.services?.private_analyst_until_match||0),m=Number(C()?.season_match||0);
   return `<div class="ace530Dash">
-    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V538</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
+    <div class="ace530DashTitle"><div><small>PROJECT ACE · VERSION 1</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
     <div class="ace530MetricGrid">
       <div class="ace530Metric"><span>CHEMISTRY</span><b>${Number(c.team_chemistry||0).toFixed(0)}</b><small>${statusWord(c.team_chemistry)}</small></div>
       <div class="ace530Metric"><span>ADAPTATION</span><b>${Number(c.adaptation||0).toFixed(0)}</b><small>${statusWord(c.adaptation)}</small></div>
@@ -67405,11 +67427,11 @@ setTimeout(()=>{refreshEco(true);queue()},1100);
 window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD};
 })();
 </script>
-<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';</script>
+<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='PROJECT-ACE-V1-RC2';</script>
 
 
 
-<!-- PROJECT ACE B21.36.538 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
+<!-- PROJECT ACE V1 · RC2 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
 <style id="ace535-career-notice-nav-gameplay-style">
 /* Persistent injury notice: no timer and no close X. It leaves only after the player taps it. */
 .ace535InjuryNotice{
@@ -67520,7 +67542,7 @@ window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD
 'use strict';
 if(window.ACE535_CAREER_NOTICE_TUTORIAL)return;
 window.ACE535_CAREER_NOTICE_TUTORIAL=true;
-const BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+const BUILD='PROJECT-ACE-V1-RC2';
 const S=()=>window.__ACE_RTA_STATE||{};
 const C=()=>S().career||null;
 const q=(sel,root=document)=>{try{return root.querySelector(sel)}catch(_){return null}};
@@ -67721,11 +67743,11 @@ window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
+<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
 
 
 
-<!-- PROJECT ACE B21.36.538 · CAREER OFFICE / TRUE HISTORY / CLEAN MOBILE CHROME -->
+<!-- PROJECT ACE V1 · RC2 · CAREER OFFICE / TRUE HISTORY / CLEAN MOBILE CHROME -->
 <style id="ace536-career-office-history-mobile-style">
 /* Career money belongs in Career Office; History remains history. */
 #roadtoace .ace536MoneyQuick b{color:#8fdfb2!important}
@@ -67804,17 +67826,17 @@ window.addEventListener('pageshow',cleanRtaChrome,{passive:true});
 new MutationObserver(cleanRtaChrome).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']});
 setTimeout(cleanRtaChrome,150);
 
-window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
-window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
-window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace536-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace536-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
-<!-- PROJECT ACE B21.36.538 · INJURY NOTICE AS HANGING POPUP -->
+<!-- PROJECT ACE V1 · RC2 · INJURY NOTICE AS HANGING POPUP -->
 <style id="ace537-injury-popup-style">
 /* Use the same hanging popup language as club-interest / scout notices. */
 body .ace535InjuryNotice,
@@ -67891,17 +67913,17 @@ body .ace535InjuryNotice em{
   window.addEventListener('pageshow', ()=>setTimeout(upgradeMedicalPopup,120), {passive:true});
   new MutationObserver(upgradeMedicalPopup).observe(document.documentElement,{subtree:true,childList:true});
   setTimeout(upgradeMedicalPopup,200);
-  window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
-  window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
-  window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
   window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace537-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace537-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
-<!-- PROJECT ACE B21.36.538 · CAREER ENTRY GATE WATCHDOG -->
+<!-- PROJECT ACE V1 · RC2 · CAREER ENTRY GATE WATCHDOG -->
 <script id="ace538-career-entry-watchdog">
 (()=>{
   let token=0;
@@ -67927,10 +67949,243 @@ body .ace535InjuryNotice em{
   document.addEventListener('click',e=>{
     if(e.target.closest?.('[data-ace491-retry]'))setTimeout(arm,60);
   },true);
-  window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
-  window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
-  window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';
+  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
 })();
 </script>
-<script id="ace538-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.538-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace538-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+
+
+
+<!-- PROJECT ACE V1 · RC2 · FAIL-OPEN CAREER ENTRY -->
+<style id="ace539-no-preentry-gate-style">
+/* V539: The redundant pre-entry gate is retired. Career has its own loader. */
+#ace491CareerEntryGate,
+#ace491CareerEntryGate.show{display:none!important;visibility:hidden!important;pointer-events:none!important}
+</style>
+<script id="ace539-career-entry-runtime">
+(()=>{
+  const retireGate=()=>{
+    const g=document.getElementById('ace491CareerEntryGate');
+    if(g){g.classList.remove('show');g.setAttribute('aria-hidden','true')}
+  };
+  retireGate();
+  new MutationObserver(retireGate).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  window.ACE491_PREPARE_CAREER=()=>{
+    retireGate();
+    window.goPage?.('roadtoace');
+    requestAnimationFrame(()=>{
+      try{
+        if(!window.__ACE_RTA_STATE?.career&&typeof window.ACE_RTA_LOAD_STATE==='function'){
+          Promise.resolve(window.ACE_RTA_LOAD_STATE({silent:false,world:false}))
+            .then(()=>{try{window.__ACE_RTA_RENDER?.()}catch(_){}})
+            .catch(err=>console.warn('Project Ace Career background load',err));
+        }else{
+          window.__ACE_RTA_RENDER?.();
+        }
+      }catch(err){console.warn('Project Ace Career entry',err)}
+    });
+  };
+  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_TEST_SERVER_BUILD=true;
+})();
+</script>
+<script id="ace539-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+
+
+
+<!-- PROJECT ACE · VERSION 1 RC1 · HOME ESSENTIALS + RESILIENCE AUDIT -->
+<style id="project-ace-v1-home-essentials-style">
+/* V1 HOME: keep the cinematic club identity and layer essential career controls into it. */
+#roadtoace .ace464HomeHub>.ace456Hero .aceV1HomeDock{
+  position:absolute;z-index:7;left:18px;right:18px;top:58px;
+  padding:8px;border:1px solid rgba(111,201,247,.14);border-radius:14px;
+  background:linear-gradient(145deg,rgba(4,16,27,.82),rgba(5,20,31,.72));
+  box-shadow:0 12px 34px rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.012);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+#roadtoace .aceV1DockLabel{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 3px 6px}
+#roadtoace .aceV1DockLabel span{color:#79c9ef;font-size:5.7px;font-weight:1000;letter-spacing:.15em}
+#roadtoace .aceV1DockLabel small{color:#537286;font-size:5.2px;font-weight:900;letter-spacing:.08em}
+#roadtoace .aceV1DockGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+#roadtoace .aceV1DockGrid button{
+  position:relative;min-width:0;min-height:58px;padding:8px 7px;border:1px solid rgba(255,255,255,.055);
+  border-radius:9px;background:rgba(255,255,255,.023);color:#eaf6fc;text-align:left;cursor:pointer;
+  transition:transform .14s ease,border-color .14s ease,background .14s ease
+}
+#roadtoace .aceV1DockGrid button:hover{transform:translateY(-1px);border-color:rgba(105,201,249,.20);background:rgba(67,160,210,.055)}
+#roadtoace .aceV1DockGrid small{display:block;color:#698799;font-size:4.9px;font-weight:1000;letter-spacing:.10em}
+#roadtoace .aceV1DockGrid b{display:block;margin-top:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f4fbff;font-size:10px;line-height:1}
+#roadtoace .aceV1DockGrid b em{font-size:5px;font-style:normal;color:#7992a2;margin-left:2px}
+#roadtoace .aceV1DockGrid span{display:block;margin-top:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#718897;font-size:5.5px;font-weight:750}
+#roadtoace .aceV1DockGrid button.alert{border-color:rgba(255,105,124,.24);background:linear-gradient(145deg,rgba(117,31,46,.16),rgba(255,255,255,.018))}
+#roadtoace .aceV1DockGrid button.alert small,#roadtoace .aceV1DockGrid button.alert b{color:#ffabb6}
+#roadtoace .aceV1DockGrid button.urgent{border-color:rgba(255,188,91,.20);background:linear-gradient(145deg,rgba(119,76,20,.13),rgba(255,255,255,.018))}
+#roadtoace .aceV1DockGrid button.notice{border-color:rgba(151,102,238,.22);background:linear-gradient(145deg,rgba(91,52,159,.15),rgba(255,255,255,.018))}
+#roadtoace .aceV1DockGrid button.notice i{
+  position:absolute;right:5px;top:5px;min-width:14px;height:14px;padding:0 3px;display:grid;place-items:center;
+  border-radius:999px;background:#a970ef;color:white;font-size:4.8px;font-style:normal;font-weight:1000
+}
+
+/* Make room for the V1 dock without deleting the existing club tag or identity. */
+#roadtoace .ace464HomeHub>.ace456Hero .ace456HeroTag{top:142px!important}
+
+@media(min-width:761px){
+  #roadtoace .ace464HomeHub>.ace456Hero .aceV1HomeDock{left:24px;right:24px;top:64px;padding:9px}
+  #roadtoace .aceV1DockGrid button{min-height:66px;padding:9px}
+  #roadtoace .aceV1DockGrid small{font-size:5.5px}
+  #roadtoace .aceV1DockGrid b{font-size:12px}
+  #roadtoace .aceV1DockGrid span{font-size:6.2px}
+  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroTag{top:160px!important}
+}
+@media(max-width:760px){
+  #roadtoace .ace464HomeHub>.ace456Hero .aceV1HomeDock{
+    left:10px;right:10px;top:48px;padding:7px;border-radius:12px
+  }
+  #roadtoace .aceV1DockLabel{padding-bottom:5px}
+  #roadtoace .aceV1DockGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+  #roadtoace .aceV1DockGrid button{min-height:48px;padding:6px;border-radius:8px}
+  #roadtoace .aceV1DockGrid small{font-size:4.5px}
+  #roadtoace .aceV1DockGrid b{font-size:8.4px}
+  #roadtoace .aceV1DockGrid span{font-size:5px}
+  #roadtoace .ace464HomeHub>.ace456Hero .ace456HeroTag{
+    top:166px!important;right:12px!important;font-size:5.8px!important;opacity:.82
+  }
+  /* Existing hero identity and four team-stat tiles remain untouched. */
+}
+
+/* V1: don't let retired legacy Home locks obscure the new command dock. */
+#roadtoace .ace464HomeHub>.ace456Hero .aceV1HomeDock{visibility:visible!important;opacity:1!important}
+
+/* V1 system-check modal lives only in the test build / Career Office. */
+.aceV1DiagBackdrop{position:fixed;inset:0;z-index:2147483500;display:grid;place-items:center;padding:16px;background:rgba(0,7,13,.78);backdrop-filter:blur(12px)}
+.aceV1Diag{width:min(520px,100%);max-height:min(720px,90dvh);overflow:auto;padding:16px;border:1px solid rgba(100,199,246,.16);border-radius:17px;background:#071725;color:#eaf7fd;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.aceV1Diag header{display:flex;align-items:start;justify-content:space-between;gap:10px}.aceV1Diag header small{display:block;color:#6bc4ef;font-size:6px;font-weight:1000;letter-spacing:.14em}.aceV1Diag h2{margin:4px 0 0;font-size:20px}.aceV1Diag header button{width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.05);color:#92aabb;font-size:18px}
+.aceV1DiagRows{display:grid;gap:5px;margin-top:12px}.aceV1DiagRows div{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 9px;border-radius:9px;background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.04)}.aceV1DiagRows span{font-size:7px;color:#8aa1af}.aceV1DiagRows b{font-size:7px;color:#72d9aa}.aceV1DiagRows b.warn{color:#ffca7a}.aceV1DiagRows b.bad{color:#ff8d9b}
+</style>
+
+<script id="project-ace-v1-home-runtime">
+(()=>{
+'use strict';
+if(window.ACE_V1_HOME_RUNTIME)return;window.ACE_V1_HOME_RUNTIME=true;
+const S=()=>window.__ACE_RTA_STATE||null;
+
+window.ACE_V1_HOME_ROUTE=function(ev,target){
+  try{ev?.preventDefault?.();ev?.stopPropagation?.()}catch(_){}
+  const st=S();if(!st)return false;
+  target=String(target||'').toLowerCase();
+  if(target==='match'){
+    if(st.career?.season_complete){st.view='career';st.careerPanel='overview';window.__ACE_RTA_RENDER?.();return false}
+    return window.ACE_RTA_NAV?.(null,'match')??false;
+  }
+  if(target==='prep'||target==='medical')return window.ACE_RTA_NAV?.(null,'train')??false;
+  if(target==='role'){st.view='career';st.careerPanel='overview';window.__ACE_RTA_RENDER?.();return false}
+  if(target==='office'){st.view='career';st.careerPanel='office';window.__ACE_RTA_RENDER?.();return false}
+  if(target==='inbox'){st.view='inbox';st.homePanel='week';window.__ACE_RTA_RENDER?.();return false}
+  return false;
+};
+
+function diagRows(){
+  const st=S(),c=st?.career,root=document.querySelector('#roadtoace');
+  const tests=[
+    ['Career state loaded',!!c],
+    ['Career renderer',typeof window.__ACE_RTA_RENDER==='function'],
+    ['Career RPC',typeof window.ACE_RTA_RPC==='function'],
+    ['State loader',typeof window.ACE_RTA_LOAD_STATE==='function'],
+    ['Home mount',!!document.querySelector('#rta62Mount')],
+    ['Home essentials',!!document.querySelector('.aceV1HomeDock')],
+    ['Bottom navigation',!!document.querySelector('.ace211CareerBottomNav')],
+    ['Active save',Number(st?.activeSave||0)>0],
+    ['First-training flag',c?typeof c.first_training_completed==='boolean':false],
+    ['Salary field',c?Number.isFinite(Number(c.weekly_wage)):false],
+    ['Medical field',c?!!String(c.injury_status||''):false],
+    ['Entry gate retired',getComputedStyle(document.getElementById('ace491CareerEntryGate')||document.body).display==='none'||!document.getElementById('ace491CareerEntryGate')],
+  ];
+  return tests;
+}
+window.ACE_V1_SYSTEM_CHECK=function(){
+  document.querySelector('.aceV1DiagBackdrop')?.remove();
+  const tests=diagRows(),ok=tests.filter(x=>x[1]).length;
+  const wrap=document.createElement('div');wrap.className='aceV1DiagBackdrop';
+  wrap.innerHTML=`<section class="aceV1Diag"><header><div><small>PROJECT ACE · V1 SYSTEM CHECK</small><h2>${ok}/${tests.length} checks ready</h2></div><button type="button" data-ace-v1-diag-close>×</button></header><div class="aceV1DiagRows">${tests.map(([k,v])=>`<div><span>${String(k)}</span><b class="${v?'':'bad'}">${v?'READY':'CHECK'}</b></div>`).join('')}</div></section>`;
+  document.body.appendChild(wrap);
+  return tests;
+};
+document.addEventListener('click',e=>{
+  if(e.target.closest?.('[data-ace-v1-diag-close]'))document.querySelector('.aceV1DiagBackdrop')?.remove();
+},true);
+
+window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_TEST_SERVER_BUILD=true;
+})();
+</script>
+<script id="project-ace-v1-final-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+
+
+
+<!-- PROJECT ACE V1 RC2 · PRIVATE-BETA RELEASE GUARD -->
+<style id="ace-v1-rc2-private-beta-style">
+.aceV1ReleaseStamp{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin:0 0 10px;padding:8px 10px;border:1px solid rgba(79,214,151,.15);border-radius:10px;
+  background:linear-gradient(135deg,rgba(38,149,99,.075),rgba(255,255,255,.012))
+}
+.aceV1ReleaseStamp div small{display:block;color:#6ca58a;font-size:5.4px;font-weight:1000;letter-spacing:.12em}
+.aceV1ReleaseStamp div b{display:block;margin-top:3px;color:#86e2b3;font-size:8px}
+.aceV1ReleaseStamp span{padding:5px 7px;border-radius:999px;background:rgba(63,193,125,.08);color:#75dca9;font-size:5.3px;font-weight:1000;white-space:nowrap}
+.aceV1ReleaseStamp.currentRules{border-color:rgba(228,185,88,.15);background:rgba(137,96,24,.06)}
+.aceV1ReleaseStamp.currentRules div b,.aceV1ReleaseStamp.currentRules span{color:#dfbd6c}
+</style>
+<script id="ace-v1-rc2-private-beta-runtime">
+(()=>{
+'use strict';
+if(window.ACE_V1_RELEASE_GUARD)return;
+window.ACE_V1_RELEASE_GUARD=true;
+let release=null,inflight=false,last=0;
+const rpc=(name,args={})=>typeof window.ACE_RTA_RPC==='function'?window.ACE_RTA_RPC(name,args):Promise.reject(new Error('CAREER_SERVICE_NOT_READY'));
+
+async function refresh(force=false){
+  if(inflight||(!force&&release&&Date.now()-last<10000))return release;
+  inflight=true;
+  try{
+    release=await rpc('vds_rta_v1_release_status_v540',{});
+    last=Date.now();
+    window.ACE_V1_RELEASE_STATUS=release;
+    document.documentElement.dataset.aceV1Mode=String(release?.mode||'UNKNOWN');
+    renderStamp();
+  }catch(e){
+    console.warn('Project Ace V1 release status',e);
+  }finally{inflight=false}
+  return release;
+}
+function renderStamp(){
+  document.querySelectorAll('.aceV1ReleaseStamp').forEach(n=>n.remove());
+  const office=document.querySelector('#roadtoace .ace536OfficePanel');
+  if(!office||!release)return;
+  const privateOn=!!release.private_preview;
+  const globalOn=!!release.global_release_enabled;
+  const mode=String(release.mode||'CURRENT_RULES');
+  const el=document.createElement('div');
+  el.className='aceV1ReleaseStamp '+(privateOn?'':'currentRules');
+  el.innerHTML=`<div><small>V1 RELEASE CONTROL</small><b>${privateOn?'PRIVATE BETA ACTIVE':'CURRENT RULES'}</b></div><span>${globalOn?'GLOBAL RELEASE ON':'GLOBAL RELEASE OFF'}</span>`;
+  office.prepend(el);
+}
+document.addEventListener('ace:rta-render',()=>{refresh(false);setTimeout(renderStamp,30)});
+window.addEventListener('pageshow',()=>setTimeout(()=>refresh(true),220),{passive:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh(false)});
+setInterval(()=>{if(document.visibilityState==='visible')refresh(false)},5000);
+setTimeout(()=>refresh(true),700);
+
+window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_TEST_SERVER_BUILD=true;
+})();
+</script>
+<script id="ace-v1-rc2-final-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
 
