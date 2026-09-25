@@ -66489,7 +66489,7 @@ window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 </script>
 <script id="ace518-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.518-BETA';window.ACE_RELEASE_BUILD='B21.36.518-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.518-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_UNIFIED_PREPARATION_BUILD='B21.36.518-BETA';</script>
 
-<!-- PROJECT ACE B21.36.519-BETA · COMPACT TWO-SLOT PREPARATION PLANNER -->
+<!-- PROJECT ACE B21.36.520-BETA · COMPACT TWO-SLOT PREPARATION PLANNER -->
 <style id="ace519-preparation-planner-style">
 /* Beta only. V519 replaces the large V518 dashboard with a compact plan-first screen. */
 #roadtoace .ace518PreparationHub{display:none!important}
@@ -66551,7 +66551,7 @@ window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 (()=>{
 'use strict';
 if(window.ACE519_PREPARATION_PLANNER)return;window.ACE519_PREPARATION_PLANNER=true;
-const BUILD='B21.36.519-BETA';
+const BUILD='B21.36.520-BETA';
 const S=()=>window.__ACE_RTA_STATE||{};
 const C=()=>S().career||null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -66614,9 +66614,10 @@ function slotHtml(c,p,n){const used=Number(c.training_used||0),base=Number.isFin
 function preset(c,p,kind){if(p.confirmed)return;p.baseUsed=Number(c?.training_used||0);const max=maxPlanItems(c,p);let ids=[];if(kind==='DEVELOP')ids=[focusForPosition(c),secondFocus(c)];if(kind==='BALANCED')ids=[focusForPosition(c),'REST'];if(kind==='READY')ids=status(c)==='FIT'?['REST','FILM']:['CLUB_PHYSIO','REST'];p.items=ids.slice(0,max).map(item).filter(Boolean);p.index=0;p.waiting=null;savePlan(c,p);renderPlanner()}
 function planHtml(c,p){const used=Number(c.training_used||0),s=status(c),load=Math.round(Number(c.body_load||0)),ready=Math.round(Number(c.readiness??100)),rec=recommendation(c),proj=projection(c,p),max=Math.max(0,2-used),remaining=p.items.length-p.index;const issue=s==='FIT'?'ALL TRACKED AREAS CLEAR':`${c.injury_type||'MEDICAL ISSUE'} · ${c.injury_body_part||'BODY'}`;const actionLabel=used>=2?'PREPARATION COMPLETE':p.confirmed?(p.waiting!==null?'RESUME TRAINING':remaining>0?'CONTINUE PLAN':'PLAN COMPLETE'):'CONFIRM PREPARATION';const canAction=used<2&&(p.confirmed?(remaining>0):p.items.length>0);
 return`<section class="ace519Planner" data-ace519-planner>
-  <div class="ace519Top"><div><small>PREPARATION</small><h2>Build your match plan.</h2><p>Two preparation slots. Choose first, review the impact, then commit.</p></div><div class="ace519Counter"><b>${used} / 2</b><span>SLOTS USED</span></div></div>
+  <div class="ace519Top"><div><small>MATCHDAY PREPARATION</small><h2>MATCH <span>PREP</span></h2><p>Shape your week. Two choices before the next match.</p></div><div class="ace519Counter"><b>${used} / 2</b><span>SLOTS USED</span></div></div>
   <div class="ace519Condition"><div><span>READINESS</span><b>${ready}%</b><small>${ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED'}</small></div><div><span>BODY LOAD</span><b>${load}</b><small>${loadBand(load)}</small></div><div class="${stateClass(s)}"><span>MEDICAL</span><b>${esc(s)}</b><small>${s==='FIT'?'CLEARED':Math.max(0,Math.round(Number(c.injury_days_remaining||0)))+'D EST.'}</small></div></div>
-  <div class="ace519Advice"><i>${rec.icon}</i><div><b>${esc(rec.title)}</b><span>${esc(rec.text)}</span></div></div>
+  <div class="ace520Fixture"><div><small>NEXT FIXTURE</small><b>${esc(c.club_name||'YOUR CLUB')}</b></div><strong>VS</strong><div class="away"><small>MATCH ${Number(c.season_match||0)+1}</small><b>${esc(String(S().selection?.opponent||S().selection?.user?.opponent||S().league?.next_opponent||'OPPONENT'))}</b></div></div>
+  <div class="ace519Advice"><i>${rec.icon}</i><div><small>MEDICAL / COACH STAFF</small><b>${esc(rec.title)}</b><span>${esc(rec.text)}</span></div></div>
   <button class="ace519BodyToggle" data-ace519-body><div><span>BODY STATUS</span><b>${esc(issue)}</b></div><em>${bodyOpen?'⌃':'⌄'}</em></button>
   <div class="ace519BodyDetail ${bodyOpen?'open':''}">${miniBody(c)}<div class="ace519BodyCopy"><h3>${s==='FIT'?'No current medical issue.':esc(c.injury_type||'Medical issue')}</h3><p>${s==='FIT'?'The body map stays compact while you are healthy. It expands automatically in importance when soreness or injury appears.':`${esc(c.injury_body_part||'Affected area')} · ${esc(c.injury_severity||s)} · approximately ${Math.max(0,Math.round(Number(c.injury_days_remaining||0)))} days remaining.`}</p><strong>${esc(s)}</strong></div></div>
   <div class="ace519PlanLabel"><b>YOUR PLAN</b><span>${max} slot${max===1?'':'s'} available</span></div>
@@ -66639,4 +66640,116 @@ document.addEventListener('ace:rta-render',()=>requestAnimationFrame(sync));wind
 window.ACE_PROJECT_BUILD=BUILD;window.ACE_RELEASE_BUILD=BUILD;window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD=BUILD;
 })();
 </script>
-<script id="ace519-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.519-BETA';window.ACE_RELEASE_BUILD='B21.36.519-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.519-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.519-BETA';</script>
+<script id="ace519-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.520-BETA';window.ACE_RELEASE_BUILD='B21.36.520-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.520-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.520-BETA';</script>
+
+
+<!-- PROJECT ACE B21.36.520-BETA · NATIVE MATCH PREP VISUAL PASS -->
+<style id="ace520-project-ace-prep-skin">
+#roadtoace .ace519Planner{
+  position:relative!important;overflow:hidden!important;
+  margin:0!important;padding:14px 14px 13px!important;
+  border-radius:16px!important;border:1px solid rgba(96,184,234,.13)!important;
+  background:
+    radial-gradient(circle at 92% 2%,rgba(66,164,221,.15),transparent 27%),
+    linear-gradient(180deg,rgba(8,24,36,.98),rgba(5,15,24,.99))!important;
+  box-shadow:0 20px 42px rgba(0,0,0,.20)!important;
+}
+#roadtoace .ace519Planner:before{content:"";position:absolute;left:0;top:0;width:4px;height:86px;background:linear-gradient(180deg,#65c8f8,#5d77dc);opacity:.85}
+#roadtoace .ace519Planner:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 0 70%,rgba(255,255,255,.018) 70.4% 71%,transparent 71.4%)}
+#roadtoace .ace519Top{position:relative;z-index:1;align-items:center!important;margin:0 0 11px!important;padding:0 0 11px!important;border-bottom:1px solid rgba(99,178,224,.09)}
+#roadtoace .ace519Top small{color:#74c8f5!important;font-size:6.2px!important;letter-spacing:.18em!important}
+#roadtoace .ace519Top h2{margin:4px 0 0!important;font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;font-size:31px!important;line-height:.82!important;letter-spacing:-.045em!important;color:#f5fbff!important}
+#roadtoace .ace519Top h2 span{color:#69c8f8!important}
+#roadtoace .ace519Top p{margin-top:7px!important;color:#7896a9!important;font-size:6.8px!important;letter-spacing:.01em!important}
+#roadtoace .ace519Counter{min-width:74px!important;padding:10px 9px!important;border-radius:11px!important;border-color:rgba(99,198,248,.19)!important;background:linear-gradient(145deg,rgba(40,120,173,.13),rgba(37,66,126,.14))!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.018)!important}
+#roadtoace .ace519Counter b{font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;font-size:22px!important;letter-spacing:-.02em!important}
+#roadtoace .ace519Counter span{color:#74b7d9!important;font-size:5px!important;letter-spacing:.13em!important}
+
+/* One matchday condition rail instead of three floating dashboard tiles. */
+#roadtoace .ace519Condition{position:relative;z-index:1;display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:0!important;margin:0!important;padding:0!important;border-top:1px solid rgba(255,255,255,.035)!important;border-bottom:1px solid rgba(255,255,255,.035)!important;background:rgba(255,255,255,.012)!important}
+#roadtoace .ace519Condition>div{position:relative!important;padding:9px 10px 10px!important;border:0!important;border-radius:0!important;background:transparent!important}
+#roadtoace .ace519Condition>div+div:before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:1px;background:rgba(101,177,220,.08)}
+#roadtoace .ace519Condition span{color:#6c8fa3!important;font-size:5px!important;letter-spacing:.14em!important}
+#roadtoace .ace519Condition b{font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;font-size:19px!important;letter-spacing:-.02em!important}
+#roadtoace .ace519Condition small{margin-top:3px!important;font-size:4.8px!important;color:#607f91!important}
+
+#roadtoace .ace520Fixture{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr);align-items:center;gap:8px;margin:9px 0 8px;padding:8px 10px;border:1px solid rgba(129,106,224,.12);border-radius:11px;background:radial-gradient(circle at 50% -20%,rgba(112,78,207,.17),transparent 42%),linear-gradient(180deg,rgba(8,21,35,.84),rgba(6,16,27,.84))}
+#roadtoace .ace520Fixture>div{min-width:0}.ace520Fixture .away{text-align:right}
+#roadtoace .ace520Fixture small{display:block;color:#7c8fa4;font:1000 4.8px/1 system-ui;letter-spacing:.12em}
+#roadtoace .ace520Fixture b{display:block;margin-top:3px;color:#edf7fc;font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif;font-size:11px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadtoace .ace520Fixture strong{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;border:1px solid rgba(141,110,235,.14);background:rgba(92,69,171,.10);color:#c9b7ff;font:1000 8px/1 system-ui}
+
+#roadtoace .ace519Advice{position:relative;z-index:1;margin:0 0 8px!important;padding:8px 9px 8px 10px!important;border:0!important;border-left:2px solid #d8b655!important;border-radius:0 9px 9px 0!important;background:linear-gradient(90deg,rgba(183,139,42,.075),rgba(255,255,255,.012))!important}
+#roadtoace .ace519Advice i{width:24px!important;height:24px!important;border-radius:8px!important;background:rgba(216,182,85,.08)!important;color:#e0c46e!important}
+#roadtoace .ace519Advice small{display:block;margin-bottom:2px;color:#b79d59;font:1000 4.6px/1 system-ui;letter-spacing:.12em}
+#roadtoace .ace519Advice b{font-size:7.2px!important;color:#eef6fa!important}
+#roadtoace .ace519Advice span{font-size:5.8px!important;color:#788f9e!important}
+
+#roadtoace .ace519BodyToggle{position:relative;z-index:1;margin:0 0 8px!important;padding:7px 3px 8px!important;border:0!important;border-radius:0!important;border-bottom:1px solid rgba(101,178,221,.07)!important;background:transparent!important}
+#roadtoace .ace519BodyToggle span{font-size:4.9px!important;color:#668ca1!important}
+#roadtoace .ace519BodyToggle b{font-size:7px!important;color:#ccdde6!important}
+
+#roadtoace .ace519PlanLabel{position:relative;z-index:1;margin:7px 0 7px!important}
+#roadtoace .ace519PlanLabel b{font-size:6.1px!important;color:#75c2eb!important;letter-spacing:.16em!important}
+#roadtoace .ace519PlanLabel span{color:#657f90!important}
+#roadtoace .ace519Slots{position:relative;z-index:1;gap:7px!important;margin-bottom:8px!important}
+#roadtoace .ace519Slot{min-height:70px!important;padding:11px 10px 10px 13px!important;border-radius:11px!important;border:1px solid rgba(97,172,217,.11)!important;border-left:3px solid rgba(98,190,239,.34)!important;background:linear-gradient(145deg,rgba(10,30,44,.92),rgba(8,20,31,.92))!important;box-shadow:none!important}
+#roadtoace .ace519Slot:not(.used):not(.planned):not(.done){border-style:dashed!important;border-left-style:solid!important}
+#roadtoace .ace519Slot.planned{border-color:rgba(96,190,239,.25)!important;border-left-color:#60c2f3!important;background:radial-gradient(circle at 92% 8%,rgba(79,176,231,.13),transparent 35%),linear-gradient(145deg,rgba(10,35,51,.98),rgba(8,22,34,.98))!important}
+#roadtoace .ace519Slot.done{border-color:rgba(82,211,151,.18)!important;border-left-color:#5ad69b!important;background:linear-gradient(145deg,rgba(11,38,37,.72),rgba(7,22,29,.95))!important}
+#roadtoace .ace519Slot small{font-size:4.8px!important;color:#6a8ea2!important;letter-spacing:.14em!important}
+#roadtoace .ace519Slot b{margin-top:7px!important;font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;font-size:12px!important;line-height:.92!important;letter-spacing:-.015em!important}
+#roadtoace .ace519Slot span{margin-top:5px!important;font-size:5.4px!important;color:#718b9a!important}
+#roadtoace .ace519Slot .remove{border-radius:6px!important;background:rgba(255,255,255,.025)!important}
+
+#roadtoace .ace519Presets{position:relative;z-index:1;margin:0 0 7px!important;padding:0!important}
+#roadtoace .ace519Preset{padding:6px 8px!important;border-radius:7px!important;background:rgba(255,255,255,.018)!important;font-size:5.2px!important}
+#roadtoace .ace519Preset.recommended{border-color:rgba(215,181,81,.20)!important;background:rgba(215,181,81,.05)!important;color:#e1c369!important}
+#roadtoace .ace519Categories{position:relative;z-index:1;margin-bottom:6px!important;border:1px solid rgba(99,177,223,.08)!important;border-radius:10px!important;padding:3px!important;background:rgba(4,14,23,.60)!important}
+#roadtoace .ace519Cat{padding:8px 4px!important;border:0!important;border-radius:7px!important;background:transparent!important;color:#6f8da0!important}
+#roadtoace .ace519Cat i{font-size:11px!important}.ace519Cat b{font-size:5.8px!important}
+#roadtoace .ace519Cat.active{color:#f0f9fd!important;background:linear-gradient(180deg,rgba(58,151,204,.14),rgba(52,115,164,.08))!important;box-shadow:inset 0 -2px 0 #62c3f4!important}
+#roadtoace .ace519Cat.recommended:after{color:#d5b854!important}
+
+#roadtoace .ace519Choices{position:relative;z-index:1;gap:5px!important}
+#roadtoace .ace519Choice{padding:8px 9px!important;border-radius:8px!important;border-color:rgba(98,172,215,.07)!important;background:rgba(255,255,255,.015)!important}
+#roadtoace .ace519Choice b{font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;font-size:8.5px!important}
+#roadtoace .ace519Choice.selected{border-color:rgba(94,191,240,.24)!important;background:rgba(54,146,199,.07)!important;box-shadow:inset 2px 0 0 #65c4f4!important}
+
+#roadtoace .ace519Projection{position:relative;z-index:1;margin:2px 0 8px!important;padding:0!important;border-radius:0!important;border:1px solid rgba(97,174,219,.08)!important;border-left:0!important;border-right:0!important;background:rgba(255,255,255,.010)!important}
+#roadtoace .ace519Projection>div{padding:8px 9px!important;position:relative}
+#roadtoace .ace519Projection>div+div:before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:1px;background:rgba(101,177,220,.07)}
+#roadtoace .ace519Projection span{font-size:4.5px!important;color:#66889a!important}
+#roadtoace .ace519Projection b{font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;font-size:9.5px!important;color:#eff9fd!important}
+#roadtoace .ace519Projection small{font-size:4.8px!important;color:#657f90!important}
+
+#roadtoace .ace519Actions{position:relative;z-index:1}
+#roadtoace .ace519Confirm{min-height:42px!important;border-radius:9px!important;background:linear-gradient(135deg,#2f8fc7,#496fd9)!important;box-shadow:0 9px 18px rgba(30,86,150,.18)!important;font-size:6.4px!important;letter-spacing:.12em!important}
+#roadtoace .ace519Confirm:not(:disabled):active{transform:translateY(1px)}
+#roadtoace .ace519Confirm:disabled{background:linear-gradient(135deg,rgba(47,143,199,.32),rgba(73,111,217,.28))!important;color:#8295a2!important}
+#roadtoace .ace519Reset{border-radius:9px!important}
+
+@media(max-width:760px){
+  /* Restore the site's existing compact training hero for visual continuity. */
+  #roadtoace .rta187TrainingCentre>.rta187TrainingHero{display:block!important;min-height:88px!important;height:88px!important;margin:0 0 7px!important}
+  #roadtoace .ace519Planner{padding:11px 10px 10px!important;border-radius:14px!important}
+  #roadtoace .ace519Top h2{font-size:27px!important}
+  #roadtoace .ace519Top p{font-size:6px!important}
+  #roadtoace .ace519Counter{min-width:68px!important;padding:8px 7px!important}
+  #roadtoace .ace519Counter b{font-size:19px!important}
+  #roadtoace .ace519Condition>div{padding:8px 6px!important}
+  #roadtoace .ace519Condition b{font-size:17px!important}
+  #roadtoace .ace520Fixture{padding:7px 8px!important}
+  #roadtoace .ace520Fixture b{font-size:10px!important}
+  #roadtoace .ace519Slot{min-height:66px!important;padding:10px 8px 9px 11px!important}
+  #roadtoace .ace519Slot b{font-size:10.5px!important}
+  #roadtoace .ace519Choice b{font-size:7.7px!important}
+}
+@media(max-width:390px){
+  #roadtoace .ace519Top h2{font-size:24px!important}
+  #roadtoace .ace519Condition b{font-size:15px!important}
+  #roadtoace .ace520Fixture{grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr)!important;gap:5px!important}
+  #roadtoace .ace520Fixture strong{width:26px;height:26px!important}
+}
+</style>
+<script id="ace520-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.520-BETA';window.ACE_RELEASE_BUILD='B21.36.520-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.520-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.520-BETA';</script>
