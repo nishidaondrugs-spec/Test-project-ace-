@@ -41982,7 +41982,7 @@ document.addEventListener("click",function(e){
         <button type="button" ${homeTab('table')}>TABLE</button>
         <button type="button" ${homeTab('squad')}>SQUAD</button>
         <button type="button" ${homeTab('stats')}>STATS</button>
-        <button type="button" ${homeTab('history')}>HISTORY</button>
+        <button type="button" ${homeTab('history')}>WORLD</button>
       </nav>
 
       <section class="ace456ClubPanel ace463TimelinePanel${panelClass('timeline')}" data-ace456-panel="timeline">${timeline}</section>
@@ -42026,7 +42026,7 @@ document.addEventListener("click",function(e){
 
 
   function ace464PopupLabel(id){
-    return ({timeline:'TIMELINE',table:'TABLE',squad:'SQUAD',lineup:'LINEUP',info:'CLUB INFO',stats:'STATS',history:'HISTORY'})[String(id||'')]||'CLUB';
+    return ({timeline:'TIMELINE',table:'TABLE',squad:'SQUAD',lineup:'LINEUP',info:'CLUB INFO',stats:'STATS',history:'WORLD'})[String(id||'')]||'CLUB';
   }
   function ace464ReleaseHomeLock(){
     document.documentElement.classList.remove('ace469-home-locked','ace470-home-locked');
@@ -42243,7 +42243,7 @@ document.addEventListener("click",function(e){
     return `<section class="rta92Panel rta92OverviewPanel">
       <div class="rta92HeroSummary">
         <div class="rta92HeroCopy"><small>CAREER STATUS · AGE ${age}</small><h2>${careerEnded?"PLAYING CAREER COMPLETE":esc(c.club_name)}</h2><p>${careerEnded?`Retired after Season ${Number(c.retirement_season||c.season||1)} · ${esc(careerPhase)}`:`${esc(leagueName)} · Season ${Number(c.season||1)} · ${esc(careerPhase)}`}</p></div>
-        <div class="rta92QuickStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${leagueRank()?`#${leagueRank()}`:"—"}</b>LEAGUE</span><span><b>${Number(c.reputation||0)}</b>REP</span><span><b>${esc(c.squad_role)}</b>ROLE</span></div>
+        <div class="rta92QuickStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${leagueRank()?`#${leagueRank()}`:"—"}</b>LEAGUE</span><span><b>${Number(c.reputation||0)}</b>REP</span><span><b>${esc(c.squad_role)}</b>ROLE</span><span class="ace536MoneyQuick"><b>${money(c.weekly_wage||0)}</b>WEEKLY WAGE</span><span class="ace536MoneyQuick"><b>${money(c.cash_balance||0)}</b>BANK</span></div>
       </div>
 
       <div class="rta92OverviewGrid">
@@ -42621,19 +42621,74 @@ document.addEventListener("click",function(e){
     return `<section class="rta92Panel ace474CareerForm"><div class="rta92PanelIntro"><div><small>CAREER FORM</small><h2>Recent performances.</h2><p>Your match ratings, results and active playstyles in one place.</p></div><div class="rta92TierPill"><span>RECENT AVG</span><b>${avg}</b><small>${recent.length} MATCH${recent.length===1?'':'ES'}</small></div></div><div class="rta182FormGrid"><article><div class="rta182Subhead"><span>RECENT MATCHES</span><small>RATING</small></div>${rows}</article><article><div class="rta182Subhead"><span>ACTIVE PLAYSTYLES</span><small>${styles.length}</small></div><div class="rta182Playstyles">${activeStyles}</div></article></div></section>`;
   }
 
-  function careerView(c){
+  
+function ace536ContractBonusLine(bon){
+  const bits=[];
+  if(Number(bon?.signing||0)>0)bits.push(`${money(bon.signing)} signing`);
+  if(Number(bon?.appearance||0)>0)bits.push(`${money(bon.appearance)} appearance`);
+  if(Number(bon?.performance_bonus||0)>0)bits.push(`${money(bon.performance_bonus)} at ${Number(bon.performance_rating||8).toFixed(1)}+ rating`);
+  if(Number(bon?.trophy||0)>0)bits.push(`${money(bon.trophy)} trophy`);
+  return bits.length?bits.join(' · '):'No performance bonuses listed on this contract.';
+}
+function ace536CareerOfficePanel(c){
+  const contract=c.current_contract&&typeof c.current_contract==='object'?c.current_contract:{};
+  const bon=contract.bonuses&&typeof contract.bonuses==='object'?contract.bonuses:{};
+  const sponsors=Array.isArray(c.sponsorships)?c.sponsorships:[];
+  const sponsor=sponsors[0]||null;
+  const job=String(c.employment_type||'NONE').replaceAll('_',' ');
+  const support=String(c.support_status||'SELF').replaceAll('_',' ');
+  const outside=String(c.outside_commitment||'NONE').replaceAll('_',' ');
+  return `<section class="rta92Panel ace536OfficePanel">
+    <div class="rta92PanelIntro"><div><small>CAREER OFFICE</small><h2>Contract & money</h2><p>Your football-style career information belongs here: salary, contract, income, sponsor and spending. It does not replace Career History.</p></div><div class="rta92TierPill"><span>BANK</span><b>${money(c.cash_balance||0)}</b><small>${money(c.career_earnings||0)} career earnings</small></div></div>
+
+    <div class="ace536OfficeHero">
+      <article><small>WEEKLY SALARY</small><strong>${money(c.weekly_wage||0)}</strong><span>${esc(c.contract_club||c.club_name||'Current club')}</span></article>
+      <article><small>CONTRACT</small><strong>${Number(c.contract_years||1)} YEAR${Number(c.contract_years||1)===1?'':'S'}</strong><span>${esc(contract.role||c.squad_role||'PLAYER')} · signed Season ${Number(contract.signed_season||c.season||1)}</span></article>
+      <article><small>OUTSIDE INCOME</small><strong>${Number(c.employment_income||0)>0?`${money(c.employment_income)}/WK`:'NONE'}</strong><span>${esc(job)} · ${esc(outside)} commitment</span></article>
+      <article><small>SPONSOR</small><strong>${sponsor?money(sponsor.weekly||0)+'/WK':'NONE'}</strong><span>${sponsor?esc(sponsor.name||sponsor.tier||'Sponsor'):'Build exposure and reputation'}</span></article>
+    </div>
+
+    <section class="ace536ContractCard">
+      <div><small>CURRENT DEAL</small><h3>${esc(contract.club||c.contract_club||c.club_name||'Current club')}</h3><p>${esc(contract.role||c.squad_role||'PLAYER')} · ${money((contract.weekly_wage??c.weekly_wage)||0)} per week · ${Number(contract.years||c.contract_years||1)} year${Number(contract.years||c.contract_years||1)===1?'':'s'}.</p></div>
+      <div class="ace536ContractBonus"><small>BONUSES</small><b>${esc(ace536ContractBonusLine(bon))}</b></div>
+    </section>
+
+    <div class="ace536OfficeGrid">
+      <article><small>CAREER EARNINGS</small><b>${money(c.career_earnings||0)}</b><span>Club salary + bonuses + ecosystem income.</span></article>
+      <article><small>THIS SEASON SALARY</small><b>${money(c.salary_paid_this_season||0)}</b><span>Base salary already paid this season.</span></article>
+      <article><small>LIVING COSTS</small><b>${money(c.living_costs||0)}/WK</b><span>${esc(support)} support status.</span></article>
+      <article><small>CAREER PEAK</small><b>${Number(c.career_peak_ovr||c.overall||0)} OVR</b><span>This stays a career record, not a finance stat.</span></article>
+    </div>
+
+    <div class="ace536OfficeActions">
+      <button type="button" data-ace512-details>OPEN MONEY LEDGER + MEDICAL DETAILS →</button>
+      <button type="button" data-ace536-preview-settings>TEST PREVIEW SETTINGS</button>
+    </div>
+  </section>`;
+}
+function ace536CareerHistoryPanel(c){
+  const h=Array.isArray(S.history)?S.history:[];
+  const wins=h.filter(x=>x?.won).length,losses=h.filter(x=>x&&!x.won).length;
+  return `<section class="rta92Panel ace536HistoryPanel">
+    <div class="rta92PanelIntro"><div><small>CAREER HISTORY</small><h2>Your record stays your record.</h2><p>Matches, results and performances live here. World scouting, salary, chemistry and facilities are kept in their own sections.</p></div><div class="rta92TierPill"><span>RECORDED MATCHES</span><b>${h.length}</b><small>${wins} W · ${losses} L</small></div></div>
+    <div class="ace536HistoryList">${historyHtml()}</div>
+    <div class="ace536HistoryActions"><button type="button" data-rta92-career-panel="legacy">OPEN SEASON LEGACY →</button></div>
+  </section>`;
+}
+
+function careerView(c){
     const table=Array.isArray(S.league?.table)?S.league.table:[],offers=Array.isArray(c.transfer_offers)?c.transfer_offers:[],awards=Array.isArray(c.last_awards)?c.last_awards:[],h=latestMatch(),inbox=rta255CareerInbox(c);
     const leagueName=String(S.league?.league_name||S.pathway?.current?.league_name||"CURRENT LEAGUE"),tier=Number(S.pathway?.current?.tier||c.career_tier||5);
     const panel=String(S.careerPanel||"overview");
     if(panel==="careerprofile")return `<main class="ace474CareerProfileStandalone ace484Customise"><section class="ace474CareerProfileHead ace484CustomiseHead"><small>ROAD TO ACE · PLAYER IDENTITY</small><h1>Customise</h1><p>Build the public identity other players see as your career grows.</p></section>${ace349ShowcasePanel(c)}</main>`;
-    const body=panel==="player"?playerView(c):panel==="form"?ace474CareerFormPanel(c):panel==="pathway"?rta92PathwayPanel(c):panel==="league"?rta92LeaguePanel(c,leagueName,table,h):panel==="story"?rta92StoryPanel(c,inbox,offers,awards):panel==="international"?aceV77InternationalPanel(c):panel==="legacy"?ace351LegacyPanel(c):rta92OverviewPanel(c,leagueName,tier);
+    const body=panel==="office"?ace536CareerOfficePanel(c):panel==="history"?ace536CareerHistoryPanel(c):panel==="player"?playerView(c):panel==="form"?ace474CareerFormPanel(c):panel==="pathway"?rta92PathwayPanel(c):panel==="league"?rta92LeaguePanel(c,leagueName,table,h):panel==="story"?rta92StoryPanel(c,inbox,offers,awards):panel==="international"?aceV77InternationalPanel(c):panel==="legacy"?ace351LegacyPanel(c):rta92OverviewPanel(c,leagueName,tier);
     return `<main class="rta92CareerHub">
       <section class="rta92CareerHeader">
         <div class="rta92CareerIdentity"><small>ROAD TO ACE · CAREER</small><h1>${esc(c.player_name)}</h1><p>${esc(c.club_name)} · ${esc(leagueName)}</p></div>
         <div class="rta92CareerHeaderStats"><span><b>${Number(c.overall||0)}</b>OVR</span><span><b>${Number(c.age||17)}</b>AGE</span><span><b>${Number(c.season||1)}</b>SEASON</span><span><b>${tier}</b>WORLD TIER</span></div>
       </section>
       <nav class="rta92CareerTabs" aria-label="Career sections">
-        ${[["overview","CAREER","⌂"],["player","PLAYER","★"],["form","FORM","↗"],["pathway","PATHWAY","⇧"],["international","INT’L","◎"],["legacy","LEGACY","◇"]].map(([v,l,i])=>`<button type="button" data-rta92-career-panel="${v}" class="${panel===v?"active":""}"><i>${i}</i><span>${l}</span></button>`).join("")}
+        ${[["overview","CAREER","⌂"],["office","OFFICE","£"],["history","HISTORY","↺"],["player","PLAYER","★"],["form","FORM","↗"],["pathway","PATHWAY","⇧"],["international","INT’L","◎"],["legacy","LEGACY","◇"]].map(([v,l,i])=>`<button type="button" data-rta92-career-panel="${v}" class="${panel===v?"active":""}"><i>${i}</i><span>${l}</span></button>`).join("")}
       </nav>
       <div class="rta92CareerBody">${body}</div>
       <div class="rta92CareerDanger"><button type="button" data-rta62-reset>RESET THIS CAREER SAVE</button></div>
@@ -67001,7 +67056,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
 
 
-<!-- PROJECT ACE B21.36.535 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
+<!-- PROJECT ACE B21.36.537 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
 <style id="ace530-ecosystem-ui-style">
 #roadtoace .ace530TutorialBanner{position:relative;z-index:4;margin:0 0 8px;padding:9px 10px;border:1px solid rgba(92,190,239,.22);border-radius:11px;background:linear-gradient(135deg,rgba(45,145,207,.12),rgba(6,24,37,.92));box-shadow:inset 3px 0 0 #64c6f3;color:#dff5ff}
 #roadtoace .ace530TutorialBanner small{display:block;color:#6fc9f4;font:1000 5.8px/1 system-ui;letter-spacing:.15em}
@@ -67038,7 +67093,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace530-ecosystem-ui-script">
 (()=>{
 'use strict';
-const BUILD='B21.36.535-ECOSYSTEM-PREVIEW';
+const BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
 window.ACE_PROJECT_BUILD=BUILD;
 window.ACE_RELEASE_BUILD=BUILD;
 window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
@@ -67173,7 +67228,7 @@ function decorateEcoStrip(){
   if(!active()||!eco)return;
   const mount=document.querySelector('#roadtoace #rta62Mount');if(!mount)return;
   const view=String(S()?.view||'');
-  if(!['home','career','player'].includes(view))return;
+  if(!['home'].includes(view))return;
   const target=mount.querySelector('.rta92OverviewPanel,.rta77Home,.rta77Dashboard,.rta92Panel');
   if(target)target.insertAdjacentHTML('afterbegin',ecoStripHTML());
 }
@@ -67208,7 +67263,7 @@ function dashboardHTML(){
   const holidayDisabled=!C()?.season_complete;
   const trainerUntil=Number(c.services?.personal_trainer_until_match||0),analystUntil=Number(c.services?.private_analyst_until_match||0),m=Number(C()?.season_match||0);
   return `<div class="ace530Dash">
-    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V535</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
+    <div class="ace530DashTitle"><div><small>LIVE ECOSYSTEM · V537</small><b>${esc(c.player_name||C()?.player_name||'Career')} · ${Number(c.overall||C()?.overall||0)} OVR</b></div><span>${money(c.cash_balance??C()?.cash_balance)} BANK</span></div>
     <div class="ace530MetricGrid">
       <div class="ace530Metric"><span>CHEMISTRY</span><b>${Number(c.team_chemistry||0).toFixed(0)}</b><small>${statusWord(c.team_chemistry)}</small></div>
       <div class="ace530Metric"><span>ADAPTATION</span><b>${Number(c.adaptation||0).toFixed(0)}</b><small>${statusWord(c.adaptation)}</small></div>
@@ -67336,11 +67391,11 @@ setTimeout(()=>{refreshEco(true);queue()},1100);
 window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD};
 })();
 </script>
-<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';</script>
+<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';</script>
 
 
 
-<!-- PROJECT ACE B21.36.535 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
+<!-- PROJECT ACE B21.36.537 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
 <style id="ace535-career-notice-nav-gameplay-style">
 /* Persistent injury notice: no timer and no close X. It leaves only after the player taps it. */
 .ace535InjuryNotice{
@@ -67451,7 +67506,7 @@ window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD
 'use strict';
 if(window.ACE535_CAREER_NOTICE_TUTORIAL)return;
 window.ACE535_CAREER_NOTICE_TUTORIAL=true;
-const BUILD='B21.36.535-ECOSYSTEM-PREVIEW';
+const BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
 const S=()=>window.__ACE_RTA_STATE||{};
 const C=()=>S().career||null;
 const q=(sel,root=document)=>{try{return root.querySelector(sel)}catch(_){return null}};
@@ -67466,9 +67521,18 @@ const gameKey=()=>`ace535_current_gameplay_tutorial:${uid()}:${slot()}:${String(
 let tutorial=null,step=0,raf=0,observer=null,injuryBusy=false;
 
 /* ------------------------- persistent medical notice ------------------------- */
+function ace536FallbackInjurySignature(c=C()){
+  if(!c||String(c.injury_status||'FIT').toUpperCase()==='FIT')return '';
+  return [String(c.injury_type||'INJURY'),String(c.injury_body_part||'BODY'),String(c.injury_severity||c.injury_status||'')].join('|').toUpperCase();
+}
+function ace536FallbackAckKey(sig){return `ace536_medical_ack:${uid()}:${slot()}:${sig}`}
 function injuryNotice(){
-  const n=C()?.injury_notice_pending;
-  return n&&typeof n==='object'&&Object.keys(n).length?n:null;
+  const c=C(),n=c?.injury_notice_pending;
+  if(n&&typeof n==='object'&&Object.keys(n).length)return n;
+  const sig=ace536FallbackInjurySignature(c);
+  if(!sig)return null;
+  try{if(localStorage.getItem(ace536FallbackAckKey(sig))==='1')return null}catch(_){}
+  return {fallback:true,key:sig,type:'INJURY',name:c.injury_type||'Medical issue',body_part:c.injury_body_part||'BODY',severity:c.injury_severity||'MINOR',status:c.injury_status||'LIMITED',days:c.injury_days_remaining||0,message:'Tap to review this medical update in Prep.'};
 }
 function injuryHeadline(n){
   const st=String(n?.status||'INJURY').toUpperCase(),part=String(n?.body_part||'BODY').toUpperCase();
@@ -67488,9 +67552,15 @@ function renderInjuryNotice(){
 }
 async function acknowledgeInjury(){
   if(injuryBusy)return;injuryBusy=true;
-  const el=q('.ace535InjuryNotice');if(el)el.style.opacity='.62';
+  const el=q('.ace535InjuryNotice'),notice=injuryNotice();if(el)el.style.opacity='.62';
   try{
-    const d=await rpc('vds_rta_ack_injury_notice_v535',{});
+    let d=null;
+    if(notice?.fallback){
+      try{localStorage.setItem(ace536FallbackAckKey(String(notice.key||ace536FallbackInjurySignature())), '1')}catch(_){}
+      d={career:C()};
+    }else{
+      d=await rpc('vds_rta_ack_injury_notice_v535',{});
+    }
     if(d?.career)S().career=d.career;
     removeInjuryNotice();
     try{if(typeof window.goPage==='function')window.goPage('roadtoace')}catch(_){}
@@ -67637,5 +67707,181 @@ window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.535-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
+<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
+
+
+
+<!-- PROJECT ACE B21.36.537 · CAREER OFFICE / TRUE HISTORY / CLEAN MOBILE CHROME -->
+<style id="ace536-career-office-history-mobile-style">
+/* Career money belongs in Career Office; History remains history. */
+#roadtoace .ace536MoneyQuick b{color:#8fdfb2!important}
+#roadtoace .ace536OfficePanel,#roadtoace .ace536HistoryPanel{min-height:430px}
+#roadtoace .ace536OfficeHero{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:14px}
+#roadtoace .ace536OfficeHero article{min-height:112px;padding:13px;border:1px solid rgba(255,255,255,.05);border-radius:12px;background:linear-gradient(145deg,rgba(54,150,206,.055),rgba(255,255,255,.014))}
+#roadtoace .ace536OfficeHero small,#roadtoace .ace536OfficeGrid small,#roadtoace .ace536ContractCard small{display:block;color:#698496;font-size:6px;font-weight:1000;letter-spacing:.11em}
+#roadtoace .ace536OfficeHero strong{display:block;margin-top:8px;color:#f0f8fb;font-size:19px}
+#roadtoace .ace536OfficeHero span{display:block;margin-top:6px;color:#718794;font-size:8px;line-height:1.35}
+#roadtoace .ace536ContractCard{display:grid;grid-template-columns:1.25fr .75fr;gap:12px;margin-top:8px;padding:14px;border:1px solid rgba(96,201,248,.12);border-radius:12px;background:rgba(52,143,194,.035)}
+#roadtoace .ace536ContractCard h3{margin:5px 0 3px;font-size:19px}
+#roadtoace .ace536ContractCard p{margin:0;color:#79909d;font-size:9px;line-height:1.4}
+#roadtoace .ace536ContractBonus{padding:9px;border-radius:9px;background:rgba(255,255,255,.022)}
+#roadtoace .ace536ContractBonus b{display:block;margin-top:5px;color:#cde4ef;font-size:8px;line-height:1.45}
+#roadtoace .ace536OfficeGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:8px}
+#roadtoace .ace536OfficeGrid article{padding:12px;border-radius:11px;background:rgba(255,255,255,.017);border:1px solid rgba(255,255,255,.04)}
+#roadtoace .ace536OfficeGrid b{display:block;margin-top:6px;font-size:15px}
+#roadtoace .ace536OfficeGrid span{display:block;margin-top:4px;color:#718592;font-size:7px;line-height:1.35}
+#roadtoace .ace536OfficeActions,#roadtoace .ace536HistoryActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+#roadtoace .ace536OfficeActions button,#roadtoace .ace536HistoryActions button{min-height:40px;padding:0 12px;border:1px solid rgba(91,187,235,.14);border-radius:9px;background:#10283a;color:#86cdf1;font-size:7px;font-weight:1000;cursor:pointer}
+#roadtoace .ace536HistoryList{margin-top:13px}
+#roadtoace .ace536HistoryList .rta62History{display:grid;gap:5px}
+#roadtoace .ace536HistoryList .rta62HistoryRow{border:1px solid rgba(255,255,255,.045);border-radius:10px;background:rgba(255,255,255,.015)}
+
+/* The ecosystem debug strip no longer appears over Career / History. */
+#roadtoace .rta92CareerHub [data-ace530-strip]{display:none!important}
+
+/* Full-width phone nav. Remove the floating clutter that was sitting on top of it. */
+@media(max-width:760px){
+  body.aceRtaActive{padding-bottom:calc(88px + env(safe-area-inset-bottom))!important}
+  body > .rta85MobileTabs.ace211CareerBottomNav{
+    left:0!important;right:0!important;bottom:0!important;width:100vw!important;
+    height:82px!important;min-height:82px!important;padding:8px 5px calc(7px + env(safe-area-inset-bottom))!important;
+    border-radius:22px 22px 0 0!important;gap:4px!important;
+    grid-template-columns:1fr 1fr 90px 1fr 1fr!important
+  }
+  body > .ace211CareerBottomNav button{height:59px!important;min-height:59px!important}
+  body > .ace211CareerBottomNav button[data-rta62-view="home"]{height:86px!important;min-height:86px!important;margin-top:-31px!important}
+  body > .ace211CareerBottomNav button[data-rta62-view="home"] i{width:74px!important;height:74px!important;min-height:74px!important}
+  body.aceRtaActive #ace527PreviewChip{display:none!important}
+  body.aceRtaActive #aceCloudSavePill{display:none!important}
+  body.aceRtaActive .ace406GuideHelp.helpOnly{display:none!important}
+  body.aceRtaActive .ace406GuideHelp.next{top:10px!important;right:10px!important;bottom:auto!important}
+  #roadtoace .rta92CareerTabs{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important}
+  #roadtoace .rta92CareerTabs button{min-height:46px!important;font-size:8px!important;padding:3px!important}
+  #roadtoace .rta92QuickStats{justify-content:flex-start!important}
+  #roadtoace .rta92QuickStats span{min-width:calc(33.333% - 4px)!important;flex:1 1 calc(33.333% - 4px)!important}
+  #roadtoace .ace536OfficeHero,#roadtoace .ace536OfficeGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #roadtoace .ace536ContractCard{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+  body > .rta85MobileTabs.ace211CareerBottomNav{grid-template-columns:1fr 1fr 84px 1fr 1fr!important}
+  #roadtoace .ace536OfficeHero,#roadtoace .ace536OfficeGrid{grid-template-columns:1fr 1fr}
+}
+
+/* Persistent injury alert should always be top-of-screen, never another bottom chip. */
+.ace535InjuryNotice{top:12px!important;bottom:auto!important}
+@media(max-width:760px){.ace535InjuryNotice{top:8px!important;bottom:auto!important}}
+</style>
+<script id="ace536-career-office-history-runtime">
+(()=>{
+'use strict';
+const S=()=>window.__ACE_RTA_STATE||null;
+document.addEventListener('click',e=>{
+  const p=e.target.closest?.('[data-ace536-preview-settings]');
+  if(p){e.preventDefault();document.getElementById('ace527PreviewChip')?.click();return}
+},true);
+
+/* Never leave the old floating test/cloud UI over Road to Ace after a render. */
+function cleanRtaChrome(){
+  const inRta=document.getElementById('roadtoace')?.classList.contains('active');
+  document.body.classList.toggle('aceRtaActive',!!inRta);
+}
+document.addEventListener('ace:rta-render',cleanRtaChrome);
+window.addEventListener('pageshow',cleanRtaChrome,{passive:true});
+new MutationObserver(cleanRtaChrome).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']});
+setTimeout(cleanRtaChrome,150);
+
+window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+window.ACE_TEST_SERVER_BUILD=true;
+})();
+</script>
+<script id="ace536-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
+
+
+
+<!-- PROJECT ACE B21.36.537 · INJURY NOTICE AS HANGING POPUP -->
+<style id="ace537-injury-popup-style">
+/* Use the same hanging popup language as club-interest / scout notices. */
+body .ace535InjuryNotice,
+body.aceRtaActive .ace535InjuryNotice{
+  left:auto!important;
+  right:18px!important;
+  top:auto!important;
+  bottom:92px!important;
+  width:min(390px,calc(100vw - 28px))!important;
+  max-width:calc(100vw - 28px)!important;
+  grid-template-columns:52px minmax(0,1fr) auto!important;
+  gap:12px!important;
+  padding:13px 14px 13px 13px!important;
+  border-radius:16px!important;
+  border:1px solid rgba(255,111,126,.34)!important;
+  background:linear-gradient(145deg,rgba(36,11,19,.98),rgba(18,9,15,.985))!important;
+  box-shadow:0 20px 48px rgba(0,0,0,.46),0 0 28px rgba(255,110,129,.09)!important;
+  backdrop-filter:blur(16px)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+  animation:ace425ScoutIn .28s cubic-bezier(.18,.8,.24,1) both!important;
+}
+body .ace535InjuryNotice>i{
+  width:52px!important;height:52px!important;
+  border-radius:14px!important;
+  background:rgba(255,112,130,.12)!important;
+  border:1px solid rgba(255,132,147,.18)!important;
+  font-size:22px!important;
+}
+body .ace535InjuryNotice small{font-size:5.8px!important;letter-spacing:.14em!important}
+body .ace535InjuryNotice b{font-size:10.6px!important;line-height:1.08!important}
+body .ace535InjuryNotice span{font-size:6.4px!important;line-height:1.35!important}
+body .ace535InjuryNotice em{
+  align-self:center!important;
+  padding:0!important;
+  min-width:auto!important;
+  background:transparent!important;
+  border:0!important;
+  color:#ffbcc6!important;
+  font-size:15px!important;
+  letter-spacing:0!important;
+}
+@media(max-width:760px){
+  body .ace535InjuryNotice,
+  body.aceRtaActive .ace535InjuryNotice{
+    right:10px!important;
+    left:auto!important;
+    top:auto!important;
+    bottom:calc(94px + env(safe-area-inset-bottom))!important;
+    width:min(390px,calc(100vw - 20px))!important;
+    max-width:calc(100vw - 20px)!important;
+    grid-template-columns:46px minmax(0,1fr) auto!important;
+    gap:10px!important;
+    padding:11px 12px 11px 11px!important;
+    border-radius:15px!important;
+  }
+  body .ace535InjuryNotice>i{
+    width:46px!important;height:46px!important;font-size:19px!important;border-radius:12px!important;
+  }
+  body .ace535InjuryNotice b{font-size:10px!important}
+  body .ace535InjuryNotice span{font-size:6px!important}
+  body .ace535InjuryNotice em{font-size:13px!important}
+}
+</style>
+<script id="ace537-injury-popup-runtime">
+(()=>{
+  function upgradeMedicalPopup(){
+    const el=document.querySelector('.ace535InjuryNotice');
+    if(!el) return;
+    el.classList.add('ace537MedicalPopup');
+    const cta=el.querySelector('em');
+    if(cta) cta.textContent='›';
+  }
+  document.addEventListener('ace:rta-render', upgradeMedicalPopup);
+  window.addEventListener('pageshow', ()=>setTimeout(upgradeMedicalPopup,120), {passive:true});
+  new MutationObserver(upgradeMedicalPopup).observe(document.documentElement,{subtree:true,childList:true});
+  setTimeout(upgradeMedicalPopup,200);
+  window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+  window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+  window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';
+  window.ACE_TEST_SERVER_BUILD=true;
+})();
+</script>
+<script id="ace537-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.537-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;</script>
 
