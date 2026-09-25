@@ -66489,7 +66489,7 @@ window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 </script>
 <script id="ace518-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.518-BETA';window.ACE_RELEASE_BUILD='B21.36.518-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.518-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_UNIFIED_PREPARATION_BUILD='B21.36.518-BETA';</script>
 
-<!-- PROJECT ACE B21.36.523-BETA · COMPACT TWO-SLOT PREPARATION PLANNER -->
+<!-- PROJECT ACE B21.36.524-BETA · COMPACT TWO-SLOT PREPARATION PLANNER -->
 <style id="ace519-preparation-planner-style">
 /* Beta only. V519 replaces the large V518 dashboard with a compact plan-first screen. */
 #roadtoace .ace518PreparationHub{display:none!important}
@@ -66551,7 +66551,7 @@ window.ACE_BODY_RECOVERY_MAP_BUILD='B21.36.517-BETA';
 (()=>{
 'use strict';
 if(window.ACE519_PREPARATION_PLANNER)return;window.ACE519_PREPARATION_PLANNER=true;
-const BUILD='B21.36.523-BETA';
+const BUILD='B21.36.524-BETA';
 const S=()=>window.__ACE_RTA_STATE||{};
 const C=()=>S().career||null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -66612,11 +66612,11 @@ function choices(c,p){
 }
 function slotHtml(c,p,n){const used=Number(c.training_used||0),base=Number.isFinite(Number(p.baseUsed))?Number(p.baseUsed):used;if(n<=base)return`<div class="ace519Slot used"><small>SLOT ${n}</small><b>ACTIVITY USED</b><span>Already completed this match cycle.</span></div>`;const planIndex=n-base-1,x=p.items[planIndex];if(!x)return`<button class="ace519Slot" data-ace519-empty="${planIndex}"><small>SLOT ${n}</small><b>+ CHOOSE ACTIVITY</b><span>Training, recovery or off-court.</span></button>`;const done=p.confirmed&&planIndex<p.index;const current=p.confirmed&&planIndex===p.index;return`<div class="ace519Slot ${done?'done':'planned'}"><small>SLOT ${n}${done?' · DONE':current?' · NEXT':''}</small><b>${esc(x.title)}</b><span>${esc(x.sub)}</span>${!p.confirmed?`<button class="remove" data-ace519-remove="${planIndex}" aria-label="Remove">×</button>`:''}</div>`}
 function preset(c,p,kind){if(p.confirmed)return;p.baseUsed=Number(c?.training_used||0);const max=maxPlanItems(c,p);let ids=[];if(kind==='DEVELOP')ids=[focusForPosition(c),secondFocus(c)];if(kind==='BALANCED')ids=[focusForPosition(c),'REST'];if(kind==='READY')ids=status(c)==='FIT'?['REST','FILM']:['CLUB_PHYSIO','REST'];p.items=ids.slice(0,max).map(item).filter(Boolean);p.index=0;p.waiting=null;savePlan(c,p);renderPlanner()}
-function planHtml(c,p){const used=Number(c.training_used||0),s=status(c),load=Math.round(Number(c.body_load||0)),ready=Math.round(Number(c.readiness??100)),rec=recommendation(c),proj=projection(c,p),max=Math.max(0,2-used),remaining=p.items.length-p.index;const issue=s==='FIT'?'ALL TRACKED AREAS CLEAR':`${c.injury_type||'MEDICAL ISSUE'} · ${c.injury_body_part||'BODY'}`;const actionLabel=used>=2?'PREPARATION COMPLETE':p.confirmed?(p.waiting!==null?'RESUME TRAINING':remaining>0?'CONTINUE PLAN':'PLAN COMPLETE'):'CONFIRM PREPARATION';const canAction=used<2&&(p.confirmed?(remaining>0):p.items.length>0);
+function planHtml(c,p){const used=Number(c.training_used||0),s=status(c),load=Math.round(Number(c.body_load||0)),ready=Math.round(Number(c.readiness??100)),rec=recommendation(c),proj=projection(c,p),hasPlan=p.items.length>0,displayReady=hasPlan?proj.ready:ready,displayLoad=hasPlan?proj.load:load,max=Math.max(0,2-used),remaining=p.items.length-p.index;const issue=s==='FIT'?'ALL TRACKED AREAS CLEAR':`${c.injury_type||'MEDICAL ISSUE'} · ${c.injury_body_part||'BODY'}`;const actionLabel=used>=2?'PREPARATION COMPLETE':p.confirmed?(p.waiting!==null?'RESUME TRAINING':remaining>0?'CONTINUE PLAN':'PLAN COMPLETE'):'CONFIRM PREPARATION';const canAction=used<2&&(p.confirmed?(remaining>0):p.items.length>0);
 return`<section class="ace519Planner" data-ace519-planner>
   <div class="ace519Top"><div><small>MATCHDAY PREPARATION</small><h2>MATCH <span>PREP</span></h2><p>Shape your week. Two choices before the next match.</p></div><div class="ace519Counter"><b>${used} / 2</b><span>SLOTS USED</span></div></div>
-  <div class="ace519Condition"><div><span>READINESS</span><b>${ready}%</b><small>${ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED'}</small></div><div><span>BODY LOAD</span><b>${load}</b><small>${loadBand(load)}</small></div><div class="${stateClass(s)}"><span>MEDICAL</span><b>${esc(s)}</b><small>${s==='FIT'?'CLEARED':Math.max(0,Math.round(Number(c.injury_days_remaining||0)))+'D EST.'}</small></div></div>
   <div class="ace520Fixture"><div><small>NEXT FIXTURE</small><b>${esc(c.club_name||'YOUR CLUB')}</b></div><strong>VS</strong><div class="away"><small>MATCH ${Number(c.season_match||0)+1}</small><b>${esc(String(S().selection?.opponent||S().selection?.user?.opponent||S().league?.next_opponent||'OPPONENT'))}</b></div></div>
+  <div class="ace519Condition ${hasPlan?'projecting':''}"><div><span>READINESS</span><b>${displayReady}%</b><small>${hasPlan?(displayReady-ready>=0?`PLAN ${displayReady-ready>=0?'+':''}${displayReady-ready}`:`PLAN ${displayReady-ready}`):(ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED')}</small></div><div><span>BODY LOAD</span><b>${displayLoad}</b><small>${hasPlan?(displayLoad-load>=0?`PLAN +${displayLoad-load}`:`PLAN ${displayLoad-load}`):loadBand(load)}</small></div><div class="${stateClass(s)}"><span>MEDICAL</span><b>${esc(s)}</b><small>${s==='FIT'?'CLEARED':Math.max(0,Math.round(Number(c.injury_days_remaining||0)))+'D EST.'}</small></div></div>
   <div class="ace519Advice"><i>${rec.icon}</i><div><small>MEDICAL / COACH STAFF</small><b>${esc(rec.title)}</b><span>${esc(rec.text)}</span></div></div>
   <div class="ace523MainRow">
     <div class="ace523BodyPanel">
@@ -66626,10 +66626,10 @@ return`<section class="ace519Planner" data-ace519-planner>
     <div class="ace523PlanWrap">
       <div class="ace519PlanLabel"><b>YOUR PLAN</b><span>${max} slot${max===1?'':'s'} available</span></div>
       <div class="ace519Slots">${slotHtml(c,p,1)}${slotHtml(c,p,2)}</div>
+      <div class="ace519Actions ace524PlanActions"><button class="ace519Confirm" data-ace519-confirm ${!canAction?'disabled':''}>${esc(actionLabel)}</button>${!p.confirmed&&p.items.length?`<button class="ace519Reset" data-ace519-reset>RESET</button>`:''}</div>
     </div>
   </div>
   ${!p.confirmed&&max>0?`<div class="ace519Presets"><button class="ace519Preset ${rec.cat==='TRAIN'?'recommended':''}" data-ace519-preset="DEVELOP">DEVELOP</button><button class="ace519Preset" data-ace519-preset="BALANCED">BALANCED</button><button class="ace519Preset ${rec.cat==='RECOVER'?'recommended':''}" data-ace519-preset="READY">MATCH READY</button></div>${categories(c,p)}${choices(c,p)}`:''}
-  <div class="ace519Actions"><button class="ace519Confirm" data-ace519-confirm ${!canAction?'disabled':''}>${esc(actionLabel)}</button>${!p.confirmed&&p.items.length?`<button class="ace519Reset" data-ace519-reset>RESET</button>`:''}</div>
   ${p.confirmed?`<div class="ace519Progress">Plan locked. Complete the highlighted activity, then continue to the next slot.</div>`:''}
 </section>`}
 function host(){return document.querySelector('#roadtoace .rta187TrainingCentre')}
@@ -66661,10 +66661,10 @@ window.ACE_PROJECT_BUILD=BUILD;window.ACE_RELEASE_BUILD=BUILD;window.ACE_RELEASE
 #roadtoace .ace519Projection,#roadtoace .ace519BodyToggle,#roadtoace .ace519BodyDetail{display:none!important}
 @media(max-width:560px){#roadtoace .ace523MainRow{grid-template-columns:105px minmax(0,1fr);gap:7px}#roadtoace .ace523BodyPanel{min-height:228px;padding:7px}#roadtoace .ace523BodyPanel .ace519BodyMini{width:74px;height:132px}}
 </style>
-<script id="ace519-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.523-BETA';</script>
+<script id="ace519-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.524-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.524-BETA';</script>
 
 
-<!-- PROJECT ACE B21.36.523-BETA · NATIVE MATCH PREP VISUAL PASS -->
+<!-- PROJECT ACE B21.36.524-BETA · NATIVE MATCH PREP VISUAL PASS -->
 <style id="ace520-project-ace-prep-skin">
 #roadtoace .ace519Planner{
   position:relative!important;overflow:hidden!important;
@@ -66773,10 +66773,10 @@ window.ACE_PROJECT_BUILD=BUILD;window.ACE_RELEASE_BUILD=BUILD;window.ACE_RELEASE
   #roadtoace .ace520Fixture strong{width:26px;height:26px!important}
 }
 </style>
-<script id="ace520-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.523-BETA';</script>
+<script id="ace520-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.524-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREPARATION_PLANNER_BUILD='B21.36.524-BETA';</script>
 
 
-<!-- PROJECT ACE B21.36.523-BETA · LOCKED PREP PICKER + OPPONENT FILM -->
+<!-- PROJECT ACE B21.36.524-BETA · LOCKED PREP PICKER + OPPONENT FILM -->
 <style id="ace522-prep-picker-style">
 /* Keep the main Prep page locked/compact. Activity catalogues live in the picker. */
 #roadtoace .ace519Categories,#roadtoace .ace519Choices{display:none!important}
@@ -66822,7 +66822,30 @@ function showFilm(d){document.querySelectorAll('.ace522FilmBackdrop').forEach(n=
 window.ACE522_SHOW_FILM_REPORT=showFilm;
 document.addEventListener('click',e=>{if(String(S().view||'')!=='train'&&!e.target.closest?.('.ace522FilmBackdrop'))return;const empty=e.target.closest?.('[data-ace519-empty]');if(empty){e.preventDefault();e.stopPropagation();openPicker(Number(empty.dataset.ace519Empty||0));return}const planned=e.target.closest?.('.ace519Slot.planned');if(planned&&!e.target.closest?.('[data-ace519-remove]')){e.preventDefault();const all=[...planned.parentElement.children];openPicker(Math.max(0,all.indexOf(planned)-Number(C()?.training_used||0)));return}const t=e.target.closest?.('[data-ace522-tab]');if(t){e.preventDefault();tab=t.dataset.ace522Tab||'TRAIN';document.querySelectorAll('.ace522PickerTab').forEach(b=>b.classList.toggle('active',b.dataset.ace522Tab===tab));const body=document.querySelector('[data-ace522-body]');if(body)body.innerHTML=renderChoices();return}const ch=e.target.closest?.('[data-ace522-choice]');if(ch){e.preventDefault();choose(ch.dataset.ace522Choice);return}if(e.target.closest?.('[data-ace522-close]')||e.target===document.querySelector('.ace522PickerBackdrop')){e.preventDefault();closePicker();return}if(e.target.closest?.('[data-ace522-film-close]')||e.target===document.querySelector('.ace522FilmBackdrop')){e.preventDefault();document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove());return}},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePicker();document.querySelectorAll('.ace522FilmBackdrop').forEach(n=>n.remove())}});
-window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;
+window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.524-BETA';window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace522-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.523-BETA';window.ACE_RELEASE_BUILD='B21.36.523-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.523-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREP_POPUP_FILM_BUILD='B21.36.523-BETA';</script>
+
+<style id="ace524-prep-layout-fix">
+/* Beta V524: locked one-screen prep composition. */
+#roadtoace .rta187TrainingCentre>.rta187TrainingHero{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}
+#roadtoace .rta187TrainingCentre{padding-top:0!important}
+#roadtoace .ace520Fixture{margin:0 0 8px!important}
+#roadtoace .ace519Condition{margin:0 0 9px!important}
+#roadtoace .ace519Condition.projecting{box-shadow:inset 0 -2px 0 rgba(93,201,250,.13)!important}
+#roadtoace .ace519Condition.projecting b{color:#80d5ff!important}
+#roadtoace .ace523MainRow{grid-template-columns:118px minmax(0,1fr)!important;align-items:stretch!important;min-height:252px!important;margin:2px 0 8px!important}
+#roadtoace .ace523BodyPanel{height:252px!important;min-height:252px!important;box-sizing:border-box!important}
+#roadtoace .ace523PlanWrap{height:252px!important;min-height:252px!important;display:grid!important;grid-template-rows:auto 1fr auto!important;align-content:stretch!important}
+#roadtoace .ace523PlanWrap .ace519Slots{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:1fr 1fr!important;gap:7px!important;min-height:0!important}
+#roadtoace .ace523PlanWrap .ace519Slot{height:auto!important;min-height:0!important;padding:10px 12px!important}
+#roadtoace .ace524PlanActions{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important;margin:7px 0 0!important}
+#roadtoace .ace524PlanActions .ace519Confirm{min-height:40px!important;height:40px!important;margin:0!important;padding:0 10px!important}
+#roadtoace .ace524PlanActions .ace519Reset{height:40px!important;min-height:40px!important;margin:0!important;padding:0 9px!important}
+@media(max-width:560px){
+  #roadtoace .ace523MainRow{grid-template-columns:105px minmax(0,1fr)!important;min-height:238px!important}
+  #roadtoace .ace523BodyPanel,#roadtoace .ace523PlanWrap{height:238px!important;min-height:238px!important}
+  #roadtoace .ace524PlanActions .ace519Confirm,#roadtoace .ace524PlanActions .ace519Reset{height:37px!important;min-height:37px!important}
+}
+</style>
+<script id="ace522-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-BETA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.524-BETA';window.ACE_TEST_SERVER_BUILD=true;window.ACE_PREP_POPUP_FILM_BUILD='B21.36.524-BETA';</script>
