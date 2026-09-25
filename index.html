@@ -65487,7 +65487,7 @@ img,svg{
 <script id="ace512-health-economy-js">
 (()=>{
   'use strict';
-  const BUILD='B21.36.512';
+  const BUILD='B21.36.516-BETA';
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const S=()=>window.__ACE_RTA_STATE||null;
   const career=()=>S()?.career||null;
@@ -65552,24 +65552,45 @@ img,svg{
 
   function decorateHome(c){
     const road=document.getElementById('roadtoace');if(!road)return;
-    const host=road.querySelector('.rta175CareerHome,.ace456ClubPage');if(!host)return;
+    const host=road.querySelector('.ace464HomeHub,.ace456ClubPage,.rta175CareerHome');if(!host)return;
+
+    // V516: the cinematic club hero stays untouched. Health/recovery is no longer
+    // injected as a large Home card beneath it.
     host.querySelectorAll(':scope>.ace512HealthEconomy').forEach(n=>n.remove());
-    const anchor=host.querySelector('.rta175CareerHeader,.ace456Hero')||host.firstElementChild;
-    insertAfter(anchor,healthPanel(c,'home'));
+
+    // Recovery replaces the old Club Home HISTORY tab for the beta test build.
+    const tab=host.querySelector('[data-ace464-home-tab="history"],[data-ace456-tab="history"],[data-ace512-recovery-tab]');
+    if(tab){
+      tab.textContent='RECOVERY';
+      tab.setAttribute('data-ace512-recovery-tab','1');
+      tab.removeAttribute('data-ace464-home-tab');
+      tab.removeAttribute('data-ace456-tab');
+      tab.classList.remove('active');
+      tab.title='Player health, recovery and contract status';
+    }
   }
   function decorateTraining(c){
     const road=document.getElementById('roadtoace');if(!road)return;
     const host=road.querySelector('.rta187TrainingCentre');if(!host)return;
+
+    // V516: Training remains the normal training screen. Recovery lives in its
+    // own Club Home tab instead of taking over this page.
     host.querySelectorAll(':scope>.ace512RecoverySection,:scope>.ace512HealthEconomy').forEach(n=>n.remove());
-    const hero=host.querySelector('.rta187TrainingHero')||host.firstElementChild;
-    const hp=insertAfter(hero,healthPanel(c,'training'));
-    if(hp)insertAfter(hp,recoverySection(c));
-    host.querySelectorAll('.ace512MedicalHold').forEach(n=>n.classList.remove('ace512MedicalHold'));
+    host.querySelectorAll('.ace512MedicalHold').forEach(n=>{
+      n.classList.remove('ace512MedicalHold');
+      n.disabled=false;
+      if(n.title==='Medical clearance required'||String(n.title||'').startsWith('Limited training'))n.removeAttribute('title');
+    });
+
     const st=status(c.injury_status);
     if(st==='OUT'){
-      host.querySelectorAll('[data-rta62-train],[data-rta113-physical]').forEach(b=>{b.disabled=true;b.classList.add('ace512MedicalHold');b.title='Medical clearance required';});
+      host.querySelectorAll('[data-rta62-train],[data-rta113-physical]').forEach(b=>{
+        b.disabled=true;b.classList.add('ace512MedicalHold');b.title='Medical clearance required — use Recovery';
+      });
     }else if(st==='LIMITED'){
-      host.querySelectorAll('[data-rta62-train="ATTACK"],[data-rta62-train="SERVE"],[data-rta62-train="BLOCK"],[data-rta113-physical]').forEach(b=>{b.disabled=true;b.classList.add('ace512MedicalHold');b.title='Limited training — choose lower-impact work or recovery';});
+      host.querySelectorAll('[data-rta62-train="ATTACK"],[data-rta62-train="SERVE"],[data-rta62-train="BLOCK"],[data-rta113-physical]').forEach(b=>{
+        b.disabled=true;b.classList.add('ace512MedicalHold');b.title='Limited training — use lower-impact work or Recovery';
+      });
     }
   }
   function decorateMatch(c){
@@ -65591,9 +65612,46 @@ img,svg{
     if(view==='home')decorateHome(c);
     if(view==='train')decorateTraining(c);
     if(view==='match')decorateMatch(c);
-    // Unified/legacy home builds can paint after the state view changes; harmlessly retry.
-    if(document.querySelector('#roadtoace .rta175CareerHome,#roadtoace .ace456ClubPage')&&!document.querySelector('#roadtoace .ace512HealthEconomy'))decorateHome(c);
-    const hist=Array.isArray(S()?.history)?S().history:[];const ev=hist[0]?.stats?.health?.injury_event;if(ev){const k=`${hist[0]?.season||0}:${hist[0]?.season_match||0}:${ev.name||ev.type||''}`;try{if(sessionStorage.getItem('ace512-medical-toast')!==k){sessionStorage.setItem('ace512-medical-toast',k);toast(`Medical update: ${ev.name||ev.type} · ${ev.status||''} · ${estDays(ev.days)}`,ev.status==='OUT'?'error':'')}}catch(_){}}
+
+    const hist=Array.isArray(S()?.history)?S().history:[];
+    const ev=hist[0]?.stats?.health?.injury_event;
+    if(ev){
+      const k=`${hist[0]?.season||0}:${hist[0]?.season_match||0}:${ev.name||ev.type||''}`;
+      try{
+        if(sessionStorage.getItem('ace512-medical-toast')!==k){
+          sessionStorage.setItem('ace512-medical-toast',k);
+          toast(`Medical update: ${ev.name||ev.type} · ${ev.status||''} · ${estDays(ev.days)}`,ev.status==='OUT'?'error':'');
+        }
+      }catch(_){}
+    }
+  }
+
+  function recoveryHubHTML(c){
+    const st=status(c.injury_status),load=Number(c.body_load||0),ready=Math.round(Number(c.readiness??100));
+    return `<div class="ace512Modal ace516RecoveryModal" data-ace512-recovery-modal>
+      <section class="ace512ModalCard ace516RecoveryHub" role="dialog" aria-modal="true" aria-label="Recovery">
+        <header class="ace512ModalHead ace516RecoveryHead">
+          <div><small>ROAD TO ACE · PLAYER CARE</small><h2>Recovery</h2></div>
+          <button type="button" data-ace512-recovery-close aria-label="Close">×</button>
+        </header>
+        <div class="ace516RecoverySummary">
+          <div><span>READINESS</span><b>${ready}%</b><small>${ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED'}</small></div>
+          <div><span>BODY LOAD</span><b>${Math.round(load)}</b><small>${loadBand(load)}</small></div>
+          <div class="${statClass(st)}"><span>MEDICAL</span><b>${esc(st)}</b><small>${st==='FIT'?'CLEARED':estDays(c.injury_days_remaining)}</small></div>
+        </div>
+        ${status(c.injury_status)!=='FIT'?`<div class="ace512InjuryLine"><div><b>${esc(c.injury_type||'Medical issue')}</b><span>${esc(c.injury_body_part||'')} · ${esc(c.injury_severity||st)}</span></div><strong>${estDays(c.injury_days_remaining)}</strong></div>`:''}
+        ${recoverySection(c)}
+        <button type="button" class="ace516ContractButton" data-ace512-details>CONTRACT + MONEY DETAILS <span>→</span></button>
+      </section>
+    </div>`;
+  }
+
+  function openRecoveryHub(){
+    const c=career();if(!c)return;
+    document.querySelectorAll('[data-ace512-recovery-modal]').forEach(n=>n.remove());
+    const wrap=document.createElement('div');
+    wrap.innerHTML=recoveryHubHTML(c);
+    document.body.appendChild(wrap.firstElementChild);
   }
 
   async function recover(activity,btn){
@@ -65606,7 +65664,7 @@ img,svg{
       const labels={REST:'Full rest completed',CLUB_PHYSIO:'Club rehab completed',FILM:'Film-room session completed',TEAM_TIME:'Team time completed',SPECIALIST_PHYSIO:'Specialist recovery completed'};
       toast(`${labels[activity]||'Recovery completed'}${Number(d?.cost||0)>0?` · ${money(d.cost)}`:''}.`,'good');
       try{window.__ACE_RTA_RENDER?.()}catch(_){}
-      setTimeout(decorate,30);
+      setTimeout(()=>{decorate();if(document.querySelector('[data-ace512-recovery-modal]'))openRecoveryHub();},30);
     }catch(err){toast(errorText(err),'error');if(btn){btn.disabled=false;btn.innerHTML=old||btn.innerHTML}}
   }
 
@@ -65628,15 +65686,33 @@ img,svg{
   }
 
   document.addEventListener('click',e=>{
-    const rec=e.target.closest?.('[data-ace512-recovery]');if(rec){e.preventDefault();e.stopPropagation();recover(String(rec.dataset.ace512Recovery||''),rec);return}
-    if(e.target.closest?.('[data-ace512-details]')){e.preventDefault();openDetails();return}
-    if(e.target.closest?.('[data-ace512-close]')||e.target.matches?.('[data-ace512-modal]')){e.target.closest?.('[data-ace512-modal]')?.remove?.();return}
-  },true);
+    const recoveryTab=e.target.closest?.('[data-ace512-recovery-tab]');
+    if(recoveryTab){e.preventDefault();e.stopPropagation();openRecoveryHub();return}
 
+    const rec=e.target.closest?.('[data-ace512-recovery]');
+    if(rec){e.preventDefault();e.stopPropagation();recover(String(rec.dataset.ace512Recovery||''),rec);return}
+
+    if(e.target.closest?.('[data-ace512-details]')){
+      e.preventDefault();
+      document.querySelector('[data-ace512-recovery-modal]')?.remove?.();
+      openDetails();return;
+    }
+
+    if(e.target.closest?.('[data-ace512-recovery-close]')||e.target.matches?.('[data-ace512-recovery-modal]')){
+      e.target.closest?.('[data-ace512-recovery-modal]')?.remove?.();return;
+    }
+
+    if(e.target.closest?.('[data-ace512-close]')||e.target.matches?.('[data-ace512-modal]')){
+      e.target.closest?.('[data-ace512-modal]')?.remove?.();return;
+    }
+  },false);
+
+  // V516: no MutationObserver here. The old observer reacted to ACE512's own DOM
+  // writes and could create a continuous decorate/remove/reinsert cycle on mobile.
   document.addEventListener('ace:rta-render',()=>requestAnimationFrame(decorate));
   window.addEventListener('pageshow',()=>setTimeout(decorate,120),{passive:true});
-  try{new MutationObserver(()=>{clearTimeout(window.__ace512DecorateTimer);window.__ace512DecorateTimer=setTimeout(decorate,20)}).observe(document.getElementById('roadtoace')||document.body,{childList:true,subtree:true})}catch(_){}
-  setTimeout(decorate,100);setTimeout(decorate,700);
+  setTimeout(decorate,100);
+  setTimeout(decorate,700);
 
   window.ACE_HEALTH_ECONOMY_V1_BUILD=BUILD;
   window.ACE_PROJECT_BUILD=BUILD;
@@ -66093,4 +66169,61 @@ img,svg{
   window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.515-BETA';
   window.ACE_TEST_OPTIONAL_ASSETS_BUILD='B21.36.515-BETA';
 })();
+</script>
+
+
+<!-- PROJECT ACE B21.36.516-BETA · RECOVERY TAB + INTERACTION HOTFIX -->
+<style id="ace516-recovery-tab-interaction-style">
+/* Keep the original cinematic Club Home hero intact. */
+#roadtoace .ace464HomeHub>.ace456Hero{
+  display:block!important;
+  visibility:visible!important;
+}
+#roadtoace .ace464HomeHub>.ace512HealthEconomy{display:none!important;}
+
+/* Recovery is a Club Home section now, replacing History in the beta. */
+#roadtoace .ace456ClubTabs [data-ace512-recovery-tab]{
+  color:#dff6ff!important;
+  border-color:rgba(81,190,239,.18)!important;
+}
+#roadtoace .ace456ClubTabs [data-ace512-recovery-tab]::after{
+  content:"";
+  display:block;
+  width:16px;
+  height:2px;
+  margin:4px auto 0;
+  border-radius:999px;
+  background:rgba(91,204,244,.55);
+}
+
+.ace516RecoveryModal{z-index:20050!important;align-items:flex-end!important;padding:0!important;background:rgba(1,7,13,.68)!important;backdrop-filter:blur(9px)!important;-webkit-backdrop-filter:blur(9px)!important;}
+.ace516RecoveryHub{width:min(860px,100%)!important;max-width:none!important;max-height:min(88dvh,900px)!important;margin:0 auto!important;border-radius:26px 26px 0 0!important;overflow:auto!important;background:linear-gradient(180deg,#071924,#041019)!important;border:1px solid rgba(95,191,241,.17)!important;border-bottom:0!important;box-shadow:0 -24px 90px rgba(0,0,0,.52)!important;padding:15px 15px calc(22px + env(safe-area-inset-bottom))!important;}
+.ace516RecoveryHead{position:sticky!important;top:-15px!important;z-index:4!important;margin:-15px -15px 12px!important;padding:16px 15px 12px!important;background:linear-gradient(180deg,#071924 75%,rgba(7,25,36,.92))!important;border-bottom:1px solid rgba(255,255,255,.06)!important;}
+.ace516RecoverySummary{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:0 0 11px!important;}
+.ace516RecoverySummary>div{min-width:0!important;padding:13px!important;border-radius:14px!important;border:1px solid rgba(116,196,238,.11)!important;background:rgba(255,255,255,.025)!important;}
+.ace516RecoverySummary span{display:block!important;color:#68869a!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.14em!important;}
+.ace516RecoverySummary b{display:block!important;margin-top:5px!important;color:#f3f9fc!important;font-size:24px!important;line-height:1!important;}
+.ace516RecoverySummary small{display:block!important;margin-top:5px!important;color:#718c9d!important;font-size:7px!important;font-weight:900!important;letter-spacing:.06em!important;}
+.ace516RecoverySummary .fit b{color:#60dfa7!important}.ace516RecoverySummary .sore b{color:#edcd66!important}.ace516RecoverySummary .limited b{color:#f1a754!important}.ace516RecoverySummary .out b{color:#f27373!important}
+.ace516RecoveryHub .ace512RecoverySection{margin:10px 0 0!important;}
+.ace516RecoveryHub .ace512RecoveryHead h2{font-size:19px!important;}
+.ace516ContractButton{width:100%!important;margin-top:11px!important;padding:13px 14px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;border-radius:13px!important;border:1px solid rgba(104,196,242,.14)!important;background:linear-gradient(135deg,rgba(41,116,160,.16),rgba(255,255,255,.025))!important;color:#dff5ff!important;font:1000 8px/1 system-ui!important;letter-spacing:.10em!important;}
+.ace516ContractButton span{font-size:17px!important;}
+
+@media(max-width:760px){
+  .ace516RecoveryHub{width:100%!important;max-height:90dvh!important;border-radius:23px 23px 0 0!important;padding:12px 11px calc(20px + env(safe-area-inset-bottom))!important;}
+  .ace516RecoveryHead{top:-12px!important;margin:-12px -11px 10px!important;padding:14px 11px 10px!important;}
+  .ace516RecoverySummary{gap:6px!important;}
+  .ace516RecoverySummary>div{padding:10px 8px!important;}
+  .ace516RecoverySummary b{font-size:19px!important;}
+  .ace516RecoverySummary span,.ace516RecoverySummary small{font-size:6.3px!important;}
+}
+</style>
+<script id="ace516-final-build-marker">
+window.ACE_PROJECT_BUILD='B21.36.516-BETA';
+window.ACE_RELEASE_BUILD='B21.36.516-BETA';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.516-BETA';
+window.ACE_TEST_SERVER_BUILD=true;
+window.ACE_HEALTH_ECONOMY_V1_BUILD='B21.36.516-BETA';
+window.ACE_RECOVERY_TAB_BUILD='B21.36.516-BETA';
 </script>
