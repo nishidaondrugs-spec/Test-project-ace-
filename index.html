@@ -64343,32 +64343,30 @@ window.ACE_INTL_MATCH_CANONICAL_BUILD='B21.36.480';
     if(changed&&!normalizing){normalizing=true;requestAnimationFrame(()=>{try{window.__ACE_RTA_RENDER?.()}catch(_){}normalizing=false;});}
   }
   async function begin(){
-    /* V539 — fail-open Career entry.
-       The old full-screen pre-entry RPC gate could strand iOS/GitHub Pages on
-       "Checking career data". Road to Ace now opens immediately and the normal
-       Career loader refreshes state after navigation. */
+    /* V1 RC3: never render Create Player while an existing save is still loading.
+       The final runtime owns the load/verify/navigation sequence. */
     if(busy)return;
     busy=true;
     const el=document.getElementById('ace491CareerEntryGate');
     if(el)el.classList.remove('show');
     try{
-      window.goPage?.('roadtoace');
+      if(typeof window.ACE_V1_SAFE_ENTER_CAREER==='function'){
+        await window.ACE_V1_SAFE_ENTER_CAREER();
+      }else{
+        /* Extremely early fallback: load first, navigate second. */
+        if(!window.__ACE_RTA_STATE?.career && typeof window.ACE_RTA_LOAD_STATE==='function'){
+          await window.ACE_RTA_LOAD_STATE({silent:true,world:false});
+        }
+        if(window.__ACE_RTA_STATE?.career || window.__ACE_RTA_STATE?.loaded){
+          window.goPage?.('roadtoace');
+          try{window.__ACE_RTA_RENDER?.()}catch(_){}
+        }
+      }
+    }catch(err){
+      console.warn('Project Ace Career entry',err);
     }finally{
       busy=false;
     }
-    requestAnimationFrame(()=>{
-      try{
-        const live=window.__ACE_RTA_STATE;
-        if(live?.career){
-          live.loading=false;
-          try{window.__ACE_RTA_RENDER?.()}catch(_){}
-        }else if(typeof window.ACE_RTA_LOAD_STATE==='function'){
-          Promise.resolve(window.ACE_RTA_LOAD_STATE({silent:false,world:false}))
-            .then(()=>{try{window.__ACE_RTA_RENDER?.()}catch(_){}})
-            .catch(err=>console.warn('Project Ace background Career load',err));
-        }
-      }catch(err){console.warn('Project Ace Career entry',err)}
-    });
   }
   document.addEventListener('click',e=>{
     const home=document.querySelector('#home.page.active');if(!home)return;
@@ -67092,7 +67090,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
 
 
-<!-- PROJECT ACE V1 · RC2 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
+<!-- PROJECT ACE V1 · RC3 · FULL ECOSYSTEM TEST-SERVER SURFACES -->
 <style id="ace530-ecosystem-ui-style">
 #roadtoace .ace530TutorialBanner{position:relative;z-index:4;margin:0 0 8px;padding:9px 10px;border:1px solid rgba(92,190,239,.22);border-radius:11px;background:linear-gradient(135deg,rgba(45,145,207,.12),rgba(6,24,37,.92));box-shadow:inset 3px 0 0 #64c6f3;color:#dff5ff}
 #roadtoace .ace530TutorialBanner small{display:block;color:#6fc9f4;font:1000 5.8px/1 system-ui;letter-spacing:.15em}
@@ -67129,7 +67127,7 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
 <script id="ace530-ecosystem-ui-script">
 (()=>{
 'use strict';
-const BUILD='PROJECT-ACE-V1-RC2';
+const BUILD='PROJECT-ACE-V1-RC3';
 window.ACE_PROJECT_BUILD=BUILD;
 window.ACE_RELEASE_BUILD=BUILD;
 window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
@@ -67427,11 +67425,11 @@ setTimeout(()=>{refreshEco(true);queue()},1100);
 window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD};
 })();
 </script>
-<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='PROJECT-ACE-V1-RC2';</script>
+<script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='PROJECT-ACE-V1-RC3';</script>
 
 
 
-<!-- PROJECT ACE V1 · RC2 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
+<!-- PROJECT ACE V1 · RC3 · PERSISTENT MEDICAL NOTICE + WIDER MOBILE NAV + CURRENT GAMEPLAY WALKTHROUGH -->
 <style id="ace535-career-notice-nav-gameplay-style">
 /* Persistent injury notice: no timer and no close X. It leaves only after the player taps it. */
 .ace535InjuryNotice{
@@ -67542,7 +67540,7 @@ window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD
 'use strict';
 if(window.ACE535_CAREER_NOTICE_TUTORIAL)return;
 window.ACE535_CAREER_NOTICE_TUTORIAL=true;
-const BUILD='PROJECT-ACE-V1-RC2';
+const BUILD='PROJECT-ACE-V1-RC3';
 const S=()=>window.__ACE_RTA_STATE||{};
 const C=()=>S().career||null;
 const q=(sel,root=document)=>{try{return root.querySelector(sel)}catch(_){return null}};
@@ -67743,11 +67741,11 @@ window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
+<script id="ace535-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;window.ACE_INJURY_NOTICE_BUILD='B21.36.535';window.ACE_GAMEPLAY_TUTORIAL_BUILD='B21.36.535';</script>
 
 
 
-<!-- PROJECT ACE V1 · RC2 · CAREER OFFICE / TRUE HISTORY / CLEAN MOBILE CHROME -->
+<!-- PROJECT ACE V1 · RC3 · CAREER OFFICE / TRUE HISTORY / CLEAN MOBILE CHROME -->
 <style id="ace536-career-office-history-mobile-style">
 /* Career money belongs in Career Office; History remains history. */
 #roadtoace .ace536MoneyQuick b{color:#8fdfb2!important}
@@ -67826,17 +67824,17 @@ window.addEventListener('pageshow',cleanRtaChrome,{passive:true});
 new MutationObserver(cleanRtaChrome).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']});
 setTimeout(cleanRtaChrome,150);
 
-window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
-window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
-window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace536-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace536-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
-<!-- PROJECT ACE V1 · RC2 · INJURY NOTICE AS HANGING POPUP -->
+<!-- PROJECT ACE V1 · RC3 · INJURY NOTICE AS HANGING POPUP -->
 <style id="ace537-injury-popup-style">
 /* Use the same hanging popup language as club-interest / scout notices. */
 body .ace535InjuryNotice,
@@ -67913,17 +67911,17 @@ body .ace535InjuryNotice em{
   window.addEventListener('pageshow', ()=>setTimeout(upgradeMedicalPopup,120), {passive:true});
   new MutationObserver(upgradeMedicalPopup).observe(document.documentElement,{subtree:true,childList:true});
   setTimeout(upgradeMedicalPopup,200);
-  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
-  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
-  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';
+  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';
+  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';
   window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace537-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace537-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
-<!-- PROJECT ACE V1 · RC2 · CAREER ENTRY GATE WATCHDOG -->
+<!-- PROJECT ACE V1 · RC3 · CAREER ENTRY GATE WATCHDOG -->
 <script id="ace538-career-entry-watchdog">
 (()=>{
   let token=0;
@@ -67949,16 +67947,16 @@ body .ace535InjuryNotice em{
   document.addEventListener('click',e=>{
     if(e.target.closest?.('[data-ace491-retry]'))setTimeout(arm,60);
   },true);
-  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
-  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
-  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';
+  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';
+  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';
 })();
 </script>
-<script id="ace538-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace538-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
-<!-- PROJECT ACE V1 · RC2 · FAIL-OPEN CAREER ENTRY -->
+<!-- PROJECT ACE V1 · RC3 · FAIL-OPEN CAREER ENTRY -->
 <style id="ace539-no-preentry-gate-style">
 /* V539: The redundant pre-entry gate is retired. Career has its own loader. */
 #ace491CareerEntryGate,
@@ -67987,13 +67985,13 @@ body .ace535InjuryNotice em{
       }catch(err){console.warn('Project Ace Career entry',err)}
     });
   };
-  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
-  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
-  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+  window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';
+  window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';
+  window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';
   window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace539-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace539-final-build-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
@@ -68118,13 +68116,13 @@ document.addEventListener('click',e=>{
   if(e.target.closest?.('[data-ace-v1-diag-close]'))document.querySelector('.aceV1DiagBackdrop')?.remove();
 },true);
 
-window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
-window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
-window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="project-ace-v1-final-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="project-ace-v1-final-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;</script>
 
 
 
@@ -68181,11 +68179,192 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh(fa
 setInterval(()=>{if(document.visibilityState==='visible')refresh(false)},5000);
 setTimeout(()=>refresh(true),700);
 
-window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';
-window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';
-window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';
+window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';
 window.ACE_TEST_SERVER_BUILD=true;
 })();
 </script>
-<script id="ace-v1-rc2-final-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC2';window.ACE_TEST_SERVER_BUILD=true;</script>
+<script id="ace-v1-rc2-final-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;</script>
+
+
+
+<!-- PROJECT ACE V1 RC3 · VERIFIED CAREER ENTRY -->
+<style id="ace-v1-rc3-career-entry-style">
+.aceV1CareerLoadPill{
+  position:fixed;z-index:2147483400;left:50%;bottom:22px;transform:translateX(-50%);
+  display:flex;align-items:center;gap:9px;min-width:210px;max-width:calc(100vw - 24px);
+  padding:10px 12px;border:1px solid rgba(91,190,239,.18);border-radius:12px;
+  background:rgba(6,20,31,.97);box-shadow:0 16px 44px rgba(0,0,0,.38);
+  color:#dff5ff;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
+}
+.aceV1CareerLoadPill[hidden]{display:none!important}
+.aceV1CareerLoadPill i{
+  width:17px;height:17px;border:2px solid rgba(112,205,248,.22);border-top-color:#68c9f4;
+  border-radius:50%;animation:aceV1CareerSpin .75s linear infinite;flex:0 0 auto
+}
+.aceV1CareerLoadPill div{min-width:0;flex:1}
+.aceV1CareerLoadPill small{display:block;color:#6591a9;font-size:5.4px;font-weight:1000;letter-spacing:.11em}
+.aceV1CareerLoadPill b{display:block;margin-top:2px;font-size:7.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aceV1CareerLoadPill button{
+  display:none;min-height:30px;padding:0 9px;border:1px solid rgba(95,196,244,.15);
+  border-radius:8px;background:#102a3c;color:#9fdcf8;font-size:5.6px;font-weight:1000;cursor:pointer
+}
+.aceV1CareerLoadPill.error{border-color:rgba(255,119,137,.20)}
+.aceV1CareerLoadPill.error i{display:none}
+.aceV1CareerLoadPill.error button{display:block}
+@keyframes aceV1CareerSpin{to{transform:rotate(360deg)}}
+@media(max-width:760px){
+  .aceV1CareerLoadPill{bottom:18px;min-width:min(290px,calc(100vw - 20px));padding:9px 10px}
+}
+</style>
+<script id="ace-v1-rc3-career-entry-runtime">
+(()=>{
+'use strict';
+if(window.ACE_V1_RC3_ENTRY)return;
+window.ACE_V1_RC3_ENTRY=true;
+
+const S=()=>window.__ACE_RTA_STATE||null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let entryPromise=null;
+let bypass=false;
+
+function pill(){
+  let el=document.getElementById('aceV1CareerLoadPill');
+  if(el)return el;
+  el=document.createElement('div');
+  el.id='aceV1CareerLoadPill';
+  el.className='aceV1CareerLoadPill';
+  el.hidden=true;
+  el.innerHTML='<i></i><div><small>ROAD TO ACE</small><b>Loading career save…</b></div><button type="button" data-ace-v1-entry-retry>RETRY</button>';
+  document.body.appendChild(el);
+  return el;
+}
+function showPill(text='Loading career save…'){
+  const el=pill();
+  el.hidden=false;
+  el.classList.remove('error');
+  const b=el.querySelector('b');if(b)b.textContent=text;
+}
+function errorPill(text='Career save could not load.'){
+  const el=pill();
+  el.hidden=false;
+  el.classList.add('error');
+  const b=el.querySelector('b');if(b)b.textContent=text;
+}
+function hidePill(){const el=pill();el.hidden=true;el.classList.remove('error')}
+
+async function waitForLoadToSettle(ms=8500){
+  const began=Date.now();
+  while(S()?.loading && Date.now()-began<ms)await sleep(80);
+  return !S()?.loading;
+}
+
+async function ensureState(){
+  const st=S();
+  if(!st)throw new Error('CAREER_STATE_NOT_READY');
+  if(st.career)return {loaded:true,career:true};
+
+  /* If another part of the game is already fetching this save, wait for it
+     instead of falsely treating an empty in-memory state as a new career. */
+  if(st.loading){
+    await waitForLoadToSettle();
+    if(st.career)return {loaded:true,career:true};
+    if(st.loaded)return {loaded:true,career:false};
+  }
+
+  if(typeof window.ACE_RTA_LOAD_STATE!=='function')throw new Error('CAREER_LOADER_NOT_READY');
+
+  showPill('Loading active career save…');
+  await window.ACE_RTA_LOAD_STATE({silent:true,world:false});
+  await waitForLoadToSettle();
+
+  if(st.career)return {loaded:true,career:true};
+  if(st.loaded)return {loaded:true,career:false};  // genuinely empty active slot
+  throw new Error('CAREER_LOAD_FAILED');
+}
+
+let baseGoPage=null;
+function installGoPageGuard(){
+  if(typeof window.goPage!=='function')return;
+  if(window.goPage.__aceV1RC3Guard)return;
+  baseGoPage=window.goPage;
+  const guarded=function(id){
+    if(String(id)==='roadtoace'&&!bypass){
+      window.ACE_V1_SAFE_ENTER_CAREER();
+      return false;
+    }
+    return baseGoPage.apply(this,arguments);
+  };
+  guarded.__aceV1RC3Guard=true;
+  guarded.__aceV1RC3Base=baseGoPage;
+  window.goPage=guarded;
+  try{goPage=guarded}catch(_){}
+}
+
+async function enter(){
+  if(entryPromise)return entryPromise;
+  entryPromise=(async()=>{
+    showPill();
+    try{
+      const state=await Promise.race([
+        ensureState(),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('CAREER_ENTRY_TIMEOUT')),10000))
+      ]);
+
+      /* Only NOW is Road to Ace allowed to become the active page. */
+      hidePill();
+      installGoPageGuard();
+      const pageFn=baseGoPage || window.goPage?.__aceV1RC3Base || window.goPage;
+      if(typeof pageFn!=='function')throw new Error('PAGE_ROUTER_NOT_READY');
+
+      bypass=true;
+      try{pageFn.call(window,'roadtoace')}finally{bypass=false}
+
+      const st=S();
+      if(state.career){
+        st.view=st.view||'home';
+        try{window.__ACE_RTA_RENDER?.()}catch(err){console.warn('Career render after load',err)}
+      }else{
+        /* This is the ONLY route to Create Player: the backend has actually
+           confirmed that the selected save slot contains no career. */
+        try{window.__ACE_RTA_RENDER?.()}catch(_){}
+      }
+      return state;
+    }catch(err){
+      console.warn('Project Ace verified Career entry',err);
+      errorPill(String(err?.message||'').includes('TIMEOUT')
+        ?'Career save took too long to load.'
+        :'Career save could not load.');
+      return {loaded:false,career:false,error:String(err?.message||err)};
+    }finally{
+      entryPromise=null;
+    }
+  })();
+  return entryPromise;
+}
+
+window.ACE_V1_SAFE_ENTER_CAREER=enter;
+
+document.addEventListener('click',e=>{
+  if(e.target.closest?.('[data-ace-v1-entry-retry]')){
+    e.preventDefault();e.stopPropagation();
+    hidePill();enter();
+  }
+},true);
+
+/* Install last, after all historical page-router wrappers. Re-install on
+   pageshow in case an older lazy module wrapped goPage again. */
+installGoPageGuard();
+window.addEventListener('pageshow',()=>setTimeout(installGoPageGuard,50),{passive:true});
+setTimeout(installGoPageGuard,250);
+setTimeout(installGoPageGuard,1200);
+
+window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';
+window.ACE_TEST_SERVER_BUILD=true;
+})();
+</script>
+<script id="ace-v1-rc3-final-marker">window.ACE_PROJECT_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_RELEASE_CANDIDATE_BUILD='PROJECT-ACE-V1-RC3';window.ACE_TEST_SERVER_BUILD=true;</script>
 
