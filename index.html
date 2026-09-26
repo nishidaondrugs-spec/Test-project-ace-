@@ -41904,30 +41904,6 @@ document.addEventListener("click",function(e){
     const benchCards=bench.slice(0,5).map(p=>`<div class="ace456BenchCard ${p.isUser?'me':''}"><i>${esc(p.position)}</i><b>${esc(p.isUser?'You':p.name.split(/\s+/).slice(-1)[0])}</b><strong>${Number(p.overall)}</strong></div>`).join('')||'<div class="ace456BenchEmpty">No rotation players.</div>';
     const starterList=starters.map(p=>`<div class="ace456StarterListRow ${p.isUser?'me':''}"><i>${esc(p.position)}</i><span><b>${esc(p.isUser?'You':p.name)}</b><small>${Number(p.overall)} OVR · ${Number(p.form||65)} FORM</small></span></div>`).join('');
     const status=esc(c.squad_role||'SQUAD');
-    /* Stage 1 Home redesign: presentation data only. These values already exist
-       in the loaded Career state; no additional RPCs or save mutations occur. */
-    const homeNextOpponent=String(S.selection?.opponent||S.selection?.user?.opponent||nextOpponent()||'Opponent');
-    const homePrepUsed=Math.max(0,Math.min(2,Number(c.training_used||0)));
-    const homePrepLeft=Math.max(0,2-homePrepUsed);
-    const homeInjury=String(c.injury_status||'FIT').toUpperCase();
-    const homeReadiness=Math.max(0,Math.min(100,Math.round(Number(c.readiness??100))));
-    const homeRole=String(S.selection?.user?.selection_status||c.squad_role||'SQUAD').toUpperCase();
-    const homeMatchNo=Math.max(1,Number(c.season_match||0)+1);
-    const homePlayerIdentity=[String(c.player_name||'').trim(),String(c.position||'').toUpperCase()].filter(Boolean).join(' · ');
-    const homePulse=homeMode?`<div class="ace532HomePulse" aria-label="Career status">
-      <button type="button" class="ace532HomePulseCard match" data-rta62-view="match">
-        <small>NEXT MATCH</small><b>MATCH ${homeMatchNo}</b><span>vs ${esc(homeNextOpponent)}</span>
-      </button>
-      <button type="button" class="ace532HomePulseCard prep ${homePrepUsed>=2?'ready':''}" data-rta62-view="train">
-        <small>PREPARATION</small><b>${homePrepUsed}/2 SLOTS</b><span>${homePrepUsed>=2?'Matchday ready':`${homePrepLeft} choice${homePrepLeft===1?'':'s'} remaining`}</span>
-      </button>
-      <div class="ace532HomePulseCard medical ${homeInjury==='FIT'?'fit':'warn'}">
-        <small>MEDICAL</small><b>${esc(homeInjury)}</b><span>${homeReadiness}% readiness</span>
-      </div>
-      <div class="ace532HomePulseCard role">
-        <small>YOUR PLACE</small><b>${esc(homeRole)}</b><span>${esc(c.position||'PLAYER')} · ${Number(c.overall||0)} OVR</span>
-      </div>
-    </div>`:'';
     const hubClass=homeMode?' ace464HomeHub':'';
     const homeTab=id=>homeMode?`data-ace464-home-tab="${id}"`:`data-ace456-tab="${id}"`;
     const panelClass=id=>(!homeMode&&id==='timeline')?' active':'';
@@ -41983,16 +41959,15 @@ document.addEventListener("click",function(e){
     const homeLeagueTable=Array.isArray(S.league?.table)?S.league.table:[];
     const clubTable=`<article class="ace471ClubTable"><div class="ace471ClubTableHead"><div><small>CURRENT TABLE · SEASON ${Math.max(1,Number(c.season||1))}</small><h2>${esc(leagueName)}</h2><p>Live league standings from your current career world.</p></div><span>${rank?`#${rank}`:'—'}<small>YOUR CLUB</small></span></div><div class="ace471ClubTableScroll"><table><thead><tr><th>#</th><th>CLUB</th><th>P</th><th>W</th><th>L</th><th>PTS</th></tr></thead><tbody>${homeLeagueTable.map((r,i)=>`<tr class="${r.is_user?'me':''}"><td>${i+1}</td><td><div class="ace471ClubCell">${rta77ClubLogo(r.club||'Club','sm')}<b>${esc(r.club||'Club')}</b></div></td><td>${Number(r.played||0)}</td><td>${Number(r.wins||0)}</td><td>${Number(r.losses||0)}</td><td><strong>${Number(r.points||0)}</strong></td></tr>`).join('')}</tbody></table></div></article>`;
 
-    return `<main class="rta93Club ace456ClubPage${hubClass}" data-ace456-country="${countryKey}" ${homeMode?'data-ace532-home-stage1="1"':''}>
+    return `<main class="rta93Club ace456ClubPage${hubClass}" data-ace456-country="${countryKey}">
       <section class="rta93ClubHero ace421ClubHero ace456Hero">
         <div class="ace421ClubCourtTexture" aria-hidden="true"></div>
         <div class="rta93HeroShade ace456HeroShade" aria-hidden="true"></div>
         <div class="ace456HeroTop">${homeMode?'':'<button type="button" class="ace456Back" data-rta62-view="home" aria-label="Back">‹</button>'}<span class="ace421SeasonChip">SEASON ${Math.max(1,Number(c.season||1))}</span></div>
-        ${homePulse}
         <div class="ace456HeroTag">MORE<br>THAN A GAME<br>A STRONGER<br>${esc(countryLabel)}</div>
         <div class="ace456HeroIdentity">
           <div class="ace456HeroCrest">${rta77ClubLogo(c.club_name||'Club','lg')}</div>
-          <div class="ace456HeroName"><h1>${esc(c.club_name)}</h1><p><span>${flag}</span>${esc(leagueName)}</p>${homeMode&&homePlayerIdentity?`<div class="ace532HomePlayer"><i></i>${esc(homePlayerIdentity)}</div>`:''}</div>
+          <div class="ace456HeroName"><h1>${esc(c.club_name)}</h1><p><span>${flag}</span>${esc(leagueName)}</p></div>
         </div>
         <div class="ace456HeroStats">
           <div><b>${metrics.overall}</b><span>TEAM OVR</span></div>
@@ -62025,58 +62000,6 @@ window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.443';
 #roadtoace .ace456HeroStats>div{min-height:82px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:12px 8px!important;border-radius:15px!important;border:1px solid rgba(104,194,245,.16)!important;background:linear-gradient(180deg,rgba(7,20,31,.86),rgba(5,14,22,.90))!important;box-shadow:0 12px 28px rgba(0,0,0,.16),inset 0 0 0 1px rgba(255,255,255,.015)!important;backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important;text-align:center!important;}
 #roadtoace .ace456HeroStats b{display:block!important;color:#fff!important;font-size:19px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important;}
 #roadtoace .ace456HeroStats span{display:block!important;margin-top:9px!important;color:#90a9bb!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.10em!important;text-transform:uppercase!important;}
-
-/* V532 STAGE 1 HOME — direct Hero composition, no post-render injection. */
-#roadtoace .ace464HomeHub .ace532HomePulse{
-  position:absolute!important;z-index:5!important;left:16px!important;right:16px!important;top:62px!important;
-  display:grid!important;grid-template-columns:1.18fr 1.18fr .9fr .9fr!important;gap:7px!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePulseCard{
-  min-width:0!important;min-height:64px!important;padding:10px 11px!important;
-  border:1px solid rgba(112,201,246,.12)!important;border-radius:13px!important;
-  background:linear-gradient(145deg,rgba(5,20,31,.80),rgba(4,13,22,.76))!important;
-  box-shadow:0 10px 28px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.014)!important;
-  backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;
-  color:#eef8fd!important;text-align:left!important;overflow:hidden!important;
-}
-#roadtoace .ace464HomeHub button.ace532HomePulseCard{cursor:pointer!important;-webkit-tap-highlight-color:transparent!important;}
-#roadtoace .ace464HomeHub button.ace532HomePulseCard:active{transform:scale(.985)!important;}
-#roadtoace .ace464HomeHub .ace532HomePulseCard.match{
-  border-color:rgba(91,194,244,.24)!important;
-  background:linear-gradient(145deg,rgba(16,62,88,.82),rgba(5,20,31,.80))!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePulseCard.prep.ready{
-  border-color:rgba(101,216,162,.20)!important;
-  background:linear-gradient(145deg,rgba(18,76,57,.66),rgba(5,23,28,.80))!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePulseCard.medical.warn{
-  border-color:rgba(255,111,133,.28)!important;
-  background:linear-gradient(145deg,rgba(91,25,38,.70),rgba(27,12,18,.82))!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePulseCard small{
-  display:block!important;color:#6f9bb3!important;font-size:5.7px!important;font-weight:1000!important;letter-spacing:.13em!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePulseCard.match small{color:#7dd1f7!important;}
-#roadtoace .ace464HomeHub .ace532HomePulseCard.medical.warn small{color:#ff9eae!important;}
-#roadtoace .ace464HomeHub .ace532HomePulseCard b{
-  display:block!important;margin-top:5px!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
-  color:#f6fbfe!important;font-size:12px!important;line-height:1!important;font-weight:1000!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePulseCard.medical.warn b{color:#ffb0bc!important;}
-#roadtoace .ace464HomeHub .ace532HomePulseCard span{
-  display:block!important;margin-top:5px!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
-  color:#7d96a6!important;font-size:6.2px!important;font-weight:760!important;line-height:1.1!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePlayer{
-  display:flex!important;align-items:center!important;gap:7px!important;margin-top:8px!important;
-  color:#a7bfcd!important;font-size:8px!important;font-weight:900!important;letter-spacing:.055em!important;text-transform:uppercase!important;
-  text-shadow:0 3px 12px rgba(0,0,0,.34)!important;
-}
-#roadtoace .ace464HomeHub .ace532HomePlayer i{
-  width:5px!important;height:5px!important;flex:0 0 auto!important;border-radius:50%!important;background:#67c9f4!important;
-  box-shadow:0 0 12px rgba(103,201,244,.48)!important;
-}
-#roadtoace .ace464HomeHub .ace456HeroTag{top:151px!important;opacity:.52!important;}
 #roadtoace .ace456ClubTabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin:12px 0 0!important;border-bottom:1px solid rgba(107,196,244,.13)!important;background:rgba(6,17,27,.46)!important;border-radius:15px 15px 0 0!important;overflow:hidden!important;}
 #roadtoace .ace456ClubTabs button{position:relative!important;min-height:54px!important;border:0!important;background:transparent!important;color:#829caf!important;font-size:12px!important;font-weight:900!important;letter-spacing:.02em!important;}
 #roadtoace .ace456ClubTabs button.active{color:#fff!important;}
@@ -62132,15 +62055,6 @@ window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.443';
 #roadtoace .ace456ClubPage[data-ace456-country="turkiye"] .ace456Hero{border-color:rgba(242,129,81,.24)!important;}#roadtoace .ace456ClubPage[data-ace456-country="japan"] .ace456Hero{border-color:rgba(105,188,255,.22)!important;}#roadtoace .ace456ClubPage[data-ace456-country="poland"] .ace456Hero{border-color:rgba(229,100,120,.20)!important;}#roadtoace .ace456ClubPage[data-ace456-country="russia"] .ace456Hero{border-color:rgba(106,155,255,.20)!important;}#roadtoace .ace456ClubPage[data-ace456-country="italy"] .ace456Hero{border-color:rgba(99,202,145,.20)!important;}#roadtoace .ace456ClubPage[data-ace456-country="brazil"] .ace456Hero{border-color:rgba(85,206,131,.20)!important;}
 
 @media(max-width:760px){
-  #roadtoace .ace464HomeHub .ace532HomePulse{
-    left:11px!important;right:11px!important;top:52px!important;grid-template-columns:1fr 1fr!important;gap:5px!important;
-  }
-  #roadtoace .ace464HomeHub .ace532HomePulseCard{min-height:53px!important;padding:8px 9px!important;border-radius:10px!important;}
-  #roadtoace .ace464HomeHub .ace532HomePulseCard small{font-size:4.7px!important;}
-  #roadtoace .ace464HomeHub .ace532HomePulseCard b{margin-top:4px!important;font-size:9.6px!important;}
-  #roadtoace .ace464HomeHub .ace532HomePulseCard span{margin-top:4px!important;font-size:5.3px!important;}
-  #roadtoace .ace464HomeHub .ace456HeroTag{display:none!important;}
-  #roadtoace .ace464HomeHub .ace532HomePlayer{margin-top:6px!important;gap:5px!important;font-size:6.5px!important;letter-spacing:.035em!important;}
   #roadtoace .ace456ClubPage{width:calc(100% - 16px)!important;margin:8px 8px 104px!important;}
   #roadtoace .ace456Hero{width:100%!important;min-height:0!important;aspect-ratio:1/1!important;border-radius:22px!important;}
   #roadtoace .ace456HeroTag{right:14px!important;top:62px!important;font-size:6.8px!important;line-height:1.45!important;}
@@ -66696,28 +66610,74 @@ function choices(c,p){
   else{ids=['FILM','TEAM_TIME'];kick='LOW LOAD'}
   return`<div class="ace519Choices">${ids.map(id=>choiceHtml(c,p,id,kick)).join('')}</div>`
 }
-function slotHtml(c,p,n){const used=Number(c.training_used||0),base=Number.isFinite(Number(p.baseUsed))?Number(p.baseUsed):used;if(n<=base)return`<div class="ace519Slot used"><small>SLOT ${n}</small><b>ACTIVITY USED</b><span>Already completed this match cycle.</span></div>`;const planIndex=n-base-1,x=p.items[planIndex];if(!x)return`<button class="ace519Slot" data-ace519-empty="${planIndex}"><small>SLOT ${n}</small><b>+ CHOOSE ACTIVITY</b><span>Training, recovery or off-court.</span></button>`;const done=p.confirmed&&planIndex<p.index;const current=p.confirmed&&planIndex===p.index;return`<div class="ace519Slot ${done?'done':'planned'}"><small>SLOT ${n}${done?' · DONE':current?' · NEXT':''}</small><b>${esc(x.title)}</b><span>${esc(x.sub)}</span>${!p.confirmed?`<button class="remove" data-ace519-remove="${planIndex}" aria-label="Remove">×</button>`:''}</div>`}
+function prepIcon(x){
+  const id=String(x?.id||'').toUpperCase();
+  if(['REST','CLUB_PHYSIO','SPECIALIST_PHYSIO'].includes(id))return id==='REST'?'☾':'✚';
+  if(id==='FILM')return'▶';
+  if(id==='TEAM_TIME')return'◉';
+  if(['VERTICAL','REACTION_TIME','SPEED','WORK_RATE'].includes(id))return'⚡';
+  return'♟';
+}
+function slotHtml(c,p,n){
+  const used=Number(c.training_used||0),base=Number.isFinite(Number(p.baseUsed))?Number(p.baseUsed):used;
+  if(n<=base)return`<div class="ace519Slot ace545ChoiceCard used"><div class="ace545ChoiceNo">${n}</div><div class="ace545ChoiceGlyph">✓</div><div class="ace545ChoiceCopy"><small>CHOICE ${n}</small><b>Activity complete</b><span>Already used this match cycle.</span></div><div class="ace545ChoiceState done">✓</div></div>`;
+  const planIndex=n-base-1,x=p.items[planIndex];
+  if(!x)return`<button class="ace519Slot ace545ChoiceCard empty" data-ace519-empty="${planIndex}"><div class="ace545ChoiceNo">${n}</div><div class="ace545ChoiceGlyph">＋</div><div class="ace545ChoiceCopy"><small>CHOICE ${n}</small><b>Choose Activity</b><span>Training · Recovery · Off-court</span></div><div class="ace545ChoiceState add">＋</div></button>`;
+  const done=p.confirmed&&planIndex<p.index,current=p.confirmed&&planIndex===p.index;
+  return`<div class="ace519Slot ace545ChoiceCard ${done?'done':'planned'}"><div class="ace545ChoiceNo">${n}</div><div class="ace545ChoiceGlyph">${prepIcon(x)}</div><div class="ace545ChoiceCopy"><small>CHOICE ${n}${done?' · DONE':current?' · NEXT':''}</small><b>${esc(x.title)}</b><span>${esc(x.sub)}</span></div><div class="ace545ChoiceState ${done?'done':'selected'}">✓</div>${!p.confirmed?`<button class="remove" data-ace519-remove="${planIndex}" aria-label="Remove">×</button>`:''}</div>`;
+}
 function preset(c,p,kind){if(p.confirmed)return;p.baseUsed=Number(c?.training_used||0);const max=maxPlanItems(c,p);let ids=[];if(kind==='DEVELOP')ids=[focusForPosition(c),secondFocus(c)];if(kind==='BALANCED')ids=[focusForPosition(c),'REST'];if(kind==='READY')ids=status(c)==='FIT'?['REST','FILM']:['CLUB_PHYSIO','REST'];p.items=ids.slice(0,max).map(item).filter(Boolean);p.index=0;p.waiting=null;savePlan(c,p);renderPlanner()}
-function planHtml(c,p){const used=Number(c.training_used||0),s=status(c),load=Math.round(Number(c.body_load||0)),ready=Math.round(Number(c.readiness??100)),rec=recommendation(c),proj=projection(c,p),hasPlan=p.items.length>0,displayReady=hasPlan?proj.ready:ready,displayLoad=hasPlan?proj.load:load,max=Math.max(0,2-used),remaining=p.items.length-p.index;const issue=s==='FIT'?'ALL TRACKED AREAS CLEAR':`${c.injury_type||'MEDICAL ISSUE'} · ${c.injury_body_part||'BODY'}`;const actionLabel=used>=2?'PREPARATION COMPLETE':p.confirmed?(p.waiting!==null?'RESUME TRAINING':remaining>0?'CONTINUE PLAN':'PLAN COMPLETE'):'CONFIRM PREPARATION';const canAction=used<2&&(p.confirmed?(remaining>0):p.items.length>0);
-return`<section class="ace519Planner" data-ace519-planner>
-  <div class="ace519Top"><div><small>MATCHDAY PREPARATION</small><h2>MATCH <span>PREP</span></h2><p>Shape your week. Two choices before the next match.</p></div><div class="ace519Counter"><b>${used} / 2</b><span>SLOTS USED</span></div></div>
-  <div class="ace520Fixture"><div><small>NEXT FIXTURE</small><b>${esc(c.club_name||'YOUR CLUB')}</b></div><strong>VS</strong><div class="away"><small>MATCH ${Number(c.season_match||0)+1}</small><b>${esc(String(S().selection?.opponent||S().selection?.user?.opponent||S().league?.next_opponent||'OPPONENT'))}</b></div></div>
-  <div class="ace519Condition ${hasPlan?'projecting':''}"><div><span>READINESS</span><b>${displayReady}%</b><small>${hasPlan?(displayReady-ready>=0?`PLAN ${displayReady-ready>=0?'+':''}${displayReady-ready}`:`PLAN ${displayReady-ready}`):(ready>=90?'MATCH READY':ready>=75?'MANAGE LOAD':'RECOVERY ADVISED')}</small></div><div><span>BODY LOAD</span><b>${displayLoad}</b><small>${hasPlan?(displayLoad-load>=0?`PLAN +${displayLoad-load}`:`PLAN ${displayLoad-load}`):loadBand(load)}</small></div><div class="${stateClass(s)}"><span>MEDICAL</span><b>${esc(s)}</b><small>${s==='FIT'?'CLEARED':Math.max(0,Math.round(Number(c.injury_days_remaining||0)))+'D EST.'}</small></div></div>
-  <div class="ace519Advice"><i>${rec.icon}</i><div><small>MEDICAL / COACH STAFF</small><b>${esc(rec.title)}</b><span>${esc(rec.text)}</span></div></div>
-  <div class="ace523MainRow">
-    <div class="ace523BodyPanel">
-      <div class="ace523BodyHead"><small>BODY STATUS</small><b>${esc(issue)}</b><span>${s==='FIT'?'All tracked areas are currently clear.':`${esc(c.injury_body_part||'Affected area')} · ${esc(c.injury_severity||s)} · approximately ${Math.max(0,Math.round(Number(c.injury_days_remaining||0)))} days remaining.`}</span></div>
-      ${miniBody(c)}
-    </div>
-    <div class="ace523PlanWrap">
-      <div class="ace519PlanLabel"><b>YOUR PLAN</b><span>${max} slot${max===1?'':'s'} available</span></div>
-      <div class="ace519Slots">${slotHtml(c,p,1)}${slotHtml(c,p,2)}</div>
-      <div class="ace519Actions ace524PlanActions"><button class="ace519Confirm" data-ace519-confirm ${!canAction?'disabled':''}>${esc(actionLabel)}</button>${!p.confirmed&&p.items.length?`<button class="ace519Reset" data-ace519-reset>RESET</button>`:''}</div>
-    </div>
-  </div>
-  ${!p.confirmed&&max>0?`<div class="ace519Presets"><button class="ace519Preset ${rec.cat==='TRAIN'?'recommended':''}" data-ace519-preset="DEVELOP">DEVELOP</button><button class="ace519Preset" data-ace519-preset="BALANCED">BALANCED</button><button class="ace519Preset ${rec.cat==='RECOVER'?'recommended':''}" data-ace519-preset="READY">MATCH READY</button></div>${categories(c,p)}${choices(c,p)}`:''}
-  ${p.confirmed?`<div class="ace519Progress">Plan locked. Complete the highlighted activity, then continue to the next slot.</div>`:''}
-</section>`}
+function ace545Country(c){
+  const code=String(c?.league_code||'').toUpperCase();
+  if(/ENG|NVL/.test(code))return'england';
+  if(/JPN|JAP|SV/.test(code))return'japan';
+  if(/ITA|SUPERLEGA/.test(code))return'italy';
+  if(/TUR/.test(code))return'turkiye';
+  if(/POL|PLUS/.test(code))return'poland';
+  if(/BRA/.test(code))return'brazil';
+  if(/RUS/.test(code))return'russia';
+  if(/MAS|MYS|MAL/.test(code))return'malaysia';
+  return'global';
+}
+function ace545Flag(country){return({england:'🇬🇧',japan:'🇯🇵',italy:'🇮🇹',turkiye:'🇹🇷',poland:'🇵🇱',brazil:'🇧🇷',russia:'🇷🇺',malaysia:'🇲🇾'})[country]||'🏐'}
+function ace545League(c){const raw=S().league?.name||S().league?.league_name||c?.league_name||c?.league_code||'CLUB LEAGUE';return String(raw).replaceAll('_',' ')}
+function ace545Logo(name){try{return typeof window.rta77ClubLogo==='function'?window.rta77ClubLogo(name||'Club','lg'):''}catch(_){return''}}
+function ace545EffectRows(x,c){
+  const rows=[];
+  if(Number(x?.ready||0)!==0)rows.push(`<span class="${Number(x.ready)>0?'good':'warn'}"><i>${Number(x.ready)>0?'↑':'↓'}</i> Readiness <b>${Number(x.ready)>0?'+':''}${Number(x.ready)}</b></span>`);
+  if(Number(x?.load||0)!==0)rows.push(`<span class="${Number(x.load)<0?'good':'warn'}"><i>${Number(x.load)<0?'↓':'↑'}</i> Body Load <b>${Number(x.load)>0?'+':''}${Number(x.load)}</b></span>`);
+  if(Number(x?.injury||0)!==0)rows.push(`<span class="good"><i>✚</i> Recovery <b>${Number(x.injury)}D</b></span>`);
+  if(!rows.length&&x?.growth)rows.push(`<span class="good"><i>↑</i> Development <b>${esc(x.growth)}</b></span>`);
+  if(x?.paid)rows.push(`<span><i>£</i> Cost <b>${esc(money(specCost(c)))}</b></span>`);
+  return rows.slice(0,2).join('');
+}
+function ace545Selected(c,p){
+  if(!p.items.length)return`<div class="ace545NoSelection"><b>No preparation selected yet.</b><span>Tap either Choice card above to choose an activity.</span></div>`;
+  return p.items.map((x,i)=>`<article class="ace545SelectedCard"><div class="ace545SelectedIcon">${prepIcon(x)}</div><div class="ace545SelectedCopy"><b>${esc(x.title)}</b><span>${esc(x.sub)}</span><small>CHOICE ${i+1} ✓</small></div><div class="ace545Effects"><em>EXPECTED EFFECTS</em>${ace545EffectRows(x,c)}</div>${!p.confirmed?`<button type="button" data-ace519-empty="${i}" class="ace545Change">Change</button>`:''}</article>`).join('');
+}
+function planHtml(c,p){
+  const used=Number(c.training_used||0),s=status(c),load=Math.round(Number(c.body_load||0)),ready=Math.round(Number(c.readiness??100));
+  const remaining=p.items.length-p.index,opp=String(S().selection?.opponent||S().selection?.user?.opponent||S().league?.next_opponent||'Next opponent');
+  const country=ace545Country(c),flag=ace545Flag(country),league=ace545League(c),crest=ace545Logo(c.club_name||'Club');
+  const issue=s==='FIT'?'No current injuries':`${c.injury_type||'Medical issue'} · ${c.injury_body_part||'Body'}`;
+  const canAction=used<2&&(p.confirmed?(remaining>0):p.items.length>0);
+  const actionLabel=used>=2?'CONTINUE TO MATCH →':p.confirmed?(p.waiting!==null?'RESUME TRAINING →':remaining>0?'CONTINUE PREPARATION →':'PREPARATION COMPLETE'):(p.items.length?'CONFIRM PREPARATION →':'CHOOSE AN ACTIVITY');
+  const actionAttrs=used>=2?'data-rta62-view="match"':`data-ace519-confirm ${!canAction?'disabled':''}`;
+  return`<section class="ace519Planner ace545PrepReplica" data-ace519-planner data-ace545-prep-replica="1">
+    <header class="ace545PrepHead"><button type="button" class="ace545Back" data-rta62-view="home" aria-label="Back to Home">‹</button><div><h2>MATCH PREP</h2><p>Choose 2 activities to prepare for your next match.</p></div><span class="ace545Help" aria-hidden="true">?</span></header>
+    <section class="ace545MatchBanner ace545-${country}"><div class="ace545BannerShade"></div><div class="ace545BannerCopy"><small>NEXT MATCH</small><h3>${esc(c.club_name||'YOUR CLUB')}</h3><p><span>${flag}</span>${esc(league)}</p><em>Match ${Number(c.season_match||0)+1} &nbsp;•&nbsp; vs ${esc(opp)}</em></div><div class="ace545BannerCrest">${crest}</div></section>
+    <div class="ace545ChoiceRow">${slotHtml(c,p,1)}${slotHtml(c,p,2)}</div>
+    <h3 class="ace545SectionTitle">YOUR CONDITION</h3>
+    <div class="ace545ConditionGrid"><section class="ace545BodyCard ${stateClass(s)}"><div class="ace545BodyLabels"><span>SHOULDER</span><span>BACK</span><span>KNEE</span><span>ANKLE</span></div>${miniBody(c)}</section><div class="ace545Vitals">
+      <article><div class="ace545VitalIcon readiness">⚡</div><div><small>READINESS</small><b>${ready}<span>/ 100</span></b><i class="ace545Meter"><u style="width:${Math.max(0,Math.min(100,ready))}%"></u></i></div><em>ⓘ</em></article>
+      <article><div class="ace545VitalIcon load">◔</div><div><small>BODY LOAD</small><b>${load}<span>/ 100</span></b><i class="ace545Meter load"><u style="width:${Math.max(0,Math.min(100,load))}%"></u></i></div><em>ⓘ</em></article>
+      <article class="ace545Medical ${stateClass(s)}"><div class="ace545VitalIcon medical">✚</div><div><small>MEDICAL STATUS</small><b>${s==='FIT'?'✓':esc(s)}</b><span>${esc(issue)}</span></div></article>
+    </div></div>
+    <h3 class="ace545SectionTitle selected">SELECTED PREPARATION</h3><div class="ace545SelectedList">${ace545Selected(c,p)}</div>
+    ${p.confirmed?`<div class="ace519Progress ace545Progress">Plan locked. Complete the highlighted activity, then continue to the next slot.</div>`:''}
+    <button type="button" class="ace545Continue" ${actionAttrs}>${esc(actionLabel)}</button>${!p.confirmed&&p.items.length?`<button type="button" class="ace545Reset" data-ace519-reset>RESET PREPARATION</button>`:''}
+  </section>`;
+}
 function host(){return document.querySelector('#roadtoace .rta187TrainingCentre')}
 function renderPlanner(){const c=C(),h=host();if(!c||!h)return;h.querySelectorAll(':scope>.ace519Planner').forEach(n=>n.remove());h.querySelectorAll(':scope>.ace518PreparationHub').forEach(n=>n.remove());let p=normalizePlan(c,loadPlan(c));const hero=h.querySelector(':scope>.rta187TrainingHero');if(hero)hero.style.display='none';const anchor=hero||h.querySelector(':scope>.ace252FirstMatchGuide')||h.firstElementChild;if(anchor)anchor.insertAdjacentHTML('afterend',planHtml(c,p));}
 function toast(msg,type=''){if(typeof window.ACE_RTA_TOAST==='function'){try{return window.ACE_RTA_TOAST(msg,type)}catch(_){}}document.querySelectorAll('.ace519Toast').forEach(n=>n.remove());const el=document.createElement('div');el.className='ace519Toast';el.style.cssText='position:fixed;left:50%;bottom:95px;transform:translateX(-50%);z-index:999999;padding:10px 13px;border-radius:10px;background:#0d2533;color:#eefaff;border:1px solid rgba(106,196,241,.2);font:800 11px system-ui';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
@@ -67423,3 +67383,30 @@ window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD
 })();
 </script>
 <script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';</script>
+
+
+<!-- PROJECT ACE B21.36.545 · APPROVED MATCH PREP REPLICA -->
+<style id="ace545-approved-match-prep-replica">
+#roadtoace .ace545PrepReplica{max-width:980px!important;margin:0 auto!important;padding:18px!important;border:0!important;border-radius:0!important;background:linear-gradient(180deg,#061522 0%,#04101a 100%)!important;box-shadow:none!important;overflow:visible!important;color:#f4fbff!important}
+#roadtoace .ace545PrepReplica:before,#roadtoace .ace545PrepReplica:after{display:none!important}
+#roadtoace .ace545PrepHead{display:grid!important;grid-template-columns:46px minmax(0,1fr) 42px!important;align-items:center!important;gap:14px!important;margin:0 0 16px!important;padding:0!important;border:0!important}
+#roadtoace .ace545Back{width:46px!important;height:46px!important;border:1px solid rgba(115,180,220,.18)!important;border-radius:12px!important;background:#0a1d2c!important;color:#eff9ff!important;font-size:35px!important;line-height:1!important;display:grid!important;place-items:center!important;cursor:pointer!important}
+#roadtoace .ace545PrepHead h2{margin:0!important;color:#fff!important;font:1000 34px/.92 "Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;letter-spacing:-.035em!important}
+#roadtoace .ace545PrepHead p{margin:7px 0 0!important;color:#9db2c2!important;font:700 11px/1.3 Inter,system-ui,sans-serif!important}
+#roadtoace .ace545Help{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:#071c2b;border:1px solid rgba(51,166,241,.12);color:#5fc2ff;font:1000 22px/1 system-ui}
+#roadtoace .ace545MatchBanner{position:relative!important;min-height:190px!important;overflow:hidden!important;border:1px solid rgba(135,190,224,.18)!important;border-radius:18px!important;background-position:center!important;background-size:cover!important;background-color:#0a1b29!important;box-shadow:0 18px 34px rgba(0,0,0,.22)!important;margin-bottom:14px!important}
+#roadtoace .ace545MatchBanner.ace545-england{background-image:url("./assets/england_hero.png")!important}#roadtoace .ace545MatchBanner.ace545-japan{background-image:url("./assets/japan_hero.png")!important}#roadtoace .ace545MatchBanner.ace545-italy{background-image:url("./assets/italy_hero.png")!important}#roadtoace .ace545MatchBanner.ace545-turkiye{background-image:url("./assets/turkiye_hero.png")!important}#roadtoace .ace545MatchBanner.ace545-poland{background-image:url("./assets/poland_hero.png")!important}#roadtoace .ace545MatchBanner.ace545-russia{background-image:url("./assets/russia_hero.png")!important}#roadtoace .ace545MatchBanner.ace545-brazil{background-image:url("./assets/brazil_hero.png")!important}
+#roadtoace .ace545BannerShade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,8,14,.95) 0%,rgba(2,8,14,.72) 48%,rgba(2,8,14,.28) 75%,rgba(2,8,14,.58) 100%),linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.38));z-index:1}
+#roadtoace .ace545BannerCopy{position:relative;z-index:2;padding:20px 22px 18px;max-width:72%}.ace545BannerCopy small{display:block;color:#d9e9f4;font:1000 8px/1 system-ui;letter-spacing:.18em}.ace545BannerCopy h3{margin:13px 0 8px!important;color:#fff;font:1000 38px/.88 "Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif;letter-spacing:-.04em;text-shadow:0 5px 18px rgba(0,0,0,.45)}.ace545BannerCopy p{display:flex;align-items:center;gap:8px;margin:0;color:#f2f7fb;font:800 14px/1.2 system-ui}.ace545BannerCopy p span{font-size:19px}.ace545BannerCopy em{display:block;margin-top:18px;color:#b4c5d1;font:700 12px/1.2 system-ui;font-style:normal}
+#roadtoace .ace545BannerCrest{position:absolute;right:17px;bottom:14px;z-index:2;width:122px;height:122px;display:grid;place-items:center}.ace545BannerCrest .rta77ClubMark,.ace545BannerCrest img{width:118px!important;height:118px!important;object-fit:contain!important;background:transparent!important;border:0!important;filter:drop-shadow(0 12px 18px rgba(0,0,0,.45))!important}
+#roadtoace .ace545ChoiceRow{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important;margin:0 0 22px!important}.ace545ChoiceRow .ace519Slot{display:grid!important;grid-template-columns:48px 52px minmax(0,1fr) 42px!important;align-items:center!important;gap:10px!important;min-height:108px!important;height:auto!important;margin:0!important;padding:13px 14px!important;border:1px solid rgba(91,178,235,.18)!important;border-radius:18px!important;background:linear-gradient(135deg,rgba(11,43,66,.95),rgba(5,22,36,.98))!important;color:#f6fbff!important;text-align:left!important;box-shadow:0 12px 28px rgba(0,0,0,.16)!important;position:relative!important;overflow:hidden!important}.ace545ChoiceRow .ace519Slot.planned,.ace545ChoiceRow .ace519Slot.done{border-color:#3eaff4!important;box-shadow:inset 0 0 0 1px rgba(69,186,255,.22),0 12px 28px rgba(0,0,0,.18)!important}.ace545ChoiceRow .ace519Slot.empty{border-color:rgba(255,112,98,.20)!important;background:linear-gradient(135deg,rgba(49,23,31,.92),rgba(16,16,27,.98))!important}
+#roadtoace .ace545ChoiceNo{color:#58c3ff;font:1000 31px/1 "Bahnschrift SemiCondensed",Impact,sans-serif;text-align:center}.ace545ChoiceRow .empty .ace545ChoiceNo{color:#ff7d70}.ace545ChoiceGlyph{width:50px;height:50px;border-radius:13px;display:grid;place-items:center;background:rgba(21,93,142,.42);color:#77d2ff;font-size:22px}.ace545ChoiceRow .empty .ace545ChoiceGlyph{background:rgba(130,56,63,.20);color:#ff796c}.ace545ChoiceCopy{min-width:0}.ace545ChoiceCopy small{display:block!important;color:#59bff5!important;font:1000 8px/1 system-ui!important;letter-spacing:.07em!important}.ace545ChoiceRow .empty .ace545ChoiceCopy small{color:#ff8174!important}.ace545ChoiceCopy b{display:block!important;margin-top:7px!important;color:#fff!important;font:1000 17px/1 system-ui!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ace545ChoiceCopy span{display:block!important;margin-top:5px!important;color:#9aafbd!important;font:700 11px/1.25 system-ui!important}.ace545ChoiceState{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:2px solid #44e4ae;color:#06231a;background:#43e3ad;font:1000 21px/1 system-ui}.ace545ChoiceState.add{border-color:#ff705f;color:#ff705f;background:transparent}.ace545ChoiceRow .remove{position:absolute!important;right:6px!important;top:6px!important;width:21px!important;height:21px!important;border-radius:7px!important;border:1px solid rgba(255,255,255,.09)!important;background:rgba(1,7,12,.56)!important;color:#9db3c2!important;font-size:13px!important;z-index:3!important}
+#roadtoace .ace545SectionTitle{margin:0 0 10px!important;color:#f5fbff!important;font:1000 13px/1 system-ui!important;letter-spacing:.16em!important}.ace545SectionTitle.selected{margin-top:22px!important}.ace545ConditionGrid{display:grid!important;grid-template-columns:1.08fr 1fr!important;gap:14px!important;align-items:stretch!important}
+#roadtoace .ace545BodyCard{position:relative;min-height:430px;border:1px solid rgba(104,177,220,.16);border-radius:18px;background:radial-gradient(circle at 50% 45%,rgba(22,101,173,.17),transparent 48%),linear-gradient(180deg,rgba(6,27,43,.96),rgba(4,18,30,.98));overflow:hidden}.ace545BodyCard:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(75,135,174,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(75,135,174,.055) 1px,transparent 1px);background-size:25px 25px;pointer-events:none}.ace545BodyCard .ace519BodyMini{position:absolute!important;left:50%!important;bottom:14px!important;transform:translateX(-50%)!important;width:205px!important;height:374px!important;margin:0!important;filter:drop-shadow(0 0 14px rgba(41,127,255,.34))!important}.ace545BodyCard .ace519BodyMini .shape,.ace545BodyCard .ace519BodyMini .limb{fill:rgba(24,91,173,.24)!important;stroke:#4ba6ff!important;stroke-width:2.2!important}.ace545BodyLabels{position:absolute;left:18px;top:64px;bottom:62px;z-index:3;display:flex;flex-direction:column;justify-content:space-between;color:#aebdca;font:800 9px/1 system-ui}.ace545BodyLabels span{padding-left:33px;position:relative}.ace545BodyLabels span:before{content:"";position:absolute;left:0;top:50%;width:24px;height:24px;transform:translateY(-50%);border-radius:50%;border:2px solid #5ecaff;background:rgba(25,94,135,.20);box-shadow:0 0 15px rgba(64,190,246,.12)}
+#roadtoace .ace545Vitals{display:grid;grid-template-rows:1fr 1fr 1fr;gap:12px}.ace545Vitals article{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:13px;padding:17px 16px;border:1px solid rgba(103,174,216,.14);border-radius:17px;background:linear-gradient(145deg,rgba(11,31,46,.97),rgba(7,21,33,.98));min-height:124px}.ace545VitalIcon{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font-size:23px;border:2px solid rgba(229,184,69,.38);color:#ffc84a;background:rgba(119,83,16,.18)}.ace545VitalIcon.load{border-color:rgba(44,162,255,.48);color:#39aaff;background:rgba(28,93,145,.18)}.ace545VitalIcon.medical{border-radius:14px;border-color:rgba(255,92,92,.28);color:#ff7d76;background:rgba(126,43,43,.22)}.ace545Vitals small{display:block;color:#9fb1bf;font:1000 8px/1 system-ui;letter-spacing:.13em}.ace545Vitals b{display:block;margin-top:8px;color:#fff;font:1000 31px/1 system-ui;letter-spacing:-.035em}.ace545Vitals b span{color:#536878;font-size:17px;font-weight:800}.ace545Vitals article>em{align-self:start;color:#a7b8c5;font:900 14px/1 system-ui;font-style:normal}.ace545Meter{display:block;margin-top:12px;height:9px;border-radius:999px;background:#182b3a;overflow:hidden}.ace545Meter u{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#34e8a4,#50d7a0);text-decoration:none}.ace545Meter.load u{background:linear-gradient(90deg,#38a6ff,#2a86e5)}.ace545Medical b{display:inline-block!important;font-size:20px!important;color:#44e1aa!important;margin-right:7px!important}.ace545Medical div>span{color:#64dcb8;font:800 11px/1.3 system-ui}.ace545Medical.sore div>span,.ace545Medical.limited div>span{color:#ffd06b}.ace545Medical.out div>span{color:#ff8585}
+#roadtoace .ace545SelectedList{display:grid;gap:10px}.ace545SelectedCard{display:grid;grid-template-columns:72px minmax(0,1.1fr) minmax(0,1.25fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1px solid rgba(111,180,220,.16);border-radius:17px;background:linear-gradient(145deg,rgba(12,31,45,.98),rgba(7,20,31,.98))}.ace545SelectedIcon{width:66px;height:66px;border-radius:14px;display:grid;place-items:center;background:rgba(36,93,137,.25);border:1px solid rgba(102,170,214,.16);font-size:29px;color:#8fd6ff}.ace545SelectedCopy b{display:block;color:#fff;font:1000 17px/1 system-ui}.ace545SelectedCopy span{display:block;margin-top:6px;color:#9eb0bd;font:700 12px/1.2 system-ui}.ace545SelectedCopy small{display:inline-flex;margin-top:9px;padding:5px 10px;border-radius:999px;background:rgba(29,171,119,.14);border:1px solid rgba(45,211,145,.16);color:#62e5b5;font:1000 8px/1 system-ui;letter-spacing:.07em}.ace545Effects{padding-left:18px;border-left:1px solid rgba(120,173,206,.14)}.ace545Effects em{display:block;color:#8da2b2;font:1000 8px/1 system-ui;letter-spacing:.12em;font-style:normal;margin-bottom:8px}.ace545Effects span{display:block;color:#e8f3f8;font:800 11px/1.55 system-ui}.ace545Effects span.good b{color:#42e3aa}.ace545Effects span.warn b{color:#ffbd55}.ace545Effects i{display:inline-block;width:18px;color:#46c6ff;font-style:normal}.ace545Change{height:43px;padding:0 18px;border-radius:11px;border:1px solid rgba(119,177,213,.18);background:#0b2132;color:#fff;font:900 11px/1 system-ui;cursor:pointer}.ace545NoSelection{padding:18px;border:1px dashed rgba(113,178,217,.18);border-radius:15px;background:rgba(255,255,255,.018);text-align:center}.ace545NoSelection b{display:block;color:#eaf6fc;font:900 13px/1.2 system-ui}.ace545NoSelection span{display:block;margin-top:7px;color:#8097a7;font:700 10px/1.35 system-ui}.ace545Progress{margin:13px 0 0!important;padding:10px 12px!important;border-radius:11px!important;background:rgba(68,159,217,.07)!important;border:1px solid rgba(79,173,227,.12)!important;color:#93b1c4!important;font-size:9px!important}.ace545Continue{width:100%!important;min-height:76px!important;margin:24px 0 0!important;border:1px solid rgba(86,185,255,.46)!important;border-radius:20px!important;background:linear-gradient(180deg,#33a9ff,#087af0)!important;box-shadow:0 14px 30px rgba(0,106,225,.24),inset 0 1px 0 rgba(255,255,255,.25)!important;color:#fff!important;font:1000 17px/1 system-ui!important;letter-spacing:.08em!important;cursor:pointer!important}.ace545Continue:disabled{opacity:.42!important;filter:saturate(.55)!important;cursor:not-allowed!important}.ace545Reset{display:block;margin:9px auto 0;border:0;background:transparent;color:#718a9a;font:900 8px/1 system-ui;letter-spacing:.1em;cursor:pointer}
+#roadtoace .ace519Presets,#roadtoace .ace519Categories,#roadtoace .ace519Choices,#roadtoace .ace519Advice,#roadtoace .ace520Fixture,#roadtoace .ace519Condition,#roadtoace .ace523MainRow{display:none!important}
+@media(max-width:760px){#roadtoace .ace545PrepReplica{padding:12px 10px 18px!important}.ace545PrepHead{grid-template-columns:42px minmax(0,1fr) 38px!important;gap:10px!important;margin-bottom:13px!important}.ace545Back{width:42px!important;height:42px!important;font-size:31px!important}.ace545Help{width:38px!important;height:38px!important}.ace545PrepHead h2{font-size:28px!important}.ace545PrepHead p{font-size:9.5px!important}.ace545MatchBanner{min-height:170px!important;border-radius:16px!important}.ace545BannerCopy{padding:16px!important;max-width:76%!important}.ace545BannerCopy h3{font-size:31px!important}.ace545BannerCopy p{font-size:11.5px!important}.ace545BannerCopy em{margin-top:14px!important;font-size:10px!important}.ace545BannerCrest{width:98px!important;height:98px!important;right:10px!important;bottom:10px!important}.ace545BannerCrest .rta77ClubMark,.ace545BannerCrest img{width:96px!important;height:96px!important}.ace545ChoiceRow{gap:8px!important;margin-bottom:18px!important}.ace545ChoiceRow .ace519Slot{grid-template-columns:34px 38px minmax(0,1fr) 30px!important;gap:7px!important;min-height:92px!important;padding:10px 9px!important;border-radius:14px!important}.ace545ChoiceNo{font-size:24px!important}.ace545ChoiceGlyph{width:38px!important;height:38px!important;border-radius:10px!important;font-size:17px!important}.ace545ChoiceCopy small{font-size:6.5px!important}.ace545ChoiceCopy b{font-size:13px!important;margin-top:5px!important}.ace545ChoiceCopy span{font-size:8.5px!important}.ace545ChoiceState{width:28px!important;height:28px!important;font-size:16px!important}.ace545ChoiceRow .remove{right:4px!important;top:4px!important;width:18px!important;height:18px!important}.ace545ConditionGrid{grid-template-columns:1.02fr .98fr!important;gap:8px!important}.ace545BodyCard{min-height:330px!important}.ace545BodyCard .ace519BodyMini{width:158px!important;height:288px!important;bottom:8px!important}.ace545BodyLabels{left:10px!important;top:55px!important;bottom:46px!important;font-size:6.5px!important}.ace545BodyLabels span{padding-left:24px!important}.ace545BodyLabels span:before{width:17px!important;height:17px!important;border-width:1.5px!important}.ace545Vitals{gap:7px!important}.ace545Vitals article{grid-template-columns:38px minmax(0,1fr) auto!important;gap:7px!important;padding:10px 9px!important;min-height:101px!important;border-radius:13px!important}.ace545VitalIcon{width:37px!important;height:37px!important;font-size:17px!important}.ace545Vitals small{font-size:6.3px!important}.ace545Vitals b{font-size:22px!important;margin-top:6px!important}.ace545Vitals b span{font-size:11px!important}.ace545Meter{height:6px!important;margin-top:8px!important}.ace545Medical div>span{font-size:8px!important}.ace545Medical b{font-size:15px!important}.ace545SectionTitle{font-size:10px!important;margin-bottom:8px!important}.ace545SectionTitle.selected{margin-top:17px!important}.ace545SelectedCard{grid-template-columns:52px minmax(0,1fr) auto!important;gap:9px!important;padding:11px!important;border-radius:13px!important}.ace545SelectedIcon{width:49px!important;height:49px!important;font-size:21px!important}.ace545SelectedCopy b{font-size:13px!important}.ace545SelectedCopy span{font-size:9px!important}.ace545SelectedCopy small{font-size:6.5px!important;padding:4px 7px!important}.ace545Effects{grid-column:2/4!important;border-left:0!important;border-top:1px solid rgba(120,173,206,.12)!important;padding:8px 0 0!important}.ace545Effects em{font-size:6.5px!important;margin-bottom:5px!important}.ace545Effects span{font-size:8.5px!important;display:inline-block!important;margin-right:12px!important}.ace545Change{grid-column:3!important;grid-row:1!important;height:34px!important;padding:0 10px!important;font-size:8px!important}.ace545Continue{min-height:64px!important;border-radius:17px!important;font-size:14px!important;margin-top:18px!important}}
+@media(max-width:390px){#roadtoace .ace545ChoiceRow{grid-template-columns:1fr!important}.ace545ConditionGrid{grid-template-columns:1fr!important}.ace545BodyCard{min-height:315px!important}.ace545Vitals{grid-template-columns:1fr 1fr!important;grid-template-rows:auto auto!important}.ace545Vitals article{min-height:92px!important}.ace545Vitals .ace545Medical{grid-column:1/-1!important}.ace545SelectedCard{grid-template-columns:48px minmax(0,1fr) auto!important}.ace545BannerCopy h3{font-size:27px!important}}
+</style>
+<script id="ace545-build-marker">window.ACE_PROJECT_BUILD='B21.36.545-PREP-REPLICA';window.ACE_RELEASE_BUILD='B21.36.545-PREP-REPLICA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.545-PREP-REPLICA';window.ACE_PREP_REPLICA_BUILD='B21.36.545-PREP-REPLICA';</script>
