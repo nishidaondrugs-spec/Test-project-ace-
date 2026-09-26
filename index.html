@@ -66679,7 +66679,21 @@ function planHtml(c,p){
   </section>`;
 }
 function host(){return document.querySelector('#roadtoace .rta187TrainingCentre')}
-function renderPlanner(){const c=C(),h=host();if(!c||!h)return;h.querySelectorAll(':scope>.ace519Planner').forEach(n=>n.remove());h.querySelectorAll(':scope>.ace518PreparationHub').forEach(n=>n.remove());let p=normalizePlan(c,loadPlan(c));const hero=h.querySelector(':scope>.rta187TrainingHero');if(hero)hero.style.display='none';const anchor=hero||h.querySelector(':scope>.ace252FirstMatchGuide')||h.firstElementChild;if(anchor)anchor.insertAdjacentHTML('afterend',planHtml(c,p));}
+function renderPlanner(){
+  const c=C(),h=host();if(!c||!h)return;
+  h.querySelectorAll(':scope>.ace519Planner').forEach(n=>n.remove());
+  h.querySelectorAll(':scope>.ace518PreparationHub').forEach(n=>n.remove());
+  let p=normalizePlan(c,loadPlan(c));
+  h.insertAdjacentHTML('afterbegin',planHtml(c,p));
+  [...h.children].forEach(el=>{
+    if(el.classList.contains('ace519Planner')){
+      el.classList.remove('ace546PrepHiddenCore');
+      el.style.removeProperty('display');
+    }else{
+      el.classList.add('ace546PrepHiddenCore');
+    }
+  });
+}
 function toast(msg,type=''){if(typeof window.ACE_RTA_TOAST==='function'){try{return window.ACE_RTA_TOAST(msg,type)}catch(_){}}document.querySelectorAll('.ace519Toast').forEach(n=>n.remove());const el=document.createElement('div');el.className='ace519Toast';el.style.cssText='position:fixed;left:50%;bottom:95px;transform:translateX(-50%);z-index:999999;padding:10px 13px;border-radius:10px;background:#0d2533;color:#eefaff;border:1px solid rgba(106,196,241,.2);font:800 11px system-ui';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
 async function executeRecovery(c,p,x){busy=true;renderPlanner();try{const d=x.id==='FILM'?await window.ACE_RTA_RPC('vds_rta_watch_opponent_film_v522',{}):await window.ACE_RTA_RPC('vds_rta_recovery_activity_v512',{p_activity:x.id});if(d?.career)S().career=d.career;if(x.id==='FILM'&&d?.report){try{window.ACE522_SHOW_FILM_REPORT?.(d)}catch(_){}}try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}p.index++;p.waiting=null;savePlan(C()||c,p);toast(`${x.title} completed.`,'good');try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(renderPlanner,50)}catch(e){toast(String(e?.message||e).replace(/^.*?:\s*/,''),'error')}finally{busy=false;renderPlanner()}}
 function executeTraining(c,p,x){const h=host();if(!h)return;let target=null;if(x.type==='physical')target=h.querySelector(`[data-rta113-physical="${CSS.escape(x.id)}"]`);else target=h.querySelector(`[data-rta62-train="${CSS.escape(x.id)}"]`);if(!target||target.disabled){toast('That training activity is currently unavailable.','error');return}p.waiting=Number(c.training_used||0);savePlan(c,p);renderPlanner();target.click()}
@@ -67410,3 +67424,19 @@ window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD
 @media(max-width:390px){#roadtoace .ace545ChoiceRow{grid-template-columns:1fr!important}.ace545ConditionGrid{grid-template-columns:1fr!important}.ace545BodyCard{min-height:315px!important}.ace545Vitals{grid-template-columns:1fr 1fr!important;grid-template-rows:auto auto!important}.ace545Vitals article{min-height:92px!important}.ace545Vitals .ace545Medical{grid-column:1/-1!important}.ace545SelectedCard{grid-template-columns:48px minmax(0,1fr) auto!important}.ace545BannerCopy h3{font-size:27px!important}}
 </style>
 <script id="ace545-build-marker">window.ACE_PROJECT_BUILD='B21.36.545-PREP-REPLICA';window.ACE_RELEASE_BUILD='B21.36.545-PREP-REPLICA';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.545-PREP-REPLICA';window.ACE_PREP_REPLICA_BUILD='B21.36.545-PREP-REPLICA';</script>
+
+<style id="ace546-prep-owner-lock">
+#roadtoace .rta187TrainingCentre > .ace546PrepHiddenCore{display:none!important}
+#roadtoace .rta187TrainingCentre > .ace519Planner.ace545PrepReplica{
+  display:block!important;
+  order:0!important;
+  width:100%!important;
+}
+#roadtoace .rta187TrainingCentre{display:block!important;padding:0!important}
+</style>
+<script id="ace546-build-marker">
+window.ACE_PROJECT_BUILD='B21.36.546-PREP-OWNER';
+window.ACE_RELEASE_BUILD='B21.36.546-PREP-OWNER';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.546-PREP-OWNER';
+window.ACE_PREP_REPLICA_BUILD='B21.36.546-PREP-OWNER';
+</script>
