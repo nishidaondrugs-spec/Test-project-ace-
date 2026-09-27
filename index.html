@@ -68191,3 +68191,110 @@ window.ACE_HOME_MATCH_BUILD='B21.36.556-HOME-CLEAN-MATCH';
   window.ACE_HOME_LOCKED_BUILD=BUILD;
 })();
 </script>
+
+<style id="ace558-home-fixed-view">
+/* B21.36.558 — PC HOME ONLY.
+   Keep the giant cinematic hero, but size it to the visible browser space so
+   Home never becomes a long vertical page. Other Road to Ace routes untouched. */
+@media (min-width:900px){
+  #roadtoace .ace464HomeHub{
+    box-sizing:border-box!important;
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace456Hero{
+    box-sizing:border-box!important;
+    height:var(--ace558-home-hero-h,620px)!important;
+    min-height:520px!important;
+    max-height:var(--ace558-home-hero-h,620px)!important;
+    margin-bottom:0!important;
+    overflow:hidden!important;
+  }
+
+  /* Keep the approved identity/stat positioning inside the newly fitted hero. */
+  #roadtoace .ace464HomeHub .ace456HeroIdentity{
+    bottom:118px!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace456HeroStats{
+    bottom:18px!important;
+    height:82px!important;
+    min-height:82px!important;
+  }
+
+  /* The top tabs must not create extra page height after the fitted hero. */
+  #roadtoace .ace464HomeHub .ace456ClubPanel{
+    margin-bottom:0!important;
+  }
+}
+
+/* Very short laptop screens get a tighter but still cinematic fit. */
+@media (min-width:900px) and (max-height:760px){
+  #roadtoace .ace464HomeHub .ace456Hero{
+    min-height:470px!important;
+  }
+  #roadtoace .ace464HomeHub .ace456HeroIdentity{
+    bottom:106px!important;
+  }
+  #roadtoace .ace464HomeHub .ace456HeroStats{
+    bottom:12px!important;
+    height:76px!important;
+    min-height:76px!important;
+  }
+}
+</style>
+
+<script id="ace558-home-fixed-controller">
+(()=>{
+  const BUILD='B21.36.558-HOME-FIXED-VIEW';
+  const mq=window.matchMedia('(min-width:900px)');
+  let raf=0;
+
+  function fitHome(){
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>{
+      if(!mq.matches)return;
+      const road=document.getElementById('roadtoace');
+      if(!road || !road.classList.contains('active'))return;
+
+      const home=road.querySelector('.ace464HomeHub');
+      const hero=home?.querySelector('.ace456Hero');
+      if(!home||!hero)return;
+
+      /*
+       * Measure from the REAL hero top to the current viewport bottom.
+       * This preserves the main Ace header + Road to Ace tabs and adapts to
+       * 768p, 900p, 1080p, browser zoom, etc. No global fixed-shell hacks.
+       */
+      const viewport=window.visualViewport?.height||window.innerHeight||800;
+      const top=Math.max(0,hero.getBoundingClientRect().top);
+      const bottomGap=12;
+      const available=Math.floor(viewport-top-bottomGap);
+
+      if(available>0){
+        const h=Math.max(470,available);
+        home.style.setProperty('--ace558-home-hero-h',h+'px');
+      }
+    });
+  }
+
+  document.addEventListener('ace:rta-render',fitHome);
+  window.addEventListener('resize',fitHome,{passive:true});
+  window.visualViewport?.addEventListener?.('resize',fitHome,{passive:true});
+  window.addEventListener('pageshow',fitHome,{passive:true});
+  mq.addEventListener?.('change',fitHome);
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(fitHome,50),{once:true});
+  }else{
+    setTimeout(fitHome,50);
+  }
+  setTimeout(fitHome,250);
+
+  window.ACE558_HOME_FIXED_VIEW={fit:fitHome,build:BUILD};
+  window.ACE_PROJECT_BUILD=BUILD;
+  window.ACE_RELEASE_BUILD=BUILD;
+  window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+})();
+</script>
