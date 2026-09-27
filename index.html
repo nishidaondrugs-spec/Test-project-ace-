@@ -42862,6 +42862,8 @@ document.addEventListener("click",function(e){
       const d=await rpc("vds_rta_play_match");
       if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
       if(d?.career){rta549PatchCareer(d.career);if(d?.calendar&&S.career)S.career.calendar_state=d.calendar}
+      S.activeTraining=null;
+      window.ACE_RTA_BUNDLE_STALE=true;
       showMatchResult(d);
       if(!d?.career)await loadState({silent:true,world:false});
       try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}
@@ -43684,7 +43686,7 @@ document.addEventListener("click",function(e){
       const proc=ace316eTriggeredText(d);
       rta242Feedback(r,proc?`${out||"RESULT"} · ${proc}`:(out||"RESULT"));
       await new Promise(res=>setTimeout(res,2300));
-      if(d.done){S.key=d;if(d?.career)rta549PatchCareer(d.career);showMatchResult(d);if(!d?.career)await loadState({silent:true,world:false});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
+      if(d.done){S.key=d;S.activeTraining=null;window.ACE_RTA_BUNDLE_STALE=true;if(d?.career)rta549PatchCareer(d.career);showMatchResult(d);if(!d?.career)await loadState({silent:true,world:false});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
       else{S.key=d;S.feedback=null;renderKeyOverlay()}
     }catch(e){toast(errText(e),"error");renderKeyOverlay()}
     finally{S.busy=false;rta242Hit.busy=false}
@@ -43744,7 +43746,7 @@ function renderAttackKeyOverlay(){
       const d=await rpc(intl?"vds_rta_resolve_international_key_timeout_v315":"vds_rta_resolve_key_timeout");
       if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
       vibrate([20,35,20]);
-      if(d.done){S.key=d;if(d?.career)rta549PatchCareer(d.career);showMatchResult(d);if(!d?.career)await loadState({silent:true,world:false});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
+      if(d.done){S.key=d;S.activeTraining=null;window.ACE_RTA_BUNDLE_STALE=true;if(d?.career)rta549PatchCareer(d.career);showMatchResult(d);if(!d?.career)await loadState({silent:true,world:false});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
       else{S.key=d;S.feedback={good:false,text:`LATE READ · ${d.outcome||"The defence wins the moment."}`};renderKeyOverlay()}
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
@@ -68293,6 +68295,167 @@ window.ACE_HOME_MATCH_BUILD='B21.36.556-HOME-CLEAN-MATCH';
   setTimeout(fitHome,250);
 
   window.ACE558_HOME_FIXED_VIEW={fit:fitHome,build:BUILD};
+  window.ACE_PROJECT_BUILD=BUILD;
+  window.ACE_RELEASE_BUILD=BUILD;
+  window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+})();
+</script>
+
+<script id="ace560-training-match-state-fix">
+window.ACE_PROJECT_BUILD='B21.36.560-TRAINING-MATCH-FIX';
+window.ACE_RELEASE_BUILD='B21.36.560-TRAINING-MATCH-FIX';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.560-TRAINING-MATCH-FIX';
+window.ACE_TRAINING_MATCH_FIX='B21.36.560-TRAINING-MATCH-FIX';
+</script>
+
+<style id="ace561-pc-home-noscroll">
+/* B21.36.561 — PC HOME ONLY.
+   Lock the actual current Home owner (.ace464HomeHub), not the whole Career app. */
+@media (min-width:900px){
+  html.ace561PcHomeLocked,
+  body.ace561PcHomeLocked{
+    overflow:hidden!important;
+    overscroll-behavior:none!important;
+  }
+
+  body.ace561PcHomeLocked #roadtoace.page.active{
+    overflow:hidden!important;
+    padding-bottom:0!important;
+  }
+
+  /* Retire the old shell/page minimum heights only while current Home is visible. */
+  body.ace561PcHomeLocked #roadtoace .rta93Shell{
+    min-height:0!important;
+    padding-bottom:0!important;
+  }
+  body.ace561PcHomeLocked #roadtoace #rta62Mount,
+  body.ace561PcHomeLocked #roadtoace .rta78Mode-home{
+    min-height:0!important;
+    padding-bottom:0!important;
+    overflow:hidden!important;
+  }
+
+  /*
+   * Keep exactly the approved layout:
+   * tabs on top, giant Hero below. The Hub owns the remaining viewport.
+   */
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub{
+    display:flex!important;
+    flex-direction:column!important;
+    width:min(1180px,calc(100% - 44px))!important;
+    height:var(--ace561-home-h,680px)!important;
+    min-height:0!important;
+    max-height:var(--ace561-home-h,680px)!important;
+    margin:18px auto 0!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub>.ace456ClubTabs{
+    order:0!important;
+    flex:0 0 auto!important;
+    width:100%!important;
+    margin:0 0 12px!important;
+  }
+
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub>.ace456Hero{
+    order:1!important;
+    flex:1 1 auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    margin:0!important;
+    aspect-ratio:auto!important;
+    overflow:hidden!important;
+  }
+
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub>.ace456ClubPanel{
+    display:none!important;
+  }
+
+  /* Preserve the exact approved identity / stat composition. */
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub .ace456HeroIdentity{
+    bottom:118px!important;
+  }
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub .ace456HeroStats{
+    bottom:18px!important;
+    height:82px!important;
+    min-height:82px!important;
+  }
+}
+
+@media (min-width:900px) and (max-height:760px){
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub{
+    margin-top:10px!important;
+  }
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub .ace456HeroIdentity{
+    bottom:106px!important;
+  }
+  body.ace561PcHomeLocked #roadtoace .ace464HomeHub .ace456HeroStats{
+    bottom:12px!important;
+    height:76px!important;
+    min-height:76px!important;
+  }
+}
+</style>
+
+<script id="ace561-pc-home-noscroll-controller">
+(()=>{
+  const BUILD='B21.36.561-PC-HOME-NOSCROLL';
+  const mq=window.matchMedia('(min-width:900px)');
+  let raf=0,locked=false;
+
+  function setLocked(on){
+    document.documentElement.classList.toggle('ace561PcHomeLocked',on);
+    document.body.classList.toggle('ace561PcHomeLocked',on);
+    if(on && !locked){
+      try{window.scrollTo(0,0)}catch(_){}
+    }
+    locked=on;
+  }
+
+  function sync(){
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>{
+      const road=document.getElementById('roadtoace');
+      const home=road?.querySelector('.ace464HomeHub');
+      const active=!!(mq.matches && road?.classList.contains('active') && home);
+
+      if(!active){
+        setLocked(false);
+        home?.style.removeProperty('--ace561-home-h');
+        return;
+      }
+
+      setLocked(true);
+
+      /*
+       * Measure the real Home Hub top after the global ACE header and Career shell
+       * have rendered, then use exactly the viewport space remaining below it.
+       */
+      const viewport=window.visualViewport?.height||window.innerHeight||800;
+      const top=Math.max(0,home.getBoundingClientRect().top);
+      const available=Math.max(470,Math.floor(viewport-top-8));
+      home.style.setProperty('--ace561-home-h',available+'px');
+    });
+  }
+
+  document.addEventListener('ace:rta-render',sync);
+  window.addEventListener('resize',sync,{passive:true});
+  window.visualViewport?.addEventListener?.('resize',sync,{passive:true});
+  window.addEventListener('pageshow',sync,{passive:true});
+  mq.addEventListener?.('change',sync);
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(sync,40),{once:true});
+  }else{
+    setTimeout(sync,40);
+  }
+  setTimeout(sync,180);
+  setTimeout(sync,450);
+
+  window.ACE561_PC_HOME_NOSCROLL={sync,build:BUILD};
   window.ACE_PROJECT_BUILD=BUILD;
   window.ACE_RELEASE_BUILD=BUILD;
   window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
