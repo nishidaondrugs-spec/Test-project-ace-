@@ -67440,3 +67440,417 @@ window.ACE_RELEASE_BUILD='B21.36.546-PREP-OWNER';
 window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.546-PREP-OWNER';
 window.ACE_PREP_REPLICA_BUILD='B21.36.546-PREP-OWNER';
 </script>
+
+<style id="ace547-prep-pc-project-ace">
+/* B21.36.547 — desktop Match Prep compact pass.
+   Keep the approved two-choice mechanics; make the page fit the desktop
+   viewport and use the established Project Ace visual language. */
+@media (min-width: 900px){
+  #roadtoace .ace545PrepReplica{
+    max-width:1120px!important;
+    margin:0 auto!important;
+    padding:10px 14px 14px!important;
+    background:transparent!important;
+    color:#eef4f8!important;
+  }
+
+  /* Header — tighter, condensed, Project Ace-like. */
+  #roadtoace .ace545PrepHead{
+    grid-template-columns:40px minmax(0,1fr) 36px!important;
+    gap:11px!important;
+    margin:0 0 9px!important;
+  }
+  #roadtoace .ace545Back{
+    width:40px!important;height:40px!important;
+    border-radius:10px!important;
+    border:1px solid rgba(255,255,255,.06)!important;
+    background:#0d111b!important;
+    color:#dbe6ef!important;
+    font-size:29px!important;
+    box-shadow:none!important;
+  }
+  #roadtoace .ace545PrepHead h2{
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:31px!important;
+    line-height:.88!important;
+    font-weight:1000!important;
+    letter-spacing:-.045em!important;
+    text-transform:uppercase!important;
+    color:#f5f2fa!important;
+  }
+  #roadtoace .ace545PrepHead p{
+    margin-top:5px!important;
+    color:#7d899a!important;
+    font:800 8px/1.25 Inter,ui-sans-serif,system-ui,sans-serif!important;
+    letter-spacing:.015em!important;
+  }
+  #roadtoace .ace545Help{
+    width:36px!important;height:36px!important;
+    border-radius:10px!important;
+    border:1px solid rgba(118,93,205,.18)!important;
+    background:rgba(115,84,196,.08)!important;
+    color:#b891e8!important;
+    font:1000 18px/1 system-ui!important;
+  }
+
+  /* Fixture hero — cinematic, but no giant empty block. */
+  #roadtoace .ace545MatchBanner{
+    min-height:104px!important;
+    height:104px!important;
+    margin-bottom:9px!important;
+    border-radius:13px!important;
+    border-color:rgba(255,255,255,.055)!important;
+    background-color:#0d111b!important;
+    box-shadow:none!important;
+  }
+  #roadtoace .ace545BannerShade{
+    background:
+      linear-gradient(90deg,rgba(5,8,15,.96) 0%,rgba(5,8,15,.80) 43%,rgba(5,8,15,.35) 72%,rgba(5,8,15,.60) 100%),
+      linear-gradient(180deg,rgba(119,81,193,.06),rgba(0,0,0,.18))!important;
+  }
+  #roadtoace .ace545BannerCopy{
+    padding:13px 16px!important;
+    max-width:76%!important;
+  }
+  #roadtoace .ace545BannerCopy small{
+    color:#8fa2b6!important;
+    font:1000 6.5px/1 system-ui!important;
+    letter-spacing:.17em!important;
+  }
+  #roadtoace .ace545BannerCopy h3{
+    margin:8px 0 5px!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:29px!important;
+    line-height:.88!important;
+    letter-spacing:-.045em!important;
+    text-transform:uppercase!important;
+    color:#f6f4ee!important;
+  }
+  #roadtoace .ace545BannerCopy p{
+    gap:6px!important;
+    color:#b9c5d0!important;
+    font:900 9px/1.15 system-ui!important;
+  }
+  #roadtoace .ace545BannerCopy p span{font-size:13px!important}
+  #roadtoace .ace545BannerCopy em{
+    margin-top:9px!important;
+    color:#6e8092!important;
+    font:850 8px/1 system-ui!important;
+  }
+  #roadtoace .ace545BannerCrest{
+    width:76px!important;height:76px!important;
+    right:15px!important;bottom:11px!important;
+  }
+  #roadtoace .ace545BannerCrest .rta77ClubMark,
+  #roadtoace .ace545BannerCrest img{
+    width:74px!important;height:74px!important;
+    filter:drop-shadow(0 8px 12px rgba(0,0,0,.42))!important;
+  }
+
+  /* Two choices — compact matchday modules rather than mobile cards scaled up. */
+  #roadtoace .ace545ChoiceRow{
+    gap:9px!important;
+    margin:0 0 11px!important;
+  }
+  #roadtoace .ace545ChoiceRow .ace519Slot{
+    grid-template-columns:34px 38px minmax(0,1fr) 29px!important;
+    gap:8px!important;
+    min-height:66px!important;
+    height:66px!important;
+    padding:8px 10px!important;
+    border-radius:12px!important;
+    border-color:rgba(255,255,255,.055)!important;
+    background:#0d111b!important;
+    box-shadow:none!important;
+  }
+  #roadtoace .ace545ChoiceRow .ace519Slot.planned,
+  #roadtoace .ace545ChoiceRow .ace519Slot.done{
+    border-color:rgba(79,165,224,.24)!important;
+    background:linear-gradient(135deg,rgba(40,116,158,.10),rgba(13,17,27,.98))!important;
+    box-shadow:inset 0 0 0 1px rgba(83,174,230,.025)!important;
+  }
+  #roadtoace .ace545ChoiceRow .ace519Slot.empty{
+    border-color:rgba(164,91,214,.15)!important;
+    background:linear-gradient(135deg,rgba(137,78,204,.07),rgba(13,17,27,.98))!important;
+  }
+  #roadtoace .ace545ChoiceNo{
+    color:#5bb7ed!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:23px!important;
+    font-weight:1000!important;
+  }
+  #roadtoace .ace545ChoiceRow .empty .ace545ChoiceNo{color:#b987df!important}
+  #roadtoace .ace545ChoiceGlyph{
+    width:36px!important;height:36px!important;
+    border-radius:9px!important;
+    background:#0b2031!important;
+    color:#65bfff!important;
+    font-size:16px!important;
+  }
+  #roadtoace .ace545ChoiceRow .empty .ace545ChoiceGlyph{
+    background:rgba(137,78,204,.08)!important;
+    color:#bc8cdb!important;
+  }
+  #roadtoace .ace545ChoiceCopy small{
+    color:#668aa4!important;
+    font:1000 5.7px/1 system-ui!important;
+    letter-spacing:.14em!important;
+  }
+  #roadtoace .ace545ChoiceRow .empty .ace545ChoiceCopy small{color:#9672b3!important}
+  #roadtoace .ace545ChoiceCopy b{
+    margin-top:4px!important;
+    color:#eef3f7!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:14px!important;
+    line-height:.95!important;
+    font-weight:1000!important;
+    letter-spacing:-.018em!important;
+  }
+  #roadtoace .ace545ChoiceCopy span{
+    margin-top:4px!important;
+    color:#718395!important;
+    font:750 7px/1.1 system-ui!important;
+  }
+  #roadtoace .ace545ChoiceState{
+    width:27px!important;height:27px!important;
+    border-width:1px!important;
+    border-color:#4ccf99!important;
+    background:rgba(76,207,153,.12)!important;
+    color:#64d99a!important;
+    font-size:14px!important;
+  }
+  #roadtoace .ace545ChoiceState.add{
+    border-color:#a35bd6!important;
+    color:#bc8cdb!important;
+    background:rgba(163,91,214,.06)!important;
+  }
+
+  /* Technical section labels should look like the rest of Road to Ace. */
+  #roadtoace .ace545SectionTitle{
+    margin:0 0 7px!important;
+    color:#7fbcdf!important;
+    font:1000 7px/1 system-ui!important;
+    letter-spacing:.18em!important;
+  }
+  #roadtoace .ace545SectionTitle.selected{
+    margin-top:10px!important;
+  }
+
+  /* Condition block — this is where most of the wasted height was. */
+  #roadtoace .ace545ConditionGrid{
+    grid-template-columns:.92fr 1.08fr!important;
+    gap:9px!important;
+  }
+  #roadtoace .ace545BodyCard{
+    min-height:205px!important;
+    height:205px!important;
+    border-radius:12px!important;
+    border-color:rgba(255,255,255,.055)!important;
+    background:
+      radial-gradient(circle at 54% 48%,rgba(47,120,185,.11),transparent 47%),
+      #0d111b!important;
+  }
+  #roadtoace .ace545BodyCard:before{
+    opacity:.45!important;
+    background-size:20px 20px!important;
+  }
+  #roadtoace .ace545BodyCard .ace519BodyMini{
+    width:112px!important;
+    height:194px!important;
+    bottom:3px!important;
+    filter:drop-shadow(0 0 9px rgba(41,127,255,.18))!important;
+  }
+  #roadtoace .ace545BodyLabels{
+    left:12px!important;
+    top:32px!important;
+    bottom:32px!important;
+    color:#73879a!important;
+    font:900 6px/1 system-ui!important;
+  }
+  #roadtoace .ace545BodyLabels span{padding-left:23px!important}
+  #roadtoace .ace545BodyLabels span:before{
+    width:16px!important;height:16px!important;
+    border-width:1px!important;
+    border-color:#4c9fd3!important;
+    background:rgba(20,74,109,.14)!important;
+    box-shadow:none!important;
+  }
+
+  #roadtoace .ace545Vitals{
+    grid-template-rows:repeat(3,1fr)!important;
+    gap:6px!important;
+    height:205px!important;
+  }
+  #roadtoace .ace545Vitals article{
+    grid-template-columns:34px minmax(0,1fr) auto!important;
+    gap:9px!important;
+    min-height:0!important;
+    padding:8px 10px!important;
+    border-radius:11px!important;
+    border-color:rgba(255,255,255,.055)!important;
+    background:#0d111b!important;
+  }
+  #roadtoace .ace545VitalIcon{
+    width:32px!important;height:32px!important;
+    border-width:1px!important;
+    font-size:14px!important;
+    background:rgba(229,184,69,.055)!important;
+  }
+  #roadtoace .ace545VitalIcon.load{background:rgba(44,162,255,.055)!important}
+  #roadtoace .ace545VitalIcon.medical{
+    border-radius:9px!important;
+    background:rgba(255,92,92,.055)!important;
+  }
+  #roadtoace .ace545Vitals small{
+    color:#718597!important;
+    font:1000 5.8px/1 system-ui!important;
+    letter-spacing:.15em!important;
+  }
+  #roadtoace .ace545Vitals b{
+    margin-top:4px!important;
+    color:#f5f2fa!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:22px!important;
+    line-height:.9!important;
+    font-weight:1000!important;
+    letter-spacing:-.035em!important;
+  }
+  #roadtoace .ace545Vitals b span{font-size:10px!important;color:#536273!important}
+  #roadtoace .ace545Vitals article>em{font-size:10px!important;color:#667586!important}
+  #roadtoace .ace545Meter{
+    height:5px!important;
+    margin-top:6px!important;
+    background:#172330!important;
+  }
+  #roadtoace .ace545Medical b{
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:15px!important;
+    margin-top:3px!important;
+  }
+  #roadtoace .ace545Medical div>span{
+    color:#8b99a8!important;
+    font:800 7px/1.1 system-ui!important;
+  }
+
+  /* On desktop, use the width: both selected prep items sit on one row. */
+  #roadtoace .ace545SelectedList{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  #roadtoace .ace545SelectedCard{
+    grid-template-columns:40px minmax(0,1fr) minmax(120px,.9fr)!important;
+    gap:9px!important;
+    min-height:64px!important;
+    padding:8px 10px!important;
+    border-radius:11px!important;
+    border-color:rgba(255,255,255,.055)!important;
+    background:#0d111b!important;
+  }
+  #roadtoace .ace545SelectedIcon{
+    width:38px!important;height:38px!important;
+    border-radius:9px!important;
+    background:#0b2031!important;
+    border-color:rgba(87,174,240,.10)!important;
+    color:#65bfff!important;
+    font-size:17px!important;
+  }
+  #roadtoace .ace545SelectedCopy b{
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:13px!important;
+    line-height:.95!important;
+    font-weight:1000!important;
+    letter-spacing:-.015em!important;
+    color:#f0f3f6!important;
+  }
+  #roadtoace .ace545SelectedCopy span{
+    margin-top:4px!important;
+    color:#768697!important;
+    font:750 7px/1.1 system-ui!important;
+  }
+  #roadtoace .ace545SelectedCopy small{
+    margin-top:5px!important;
+    padding:3px 6px!important;
+    background:rgba(76,207,153,.07)!important;
+    border-color:rgba(76,207,153,.12)!important;
+    color:#64d99a!important;
+    font:1000 5.5px/1 system-ui!important;
+    letter-spacing:.10em!important;
+  }
+  #roadtoace .ace545Effects{
+    padding-left:10px!important;
+    border-left:1px solid rgba(255,255,255,.05)!important;
+  }
+  #roadtoace .ace545Effects em{
+    margin-bottom:5px!important;
+    color:#66788a!important;
+    font:1000 5.5px/1 system-ui!important;
+    letter-spacing:.13em!important;
+  }
+  #roadtoace .ace545Effects span{
+    color:#b7c3cd!important;
+    font:850 7px/1.45 system-ui!important;
+  }
+  #roadtoace .ace545Effects i{width:13px!important}
+  #roadtoace .ace545Change{
+    display:none!important;
+  }
+
+  #roadtoace .ace545Progress{
+    margin:7px 0 0!important;
+    padding:6px 9px!important;
+    border-radius:8px!important;
+    background:rgba(87,174,240,.035)!important;
+    border-color:rgba(87,174,240,.08)!important;
+    color:#687f92!important;
+    font:800 6.5px/1.15 system-ui!important;
+  }
+
+  #roadtoace .ace545Continue{
+    min-height:48px!important;
+    height:48px!important;
+    margin:9px 0 0!important;
+    border-radius:11px!important;
+    border-color:rgba(161,93,214,.24)!important;
+    background:linear-gradient(135deg,#9356d2,#6356c7)!important;
+    box-shadow:0 9px 22px rgba(67,43,132,.20),inset 0 1px 0 rgba(255,255,255,.08)!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:13px!important;
+    line-height:1!important;
+    font-weight:1000!important;
+    letter-spacing:.075em!important;
+    text-transform:uppercase!important;
+  }
+  #roadtoace .ace545Reset{
+    margin-top:5px!important;
+    color:#596878!important;
+    font-size:5.7px!important;
+  }
+}
+
+/* Short desktop/laptop screens get one more squeeze so the CTA remains visible. */
+@media (min-width:900px) and (max-height:820px){
+  #roadtoace .ace545PrepReplica{padding-top:6px!important;padding-bottom:8px!important}
+  #roadtoace .ace545PrepHead{margin-bottom:6px!important}
+  #roadtoace .ace545MatchBanner{height:92px!important;min-height:92px!important;margin-bottom:7px!important}
+  #roadtoace .ace545BannerCopy{padding:11px 15px!important}
+  #roadtoace .ace545BannerCopy h3{font-size:27px!important;margin-top:6px!important}
+  #roadtoace .ace545BannerCopy em{margin-top:7px!important}
+  #roadtoace .ace545BannerCrest{width:68px!important;height:68px!important}
+  #roadtoace .ace545BannerCrest .rta77ClubMark,
+  #roadtoace .ace545BannerCrest img{width:66px!important;height:66px!important}
+  #roadtoace .ace545ChoiceRow .ace519Slot{height:60px!important;min-height:60px!important}
+  #roadtoace .ace545ChoiceRow{margin-bottom:8px!important}
+  #roadtoace .ace545BodyCard,
+  #roadtoace .ace545Vitals{height:188px!important;min-height:188px!important}
+  #roadtoace .ace545BodyCard .ace519BodyMini{height:179px!important;width:104px!important}
+  #roadtoace .ace545SectionTitle.selected{margin-top:8px!important}
+  #roadtoace .ace545SelectedCard{min-height:58px!important;padding-top:6px!important;padding-bottom:6px!important}
+  #roadtoace .ace545Continue{height:44px!important;min-height:44px!important;margin-top:7px!important}
+}
+</style>
+<script id="ace547-build-marker">
+window.ACE_PROJECT_BUILD='B21.36.547-PREP-PC-FIT';
+window.ACE_RELEASE_BUILD='B21.36.547-PREP-PC-FIT';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.547-PREP-PC-FIT';
+window.ACE_PREP_REPLICA_BUILD='B21.36.547-PREP-PC-FIT';
+</script>
