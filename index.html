@@ -39128,7 +39128,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       <div class="rta62Brand rta93RailBrand"><i>♠</i><div><b>ROAD TO ACE</b><span>${esc(c.player_name)} · S${Number(c.season||1)}</span></div></div>
       <div class="rta85DesktopTabs rta93DesktopRail">
         <small class="rta93RailLabel">PLAY</small>
-        ${navButton("home","HOME","⌂")}${navButton("match","MATCH","▶")}${navButton("train","TRAINING","△")}${navButton("player","SKILL TREE","✦")}
+        ${navButton("home","HOME","⌂")}
         <small class="rta93RailLabel career">CAREER</small>
         ${navButton("club","MY SQUAD","♜")}${navButton("inbox","INBOX","✉")}${navButton("career","CAREER","◎")}${navButton("careerprofile","CUSTOMISE","◈")}${navButton("agent","AGENT","◇")}${navButton("rankings","RANKINGS","▤")}
       </div>
@@ -41979,6 +41979,10 @@ document.addEventListener("click",function(e){
     const homeMatchday=Math.max(1,Number(c.season_match||0)+1);
     const homeMedicalOut=String(c.injury_status||'FIT').toUpperCase()==='OUT';
     const homePlayLabel=S.activeKey?'RESUME':'PLAY';
+    const homePrepUsed=Math.max(0,Math.min(2,Number(c.training_used||0)));
+    const homePrepReady=readiness(c);
+    const homeSkillPoints=Math.max(0,Number(c.skill_points||0));
+    const homeArchetype=String(c.archetype||'PLAYER').replaceAll('_',' ');
 
     /* Club Home timeline uses the same league calendar state as Career Overview. */
     const k=S.league?.calendar||c.calendar_state||{};
@@ -42040,6 +42044,32 @@ document.addEventListener("click",function(e){
           :`<button type="button" class="ace456Back" data-rta62-view="home" aria-label="Back">‹</button><span class="ace421SeasonChip">SEASON ${Math.max(1,Number(c.season||1))}</span>`
         }</div>
         <div class="ace456HeroTag">MORE<br>THAN A GAME<br>A STRONGER<br>${esc(countryLabel)}</div>
+        ${homeMode?`
+          <div class="ace565HeroShortcuts" aria-label="Career shortcuts">
+            <button type="button" class="ace565HeroShortcut ace565PrepShortcut"
+                    data-rta62-view="train"
+                    onclick="return window.ACE_RTA_NAV(event,'train')">
+              <i>△</i>
+              <span>
+                <small>PREP</small>
+                <b>${homePrepUsed}/2 USED · ${homePrepReady}% READY</b>
+                <em>Prepare for your next fixture</em>
+              </span>
+              <strong>→</strong>
+            </button>
+            <button type="button" class="ace565HeroShortcut ace565SkillShortcut"
+                    data-rta62-view="player"
+                    onclick="return window.ACE_RTA_NAV(event,'player')">
+              <i>✦</i>
+              <span>
+                <small>SKILL TREE</small>
+                <b>${homeSkillPoints} SP · ${esc(homeArchetype)}</b>
+                <em>Develop your player build</em>
+              </span>
+              <strong>→</strong>
+            </button>
+          </div>
+        `:''}
         <div class="ace456HeroIdentity">
           <div class="ace456HeroCrest">${rta77ClubLogo(c.club_name||'Club','lg')}</div>
           <div class="ace456HeroName"><h1>${esc(c.club_name)}</h1><p><span>${flag}</span>${esc(leagueName)}</p></div>
@@ -68422,4 +68452,154 @@ window.ACE_TRAINING_MATCH_FIX='B21.36.560-TRAINING-MATCH-FIX';
   window.ACE_RELEASE_BUILD='B21.36.564-ROUTER-COMPACT-HEADER';
   window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.564-ROUTER-COMPACT-HEADER';
 })();
+</script>
+
+<style id="ace565-home-hub-pc">
+/* B21.36.565 — PC career information architecture:
+   Home owns Match/Prep/Development entry; routes stay alive internally. */
+@media (min-width:900px){
+
+  /* With Match / Prep / Skill Tree moved Home, PLAY becomes a single clean HOME item. */
+  #roadtoace .rta93DesktopRail > .rta93RailLabel:first-child{
+    margin-bottom:1px!important;
+  }
+
+  /* Two deliberately small shortcuts inside the cinematic negative space. */
+  #roadtoace .ace464HomeHub .ace565HeroShortcuts{
+    position:absolute!important;
+    z-index:5!important;
+    left:50%!important;
+    top:46%!important;
+    transform:translate(-50%,-50%)!important;
+    width:min(650px,58%)!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+    pointer-events:auto!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut{
+    appearance:none!important;
+    min-width:0!important;
+    min-height:72px!important;
+    display:grid!important;
+    grid-template-columns:42px minmax(0,1fr) 20px!important;
+    align-items:center!important;
+    gap:10px!important;
+    padding:10px 12px!important;
+    border:1px solid rgba(99,166,208,.12)!important;
+    border-radius:13px!important;
+    background:
+      linear-gradient(135deg,rgba(7,20,31,.76),rgba(7,15,25,.64))!important;
+    box-shadow:0 12px 28px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.025)!important;
+    color:#dfe8ee!important;
+    text-align:left!important;
+    backdrop-filter:blur(5px)!important;
+    -webkit-backdrop-filter:blur(5px)!important;
+    cursor:pointer!important;
+    transition:transform .16s ease,border-color .16s ease,background .16s ease!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut:hover{
+    transform:translateY(-2px)!important;
+    border-color:rgba(103,193,239,.28)!important;
+    background:linear-gradient(135deg,rgba(11,31,46,.87),rgba(9,20,32,.80))!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut>i{
+    width:40px!important;
+    height:40px!important;
+    display:grid!important;
+    place-items:center!important;
+    border-radius:11px!important;
+    background:rgba(43,123,176,.11)!important;
+    border:1px solid rgba(76,169,224,.13)!important;
+    color:#67c5f4!important;
+    font:1000 17px/1 system-ui,sans-serif!important;
+    font-style:normal!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565SkillShortcut>i{
+    background:rgba(128,78,203,.11)!important;
+    border-color:rgba(153,99,222,.14)!important;
+    color:#c18df0!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut>span{
+    min-width:0!important;
+    display:block!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut small{
+    display:block!important;
+    margin:0 0 5px!important;
+    color:#718b9d!important;
+    font:1000 6px/1 system-ui,sans-serif!important;
+    letter-spacing:.15em!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565SkillShortcut small{
+    color:#9775b3!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut b{
+    display:block!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#f0f5f8!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif!important;
+    font-size:13px!important;
+    line-height:1!important;
+    font-weight:1000!important;
+    letter-spacing:-.01em!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut em{
+    display:block!important;
+    margin-top:5px!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#6e8292!important;
+    font:750 7px/1 system-ui,sans-serif!important;
+    font-style:normal!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut>strong{
+    color:#638da8!important;
+    font:900 15px/1 system-ui,sans-serif!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565SkillShortcut>strong{
+    color:#9f78c1!important;
+  }
+
+  /* Keep these floating cards clear of the identity on shorter PC screens. */
+  @media (max-height:820px){
+    #roadtoace .ace464HomeHub .ace565HeroShortcuts{
+      top:39%!important;
+      width:min(610px,56%)!important;
+    }
+    #roadtoace .ace464HomeHub .ace565HeroShortcut{
+      min-height:64px!important;
+      padding-top:8px!important;
+      padding-bottom:8px!important;
+    }
+  }
+}
+
+/* Mobile navigation is deliberately unchanged for this experiment. */
+@media (max-width:899px){
+  #roadtoace .ace464HomeHub .ace565HeroShortcuts{display:none!important;}
+}
+</style>
+
+<script id="ace565-home-hub-marker">
+window.ACE_PROJECT_BUILD='B21.36.565-HOME-HUB';
+window.ACE_RELEASE_BUILD='B21.36.565-HOME-HUB';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.565-HOME-HUB';
+window.ACE_HOME_HUB_BUILD='B21.36.565-HOME-HUB';
 </script>
