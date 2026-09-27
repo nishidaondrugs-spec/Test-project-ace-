@@ -45914,7 +45914,9 @@ function renderAttackKeyOverlay(){
   const rta218Phys={
     mode:"",sequence:[],step:0,errors:0,times:[],cueAt:0,readyAt:0,timeout:0,
     energy:100,workEnergy:100,lastStat:"",phase:0,phaseErrors:[],phaseStart:0,
-    pointer:null,lastDir:"",qualityParts:[]
+    pointer:null,lastDir:"",qualityParts:[],
+    speedLanes:[],speedHits:0,speedCombo:0,
+    workTaps:0,workTarget:0,workStart:0
   };
   window.ACE_RTA_PHYSICAL_V2_BUILD='B21.36.218';
 
@@ -45978,10 +45980,38 @@ function renderAttackKeyOverlay(){
     return `<div class="rta218PhysicalCourt reaction" id="rta218PhysicalCourt">${rta218CourtBase(rta218DirectionZones())}<div class="rta218Ready" id="rta218Ready">GET READY</div><div class="rta218Score" id="rta218Score">WAIT FOR THE CUE</div><div class="rta218Prompt" id="rta218Prompt">${rta112IsTouch()?"SWIPE WHEN THE CUE APPEARS":"WASD / ARROWS WHEN THE CUE APPEARS"}</div></div>`;
   }
   function rta218SceneSpeed(){
-    return `<div class="rta218PhysicalCourt speed" id="rta218PhysicalCourt">${rta218CourtBase(rta218DirectionZones())}<div class="rta218SequenceHUD"><small>FOOTWORK SEQUENCE</small><b id="rta218SequenceStep">1 / 3</b></div><div class="rta218Score" id="rta218Score">READY</div><div class="rta218Prompt" id="rta218Prompt">${rta112IsTouch()?"SWIPE THROUGH EACH ZONE":"WASD / ARROWS THROUGH EACH ZONE"}</div></div>`;
+    const keys=["D","F","J","K"];
+    return `<div class="rta218PhysicalCourt speed ace566SpeedCourt" id="rta218PhysicalCourt">
+      <div class="ace566SpeedTop">
+        <div><small>SPEED LADDER</small><b id="rta218SequenceStep">1 / 8</b></div>
+        <div><small>COMBO</small><b id="ace566SpeedCombo">0</b></div>
+      </div>
+      <div class="ace566Piano" id="ace566Piano">
+        ${keys.map((k,i)=>`<button type="button" class="ace566Lane" data-ace566-speed-lane="${i}" aria-label="Speed lane ${k}">
+          <span class="ace566Key">${k}</span>
+          <i class="ace566Tile"></i>
+          <em class="ace566Strike"></em>
+        </button>`).join("")}
+      </div>
+      <div class="rta218Score" id="rta218Score">READY</div>
+      <div class="rta218Prompt" id="rta218Prompt">${rta112IsTouch()?"TAP THE LIT TILE":"D · F · J · K"}</div>
+    </div>`;
   }
   function rta218SceneWork(){
-    return `<div class="rta218PhysicalCourt work" id="rta218PhysicalCourt">${rta218CourtBase(rta218DirectionZones())}<div class="rta218Energy"><span><small>ENERGY</small><b id="rta218EnergyText">100%</b></span><i><em id="rta218EnergyFill" style="width:100%"></em></i></div><div class="rta218SequenceHUD"><small>SHUTTLE CIRCUIT</small><b id="rta218SequenceStep">1 / 4</b></div><div class="rta218Score" id="rta218Score">READY</div><div class="rta218Prompt" id="rta218Prompt">${rta112IsTouch()?"FAST SWIPE = SPRINT · CONTROL SWIPE = SAVE ENERGY":"WASD = CONTROL · SHIFT + WASD = SPRINT"}</div></div>`;
+    return `<div class="rta218PhysicalCourt work ace566WorkCourt" id="rta218PhysicalCourt">
+      <div class="ace566WorkHead"><small>WORK RATE</small><b>KEEP THE OUTPUT HIGH</b></div>
+      <button type="button" class="ace566Mash" data-ace566-work-tap aria-label="Work rate effort button">
+        <span class="ace566MashRing" id="ace566MashRing" style="--ace566-fill:0deg">
+          <i><b id="ace566MashPct">0%</b><small>${rta112IsTouch()?"TAP":"SPACE / CLICK"}</small></i>
+        </span>
+      </button>
+      <div class="ace566WorkStats">
+        <span><small>EFFORT</small><b id="ace566WorkCount">0 / 16</b></span>
+        <span><small>PACE</small><b id="ace566WorkPace">—</b></span>
+      </div>
+      <div class="rta218Score" id="rta218Score">READY</div>
+      <div class="rta218Prompt" id="rta218Prompt">${rta112IsTouch()?"TAP UNTIL THE CIRCLE IS FULL":"HAMMER SPACE OR CLICK"}</div>
+    </div>`;
   }
   function rta218SceneVertical(){
     return `<div class="rta218PhysicalCourt vertical" id="rta218PhysicalCourt">
@@ -45994,9 +46024,9 @@ function renderAttackKeyOverlay(){
   }
   function rta218Controls(stat){
     if(stat==="REACTION_TIME")return rta112IsTouch()?"SWIPE":"WASD / ARROWS";
-    if(stat==="SPEED")return rta112IsTouch()?"SWIPE SEQUENCE":"WASD / ARROWS";
+    if(stat==="SPEED")return rta112IsTouch()?"TAP THE TILES":"D · F · J · K";
     if(stat==="VERTICAL")return rta112IsTouch()?"TAP ×3":"SPACE ×3";
-    return rta112IsTouch()?"SWIPE · CONTROL YOUR SPEED":"WASD · SHIFT TO SPRINT";
+    return rta112IsTouch()?"RAPID TAP":"SPACE / CLICK";
   }
   function rta218BindPointer(){
     const court=q("#rta218PhysicalCourt");if(!court)return;
@@ -46045,27 +46075,133 @@ function renderAttackKeyOverlay(){
       rta218Phys.timeout=setTimeout(()=>{if(!physicalLocked&&rta218Phys.mode==="REACTION")rta218SubmitQuality(.04,"TOO SLOW")},windowMs);
     },delay);
   }
+  function ace566SpeedSequence(len){
+    const out=[];
+    while(out.length<len){
+      let lane=Math.floor(Math.random()*4);
+      if(out.length&&lane===out[out.length-1])lane=(lane+1+Math.floor(Math.random()*3))%4;
+      out.push(lane);
+    }
+    return out;
+  }
+  function ace566SpeedShowTile(lane){
+    qa(".ace566Lane").forEach((el,i)=>{
+      el.classList.remove("active","good","bad");
+      const tile=el.querySelector(".ace566Tile");
+      if(tile){tile.style.animation="none";void tile.offsetWidth;tile.style.animation=""}
+      if(i===lane)el.classList.add("active");
+    });
+  }
+  function ace566SpeedInput(lane){
+    if(S.busy||physicalLocked||rta218Phys.mode!=="SPEED_TILES")return;
+    lane=Number(lane);
+    const target=Number(rta218Phys.sequence[rta218Phys.step]);
+    const now=performance.now();
+    const active=q(`.ace566Lane[data-ace566-speed-lane="${lane}"]`);
+    if(lane!==target){
+      rta218Phys.errors++;
+      rta218Phys.speedCombo=0;
+      active?.classList.add("bad");
+      const combo=q("#ace566SpeedCombo");if(combo)combo.textContent="0";
+      rta218SetScore("MISS");
+      vibrate([10,20,10]);
+      return;
+    }
+
+    const dt=Math.max(1,now-rta218Phys.cueAt);
+    const tune=window.ACE221_TUNE?window.ACE221_TUNE("SPEED"):null;
+    const base=(rta112IsTouch()?520:430)/Math.max(.82,Number(S.training?.rep?.speed||1));
+    const targetMs=base*(tune?tune.windowScale:1);
+    const stepQ=clamp(1-Math.max(0,dt-targetMs*.45)/(targetMs*1.20),.12,1);
+    rta218Phys.times.push(stepQ);
+    rta218Phys.speedHits++;
+    rta218Phys.speedCombo++;
+    active?.classList.remove("active");active?.classList.add("good");
+    const combo=q("#ace566SpeedCombo");if(combo)combo.textContent=String(rta218Phys.speedCombo);
+    rta218SetScore(stepQ>.88?"PERFECT":stepQ>.62?"GOOD":"LATE");
+    vibrate(stepQ>.75?12:7);
+    rta218Phys.step++;
+
+    if(rta218Phys.step>=rta218Phys.sequence.length){
+      const avg=rta218Phys.times.reduce((a,b)=>a+b,0)/Math.max(1,rta218Phys.times.length);
+      const quality=clamp(avg-rta218Phys.errors*.075,.04,1);
+      const label=quality>.86?"LIGHTNING FEET":quality>.64?"QUICK FEET":"SLOW FEET";
+      rta218SetScore(label);
+      setTimeout(()=>rta218SubmitQuality(quality,label),180);
+      return;
+    }
+
+    const hud=q("#rta218SequenceStep");
+    if(hud)hud.textContent=`${rta218Phys.step+1} / ${rta218Phys.sequence.length}`;
+    rta218Phys.cueAt=performance.now();
+    setTimeout(()=>{
+      if(rta218Phys.mode!=="SPEED_TILES"||physicalLocked)return;
+      ace566SpeedShowTile(rta218Phys.sequence[rta218Phys.step]);
+    },70);
+  }
   function rta218StartSpeed(){
     const rep=S.training?.rep;if(!rep)return;
-    rta218ClearPhysTimers();physicalMode="SPEED_V2";physicalLocked=false;rta218Phys.mode="SPEED";
-    const difficulty=Number(rep.difficulty||0),tune=window.ACE221_TUNE?window.ACE221_TUNE("SPEED"):null,len=tune?Math.max(3,Math.min(5,3+(tune.tierIndex>=2?1:0)+(tune.tierIndex>=3?1:0))):(difficulty>.72?4:3);
-    rta218Phys.sequence=rta218Sequence(rep,len);rta218Phys.step=0;rta218Phys.errors=0;rta218Phys.times=[];
+    rta218ClearPhysTimers();physicalMode="SPEED_TILES_V566";physicalLocked=false;rta218Phys.mode="SPEED_TILES";
+    const difficulty=Number(rep.difficulty||0),tune=window.ACE221_TUNE?window.ACE221_TUNE("SPEED"):null;
+    const tier=Number(tune?.tierIndex||0);
+    const len=Math.max(7,Math.min(11,7+(difficulty>.55?1:0)+(difficulty>.75?1:0)+(tier>=2?1:0)+(tier>=3?1:0)));
+    rta218Phys.sequence=ace566SpeedSequence(len);
+    rta218Phys.step=0;rta218Phys.errors=0;rta218Phys.times=[];rta218Phys.speedHits=0;rta218Phys.speedCombo=0;
     const hud=q("#rta218SequenceStep");if(hud)hud.textContent=`1 / ${len}`;
-    rta218Phys.timeout=setTimeout(()=>{rta218Phys.cueAt=performance.now();rta218HighlightDir(rta218Phys.sequence[0],"hot");rta218SetScore("GO");rta218SetPrompt(`${rta218DirIcon(rta218Phys.sequence[0])} ${rta218DirLabel(rta218Phys.sequence[0])}`,"live")},420);
+    const combo=q("#ace566SpeedCombo");if(combo)combo.textContent="0";
+    rta218SetPrompt(rta112IsTouch()?"TAP THE LIT TILE":"D · F · J · K","live");
+    rta218Phys.timeout=setTimeout(()=>{
+      if(rta218Phys.mode!=="SPEED_TILES"||physicalLocked)return;
+      rta218Phys.cueAt=performance.now();
+      ace566SpeedShowTile(rta218Phys.sequence[0]);
+      rta218SetScore("GO");
+    },420);
   }
   function rta218UpdateEnergy(){
     const v=Math.round(clamp(rta218Phys.energy,0,100)),fill=q("#rta218EnergyFill"),txt=q("#rta218EnergyText");
     if(fill)fill.style.width=v+"%";if(txt)txt.textContent=v+"%";
   }
+  function ace566UpdateWorkMeter(){
+    const target=Math.max(1,Number(rta218Phys.workTarget||1));
+    const taps=Math.min(target,Number(rta218Phys.workTaps||0));
+    const pct=Math.round(taps/target*100);
+    const ring=q("#ace566MashRing"),pctEl=q("#ace566MashPct"),count=q("#ace566WorkCount"),pace=q("#ace566WorkPace");
+    if(ring)ring.style.setProperty("--ace566-fill",`${pct*3.6}deg`);
+    if(pctEl)pctEl.textContent=`${pct}%`;
+    if(count)count.textContent=`${taps} / ${target}`;
+    if(pace&&rta218Phys.workStart){
+      const secs=Math.max(.1,(performance.now()-rta218Phys.workStart)/1000);
+      pace.textContent=`${(taps/secs).toFixed(1)} / SEC`;
+    }
+  }
+  function ace566WorkInput(){
+    if(S.busy||physicalLocked||rta218Phys.mode!=="WORK_MASH")return;
+    if(!rta218Phys.workStart){rta218Phys.workStart=performance.now();rta218SetScore("GO")}
+    rta218Phys.workTaps++;
+    ace566UpdateWorkMeter();
+    const btn=q(".ace566Mash");btn?.classList.remove("hit");void btn?.offsetWidth;btn?.classList.add("hit");
+    vibrate(6);
+
+    if(rta218Phys.workTaps>=rta218Phys.workTarget){
+      const elapsed=Math.max(250,performance.now()-rta218Phys.workStart);
+      const tune=window.ACE221_TUNE?window.ACE221_TUNE("WORK_RATE"):null;
+      const ideal=rta218Phys.workTarget*(rta112IsTouch()?185:155)*(tune?tune.windowScale:1);
+      const quality=clamp(1-Math.max(0,elapsed-ideal)/(ideal*1.9),.18,1);
+      const label=quality>.88?"RELENTLESS":quality>.65?"HIGH MOTOR":"GRINDING";
+      rta218SetScore(label);
+      setTimeout(()=>rta218SubmitQuality(quality,label),180);
+    }
+  }
   function rta218StartWork(){
-    const rep=S.training?.rep,d=S.training;if(!rep)return;
-    rta218ClearPhysTimers();physicalMode="WORK_V2";physicalLocked=false;rta218Phys.mode="WORK";
-    if(Number(d?.rep_no||1)<=1||rta218Phys.lastStat!=="WORK_RATE")rta218Phys.workEnergy=100;
-    rta218Phys.lastStat="WORK_RATE";rta218Phys.energy=clamp(rta218Phys.workEnergy,18,100);
-    const tune=window.ACE221_TUNE?window.ACE221_TUNE("WORK_RATE"):null,len=tune?Math.max(4,Math.min(6,4+(tune.tierIndex>=2?1:0)+(tune.tierIndex>=3?1:0))):(Number(rep.difficulty||0)>.72?5:4);
-    rta218Phys.sequence=rta218Sequence(rep,len);rta218Phys.step=0;rta218Phys.errors=0;rta218Phys.qualityParts=[];
-    rta218UpdateEnergy();const hud=q("#rta218SequenceStep");if(hud)hud.textContent=`1 / ${len}`;
-    rta218Phys.timeout=setTimeout(()=>{rta218Phys.cueAt=performance.now();rta218HighlightDir(rta218Phys.sequence[0],"hot");rta218SetScore("CIRCUIT START");rta218SetPrompt(`${rta218DirIcon(rta218Phys.sequence[0])} ${rta218DirLabel(rta218Phys.sequence[0])}`,"live")},420);
+    const rep=S.training?.rep;if(!rep)return;
+    rta218ClearPhysTimers();physicalMode="WORK_MASH_V566";physicalLocked=false;rta218Phys.mode="WORK_MASH";
+    const tune=window.ACE221_TUNE?window.ACE221_TUNE("WORK_RATE"):null;
+    const tier=Number(tune?.tierIndex||0),difficulty=Number(rep.difficulty||0);
+    rta218Phys.workTarget=Math.max(14,Math.min(20,14+(difficulty>.55?1:0)+(difficulty>.72?2:0)+(tier>=2?1:0)+(tier>=3?1:0)));
+    rta218Phys.workTaps=0;rta218Phys.workStart=0;
+    ace566UpdateWorkMeter();
+    rta218SetScore("READY");
+    rta218SetPrompt(rta112IsTouch()?"TAP UNTIL FULL":"HAMMER SPACE OR CLICK","live");
   }
   function rta218StartVertical(){
     const rep=S.training?.rep;if(!rep)return;
@@ -46160,7 +46296,7 @@ function renderAttackKeyOverlay(){
     const d=S.training,rep=d?.rep;if(!d||!rep){closeOverlay();return}
     cleanupRaf();rta218ClearPhysTimers();
     const stat=String(d.physical_stat||rep.physical_stat||"WORK_RATE").toUpperCase(),meta=rta113PhysicalStatMeta(stat);
-    const titles={REACTION_TIME:["READ IT. REACT.","One cue. One movement. Reaction speed is the whole rep."],SPEED:["CHAIN YOUR FOOTWORK.","Move through the court sequence without losing time on the change of direction."],VERTICAL:["BUILD THE JUMP.","Your approach, plant and take-off all contribute to the final jump."],WORK_RATE:["KEEP THE OUTPUT HIGH.","Move quickly, but manage your energy so you can finish the circuit strongly."]};
+    const titles={REACTION_TIME:["READ IT. REACT.","One cue. One movement. Reaction speed is the whole rep."],SPEED:["FIND THE RHYTHM.","Hit the falling lane cleanly. Fast feet are quick decisions repeated under pressure."],VERTICAL:["BUILD THE JUMP.","Your approach, plant and take-off all contribute to the final jump."],WORK_RATE:["KEEP THE OUTPUT HIGH.","Fill the effort circle as quickly as you can. Every press represents another burst of work."]};
     const scene=stat==="REACTION_TIME"?rta218SceneReaction():stat==="SPEED"?rta218SceneSpeed():stat==="VERTICAL"?rta218SceneVertical():rta218SceneWork();
     const [heading,copy]=titles[stat]||titles.WORK_RATE;
     setOverlay(`<div class="rta62OverlayShell rta218DrillShell">${overlayTop(`PHYSICAL · ${esc(meta.label)} · REP ${Number(d.rep_no)}/${Number(d.total_reps)}`,meta.label)}
@@ -46168,7 +46304,7 @@ function renderAttackKeyOverlay(){
         <div class="rta218SceneCol">${scene}</div>
         <aside class="rta218DrillSide">
           <small>${esc(meta.label)}</small><h2>${esc(heading)}</h2><p>${esc(copy)}</p>
-          <div class="rta218Control"><b>${esc(rta218Controls(stat))}</b><span>${stat==="WORK_RATE"?"PACE MATTERS":stat==="VERTICAL"?"THREE CLEAN BEATS":stat==="SPEED"?"COMPLETE THE SEQUENCE":"WAIT FOR THE CUE"}</span></div>
+          <div class="rta218Control"><b>${esc(rta218Controls(stat))}</b><span>${stat==="WORK_RATE"?"FILL THE CIRCLE":stat==="VERTICAL"?"THREE CLEAN BEATS":stat==="SPEED"?"HIT THE CORRECT LANE":"WAIT FOR THE CUE"}</span></div>
           <div class="rta113PrimaryStat"><span>PRIMARY GAIN</span><b>${esc(meta.label)}</b><strong>${Number(S.career?.[meta.attr]||0)}</strong></div>
           ${rta218Progress(S.feedback?`<div class="rta112RepFeedback ${S.feedback.good?"good":"bad"}">${esc(S.feedback.text||"")}</div>`:"")}
         </aside>
@@ -46178,13 +46314,25 @@ function renderAttackKeyOverlay(){
 
   document.addEventListener("click",e=>{
     if(S.overlay!=="training"||String(S.training?.focus||"").toUpperCase()!=="PHYSICAL")return;
-    const zone=e.target.closest?.("[data-rta218-dir]");if(zone){e.preventDefault();rta218DirectionInput(zone.dataset.rta218Dir,{sprint:false,touch:rta112IsTouch()});return}
+    const lane=e.target.closest?.("[data-ace566-speed-lane]");
+    if(lane){e.preventDefault();ace566SpeedInput(Number(lane.dataset.ace566SpeedLane));return}
+    const mash=e.target.closest?.("[data-ace566-work-tap]");
+    if(mash){e.preventDefault();ace566WorkInput();return}
+    const zone=e.target.closest?.("[data-rta218-dir]");
+    if(zone){e.preventDefault();rta218DirectionInput(zone.dataset.rta218Dir,{sprint:false,touch:rta112IsTouch()});return}
   },{passive:false});
   document.addEventListener("keydown",e=>{
     if(S.overlay!=="training"||String(S.training?.focus||"").toUpperCase()!=="PHYSICAL")return;
     const raw=String(e.key||"").toLowerCase(),map={arrowup:"w",arrowleft:"a",arrowdown:"s",arrowright:"d"},dir=map[raw]||raw;
     if(rta218Phys.mode==="VERTICAL"&&e.code==="Space"){e.preventDefault();if(!e.repeat)rta218VerticalInput();return}
-    if(["REACTION","SPEED","WORK"].includes(rta218Phys.mode)&&["w","a","s","d"].includes(dir)){
+    if(rta218Phys.mode==="WORK_MASH"&&e.code==="Space"){e.preventDefault();if(!e.repeat)ace566WorkInput();return}
+    if(rta218Phys.mode==="SPEED_TILES"){
+      const lanes={d:0,f:1,j:2,k:3};
+      if(Object.prototype.hasOwnProperty.call(lanes,raw)){
+        e.preventDefault();if(!e.repeat)ace566SpeedInput(lanes[raw]);return;
+      }
+    }
+    if(rta218Phys.mode==="REACTION"&&["w","a","s","d"].includes(dir)){
       e.preventDefault();if(!e.repeat)rta218DirectionInput(dir,{sprint:!!e.shiftKey,touch:false});return
     }
   },{passive:false});
@@ -68602,4 +68750,349 @@ window.ACE_PROJECT_BUILD='B21.36.565-HOME-HUB';
 window.ACE_RELEASE_BUILD='B21.36.565-HOME-HUB';
 window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.565-HOME-HUB';
 window.ACE_HOME_HUB_BUILD='B21.36.565-HOME-HUB';
+</script>
+
+<style id="ace566-physical-drills">
+/* SPEED — four-lane Piano Tiles-style drill */
+#roadtoace .ace566SpeedCourt{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  padding:18px!important;
+  overflow:hidden!important;
+}
+#roadtoace .ace566SpeedTop{
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:end!important;
+  margin:0 4px 10px!important;
+}
+#roadtoace .ace566SpeedTop>div:last-child{text-align:right!important}
+#roadtoace .ace566SpeedTop small,
+#roadtoace .ace566WorkHead small,
+#roadtoace .ace566WorkStats small{
+  display:block!important;
+  color:#6d879a!important;
+  font:1000 7px/1 system-ui,sans-serif!important;
+  letter-spacing:.14em!important;
+}
+#roadtoace .ace566SpeedTop b{
+  display:block!important;
+  margin-top:5px!important;
+  color:#edf5f8!important;
+  font:1000 13px/1 system-ui,sans-serif!important;
+}
+#roadtoace .ace566Piano{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:7px!important;
+  width:min(620px,88%)!important;
+  height:300px!important;
+  margin:0 auto!important;
+  padding:8px!important;
+  border:1px solid rgba(85,151,194,.12)!important;
+  border-radius:15px!important;
+  background:linear-gradient(180deg,rgba(6,15,24,.92),rgba(8,25,37,.86))!important;
+  overflow:hidden!important;
+}
+#roadtoace .ace566Lane{
+  position:relative!important;
+  min-width:0!important;
+  height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.04)!important;
+  border-radius:10px!important;
+  background:rgba(255,255,255,.018)!important;
+  cursor:pointer!important;
+}
+#roadtoace .ace566Lane+.ace566Lane:before{
+  content:""!important;
+  position:absolute!important;
+  left:-4px!important;
+  top:0!important;
+  bottom:0!important;
+  width:1px!important;
+  background:rgba(90,151,188,.08)!important;
+}
+#roadtoace .ace566Key{
+  position:absolute!important;
+  z-index:3!important;
+  left:50%!important;
+  bottom:15px!important;
+  transform:translateX(-50%)!important;
+  width:34px!important;
+  height:29px!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid rgba(99,181,226,.15)!important;
+  border-radius:7px!important;
+  background:#071722!important;
+  color:#89aec4!important;
+  font:1000 10px/1 system-ui,sans-serif!important;
+}
+#roadtoace .ace566Strike{
+  position:absolute!important;
+  left:8px!important;
+  right:8px!important;
+  bottom:53px!important;
+  height:4px!important;
+  border-radius:999px!important;
+  background:rgba(84,182,235,.16)!important;
+  box-shadow:0 0 14px rgba(67,163,219,.08)!important;
+}
+#roadtoace .ace566Tile{
+  position:absolute!important;
+  z-index:2!important;
+  left:10%!important;
+  right:10%!important;
+  top:5px!important;
+  height:70px!important;
+  border-radius:9px!important;
+  background:linear-gradient(180deg,#4cbcf1,#267bb8)!important;
+  border:1px solid rgba(207,242,255,.32)!important;
+  box-shadow:0 7px 22px rgba(35,142,204,.22)!important;
+  opacity:0!important;
+}
+#roadtoace .ace566Lane.active .ace566Tile{
+  opacity:1!important;
+  animation:ace566TileFall .72s linear both!important;
+}
+#roadtoace .ace566Lane.good{
+  border-color:rgba(89,213,157,.35)!important;
+  background:rgba(53,164,112,.07)!important;
+}
+#roadtoace .ace566Lane.bad{
+  border-color:rgba(239,90,104,.35)!important;
+  background:rgba(185,44,60,.08)!important;
+}
+#roadtoace .ace566Lane.good .ace566Key{color:#72dfa9!important;border-color:rgba(114,223,169,.28)!important}
+#roadtoace .ace566Lane.bad .ace566Key{color:#ff8791!important;border-color:rgba(255,135,145,.27)!important}
+@keyframes ace566TileFall{
+  0%{transform:translateY(-12px);opacity:.72}
+  72%{transform:translateY(176px);opacity:1}
+  100%{transform:translateY(210px);opacity:.85}
+}
+
+/* WORK RATE — rapid input circle */
+#roadtoace .ace566WorkCourt{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:14px!important;
+  padding:22px!important;
+}
+#roadtoace .ace566WorkHead{text-align:center!important}
+#roadtoace .ace566WorkHead b{
+  display:block!important;
+  margin-top:6px!important;
+  color:#edf4f8!important;
+  font:1000 17px/1 "Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif!important;
+}
+#roadtoace .ace566Mash{
+  appearance:none!important;
+  width:210px!important;
+  height:210px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+}
+#roadtoace .ace566MashRing{
+  --ace566-fill:0deg;
+  width:190px!important;
+  height:190px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  background:conic-gradient(#45b7eb var(--ace566-fill),rgba(62,106,132,.13) 0)!important;
+  box-shadow:0 0 0 1px rgba(92,177,225,.14),0 16px 36px rgba(0,0,0,.20)!important;
+  transition:background .05s linear,transform .06s ease!important;
+}
+#roadtoace .ace566MashRing:before{
+  content:""!important;
+  position:absolute!important;
+  width:156px!important;
+  height:156px!important;
+  border-radius:50%!important;
+  background:#081723!important;
+  border:1px solid rgba(255,255,255,.035)!important;
+}
+#roadtoace .ace566MashRing>i{
+  position:relative!important;
+  z-index:2!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-style:normal!important;
+}
+#roadtoace .ace566MashRing b{
+  color:#f4f8fa!important;
+  font:1000 35px/1 "Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif!important;
+}
+#roadtoace .ace566MashRing small{
+  margin-top:8px!important;
+  color:#6f8da1!important;
+  font:1000 7px/1 system-ui,sans-serif!important;
+  letter-spacing:.14em!important;
+}
+#roadtoace .ace566Mash.hit .ace566MashRing{transform:scale(.965)!important}
+#roadtoace .ace566WorkStats{
+  width:min(380px,80%)!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+}
+#roadtoace .ace566WorkStats>span{
+  display:block!important;
+  padding:9px 12px!important;
+  border:1px solid rgba(91,159,201,.10)!important;
+  border-radius:9px!important;
+  background:rgba(8,22,32,.62)!important;
+  text-align:center!important;
+}
+#roadtoace .ace566WorkStats b{
+  display:block!important;
+  margin-top:5px!important;
+  color:#e7f1f6!important;
+  font:1000 11px/1 system-ui,sans-serif!important;
+}
+
+@media (max-width:899px){
+  #roadtoace .ace566Piano{
+    width:100%!important;
+    height:360px!important;
+    gap:5px!important;
+    padding:6px!important;
+  }
+  #roadtoace .ace566Lane{
+    min-height:44px!important;
+    touch-action:manipulation!important;
+  }
+  #roadtoace .ace566Key{display:none!important}
+  #roadtoace .ace566Tile{
+    left:7%!important;
+    right:7%!important;
+    height:82px!important;
+  }
+  @keyframes ace566TileFall{
+    0%{transform:translateY(-16px);opacity:.72}
+    72%{transform:translateY(220px);opacity:1}
+    100%{transform:translateY(258px);opacity:.85}
+  }
+  #roadtoace .ace566Mash{
+    width:230px!important;
+    height:230px!important;
+    min-height:230px!important;
+  }
+  #roadtoace .ace566MashRing{width:210px!important;height:210px!important}
+  #roadtoace .ace566MashRing:before{width:174px!important;height:174px!important}
+}
+@media (prefers-reduced-motion:reduce){
+  #roadtoace .ace566Lane.active .ace566Tile{animation:none!important;top:58%!important}
+  #roadtoace .ace566MashRing{transition:none!important}
+}
+</style>
+
+<script id="ace566-physical-drills-marker">
+window.ACE_PROJECT_BUILD='B21.36.566-PHYSICAL-DRILLS';
+window.ACE_RELEASE_BUILD='B21.36.566-PHYSICAL-DRILLS';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.566-PHYSICAL-DRILLS';
+window.ACE_PHYSICAL_DRILLS_BUILD='B21.36.566-PHYSICAL-DRILLS';
+</script>
+
+<style id="ace567-home-shortcut-position">
+/* B21.36.567 — PC Home shortcut placement only.
+   Keep Home one-screen; move Prep / Skill Tree out of the visual centre. */
+@media (min-width:900px){
+  #roadtoace .ace464HomeHub .ace565HeroShortcuts{
+    left:auto!important;
+    right:26px!important;
+    top:auto!important;
+    bottom:116px!important;
+    transform:none!important;
+    width:340px!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut{
+    min-height:60px!important;
+    grid-template-columns:38px minmax(0,1fr) 18px!important;
+    gap:9px!important;
+    padding:9px 11px!important;
+    border-radius:12px!important;
+    background:linear-gradient(135deg,rgba(7,20,31,.82),rgba(7,15,25,.72))!important;
+    backdrop-filter:blur(7px)!important;
+    -webkit-backdrop-filter:blur(7px)!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut>i{
+    width:36px!important;
+    height:36px!important;
+    border-radius:10px!important;
+    font-size:15px!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut small{
+    margin-bottom:4px!important;
+    font-size:5.8px!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut b{
+    font-size:12px!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace565HeroShortcut em{
+    margin-top:4px!important;
+    font-size:6.7px!important;
+  }
+
+  /* The two sides now intentionally balance each other:
+     identity left, career actions right. */
+  #roadtoace .ace464HomeHub .ace456HeroIdentity{
+    padding-right:390px!important;
+  }
+}
+
+@media (min-width:900px) and (max-width:1220px){
+  #roadtoace .ace464HomeHub .ace565HeroShortcuts{
+    right:18px!important;
+    width:300px!important;
+  }
+  #roadtoace .ace464HomeHub .ace456HeroIdentity{
+    padding-right:330px!important;
+  }
+}
+
+@media (min-width:900px) and (max-height:820px){
+  #roadtoace .ace464HomeHub .ace565HeroShortcuts{
+    bottom:106px!important;
+    width:300px!important;
+  }
+  #roadtoace .ace464HomeHub .ace565HeroShortcut{
+    min-height:54px!important;
+    padding-top:7px!important;
+    padding-bottom:7px!important;
+  }
+}
+</style>
+
+<script id="ace567-home-shortcut-marker">
+window.ACE_PROJECT_BUILD='B21.36.567-HOME-SHORTCUT-POSITION';
+window.ACE_RELEASE_BUILD='B21.36.567-HOME-SHORTCUT-POSITION';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.567-HOME-SHORTCUT-POSITION';
+window.ACE_HOME_SHORTCUT_BUILD='B21.36.567-HOME-SHORTCUT-POSITION';
 </script>
