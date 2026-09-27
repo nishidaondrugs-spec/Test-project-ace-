@@ -38161,12 +38161,37 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   }
   let rta119RpcInflight=0,rta119LastRpcName="",rta119LastRpcFinished=0;
   const rta316ReadInflight=new Map();
+  const rta549ReadCache=new Map();
   const rta316ReadOnly=new Set([
-    "vds_rta_get_state_fast","vds_rta_get_state","vds_rta_get_world_update","vds_rta_get_save_slots",
+    "vds_rta_get_career_bundle_v549","vds_rta_get_state_fast","vds_rta_get_state","vds_rta_get_world_update","vds_rta_get_save_slots",
     "vds_rta_get_skill_tree","vds_rta_get_bonus_skill_milestones","vds_rta_get_selection_state",
-    "vds_rta_get_league_world","vds_rta_get_living_league","vds_rta_get_transfer_market"
+    "vds_rta_get_league_world","vds_rta_get_living_league","vds_rta_get_transfer_market",
+    "vds_rta_ecosystem_status_v529","vds_rta_ecosystem_preview_status_v527","vds_rta_get_squad_battle_v313"
   ]);
-  const rta316RpcStats={calls:0,deduped:0,byName:{}};
+  const rta316RpcStats={calls:0,deduped:0,cacheHits:0,byName:{}};
+  function rta549CacheTTL(name){
+    if(name==="vds_rta_get_career_bundle_v549")return 15000;
+    if(["vds_rta_ecosystem_status_v529","vds_rta_ecosystem_preview_status_v527","vds_rta_get_squad_battle_v313"].includes(name))return 15000;
+    if(["vds_rta_get_state_fast","vds_rta_get_world_update","vds_rta_get_selection_state"].includes(name))return 8000;
+    return 4000;
+  }
+  function rta549InvalidateReadCache(name=""){
+    if(!name){rta549ReadCache.clear();return}
+    const prefix=String(name)+":";
+    for(const k of [...rta549ReadCache.keys()])if(k===String(name)||k.startsWith(prefix))rta549ReadCache.delete(k);
+  }
+  function rta549PatchCareer(c){
+    if(!c||typeof c!=="object")return;
+    S.career=c;
+    const b=window.ACE_RTA_BUNDLE;
+    if(b?.core)b.core.career=c;
+    if(b?.world)b.world.career=c;
+    if(b?.ecosystem?.career)b.ecosystem.career={...b.ecosystem.career,...c};
+  }
+  function rta549MarkStale(){
+    window.ACE_RTA_BUNDLE_STALE=true;
+    rta549InvalidateReadCache();
+  }
   async function rpc(name,args={}){
     const db=mainClient();if(!db)throw new Error("ACE account connection unavailable.");
     const rpcName=String(name||"");
@@ -38174,7 +38199,12 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
     let key="";
     if(readOnly){
       try{key=rpcName+":"+JSON.stringify(args||{})}catch(_){key=rpcName}
+      const cached=rta549ReadCache.get(key);
+      if(cached&&cached.expires>Date.now()){rta316RpcStats.cacheHits++;return cached.data}
+      if(cached)rta549ReadCache.delete(key);
       if(rta316ReadInflight.has(key)){rta316RpcStats.deduped++;return rta316ReadInflight.get(key)}
+    }else{
+      rta549MarkStale();
     }
     const run=(async()=>{
       rta119RpcInflight++;rta119LastRpcName=rpcName;rta316RpcStats.calls++;
@@ -38183,6 +38213,10 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
       try{
         const {data,error}=await timeout(db.rpc(name,args));
         if(error)throw error;
+        if(readOnly&&key){
+          const ttl=rta549CacheTTL(rpcName);
+          if(ttl>0)rta549ReadCache.set(key,{data,expires:Date.now()+ttl});
+        }
         return data;
       }finally{
         const ms=Math.max(0,performance.now()-started);stat.lastMs=Math.round(ms);stat.totalMs+=ms;
@@ -38196,6 +38230,9 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
   window.ACE_RTA_316_STATS=rta316RpcStats;
   window.ACE_RTA_RPC=rpc;
   window.ACE_RTA_LOAD_STATE=loadState;
+  window.ACE_RTA_INVALIDATE_READ_CACHE=rta549InvalidateReadCache;
+  window.ACE_RTA_PATCH_CAREER=rta549PatchCareer;
+  window.ACE_RTA_MARK_STALE=rta549MarkStale;
 
   let rta316WorldAt=0,rta316SkillPromise=null,rta316SavePromise=null;
   function rta316BonusKey(){
@@ -38480,15 +38517,21 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
          If auth or the core Career RPC stalls, fail visibly instead of leaving
          the player on "Loading career…" forever. */
       await permanentSession();
-      const data=await timeout(rpc("vds_rta_get_state_fast"),7000);
+      const data=await timeout(rpc("vds_rta_get_career_bundle_v549"),12000);
+      const core=data?.core||data||{};
+      const bundledWorld=(data?.world&&typeof data.world==="object"&&!data.world.error)?data.world:null;
 
       if(S._loadToken!==loadToken)return;
 
-      S.career=data?.career||null;
-      S.history=Array.isArray(data?.history)?data.history:[];
-      S.league=data?.league||null;
-      S.activeTraining=data?.active_training||null;
-      S.activeKey=data?.active_key_match||null;
+      window.ACE_RTA_BUNDLE=data||{};
+      window.ACE_RTA_BUNDLE_AT=Date.now();
+      window.ACE_RTA_BUNDLE_STALE=false;
+
+      S.career=core?.career||null;
+      S.history=Array.isArray(core?.history)?core.history:[];
+      S.league=core?.league||null;
+      S.activeTraining=core?.active_training||null;
+      S.activeKey=core?.active_key_match||null;
       S.skillTree=null;
 
       if(world){
@@ -38505,9 +38548,15 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         S.saveSlots=Array.isArray(keepWorld?.saveSlots)?keepWorld.saveSlots:S.saveSlots;
       }
 
+      if(world&&bundledWorld){
+        rta105ApplyWorldUpdate(bundledWorld);
+        rta316WorldAt=Date.now();
+      }
+      try{document.dispatchEvent(new CustomEvent("ace:rta-bundle",{detail:data||{}}))}catch(_){}
+
       /* IMPORTANT: Career is usable NOW.
-         Skill tree, world simulation and save slots are enrichment; none of them
-         are allowed to hold the main Career screen hostage. */
+         Skill tree and save slots remain lazy; world/ecosystem/battle/preview
+         arrived in the single bootstrap request above. */
       S.loaded=true;
       S.loading=false;
       render();
@@ -38522,7 +38571,7 @@ background: linear-gradient(90deg,transparent 49.7%,rgba(255,255,255,.15) 49.8% 
         let bonusSp=0;
         const jobs=[];
 
-        if(world){
+        if(world&&!bundledWorld){
           jobs.push((async()=>{
             try{
               const w=await timeout(rta316EnsureWorld(true),6500);
@@ -42782,8 +42831,9 @@ document.addEventListener("click",function(e){
     try{
       const d=await rpc("vds_rta_play_match");
       if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
+      if(d?.career){rta549PatchCareer(d.career);if(d?.calendar&&S.career)S.career.calendar_state=d.calendar}
       showMatchResult(d);
-      await loadState({silent:true});
+      if(!d?.career)await loadState({silent:true,world:false});
       try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}
     }catch(e){
       toast(`SIM MATCH · ${errText(e)}`,"error");
@@ -43562,7 +43612,7 @@ document.addEventListener("click",function(e){
       const d=await rpc("vds_rta_submit_training_rep",{p_x:Number(px.toFixed(4)),p_y:Number(py.toFixed(4)),p_timing:Number(timing.toFixed(4))});
       vibrate(d.success?25:[18,30,18]);rta242Feedback(r,d.success?"GOOD SWING":"DEFENCE WINS");
       await new Promise(res=>setTimeout(res,2200));
-      if(d.done){S.training=d;showTrainingResult(d);await loadState({silent:true,world:false})}
+      if(d.done){S.training=d;if(d?.career)rta549PatchCareer(d.career);showTrainingResult(d);if(!d?.career)await loadState({silent:true,world:false})}
       else{S.training=d;S.feedback={good:!!d.success,text:`${rta242ReadBand(r)} · ${r.read.shot} + ${r.read.power}`};renderTrainingOverlay()}
     }catch(e){toast(errText(e),"error");renderTrainingOverlay()}
     finally{S.busy=false;rta242Hit.busy=false}
@@ -43604,7 +43654,7 @@ document.addEventListener("click",function(e){
       const proc=ace316eTriggeredText(d);
       rta242Feedback(r,proc?`${out||"RESULT"} · ${proc}`:(out||"RESULT"));
       await new Promise(res=>setTimeout(res,2300));
-      if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
+      if(d.done){S.key=d;if(d?.career)rta549PatchCareer(d.career);showMatchResult(d);if(!d?.career)await loadState({silent:true,world:false});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
       else{S.key=d;S.feedback=null;renderKeyOverlay()}
     }catch(e){toast(errText(e),"error");renderKeyOverlay()}
     finally{S.busy=false;rta242Hit.busy=false}
@@ -43664,7 +43714,7 @@ function renderAttackKeyOverlay(){
       const d=await rpc(intl?"vds_rta_resolve_international_key_timeout_v315":"vds_rta_resolve_key_timeout");
       if(d?.next_selection_state)S.selection=d.next_selection_state;else if(d?.selection_state)S.selection=d.selection_state;
       vibrate([20,35,20]);
-      if(d.done){S.key=d;showMatchResult(d);await loadState({silent:true});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
+      if(d.done){S.key=d;if(d?.career)rta549PatchCareer(d.career);showMatchResult(d);if(!d?.career)await loadState({silent:true,world:false});if(!intl){try{window.ACE425_SCOUTING_AFTER_MATCH?.()}catch(_){}}}
       else{S.key=d;S.feedback={good:false,text:`LATE READ · ${d.outcome||"The defence wins the moment."}`};renderKeyOverlay()}
     }catch(e){toast(errText(e),"error")}finally{S.busy=false}
   }
@@ -52777,9 +52827,16 @@ function decorate(){raf=0;const mount=document.querySelector('#roadtoace #rta62M
 function queue(){if(!raf)raf=requestAnimationFrame(decorate)}
 document.addEventListener('click',e=>{if(e.target.closest?.('[data-ace313-open-match]')){const s=S();if(!s)return;s.view='match';try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(()=>document.querySelector('#roadtoace')?.scrollIntoView({behavior:'smooth',block:'start'}),30)}});
 const road=document.getElementById('roadtoace');if(road)document.addEventListener("ace:rta-render",queue);
-window.addEventListener('pageshow',()=>refresh(true));window.addEventListener('online',()=>refresh(true));
-setInterval(()=>{if(document.visibilityState==='visible'&&C()&&sig()!==lastFetch)refresh()},5000);
-window.ACE_SQUAD_BATTLE_V313={refresh:()=>refresh(true),get:()=>battle};window.ACE_PROJECT_BUILD='B21.36.313';queue();setTimeout(()=>refresh(true),900);
+document.addEventListener("ace:rta-bundle",e=>{
+  const b=e?.detail?.ecosystem?.battle||window.ACE_RTA_BUNDLE?.ecosystem?.battle;
+  if(b){battle=b;lastFetch=sig();queue()}
+});
+window.ACE_SQUAD_BATTLE_V313={
+  refresh:()=>{window.ACE_RTA_INVALIDATE_READ_CACHE?.('vds_rta_get_squad_battle_v313');return refresh(true)},
+  get:()=>battle
+};
+window.ACE_PROJECT_BUILD='B21.36.549-NETWORK-QUIET';
+queue();
 })();
 </script>
 
@@ -65719,8 +65776,7 @@ img,svg{
     const old=btn?.innerHTML;if(btn){btn.disabled=true;btn.innerHTML='<small>RECOVERY</small><b>Processing…</b>'}
     try{
       const d=await window.ACE_RTA_RPC('vds_rta_recovery_activity_v512',{p_activity:activity});
-      if(d?.career&&S())S().career=d.career;
-      try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}
+      if(d?.career&&S()){S().career=d.career;window.ACE_RTA_PATCH_CAREER?.(d.career)}
       const labels={REST:'Full rest completed',CLUB_PHYSIO:'Club rehab completed',FILM:'Film-room session completed',TEAM_TIME:'Team time completed',SPECIALIST_PHYSIO:'Specialist recovery completed'};
       toast(`${labels[activity]||'Recovery completed'}${Number(d?.cost||0)>0?` · ${money(d.cost)}`:''}.`,'good');
       try{window.__ACE_RTA_RENDER?.()}catch(_){}
@@ -66695,7 +66751,7 @@ function renderPlanner(){
   });
 }
 function toast(msg,type=''){if(typeof window.ACE_RTA_TOAST==='function'){try{return window.ACE_RTA_TOAST(msg,type)}catch(_){}}document.querySelectorAll('.ace519Toast').forEach(n=>n.remove());const el=document.createElement('div');el.className='ace519Toast';el.style.cssText='position:fixed;left:50%;bottom:95px;transform:translateX(-50%);z-index:999999;padding:10px 13px;border-radius:10px;background:#0d2533;color:#eefaff;border:1px solid rgba(106,196,241,.2);font:800 11px system-ui';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
-async function executeRecovery(c,p,x){busy=true;renderPlanner();try{const d=x.id==='FILM'?await window.ACE_RTA_RPC('vds_rta_watch_opponent_film_v522',{}):await window.ACE_RTA_RPC('vds_rta_recovery_activity_v512',{p_activity:x.id});if(d?.career)S().career=d.career;if(x.id==='FILM'&&d?.report){try{window.ACE522_SHOW_FILM_REPORT?.(d)}catch(_){}}try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}p.index++;p.waiting=null;savePlan(C()||c,p);toast(`${x.title} completed.`,'good');try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(renderPlanner,50)}catch(e){toast(String(e?.message||e).replace(/^.*?:\s*/,''),'error')}finally{busy=false;renderPlanner()}}
+async function executeRecovery(c,p,x){busy=true;renderPlanner();try{const d=x.id==='FILM'?await window.ACE_RTA_RPC('vds_rta_watch_opponent_film_v522',{}):await window.ACE_RTA_RPC('vds_rta_recovery_activity_v512',{p_activity:x.id});if(d?.career){S().career=d.career;window.ACE_RTA_PATCH_CAREER?.(d.career)}if(x.id==='FILM'&&d?.report){try{window.ACE522_SHOW_FILM_REPORT?.(d)}catch(_){}}p.index++;p.waiting=null;savePlan(C()||c,p);toast(`${x.title} completed.`,'good');try{window.__ACE_RTA_RENDER?.()}catch(_){}setTimeout(renderPlanner,50)}catch(e){toast(String(e?.message||e).replace(/^.*?:\s*/,''),'error')}finally{busy=false;renderPlanner()}}
 function executeTraining(c,p,x){const h=host();if(!h)return;let target=null;if(x.type==='physical')target=h.querySelector(`[data-rta113-physical="${CSS.escape(x.id)}"]`);else target=h.querySelector(`[data-rta62-train="${CSS.escape(x.id)}"]`);if(!target||target.disabled){toast('That training activity is currently unavailable.','error');return}p.waiting=Number(c.training_used||0);savePlan(c,p);renderPlanner();target.click()}
 function runNext(){const c=C();if(!c||busy)return;let p=normalizePlan(c,loadPlan(c));if(!p.confirmed){if(!p.items.length)return;if(!Number.isFinite(Number(p.baseUsed)))p.baseUsed=Number(c.training_used||0);p.confirmed=true;p.index=0;p.waiting=null;savePlan(c,p)}if(p.waiting!==null){const resume=document.querySelector('#roadtoace [data-rta62-resume-training]');if(resume){resume.click();return}toast('Finish the current training drill first.');return}const x=p.items[p.index];if(!x){clearPlan(c);renderPlanner();return}if(x.type==='train'||x.type==='physical')executeTraining(c,p,x);else executeRecovery(c,p,x)}
 function addChoice(id){const c=C();if(!c)return;let p=normalizePlan(c,loadPlan(c));if(p.confirmed)return;const max=maxPlanItems(c,p);if(p.items.some(x=>x.id===id)){p.items=p.items.filter(x=>x.id!==id);savePlan(c,p);renderPlanner();return}if(p.items.length>=max){toast(`Only ${max} preparation slot${max===1?' is':'s are'} available.`);return}const x=item(id);if(!x||choiceDisabled(c,id))return;p.items.push(x);savePlan(c,p);renderPlanner()}
@@ -67014,11 +67070,17 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
   async function refresh(force=false){
     paintChip();
     if(!window.ACE_TEST_SERVER_BUILD||!careerReady()||!roadVisible()||typeof window.ACE_RTA_RPC!=='function')return null;
-    const now=Date.now(),currentSlot=slot();
-    if(!force&&status&&!status.error&&currentSlot===lastSlot&&now-lastChecked<20000){paintChip();paintModal();return status}
+    const currentSlot=slot();
+    const bundled=window.ACE_RTA_BUNDLE?.preview;
+    if(!force&&bundled&&typeof bundled==="object"){
+      status=bundled;lastSlot=currentSlot;lastChecked=Date.now();paintChip();paintModal();return status;
+    }
+    if(!force&&status&&!status.error&&currentSlot===lastSlot){paintChip();paintModal();return status}
     try{
+      if(force)window.ACE_RTA_INVALIDATE_READ_CACHE?.(STATUS_RPC);
       status=await rpc(STATUS_RPC,{});lastSlot=currentSlot;lastChecked=Date.now();
-    }catch(err){status={error:errorText(err),slot:currentSlot,ecosystem_active:false,private_preview:false,beta_grace:true,mode:'STATUS ERROR'};lastSlot=currentSlot;lastChecked=Date.now()}
+      if(window.ACE_RTA_BUNDLE)window.ACE_RTA_BUNDLE.preview=status;
+    }catch(err){status={error:errorText(err),slot:currentSlot,ecosystem_active:false,private_preview:false,beta_grace:false,mode:'STATUS ERROR'};lastSlot=currentSlot;lastChecked=Date.now()}
     paintChip();paintModal();return status;
   }
   async function enable(){
@@ -67044,18 +67106,15 @@ window.ACE_PROJECT_BUILD='B21.36.524-BETA';window.ACE_RELEASE_BUILD='B21.36.524-
   },true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalOpen)closeModal()});
 
-  // Detect save switching without hammering the backend. RPC refresh only occurs on
-  // a slot change or once every 20 seconds while Road to Ace is actually visible.
-  setInterval(()=>{
-    const current=slot();
-    paintChip();
-    if(careerReady()&&roadVisible()&&(current!==lastSlot||Date.now()-lastChecked>20000))refresh(true);
-  },1600);
-  window.addEventListener('focus',()=>refresh(false));
-  document.addEventListener('ace:rta-render',()=>refresh(false));
-  setTimeout(()=>refresh(true),900);
+  // Post-grace status is event-driven. No idle polling.
+  document.addEventListener('ace:rta-bundle',e=>{
+    const b=e?.detail?.preview||window.ACE_RTA_BUNDLE?.preview;
+    if(b){status=b;lastSlot=slot();lastChecked=Date.now();paintChip();paintModal()}
+  });
+  document.addEventListener('ace:rta-render',()=>paintChip());
+  setTimeout(()=>paintChip(),900);
 
-  window.ACE527_ECOSYSTEM_PREVIEW={refresh,open:openModal,status:()=>status,build:BUILD};
+  window.ACE527_ECOSYSTEM_PREVIEW={refresh,open:openModal,status:()=>status,build:'B21.36.549-NETWORK-QUIET'};
 })();
 </script>
 <script id="ace527-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.527-PRIVATE-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_PREVIEW_BUILD='B21.36.527-PRIVATE-PREVIEW';</script>
@@ -67142,9 +67201,17 @@ function cost(action,c=C()){
 }
 async function refreshEco(force=false){
   if(!active()){eco=null;queue();return null}
-  if(fetching||(!force&&eco&&Date.now()-lastFetch<8000))return eco;
+  const bundled=window.ACE_RTA_BUNDLE?.ecosystem;
+  if(!force&&bundled&&typeof bundled==="object"){
+    eco=bundled;lastFetch=Date.now();queue();return eco;
+  }
+  if(fetching||(!force&&eco))return eco;
   fetching=true;
-  try{eco=await rpc('vds_rta_ecosystem_status_v529',{});lastFetch=Date.now()}
+  try{
+    if(force)window.ACE_RTA_INVALIDATE_READ_CACHE?.('vds_rta_ecosystem_status_v529');
+    eco=await rpc('vds_rta_ecosystem_status_v529',{});lastFetch=Date.now();
+    if(window.ACE_RTA_BUNDLE)window.ACE_RTA_BUNDLE.ecosystem=eco;
+  }
   catch(e){console.warn('ACE 530 ecosystem status unavailable',e)}
   finally{fetching=false;queue()}
   return eco;
@@ -67350,12 +67417,15 @@ async function doAction(action,btn){
   if(btn)btn.disabled=true;
   try{
     const d=await rpc('vds_rta_ecosystem_action_v529',{p_action:action});
-    if(d?.career&&S())S().career=d.career;
-    if(d?.status)eco=d.status;else await refreshEco(true);
-    try{await window.ACE_RTA_LOAD_STATE?.({silent:true,world:false})}catch(_){}
+    if(d?.career){if(S())S().career=d.career;window.ACE_RTA_PATCH_CAREER?.(d.career)}
+    if(d?.status){
+      eco=d.status;
+      if(window.ACE_RTA_BUNDLE)window.ACE_RTA_BUNDLE.ecosystem=d.status;
+      lastFetch=Date.now();
+    }
     if(msg){msg.textContent=String(d?.description||'Career ecosystem updated.');msg.className='ace530ActionMsg good'}
     try{window.__ACE_RTA_RENDER?.()}catch(_){}
-    setTimeout(()=>{refreshEco(true);queue()},80);
+    queue();
   }catch(e){
     if(msg){msg.textContent=String(e?.message||e).replace(/^.*?:\s*/,'');msg.className='ace530ActionMsg bad'}
   }finally{if(btn)btn.disabled=false}
@@ -67380,20 +67450,17 @@ document.addEventListener('click',e=>{
   }
 },true);
 
-document.addEventListener('ace:rta-render',()=>{refreshEco(false);queue()});
-window.addEventListener('focus',()=>{refreshEco(false);queue()});
-window.addEventListener('pageshow',()=>{setTimeout(()=>refreshEco(true),250);setTimeout(queue,350)},{passive:true});
-
-
-setInterval(()=>{
-  if(document.visibilityState!=='visible')return;
-  const should=active();
-  if(should&&(!eco||Date.now()-lastFetch>12000))refreshEco(true);
-  if(!should&&eco){eco=null;queue()}
-},2200);
-
-setTimeout(()=>{refreshEco(true);queue()},1100);
-window.ACE530_ECOSYSTEM_UI={refresh:()=>refreshEco(true),get:()=>eco,build:BUILD};
+document.addEventListener('ace:rta-render',()=>queue());
+document.addEventListener('ace:rta-bundle',e=>{
+  const b=e?.detail?.ecosystem||window.ACE_RTA_BUNDLE?.ecosystem;
+  if(b){eco=b;lastFetch=Date.now();queue()}
+});
+setTimeout(()=>queue(),1100);
+window.ACE530_ECOSYSTEM_UI={
+  refresh:()=>{window.ACE_RTA_INVALIDATE_READ_CACHE?.('vds_rta_ecosystem_status_v529');return refreshEco(true)},
+  get:()=>eco,
+  build:'B21.36.549-NETWORK-QUIET'
+};
 })();
 </script>
 <script id="ace530-final-build-marker">window.ACE_PROJECT_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';window.ACE_TEST_SERVER_BUILD=true;window.ACE_ECOSYSTEM_UI_BUILD='B21.36.532-ECOSYSTEM-PREVIEW';</script>
@@ -67853,4 +67920,997 @@ window.ACE_PROJECT_BUILD='B21.36.547-PREP-PC-FIT';
 window.ACE_RELEASE_BUILD='B21.36.547-PREP-PC-FIT';
 window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.547-PREP-PC-FIT';
 window.ACE_PREP_REPLICA_BUILD='B21.36.547-PREP-PC-FIT';
+</script>
+
+<script id="ace549-network-quiet-marker">
+window.ACE_PROJECT_BUILD='B21.36.549-NETWORK-QUIET';
+window.ACE_RELEASE_BUILD='B21.36.549-NETWORK-QUIET';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.549-NETWORK-QUIET';
+window.ACE_RTA_NETWORK_QUIET_BUILD='B21.36.549-NETWORK-QUIET';
+</script>
+
+<style id="ace550-laptop-skilltree-fit">
+/* B21.36.550 — Road to Ace Skill Tree laptop pass.
+   Desktop/laptop only: keep the tree readable and scroll the TREE, not the whole page.
+   Phone layout from 341 remains untouched. */
+@media (min-width: 761px) and (max-height: 1050px) {
+  #roadtoace .ace316kPage{
+    width:min(1320px,calc(100% - 24px))!important;
+    margin:0 auto!important;
+    padding:0 0 22px!important;
+  }
+
+  /* Header: readable instead of micro-type. */
+  #roadtoace .ace316kTop{
+    position:relative!important;
+    top:auto!important;
+    grid-template-columns:minmax(0,1fr) 74px!important;
+    min-height:58px!important;
+    padding:9px 14px!important;
+    margin-bottom:10px!important;
+    border:1px solid rgba(127,92,207,.12)!important;
+    border-radius:16px!important;
+    background:linear-gradient(135deg,#080c18,#090d19 66%,rgba(78,48,145,.10))!important;
+    backdrop-filter:none!important;
+  }
+  #roadtoace .ace316kTitle small{
+    color:#76899e!important;
+    font:900 8px/1 system-ui,sans-serif!important;
+    letter-spacing:.12em!important;
+  }
+  #roadtoace .ace316kTitle h1{
+    margin:4px 0 0!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:24px!important;
+    line-height:.9!important;
+    letter-spacing:-.025em!important;
+  }
+  #roadtoace .ace316kSp{
+    min-width:66px!important;
+    padding:8px 10px!important;
+    border-radius:999px!important;
+    background:#071d30!important;
+  }
+  #roadtoace .ace316kSp b{font-size:19px!important}
+  #roadtoace .ace316kSp span{
+    margin-left:4px!important;
+    font-size:8px!important;
+  }
+
+  /* Identity card uses the horizontal space instead of getting vertically tall. */
+  #roadtoace .ace316kIdentity{
+    grid-template-columns:minmax(0,1fr) 86px!important;
+    gap:12px!important;
+    min-height:116px!important;
+    padding:15px 16px!important;
+    border-radius:15px!important;
+  }
+  #roadtoace .ace316kIdentityMain small{
+    font-size:8px!important;
+    letter-spacing:.13em!important;
+  }
+  #roadtoace .ace316kIdentityMain h2{
+    margin:6px 0 3px!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:30px!important;
+    line-height:.95!important;
+    letter-spacing:-.025em!important;
+  }
+  #roadtoace .ace316kIdentityMain>b{
+    font-size:8px!important;
+    letter-spacing:.10em!important;
+  }
+  #roadtoace .ace316kBuildStrip{
+    gap:7px!important;
+    margin-top:11px!important;
+  }
+  #roadtoace .ace316kBuildStrip span{
+    padding:7px 9px!important;
+    border-radius:8px!important;
+  }
+  #roadtoace .ace316kBuildStrip small{font-size:7px!important}
+  #roadtoace .ace316kBuildStrip b{
+    margin-top:3px!important;
+    font-size:9px!important;
+  }
+  #roadtoace .ace316kOvr{
+    width:72px!important;
+    height:72px!important;
+  }
+  #roadtoace .ace316kOvr small{font-size:7px!important}
+  #roadtoace .ace316kOvr b{font-size:27px!important}
+  #roadtoace .ace316kOvr span{font-size:6px!important}
+
+  /* Four paths should read as a proper navigation rail, not a tiny cluster at the left. */
+  #roadtoace .ace316kPaths{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:8px!important;
+    margin:9px 0 10px!important;
+    padding:8px!important;
+    overflow:visible!important;
+  }
+  #roadtoace .ace316kPaths button{
+    min-width:0!important;
+    width:100%!important;
+    min-height:54px!important;
+    grid-template-columns:36px minmax(0,1fr)!important;
+    gap:8px!important;
+    padding:8px 10px!important;
+    border-radius:10px!important;
+  }
+  #roadtoace .ace316kPaths i{
+    width:34px!important;
+    height:34px!important;
+    font-size:16px!important;
+  }
+  #roadtoace .ace316kPaths small{font-size:6.5px!important}
+  #roadtoace .ace316kPaths b{font-size:10px!important}
+  #roadtoace .ace316kPaths em{font-size:6.5px!important}
+
+  #roadtoace .ace332PathCommit{
+    margin:0 0 10px!important;
+    padding:10px 12px!important;
+  }
+
+  /* This is the key laptop fix:
+     keep the whole workspace inside the viewport and scroll the long tree internally. */
+  #roadtoace .ace316kWorkspace{
+    grid-template-columns:minmax(0,68%) minmax(300px,32%)!important;
+    gap:10px!important;
+    align-items:stretch!important;
+    min-height:0!important;
+  }
+  #roadtoace .ace316kTreePane,
+  #roadtoace .ace316kDetails{
+    height:clamp(430px,calc(100dvh - 385px),620px)!important;
+    min-height:430px!important;
+    max-height:620px!important;
+    border-radius:13px!important;
+  }
+  #roadtoace .ace316kTreePane{
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:thin!important;
+    scrollbar-color:#225173 #07131f!important;
+  }
+  #roadtoace .ace316kTreePane::-webkit-scrollbar{width:8px!important}
+  #roadtoace .ace316kTreePane::-webkit-scrollbar-track{background:#07131f!important}
+  #roadtoace .ace316kTreePane::-webkit-scrollbar-thumb{
+    background:#225173!important;
+    border-radius:999px!important;
+  }
+  #roadtoace .ace316kTreeHead{
+    position:sticky!important;
+    top:0!important;
+    z-index:20!important;
+    padding:10px 12px!important;
+    border-bottom-color:rgba(255,255,255,.06)!important;
+    box-shadow:0 8px 16px rgba(0,0,0,.18)!important;
+  }
+  #roadtoace .ace316kTreeHead small{font-size:7px!important}
+  #roadtoace .ace316kTreeHead b{
+    margin-top:3px!important;
+    font-size:12px!important;
+  }
+
+  /* Keep nodes legible at laptop viewing distance. */
+  #roadtoace .ace316kNode{
+    left:calc(var(--x)*1% - 48px)!important;
+    width:96px!important;
+  }
+  #roadtoace .ace316kOrb{
+    width:66px!important;
+    height:66px!important;
+  }
+  #roadtoace .ace316kNode.playstyle .ace316kOrb,
+  #roadtoace .ace316kNode.ace_plus .ace316kOrb{
+    width:72px!important;
+    height:72px!important;
+  }
+  #roadtoace .ace316kNode>b{
+    width:150px!important;
+    margin:8px 0 0 -27px!important;
+    font-size:10px!important;
+    line-height:1.08!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-align:center!important;
+  }
+  #roadtoace .ace316kNode>.ace339NodeDesc{
+    display:-webkit-box!important;
+    width:164px!important;
+    min-height:20px!important;
+    margin:4px 0 0 -34px!important;
+    -webkit-line-clamp:2!important;
+    -webkit-box-orient:vertical!important;
+    overflow:hidden!important;
+    color:#7891a5!important;
+    font-size:7.5px!important;
+    font-weight:720!important;
+    line-height:1.25!important;
+    text-align:center!important;
+  }
+  #roadtoace .ace316kNode>small{
+    width:130px!important;
+    margin:5px 0 0 -17px!important;
+    font-size:6px!important;
+  }
+  #roadtoace .ace316kStageRail{
+    width:48px!important;
+  }
+  #roadtoace .ace316kStageRail div{width:46px!important}
+  #roadtoace .ace316kStageRail small{
+    width:26px!important;
+    height:26px!important;
+    font-size:7px!important;
+  }
+  #roadtoace .ace316kStageRail b{font-size:5.5px!important}
+
+  /* Details stays beside the tree rather than causing the entire document to stretch. */
+  #roadtoace .ace316kDetails{
+    position:relative!important;
+    top:auto!important;
+    right:auto!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:thin!important;
+    scrollbar-color:#3c3158 #07131f!important;
+  }
+  #roadtoace .ace316kDetailInner{
+    padding:16px!important;
+  }
+  #roadtoace .ace316kDetailKicker{
+    font-size:7px!important;
+    letter-spacing:.14em!important;
+  }
+  #roadtoace .ace316kDetailType{
+    margin-top:8px!important;
+    font-size:7px!important;
+    padding:5px 7px!important;
+  }
+  #roadtoace .ace316kDetailInner h2{
+    margin:10px 0 8px!important;
+    font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:25px!important;
+    line-height:.95!important;
+    letter-spacing:-.02em!important;
+  }
+  #roadtoace .ace316kDetailInner>p,
+  #roadtoace .ace339GameplayDescription{
+    font-size:10px!important;
+    line-height:1.45!important;
+  }
+  #roadtoace .ace316kDetailInner h4{
+    font-size:7px!important;
+    line-height:1.35!important;
+  }
+  #roadtoace .ace344Exact summary{
+    font-size:7px!important;
+  }
+  #roadtoace .ace344Exact p,
+  #roadtoace .ace316kStatus span,
+  #roadtoace .ace316kSynergy span{
+    font-size:8px!important;
+    line-height:1.4!important;
+  }
+  #roadtoace .ace316kStatus b,
+  #roadtoace .ace316kEffect b,
+  #roadtoace .ace316kSynergy b{
+    font-size:10px!important;
+  }
+  #roadtoace .ace333NextStep{
+    min-height:50px!important;
+    padding:9px 11px!important;
+  }
+  #roadtoace .ace333NextStep span{font-size:6.5px!important}
+  #roadtoace .ace333NextStep b{font-size:8px!important}
+
+  /* Laptop body should not gain a 1500px document just because one path is long. */
+  #roadtoace:has(.ace316kPage){
+    padding-bottom:18px!important;
+  }
+}
+
+/* Shorter 768–850px laptop screens get another small squeeze. */
+@media (min-width:761px) and (max-height:850px){
+  #roadtoace .ace316kTop{
+    min-height:50px!important;
+    padding-top:7px!important;
+    padding-bottom:7px!important;
+    margin-bottom:7px!important;
+  }
+  #roadtoace .ace316kIdentity{
+    min-height:100px!important;
+    padding:11px 14px!important;
+  }
+  #roadtoace .ace316kIdentityMain h2{font-size:27px!important}
+  #roadtoace .ace316kBuildStrip{margin-top:8px!important}
+  #roadtoace .ace316kPaths{
+    margin-top:7px!important;
+    margin-bottom:7px!important;
+  }
+  #roadtoace .ace316kPaths button{min-height:48px!important}
+  #roadtoace .ace316kTreePane,
+  #roadtoace .ace316kDetails{
+    height:calc(100dvh - 335px)!important;
+    min-height:400px!important;
+    max-height:520px!important;
+  }
+}
+</style>
+<script id="ace550-laptop-skilltree-marker">
+window.ACE_PROJECT_BUILD='B21.36.550-LAPTOP-SKILLTREE';
+window.ACE_RELEASE_BUILD='B21.36.550-LAPTOP-SKILLTREE';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.550-LAPTOP-SKILLTREE';
+window.ACE_SKILL_TREE_LAPTOP_BUILD='B21.36.550-LAPTOP-SKILLTREE';
+</script>
+
+<style id="ace551-pc-fixed-pages">
+/* ==========================================================================
+   B21.36.551 — ROAD TO ACE PC FIXED-PAGE SYSTEM
+   PC ONLY. Mobile/tablet layouts are deliberately untouched.
+
+   Principle:
+   - The website header remains outside Road to Ace.
+   - Road to Ace consumes the viewport space actually left below that header.
+   - The career rail never stretches the document.
+   - Each route is a fixed workspace.
+   - Long information scrolls INSIDE the relevant panel, not the whole website.
+   ========================================================================== */
+
+@media (min-width:900px){
+
+  /* ---------- viewport / shell ---------- */
+  #rta62Mount.ace551PcFixed{
+    --ace551-h:720px;
+    --ace551-gap:12px;
+    --ace551-rail:216px;
+    height:var(--ace551-h)!important;
+    min-height:0!important;
+    max-height:var(--ace551-h)!important;
+    overflow:hidden!important;
+    contain:layout paint;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93Shell{
+    display:grid!important;
+    grid-template-columns:var(--ace551-rail) minmax(0,1fr)!important;
+    gap:var(--ace551-gap)!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93CareerRail{
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93DesktopRail{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:thin!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93RailBrand{
+    flex:0 0 auto!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93RailBottom{
+    position:relative!important;
+    inset:auto!important;
+    flex:0 0 auto!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta78Mode{
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    padding:0!important;
+    margin:0!important;
+  }
+
+  /*
+   * Every primary Road to Ace route lives inside the fixed workspace.
+   * Generic fallback uses an internal scroll area, so even an older/rare
+   * route cannot make the whole document thousands of pixels tall.
+   */
+  #rta62Mount.ace551PcFixed .rta78Mode > main{
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    margin:0!important;
+    overflow:auto!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:thin!important;
+    scrollbar-color:#24415a transparent!important;
+  }
+  #rta62Mount.ace551PcFixed .rta78Mode > main::-webkit-scrollbar{width:7px!important;height:7px!important}
+  #rta62Mount.ace551PcFixed .rta78Mode > main::-webkit-scrollbar-track{background:transparent!important}
+  #rta62Mount.ace551PcFixed .rta78Mode > main::-webkit-scrollbar-thumb{
+    background:#24415a!important;
+    border-radius:999px!important;
+  }
+
+  /* ---------- shared PC density ---------- */
+  #rta62Mount.ace551PcFixed .rta78Mode section,
+  #rta62Mount.ace551PcFixed .rta78Mode article,
+  #rta62Mount.ace551PcFixed .rta78Mode nav,
+  #rta62Mount.ace551PcFixed .rta78Mode header,
+  #rta62Mount.ace551PcFixed .rta78Mode footer{
+    box-sizing:border-box!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93SectionHead h2,
+  #rta62Mount.ace551PcFixed .ace456SquadHead h2{
+    line-height:1!important;
+  }
+
+  /* ==========================================================
+     HOME + MY SQUAD / CLUB
+     cinematic identity on top, one internally scrolling panel below
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rta93Club.ace456ClubPage{
+    display:grid!important;
+    grid-template-rows:minmax(150px,31%) 42px minmax(0,1fr)!important;
+    gap:8px!important;
+    overflow:hidden!important;
+    padding:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456Hero{
+    height:100%!important;
+    min-height:150px!important;
+    max-height:none!important;
+    margin:0!important;
+    border-radius:15px!important;
+    overflow:hidden!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456HeroIdentity{
+    bottom:48px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456HeroName h1{
+    font-size:clamp(30px,2.7vw,47px)!important;
+    line-height:.88!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456HeroStats{
+    min-height:44px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456HeroStats>div{
+    min-height:44px!important;
+    padding:6px 11px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456HeroStats b{
+    font-size:clamp(15px,1.25vw,22px)!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456ClubTabs{
+    height:42px!important;
+    min-height:42px!important;
+    margin:0!important;
+    border-radius:12px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456ClubTabs button{
+    min-height:40px!important;
+    padding:0 12px!important;
+    font-size:9px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456ClubPanel{
+    min-height:0!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    margin:0!important;
+    scrollbar-width:thin!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456SquadCard,
+  #rta62Mount.ace551PcFixed .ace456InfoGrid,
+  #rta62Mount.ace551PcFixed .ace456Metrics,
+  #rta62Mount.ace551PcFixed .ace456HistoryIntro{
+    margin-top:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456Court{
+    min-height:330px!important;
+    height:min(44vh,420px)!important;
+  }
+
+  /* ==========================================================
+     MATCH
+     header/context stays fixed; match-specific body owns scrolling
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rta93Match{
+    height:100%!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    padding:0 3px 10px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93MatchHero,
+  #rta62Mount.ace551PcFixed .ace315eInternationalMatchHead{
+    min-height:86px!important;
+    margin-bottom:8px!important;
+    padding-top:10px!important;
+    padding-bottom:10px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93Match h1,
+  #rta62Mount.ace551PcFixed .ace315eInternationalMatchHead h1{
+    font-size:clamp(25px,2.2vw,38px)!important;
+    line-height:.92!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93Match .rta93CompetitionCard{
+    margin-top:8px!important;
+  }
+
+  /* ==========================================================
+     PREP
+     already has the approved design — now make the page itself fixed
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rta187TrainingCentre{
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    padding:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta187TrainingCentre>.ace519Planner,
+  #rta62Mount.ace551PcFixed .ace545PrepReplica{
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    margin:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    padding-top:4px!important;
+    padding-bottom:8px!important;
+  }
+
+  /* ==========================================================
+     SKILL TREE
+     fixed workspace; long node path scrolls inside its own pane
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .ace316gSkillPage{
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    padding:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace316kPage{
+    display:grid!important;
+    grid-template-rows:auto auto auto minmax(0,1fr)!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace316kTop{
+    min-height:50px!important;
+    margin-bottom:7px!important;
+    padding:7px 12px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace316kIdentity{
+    min-height:98px!important;
+    padding:11px 13px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace316kPaths{
+    min-height:50px!important;
+    margin:7px 0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace316kWorkspace{
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    grid-template-columns:minmax(0,68%) minmax(290px,32%)!important;
+    gap:9px!important;
+    overflow:hidden!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace316kTreePane,
+  #rta62Mount.ace551PcFixed .ace316kDetails{
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+  }
+
+  /* ==========================================================
+     INBOX
+     mail-client layout: only message list / reader scroll
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .ace481MailShell{
+    display:grid!important;
+    grid-template-rows:auto 38px minmax(0,1fr)!important;
+    gap:7px!important;
+    height:100%!important;
+    overflow:hidden!important;
+    padding-bottom:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace481MailHeader{
+    min-height:74px!important;
+    padding:10px 14px!important;
+    margin:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace481MailHeader h1{
+    font-size:clamp(25px,2vw,34px)!important;
+    line-height:.95!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace481MailToolbar{
+    height:38px!important;
+    min-height:38px!important;
+    margin:0!important;
+    padding:0 12px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace481MailLayout{
+    min-height:0!important;
+    height:100%!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    margin:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace481MailList,
+  #rta62Mount.ace551PcFixed .ace481Reader{
+    min-height:0!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace481MailRow{
+    min-height:70px!important;
+    padding:9px 10px!important;
+  }
+
+  /* ==========================================================
+     CAREER
+     fixed header/tabs/footer; panel body owns scrolling
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rta92CareerHub{
+    display:grid!important;
+    grid-template-rows:auto 52px minmax(0,1fr) auto!important;
+    gap:8px!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding-bottom:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerHeader{
+    min-height:94px!important;
+    margin:0!important;
+    padding:12px 15px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerIdentity h1{
+    font-size:clamp(27px,2.2vw,38px)!important;
+    line-height:.92!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerTabs{
+    height:52px!important;
+    min-height:52px!important;
+    margin:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerTabs button{
+    min-height:50px!important;
+    padding:5px 10px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerBody{
+    min-height:0!important;
+    height:100%!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    margin:0!important;
+    padding-bottom:8px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerDanger{
+    margin:0!important;
+    padding:5px 0 0!important;
+  }
+
+  /* ==========================================================
+     CUSTOMISE / CAREER PROFILE
+     identity header fixed, showcase panel scrolls internally
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .ace474CareerProfileStandalone{
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    gap:8px!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding-bottom:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace474CareerProfileHead{
+    min-height:78px!important;
+    margin:0!important;
+    padding:11px 14px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace474CareerProfileHead h1{
+    font-size:clamp(27px,2vw,36px)!important;
+    line-height:.92!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace474CareerProfileStandalone > :not(.ace474CareerProfileHead){
+    min-height:0!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+  }
+
+  /* ==========================================================
+     AGENT
+     compact hero, remainder scrolls inside page
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rta93Agent{
+    height:100%!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    padding-bottom:10px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93AgentHero{
+    min-height:128px!important;
+    height:min(22vh,170px)!important;
+    margin-bottom:8px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93AgentHeroCopy h1{
+    font-size:clamp(27px,2.2vw,39px)!important;
+    line-height:.92!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93Agent > section{
+    margin-top:8px!important;
+  }
+
+  /* ==========================================================
+     RANKINGS
+     hero fixed-ish, rankings content gets the remaining viewport
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rtaRankings.ace352Rankings{
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    gap:8px!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding-bottom:0!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace352RankHero{
+    min-height:108px!important;
+    margin:0!important;
+    padding:12px 15px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace352RankHero h1{
+    font-size:clamp(27px,2.2vw,39px)!important;
+    line-height:.92!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace352Rankings > :not(.ace352RankHero){
+    min-height:0!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+  }
+
+  /* ==========================================================
+     GENERIC CARDS / LARGE SPACING
+     PC density only — don't make the interface microscopic
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rta78Mode .rta93CompetitionCard,
+  #rta62Mount.ace551PcFixed .rta78Mode .rta93Card,
+  #rta62Mount.ace551PcFixed .rta78Mode .rta92Card{
+    margin-top:7px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta78Mode .ace367CareerTileGrid,
+  #rta62Mount.ace551PcFixed .rta78Mode .rta80RosterGrid,
+  #rta62Mount.ace551PcFixed .rta78Mode .ace456RosterGrid{
+    gap:8px!important;
+  }
+
+  /* ==========================================================
+     OVERLAYS / SAVE MANAGER / SHEETS
+     fixed modal instead of full-document expansion
+     ========================================================== */
+  #rta62Mount.ace551PcFixed .rta62OverlayShell,
+  #rta62Mount.ace551PcFixed .rta85MoreSheet,
+  .rta62OverlayShell,
+  .rta85MoreSheet{
+    max-height:min(86dvh,780px)!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+  }
+
+  .rta62OverlayShell .rta76SaveStage{
+    max-height:calc(86dvh - 80px)!important;
+    overflow-y:auto!important;
+  }
+
+  /* Do not let floating status chips steal usable PC height. */
+  #rta62Mount.ace551PcFixed .ace527PreviewChip,
+  #rta62Mount.ace551PcFixed .aceCloudChip{
+    transform:scale(.90)!important;
+    transform-origin:bottom left!important;
+  }
+}
+
+
+/* Short PC/laptop displays: compress chrome, not content text. */
+@media (min-width:900px) and (max-height:760px){
+  #rta62Mount.ace551PcFixed{
+    --ace551-rail:204px;
+    --ace551-gap:9px;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93RailBrand{
+    min-height:62px!important;
+    padding-top:8px!important;
+    padding-bottom:8px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93DesktopRail button{
+    min-height:40px!important;
+    margin-bottom:3px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93RailLabel{
+    margin-top:8px!important;
+    margin-bottom:4px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93RailLeague{
+    display:none!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93Club.ace456ClubPage{
+    grid-template-rows:minmax(132px,28%) 38px minmax(0,1fr)!important;
+    gap:6px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456ClubTabs{
+    height:38px!important;
+    min-height:38px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace456ClubTabs button{
+    min-height:36px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace481MailHeader,
+  #rta62Mount.ace551PcFixed .rta92CareerHeader{
+    min-height:74px!important;
+    padding-top:8px!important;
+    padding-bottom:8px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerTabs{
+    height:46px!important;
+    min-height:46px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta92CareerTabs button{
+    min-height:44px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .rta93AgentHero{
+    height:108px!important;
+    min-height:108px!important;
+  }
+
+  #rta62Mount.ace551PcFixed .ace352RankHero{
+    min-height:88px!important;
+  }
+}
+</style>
+
+<script id="ace551-pc-fixed-controller">
+(()=>{
+  const BUILD='B21.36.551-PC-FIXED-PAGES';
+  const mq=window.matchMedia('(min-width:900px)');
+  let raf=0;
+
+  function applyPcViewport(){
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>{
+      const mount=document.getElementById('rta62Mount');
+      if(!mount)return;
+
+      if(!mq.matches){
+        mount.classList.remove('ace551PcFixed');
+        mount.style.removeProperty('--ace551-h');
+        return;
+      }
+
+      /*
+       * Use the REAL rendered top edge of Road to Ace.
+       * This avoids hard-coding the height of the global ACE header and works
+       * on 768p laptops, 900p laptops, 1080p desktops and browser zoom changes.
+       */
+      const rect=mount.getBoundingClientRect();
+      const viewport=(window.visualViewport?.height||window.innerHeight||800);
+      const top=Math.max(0,rect.top);
+      const bottomGap=10;
+      const available=Math.max(500,Math.floor(viewport-top-bottomGap));
+
+      mount.classList.add('ace551PcFixed');
+      mount.style.setProperty('--ace551-h',available+'px');
+    });
+  }
+
+  document.addEventListener('ace:rta-render',applyPcViewport);
+  window.addEventListener('resize',applyPcViewport,{passive:true});
+  window.visualViewport?.addEventListener?.('resize',applyPcViewport,{passive:true});
+  window.addEventListener('pageshow',applyPcViewport,{passive:true});
+  mq.addEventListener?.('change',applyPcViewport);
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',applyPcViewport,{once:true});
+  }else{
+    applyPcViewport();
+  }
+  setTimeout(applyPcViewport,120);
+
+  window.ACE551_PC_FIXED_PAGES={apply:applyPcViewport,build:BUILD};
+  window.ACE_PROJECT_BUILD=BUILD;
+  window.ACE_RELEASE_BUILD=BUILD;
+  window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+})();
 </script>
