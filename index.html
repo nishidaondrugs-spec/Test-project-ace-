@@ -41957,6 +41957,49 @@ document.addEventListener("click",function(e){
     const homeTab=id=>homeMode?`data-ace464-home-tab="${id}"`:`data-ace456-tab="${id}"`;
     const panelClass=id=>(!homeMode&&id==='timeline')?' active':'';
 
+    /* B21.36.555 — Home owns the next-fixture experience on PC.
+       This is real match state, not a decorative duplicate. */
+    const homeSelState=S.selection||{};
+    const homeSel=homeSelState.user||{};
+    const homeOpp=String(homeSelState.opponent||homeSel.opponent||nextOpponent()||'OPPONENT');
+    const homeSelectionStatus=String(homeSel.selection_status||c.squad_role||'BENCH');
+    const homeCoach=String(homeSel.coach_name||'Head Coach');
+    const homeReady=readiness(c);
+    const homeMatchday=Math.max(1,Number(c.season_match||0)+1);
+    const homeActionLabel=S.activeKey?'RESUME MATCH':rta88SelectionAction(homeSelectionStatus);
+    const homeMedicalOut=String(c.injury_status||'FIT').toUpperCase()==='OUT';
+    const homeMatchdayCard=(homeMode&&!c.season_complete)?`
+      <section class="ace555HomeMatchday" aria-label="Next fixture">
+        <header class="ace555HomeMatchHead">
+          <div><small>NEXT FIXTURE</small><b>MATCHDAY ${homeMatchday}</b></div>
+          <span>${esc(leagueName)}</span>
+        </header>
+        <div class="ace555HomeFixture">
+          <article class="ace555HomeClub ace555HomeClubMe">
+            <div class="ace555HomeClubMark">${rta77ClubLogo(c.club_name||'Club','lg')}</div>
+            <div><small>HOME</small><b>${esc(c.club_name)}</b><span>${esc(c.squad_role||'SQUAD')} · ${Number(c.overall||0)} OVR</span></div>
+          </article>
+          <div class="ace555HomeVs"><span>VS</span></div>
+          <article class="ace555HomeClub ace555HomeClubOpp">
+            <div><small>AWAY</small><b>${esc(homeOpp)}</b><span>${esc(homeCoach)}</span></div>
+            <div class="ace555HomeClubMark">${rta77ClubLogo(homeOpp,'lg')}</div>
+          </article>
+        </div>
+        <footer class="ace555HomeMatchFoot">
+          <div class="ace555HomePulse">
+            <span><b>${homeReady}%</b><small>READY</small></span>
+            <span><b>${esc(homeSelectionStatus)}</b><small>ROLE</small></span>
+            <span><b>${rank?`#${rank}`:'—'}</b><small>LEAGUE</small></span>
+          </div>
+          <div class="ace555HomeActions">
+            <button type="button" class="primary" data-rta62-key ${homeMedicalOut?'disabled':''}>
+              <i>▶</i><span>${homeMedicalOut?'MEDICAL DNP':esc(homeActionLabel)}</span>
+            </button>
+            <button type="button" data-rta62-sim><i>»</i><span>SIM MATCH</span></button>
+          </div>
+        </footer>
+      </section>`:'';
+
     /* Club Home timeline uses the same league calendar state as Career Overview. */
     const k=S.league?.calendar||c.calendar_state||{};
     const transfer=S.office?.transfer_window||k.transfer_window||{};
@@ -42014,6 +42057,7 @@ document.addEventListener("click",function(e){
         <div class="rta93HeroShade ace456HeroShade" aria-hidden="true"></div>
         <div class="ace456HeroTop">${homeMode?'':'<button type="button" class="ace456Back" data-rta62-view="home" aria-label="Back">‹</button>'}<span class="ace421SeasonChip">SEASON ${Math.max(1,Number(c.season||1))}</span></div>
         <div class="ace456HeroTag">MORE<br>THAN A GAME<br>A STRONGER<br>${esc(countryLabel)}</div>
+        ${homeMatchdayCard}
         <div class="ace456HeroIdentity">
           <div class="ace456HeroCrest">${rta77ClubLogo(c.club_name||'Club','lg')}</div>
           <div class="ace456HeroName"><h1>${esc(c.club_name)}</h1><p><span>${flag}</span>${esc(leagueName)}</p></div>
@@ -67934,4 +67978,133 @@ window.ACE_PROJECT_BUILD='B21.36.553-SAFE-ROLLBACK';
 window.ACE_RELEASE_BUILD='B21.36.553-SAFE-ROLLBACK';
 window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.553-SAFE-ROLLBACK';
 window.ACE_SAFE_ROLLBACK_BASE='B21.36.549-NETWORK-QUIET';
+</script>
+
+<style id="ace555-home-matchday-pc">
+@media (min-width:900px){
+  #roadtoace .ace464HomeHub .ace456Hero{position:relative!important;}
+
+  #roadtoace .ace464HomeHub .ace555HomeMatchday{
+    position:absolute!important;z-index:4!important;
+    left:3.2%!important;right:3.2%!important;top:14%!important;
+    height:34%!important;min-height:198px!important;max-height:258px!important;
+    display:grid!important;grid-template-rows:36px minmax(0,1fr) 54px!important;
+    overflow:hidden!important;
+    border:1px solid rgba(92,172,225,.15)!important;border-radius:17px!important;
+    background:
+      radial-gradient(circle at 50% 110%,rgba(41,125,183,.14),transparent 42%),
+      linear-gradient(135deg,rgba(5,14,23,.88),rgba(8,22,34,.82))!important;
+    box-shadow:0 18px 36px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.025)!important;
+    backdrop-filter:blur(7px)!important;-webkit-backdrop-filter:blur(7px)!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace555HomeMatchHead{
+    display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;
+    padding:0 15px!important;border-bottom:1px solid rgba(255,255,255,.045)!important;background:rgba(5,10,18,.34)!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeMatchHead>div{display:flex!important;align-items:center!important;gap:10px!important;}
+  #roadtoace .ace464HomeHub .ace555HomeMatchHead small{
+    color:#69c5f5!important;font:1000 6.5px/1 system-ui,sans-serif!important;letter-spacing:.15em!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeMatchHead b{
+    color:#f4f8fb!important;font:1000 10px/1 "Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif!important;letter-spacing:.035em!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeMatchHead>span{color:#72889a!important;font:900 7px/1 system-ui,sans-serif!important;}
+
+  #roadtoace .ace464HomeHub .ace555HomeFixture{
+    display:grid!important;grid-template-columns:minmax(0,1fr) 62px minmax(0,1fr)!important;
+    align-items:center!important;min-height:0!important;padding:10px 14px 8px!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace555HomeClub{
+    min-width:0!important;display:grid!important;align-items:center!important;gap:12px!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeClubMe{grid-template-columns:58px minmax(0,1fr)!important;}
+  #roadtoace .ace464HomeHub .ace555HomeClubOpp{grid-template-columns:minmax(0,1fr) 58px!important;text-align:right!important;}
+  #roadtoace .ace464HomeHub .ace555HomeClubMark{
+    width:56px!important;height:56px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeClubMark .rta77ClubMark,
+  #roadtoace .ace464HomeHub .ace555HomeClubMark img{
+    width:54px!important;height:54px!important;max-width:54px!important;max-height:54px!important;object-fit:contain!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeClub small{
+    display:block!important;margin-bottom:4px!important;color:#68859a!important;
+    font:1000 6px/1 system-ui,sans-serif!important;letter-spacing:.15em!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeClub b{
+    display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+    color:#f4f6f8!important;font-family:"Bahnschrift SemiCondensed","Arial Narrow",Impact,sans-serif!important;
+    font-size:clamp(20px,1.75vw,31px)!important;line-height:.9!important;font-weight:1000!important;letter-spacing:-.032em!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeClub span{
+    display:block!important;margin-top:6px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+    color:#758b9d!important;font:800 7px/1 system-ui,sans-serif!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace555HomeVs{
+    width:48px!important;height:48px!important;margin:auto!important;display:grid!important;place-items:center!important;
+    border-radius:14px!important;border:1px solid rgba(92,184,237,.16)!important;
+    background:linear-gradient(145deg,rgba(27,66,93,.78),rgba(10,25,38,.88))!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeVs span{
+    color:#f4f8fb!important;font:1000 19px/1 "Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace555HomeMatchFoot{
+    display:grid!important;grid-template-columns:minmax(0,1fr) minmax(300px,38%)!important;gap:10px!important;align-items:center!important;
+    padding:7px 9px!important;border-top:1px solid rgba(255,255,255,.045)!important;background:rgba(4,11,18,.38)!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomePulse{
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;height:100%!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomePulse>span{
+    min-width:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+    border-right:1px solid rgba(255,255,255,.045)!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomePulse>span:last-child{border-right:0!important;}
+  #roadtoace .ace464HomeHub .ace555HomePulse b{
+    max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+    color:#eef5f9!important;font:1000 12px/1 "Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomePulse small{
+    margin-top:4px!important;color:#60778a!important;font:1000 5.7px/1 system-ui,sans-serif!important;letter-spacing:.13em!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace555HomeActions{
+    display:grid!important;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)!important;gap:6px!important;height:100%!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeActions button{
+    min-width:0!important;height:40px!important;align-self:center!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;padding:0 10px!important;
+    border-radius:10px!important;border:1px solid rgba(89,161,207,.14)!important;background:#091925!important;
+    color:#aebfcb!important;font:1000 8px/1 system-ui,sans-serif!important;letter-spacing:.025em!important;cursor:pointer!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeActions button.primary{
+    border-color:rgba(92,187,241,.30)!important;background:linear-gradient(135deg,#309edb,#2187c5)!important;
+    color:#f8fcff!important;box-shadow:0 7px 17px rgba(34,145,207,.16)!important;
+  }
+  #roadtoace .ace464HomeHub .ace555HomeActions button:disabled{opacity:.48!important;cursor:not-allowed!important;}
+  #roadtoace .ace464HomeHub .ace555HomeActions i{font-style:normal!important;font-size:11px!important;}
+
+  #roadtoace .ace464HomeHub .ace456HeroIdentity,
+  #roadtoace .ace464HomeHub .ace456HeroStats{z-index:5!important;}
+}
+
+@media (min-width:900px) and (max-width:1180px){
+  #roadtoace .ace464HomeHub .ace555HomeMatchday{left:2.4%!important;right:2.4%!important;}
+  #roadtoace .ace464HomeHub .ace555HomeMatchFoot{grid-template-columns:minmax(0,1fr) 310px!important;}
+  #roadtoace .ace464HomeHub .ace555HomeClub b{font-size:clamp(18px,2vw,24px)!important;}
+}
+
+@media (max-width:899px){
+  #roadtoace .ace464HomeHub .ace555HomeMatchday{display:none!important;}
+}
+</style>
+<script id="ace555-home-matchday-marker">
+window.ACE_PROJECT_BUILD='B21.36.555-HOME-MATCHDAY';
+window.ACE_RELEASE_BUILD='B21.36.555-HOME-MATCHDAY';
+window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.555-HOME-MATCHDAY';
+window.ACE_HOME_MATCHDAY_BUILD='B21.36.555-HOME-MATCHDAY';
 </script>
