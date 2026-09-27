@@ -42020,7 +42020,10 @@ document.addEventListener("click",function(e){
       <section class="rta93ClubHero ace421ClubHero ace456Hero">
         <div class="ace421ClubCourtTexture" aria-hidden="true"></div>
         <div class="rta93HeroShade ace456HeroShade" aria-hidden="true"></div>
-        <div class="ace456HeroTop">${homeMode?'':'<button type="button" class="ace456Back" data-rta62-view="home" aria-label="Back">‹</button>'}<span class="ace421SeasonChip">SEASON ${Math.max(1,Number(c.season||1))}</span></div>
+        <div class="ace456HeroTop">${homeMode
+          ?'<button type="button" class="ace421SeasonChip ace557AceHome" data-ace557-global-home aria-label="Go to Ace home"><i>⌂</i><span>ACE HOME</span></button>'
+          :`<button type="button" class="ace456Back" data-rta62-view="home" aria-label="Back">‹</button><span class="ace421SeasonChip">SEASON ${Math.max(1,Number(c.season||1))}</span>`
+        }</div>
         <div class="ace456HeroTag">MORE<br>THAN A GAME<br>A STRONGER<br>${esc(countryLabel)}</div>
         <div class="ace456HeroIdentity">
           <div class="ace456HeroCrest">${rta77ClubLogo(c.club_name||'Club','lg')}</div>
@@ -42030,10 +42033,13 @@ document.addEventListener("click",function(e){
           <div><b>${metrics.overall}</b><span>TEAM OVR</span></div>
           <div><b>${rank?`#${rank}`:'—'}</b><span>LEAGUE</span></div>
           ${homeMode&&!c.season_complete?`
-            <div class="ace556NextOpponent">
-              <small>NEXT MATCH</small>
-              <b><em>VS</em> ${esc(homeOpp)}</b>
-              <span>MATCHDAY ${homeMatchday}</span>
+            <div class="ace556NextOpponent ace557NextOpponent">
+              <div class="ace557OppLogo">${rta77ClubLogo(homeOpp,'sm')}</div>
+              <div class="ace557OppCopy">
+                <small>NEXT MATCH</small>
+                <b><em>VS</em> ${esc(homeOpp)}</b>
+                <span>MATCHDAY ${homeMatchday}</span>
+              </div>
             </div>
             <div class="ace556MatchActions">
               <button type="button" class="ace556Play" data-rta62-key ${homeMedicalOut?'disabled':''}>
@@ -68086,4 +68092,102 @@ window.ACE_PROJECT_BUILD='B21.36.556-HOME-CLEAN-MATCH';
 window.ACE_RELEASE_BUILD='B21.36.556-HOME-CLEAN-MATCH';
 window.ACE_RELEASE_CANDIDATE_BUILD='B21.36.556-HOME-CLEAN-MATCH';
 window.ACE_HOME_MATCH_BUILD='B21.36.556-HOME-CLEAN-MATCH';
+</script>
+
+<style id="ace557-home-locked">
+/* B21.36.557 — Home layout locked from V556. Only ACE HOME + small opponent crest. */
+@media (min-width:900px){
+  #roadtoace .ace464HomeHub .ace557AceHome{
+    appearance:none!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    gap:7px!important;
+    width:auto!important;
+    min-width:0!important;
+    height:34px!important;
+    margin:0!important;
+    padding:0 12px!important;
+    border:1px solid rgba(91,166,211,.22)!important;
+    border-radius:999px!important;
+    background:rgba(5,16,25,.62)!important;
+    color:#dce8ef!important;
+    cursor:pointer!important;
+    box-shadow:none!important;
+  }
+  #roadtoace .ace464HomeHub .ace557AceHome:hover{
+    border-color:rgba(91,191,244,.42)!important;
+    background:rgba(15,39,56,.76)!important;
+  }
+  #roadtoace .ace464HomeHub .ace557AceHome i{
+    color:#66bce7!important;
+    font:1000 12px/1 system-ui,sans-serif!important;
+    font-style:normal!important;
+  }
+  #roadtoace .ace464HomeHub .ace557AceHome span{
+    color:#e4edf3!important;
+    font:1000 7px/1 system-ui,sans-serif!important;
+    letter-spacing:.12em!important;
+  }
+
+  #roadtoace .ace464HomeHub .ace557NextOpponent{
+    display:grid!important;
+    grid-template-columns:34px minmax(0,1fr)!important;
+    gap:10px!important;
+    align-items:center!important;
+    text-align:left!important;
+  }
+  #roadtoace .ace464HomeHub .ace557OppLogo{
+    width:32px!important;
+    height:32px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:0 0 32px!important;
+  }
+  #roadtoace .ace464HomeHub .ace557OppLogo .rta77ClubMark,
+  #roadtoace .ace464HomeHub .ace557OppLogo img{
+    width:30px!important;
+    height:30px!important;
+    max-width:30px!important;
+    max-height:30px!important;
+    object-fit:contain!important;
+  }
+  #roadtoace .ace464HomeHub .ace557OppCopy{
+    min-width:0!important;
+    display:block!important;
+  }
+  #roadtoace .ace464HomeHub .ace557OppCopy small,
+  #roadtoace .ace464HomeHub .ace557OppCopy b,
+  #roadtoace .ace464HomeHub .ace557OppCopy>span{
+    text-align:left!important;
+  }
+}
+
+/* Keep the locked V556 mobile presentation unchanged. */
+@media (max-width:899px){
+  #roadtoace .ace557AceHome i{display:none!important;}
+}
+</style>
+
+<script id="ace557-home-locked-controller">
+(()=>{
+  const BUILD='B21.36.557-HOME-LOCKED';
+
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest?.('[data-ace557-global-home]');
+    if(!btn)return;
+    e.preventDefault();
+    const home=document.querySelector('#mainNav .tab[data-page="home"]')
+      || document.querySelector('.vdsBrand[data-page="home"]');
+    if(home){ home.click(); return; }
+    try{
+      if(typeof window.goPage==='function')window.goPage('home');
+    }catch(_){}
+  });
+
+  window.ACE_PROJECT_BUILD=BUILD;
+  window.ACE_RELEASE_BUILD=BUILD;
+  window.ACE_RELEASE_CANDIDATE_BUILD=BUILD;
+  window.ACE_HOME_LOCKED_BUILD=BUILD;
+})();
 </script>
